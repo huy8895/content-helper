@@ -189,11 +189,94 @@ function showScenarioRunnerUI() {
     });
   });
 
-  document.getElementById("start-scenario").onclick = () => {
+  document.getElementById("start-scenario").onclick = async () => {
+    console.log("Bắt đầu kịch bản");
     const selected = select.value;
-    alert("Bạn chọn kịch bản: " + selected + " (Gửi từng câu sẽ thêm ở bước sau)");
+    chrome.storage.local.get("scenarioTemplates", async (items) => {
+      console.log("Đã lấy kịch bản từ storage", items);
+      if (!items["scenarioTemplates"]) {
+        alert("Không tìm thấy kịch bản nào.");
+        return;
+      }
+      const questions = items["scenarioTemplates"][selected];
+      console.log("Câu hỏi trong kịch bản:", questions);
+      if (!questions) {
+        alert("Không tìm thấy kịch bản.");
+        return;
+      }
+      for (let i = 0; i < questions.length; i++) {
+        console.log("Gửi câu hỏi:", questions[i]);
+        await sendMessageToChatGPT(questions[i]);
+        await waitForChatGPTResponse();
+      }
+    });
   };
 }
+
+async function sendMessageToChatGPT(message) {
+  console.log("🔹 Gửi tin nhắn:", message);
+
+  const editableDiv = document.getElementById("prompt-textarea");
+  if (!editableDiv) {
+    console.error("❌ Không tìm thấy #prompt-textarea");
+    return;
+  }
+
+  // Xoá nội dung cũ và thêm nội dung mới
+  editableDiv.innerHTML = "";
+  const paragraph = document.createElement("p");
+  paragraph.textContent = message;
+  editableDiv.appendChild(paragraph);
+
+  // Gửi sự kiện input để kích hoạt update
+  editableDiv.dispatchEvent(new Event("input", { bubbles: true }));
+
+  // Chờ nút gửi sẵn sàng rồi click
+  const sendBtn = await waitForButtonToAppear('button[aria-label="Send prompt"]');
+  if (sendBtn) {
+    sendBtn.click();
+    console.log("✅ Đã click nút gửi");
+  } else {
+    console.error("❌ Không tìm thấy nút gửi");
+  }
+}
+
+
+
+function waitForChatGPTResponse() {
+  console.log("Chờ ChatGPT phản hồi...");
+  return new Promise((resolve) => {
+    const interval = setInterval(() => {
+      const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
+      const voiceBtn = document.querySelector('button[aria-label="Start voice mode"]');
+
+      if (!stopBtn && voiceBtn) {
+        clearInterval(interval);
+        console.log("Đã nhận phản hồi xong.");
+        resolve();
+      }
+    }, 1500);
+  });
+}
+
+function waitForButtonToAppear(selector, maxRetries = 10, interval = 300) {
+  return new Promise((resolve) => {
+    let retries = 0;
+    const timer = setInterval(() => {
+      const button = document.querySelector(selector);
+      if (button) {
+        clearInterval(timer);
+        resolve(button);
+      } else if (retries >= maxRetries) {
+        clearInterval(timer);
+        resolve(null);
+      }
+      retries++;
+    }, interval);
+  });
+}
+
+
 
 const observer = new MutationObserver(() => insertHelperButton());
 observer.observe(document.body, { childList: true, subtree: true });
