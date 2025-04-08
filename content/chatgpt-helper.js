@@ -1,15 +1,16 @@
 function insertHelperButton() {
-  const chatInputContainer = document.querySelector("form textarea")?.closest(
-      "form");
-  if (!chatInputContainer || document.getElementById(
-      "chatgpt-helper-button")) {
-    return;
-  }
+  const chatInputContainer = document.querySelector("form textarea")?.closest("form");
+  if (!chatInputContainer || document.getElementById("chatgpt-helper-button")) return;
 
-  const button = document.createElement("button");
-  button.id = "chatgpt-helper-button";
-  button.textContent = "✏️ Content Helper";
-  button.style.cssText = `
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "6px";
+
+  const button1 = document.createElement("button");
+  button1.id = "chatgpt-helper-button";
+  button1.textContent = "🛠 Soạn kịch bản";
+  button1.style.cssText = `
     margin-top: 8px;
     padding: 6px 12px;
     background-color: #10a37f;
@@ -19,10 +20,21 @@ function insertHelperButton() {
     cursor: pointer;
   `;
 
-  button.onclick = (event) => {
-    event.preventDefault(); // ✅ Ngăn form gửi tin nhắn
-    event.stopPropagation(); // ✅ Ngăn sự kiện lan ra ngoài (đề phòng)
+  const button2 = document.createElement("button");
+  button2.id = "chatgpt-run-button";
+  button2.textContent = "📤 Chạy kịch bản";
+  button2.style.cssText = `
+    padding: 6px 12px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  `;
 
+  button1.onclick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     const existingBox = document.getElementById("scenario-builder");
     if (existingBox) {
       existingBox.remove();
@@ -31,7 +43,20 @@ function insertHelperButton() {
     showScenarioBuilderUI();
   };
 
-  chatInputContainer.appendChild(button);
+  button2.onclick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const existingBox = document.getElementById("scenario-runner");
+    if (existingBox) {
+      existingBox.remove();
+      return;
+    }
+    showScenarioRunnerUI();
+  };
+
+  container.appendChild(button1);
+  container.appendChild(button2);
+  chatInputContainer.appendChild(container);
 }
 
 function showScenarioBuilderUI() {
@@ -64,27 +89,20 @@ function showScenarioBuilderUI() {
   function generateScenarioJSON() {
     const name = document.getElementById("scenario-name").value.trim();
     const inputs = document.querySelectorAll(".question-input");
-    const questions = Array.from(inputs).map(i => i.value.trim()).filter(
-        Boolean);
-
+    const questions = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
     if (!name || questions.length === 0) {
       alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
       return;
     }
-
-    const json = {[name]: questions};
-    document.getElementById("json-preview").textContent = JSON.stringify(json,
-        null, 2);
+    const json = { [name]: questions };
+    document.getElementById("json-preview").textContent = JSON.stringify(json, null, 2);
     return json;
   }
 
   document.getElementById("export-json").onclick = () => {
     const json = generateScenarioJSON();
-    if (!json) {
-      return;
-    }
-    const blob = new Blob([JSON.stringify(json, null, 2)],
-        {type: "application/json"});
+    if (!json) return;
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -95,10 +113,8 @@ function showScenarioBuilderUI() {
 
   document.getElementById("save-to-storage").onclick = () => {
     const json = generateScenarioJSON();
-    if (!json) {
-      return;
-    }
-    chrome.storage.local.set({scenarioTemplates: json}, () => {
+    if (!json) return;
+    chrome.storage.local.set({ scenarioTemplates: json }, () => {
       alert("Đã lưu kịch bản vào trình duyệt.");
     });
   };
@@ -109,12 +125,9 @@ function showScenarioBuilderUI() {
 
   document.getElementById("json-file-input").onchange = (e) => {
     const file = e.target.files[0];
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     const reader = new FileReader();
-    reader.onload = function (event) {
+    reader.onload = function(event) {
       try {
         const data = JSON.parse(event.target.result);
         const name = Object.keys(data)[0];
@@ -130,8 +143,7 @@ function showScenarioBuilderUI() {
           input.value = q;
           container.appendChild(input);
         });
-        document.getElementById("json-preview").textContent = JSON.stringify(
-            data, null, 2);
+        document.getElementById("json-preview").textContent = JSON.stringify(data, null, 2);
       } catch (err) {
         alert("Tệp JSON không hợp lệ.");
       }
@@ -140,5 +152,48 @@ function showScenarioBuilderUI() {
   };
 }
 
+function showScenarioRunnerUI() {
+  const existing = document.getElementById("scenario-runner");
+  if (existing) existing.remove();
+
+  const div = document.createElement("div");
+  div.id = "scenario-runner";
+  div.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 12px;
+    border-radius: 10px;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  `;
+
+  div.innerHTML = `
+    <label for="scenario-select">Chọn kịch bản:</label>
+    <select id="scenario-select"></select>
+    <button id="start-scenario">▶️ Bắt đầu</button>
+  `;
+
+  document.body.appendChild(div);
+
+  const select = document.getElementById("scenario-select");
+  chrome.storage.local.get(null, (items) => {
+    const templates = items["scenarioTemplates"] || {};
+    Object.entries(templates).forEach(([name]) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+  });
+
+  document.getElementById("start-scenario").onclick = () => {
+    const selected = select.value;
+    alert("Bạn chọn kịch bản: " + selected + " (Gửi từng câu sẽ thêm ở bước sau)");
+  };
+}
+
 const observer = new MutationObserver(() => insertHelperButton());
-observer.observe(document.body, {childList: true, subtree: true});
+observer.observe(document.body, { childList: true, subtree: true });
