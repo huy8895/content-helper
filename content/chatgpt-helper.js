@@ -1,4 +1,4 @@
-console.log("🛠 ChatGPT Helper loaded.");
+
 
 function insertHelperButton() {
   console.log("✨ Thêm nút helper vào giao diện");
@@ -6,34 +6,19 @@ function insertHelperButton() {
   if (!chatInputContainer || document.getElementById("chatgpt-helper-button")) return;
 
   const container = document.createElement("div");
-  container.style.display = "flex";
-  container.style.flexDirection = "column";
-  container.style.gap = "6px";
+  container.id = "chatgpt-helper-button-container";
 
   const button1 = document.createElement("button");
   button1.id = "chatgpt-helper-button";
   button1.textContent = "🛠 Soạn kịch bản";
-  button1.style.cssText = `
-    margin-top: 8px;
-    padding: 6px 12px;
-    background-color: #10a37f;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  `;
 
   const button2 = document.createElement("button");
   button2.id = "chatgpt-run-button";
   button2.textContent = "📤 Chạy kịch bản";
-  button2.style.cssText = `
-    padding: 6px 12px;
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  `;
+
+  button1.className = 'scenario-btn btn-setup';
+  button2.className = 'scenario-btn btn-run';
+
 
   button1.onclick = (event) => {
     console.log("📝 Click: Soạn kịch bản");
