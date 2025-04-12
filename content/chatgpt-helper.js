@@ -1,4 +1,7 @@
+console.log("🛠 ChatGPT Helper loaded.");
+
 function insertHelperButton() {
+  console.log("✨ Thêm nút helper vào giao diện");
   const chatInputContainer = document.querySelector("form textarea")?.closest("form");
   if (!chatInputContainer || document.getElementById("chatgpt-helper-button")) return;
 
@@ -33,6 +36,7 @@ function insertHelperButton() {
   `;
 
   button1.onclick = (event) => {
+    console.log("📝 Click: Soạn kịch bản");
     event.preventDefault();
     event.stopPropagation();
     const existingBox = document.getElementById("scenario-builder");
@@ -44,6 +48,7 @@ function insertHelperButton() {
   };
 
   button2.onclick = (event) => {
+    console.log("🚀 Click: Chạy kịch bản");
     event.preventDefault();
     event.stopPropagation();
     const existingBox = document.getElementById("scenario-runner");
@@ -60,6 +65,7 @@ function insertHelperButton() {
 }
 
 function showScenarioBuilderUI() {
+  console.log("📦 Hiển thị giao diện tạo kịch bản");
   const container = document.createElement("div");
   container.id = "scenario-builder";
   container.innerHTML = `
@@ -79,6 +85,7 @@ function showScenarioBuilderUI() {
   document.body.appendChild(container);
 
   document.getElementById("add-question").onclick = () => {
+    console.log("➕ Thêm câu hỏi mới");
     const input = document.createElement("input");
     input.type = "text";
     input.placeholder = "Câu hỏi...";
@@ -100,6 +107,7 @@ function showScenarioBuilderUI() {
   }
 
   document.getElementById("export-json").onclick = () => {
+    console.log("📤 Xuất JSON");
     const json = generateScenarioJSON();
     if (!json) return;
     const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
@@ -112,6 +120,7 @@ function showScenarioBuilderUI() {
   };
 
   document.getElementById("save-to-storage").onclick = () => {
+    console.log("💾 Lưu kịch bản vào storage");
     const json = generateScenarioJSON();
     if (!json) return;
     chrome.storage.local.set({ scenarioTemplates: json }, () => {
@@ -120,10 +129,12 @@ function showScenarioBuilderUI() {
   };
 
   document.getElementById("import-json").onclick = () => {
+    console.log("📂 Nhập JSON từ file");
     document.getElementById("json-file-input").click();
   };
 
   document.getElementById("json-file-input").onchange = (e) => {
+    console.log("📑 Đang đọc file JSON...");
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -153,6 +164,7 @@ function showScenarioBuilderUI() {
 }
 
 function showScenarioRunnerUI() {
+  console.log("▶️ Hiển thị giao diện chạy kịch bản");
   const existing = document.getElementById("scenario-runner");
   if (existing) existing.remove();
 
@@ -190,8 +202,9 @@ function showScenarioRunnerUI() {
   });
 
   document.getElementById("start-scenario").onclick = async () => {
-    console.log("Bắt đầu kịch bản");
+    console.log("🎬 Bắt đầu chạy kịch bản");
     const selected = select.value;
+    console.log("📋 Kịch bản được chọn:", selected);
     chrome.storage.local.get("scenarioTemplates", async (items) => {
       console.log("Đã lấy kịch bản từ storage", items);
       if (!items["scenarioTemplates"]) {
@@ -214,6 +227,7 @@ function showScenarioRunnerUI() {
 }
 
 async function sendMessageToChatGPT(message) {
+  console.log("💬 Gửi tin nhắn:", message);
   console.log("🔹 Gửi tin nhắn:", message);
 
   const editableDiv = document.getElementById("prompt-textarea");
@@ -234,6 +248,7 @@ async function sendMessageToChatGPT(message) {
   // Chờ nút gửi sẵn sàng rồi click
   const sendBtn = await waitForButtonToAppear('button[aria-label="Send prompt"]');
   if (sendBtn) {
+    console.log("✅ Đã tìm thấy nút gửi. Click gửi...");
     sendBtn.click();
     console.log("✅ Đã click nút gửi");
   } else {
@@ -244,6 +259,7 @@ async function sendMessageToChatGPT(message) {
 
 
 function waitForChatGPTResponse() {
+  console.log("⏳ Chờ phản hồi từ ChatGPT...");
   console.log("Chờ ChatGPT phản hồi...");
   return new Promise((resolve) => {
     const interval = setInterval(() => {
@@ -253,9 +269,10 @@ function waitForChatGPTResponse() {
       if (!stopBtn && voiceBtn) {
         clearInterval(interval);
         console.log("Đã nhận phản hồi xong.");
+        console.log("✅ Đã nhận phản hồi xong.");
         resolve();
       }
-    }, 1500);
+    }, 5 * 60 * 1000); // 5 phút
   });
 }
 
