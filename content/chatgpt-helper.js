@@ -243,12 +243,27 @@ async function sendMessageToChatGPT(message) {
 
 
 
-function waitForChatGPTResponse() {
+function waitForChatGPTResponse(timeoutMs = 60000, checkInterval = 1000) {
   console.log("⏳ Chờ phản hồi từ ChatGPT...");
-  console.log("Chờ ChatGPT phản hồi...");
-  return new Promise((resolve) => {
+
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
     const interval = setInterval(() => {
+      console.log("🔄 Đang kiểm tra trạng thái phản hồi...");
+
       const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
+
+      // TH1: kiểm tra theo nút send prompt disabled
+      const sendBtn = document.querySelector('button[aria-label="Send prompt"]');
+
+      // Điều kiện hoàn tất: Không còn stopBtn và sendBtn bị disabled
+      if (!stopBtn && sendBtn && sendBtn.disabled) {
+        clearInterval(interval);
+        console.log("✅ Đã nhận phản hồi xong.");
+        resolve();
+      }
+
+      // TH2: kiểm tra theo nút stop
       const voiceBtn = document.querySelector('button[aria-label="Start voice mode"]');
 
       if (!stopBtn && voiceBtn) {
@@ -257,7 +272,14 @@ function waitForChatGPTResponse() {
         console.log("✅ Đã nhận phản hồi xong.");
         resolve();
       }
-    }, 5 * 60 * 1000); // 5 phút
+
+      // Kiểm tra nếu hết thời gian
+      if (Date.now() - startTime > timeoutMs) {
+        clearInterval(interval);
+        console.error("❌ Quá thời gian chờ phản hồi.");
+        reject(new Error("Timeout waiting for ChatGPT response"));
+      }
+    }, checkInterval); // Kiểm tra mỗi 1 giây
   });
 }
 
