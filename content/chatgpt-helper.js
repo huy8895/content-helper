@@ -82,10 +82,6 @@ class ChatGPTHelper {
       this.builder = null;
       return;
     }
-    if (this.runner) {
-      this.runner.destroy();
-      this.runner = null;
-    }
     console.log("📝 [ChatGPTHelper] Opening ScenarioBuilder");
     this.builder = new ScenarioBuilder(() => (this.builder = null));
   }
@@ -114,10 +110,6 @@ class ChatGPTHelper {
       this.runner.destroy();
       this.runner = null;
       return;
-    }
-    if (this.builder) {
-      this.builder.destroy();
-      this.builder = null;
     }
     console.log("🚀 [ChatGPTHelper] Opening ScenarioRunner");
     this.runner = new ScenarioRunner(() => (this.runner = null));
