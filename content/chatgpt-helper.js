@@ -1,306 +1,312 @@
+/*
+ * ChatGPT Content Helper – OOP refactor (Apr‑25‑2025)
+ * --------------------------------------------------
+ * This single file is injected as a content‑script on https://chatgpt.com/*
+ * It adds two utility buttons under the chat input:
+ *  🛠  Scenario Builder – create / edit / save JSON templates of prompts
+ *  📤  Scenario Runner  – pick a saved template and send prompts sequentially
+ * --------------------------------------------------
+ * Author: (refactored by ChatGPT)
+ */
 
+class ChatGPTHelper {
+  constructor() {
+    console.log('[ChatGPTHelper] ChatGPT Helper loaded.');
+    /** @type {ScenarioBuilder|null} */
+    this.builder = null;
+    /** @type {ScenarioRunner|null} */
+    this.runner = null;
 
-function insertHelperButton() {
-  console.log("✨ Thêm nút helper vào giao diện");
-  const chatInputContainer = document.querySelector("form textarea")?.closest("form");
-  if (!chatInputContainer || document.getElementById("chatgpt-helper-button")) return;
+    // Observe DOM mutations so we can inject buttons as soon as chat UI loads
+    this._observer = new MutationObserver(() => this._insertHelperButtons());
+    this._observer.observe(document.body, { childList: true, subtree: true });
+  }
 
-  const container = document.createElement("div");
-  container.id = "chatgpt-helper-button-container";
+  /** Injects the two control buttons once into the chat UI */
+  _insertHelperButtons() {
+    const chatForm = document.querySelector("form textarea")?.closest("form");
+    if (!chatForm || chatForm.querySelector("#chatgpt-helper-button")) return;
 
-  const button1 = document.createElement("button");
-  button1.id = "chatgpt-helper-button";
-  button1.textContent = "🛠 Soạn kịch bản";
+    const container = document.createElement("div");
+    container.id = "chatgpt-helper-button-container";
 
-  const button2 = document.createElement("button");
-  button2.id = "chatgpt-run-button";
-  button2.textContent = "📤 Chạy kịch bản";
+    const btnBuilder = this._createButton({
+      id: "chatgpt-helper-button",
+      text: "🛠 Soạn kịch bản",
+      className: "scenario-btn btn-setup",
+      onClick: () => this._toggleBuilder()
+    });
 
-  button1.className = 'scenario-btn btn-setup';
-  button2.className = 'scenario-btn btn-run';
+    const btnRunner = this._createButton({
+      id: "chatgpt-run-button",
+      text: "📤 Chạy kịch bản",
+      className: "scenario-btn btn-run",
+      onClick: () => this._toggleRunner()
+    });
 
+    container.append(btnBuilder, btnRunner);
+    chatForm.appendChild(container);
+  }
 
-  button1.onclick = (event) => {
-    console.log("📝 Click: Soạn kịch bản");
-    event.preventDefault();
-    event.stopPropagation();
-    const existingBox = document.getElementById("scenario-builder");
-    if (existingBox) {
-      existingBox.remove();
+  _createButton({ id, text, className, onClick }) {
+    const btn = document.createElement("button");
+    btn.id = id;
+    btn.textContent = text;
+    btn.className = className;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    });
+    return btn;
+  }
+
+  /* -------------------------------------------------- */
+  /* Scenario Builder                                   */
+  /* -------------------------------------------------- */
+
+  _toggleBuilder() {
+    if (this.builder) {
+      this.builder.destroy();
+      this.builder = null;
       return;
     }
-    showScenarioBuilderUI();
-  };
+    // Destroy runner UI if open
+    if (this.runner) {
+      this.runner.destroy();
+      this.runner = null;
+    }
+    this.builder = new ScenarioBuilder(() => (this.builder = null));
+  }
 
-  button2.onclick = (event) => {
-    console.log("🚀 Click: Chạy kịch bản");
-    event.preventDefault();
-    event.stopPropagation();
-    const existingBox = document.getElementById("scenario-runner");
-    if (existingBox) {
-      existingBox.remove();
+  /* -------------------------------------------------- */
+  /* Scenario Runner                                    */
+  /* -------------------------------------------------- */
+
+  _toggleRunner() {
+    if (this.runner) {
+      this.runner.destroy();
+      this.runner = null;
       return;
     }
-    showScenarioRunnerUI();
-  };
-
-  container.appendChild(button1);
-  container.appendChild(button2);
-  chatInputContainer.appendChild(container);
+    // Destroy builder UI if open
+    if (this.builder) {
+      this.builder.destroy();
+      this.builder = null;
+    }
+    this.runner = new ScenarioRunner(() => (this.runner = null));
+  }
 }
 
-function showScenarioBuilderUI() {
-  console.log("📦 Hiển thị giao diện tạo kịch bản");
-  const container = document.createElement("div");
-  container.id = "scenario-builder";
-  container.innerHTML = `
-    <div class="helper-box">
-      <h2>Tạo kịch bản mới 🎬</h2>
-      <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
-      <div id="questions-container"></div>
-      <button id="add-question">+ Thêm câu hỏi</button>
-      <br/><br/>
-      <button id="export-json">📦 Xuất JSON</button>
-      <button id="save-to-storage">💾 Lưu vào trình duyệt</button>
-      <button id="import-json">📂 Nhập JSON</button>
-      <input type="file" id="json-file-input" accept=".json" style="display:none;" />
-      <pre id="json-preview"></pre>
-    </div>
-  `;
-  document.body.appendChild(container);
+/* ===================================================================== */
+/* ScenarioBuilder – small UI on bottom‑right for editing JSON templates  */
+/* ===================================================================== */
+class ScenarioBuilder {
+  /**
+   * @param {Function} onClose – callback when UI is closed
+   */
+  constructor(onClose) {
+    this.onClose = onClose;
+    this._render();
+  }
 
-  document.getElementById("add-question").onclick = () => {
-    console.log("➕ Thêm câu hỏi mới");
+  _render() {
+    this.el = document.createElement("div");
+    this.el.id = "scenario-builder";
+    this.el.innerHTML = `
+      <div class="helper-box">
+        <h2>Tạo kịch bản mới 🎬</h2>
+        <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
+        <div id="questions-container"></div>
+        <button id="add-question">+ Thêm câu hỏi</button>
+        <br><br>
+        <button id="export-json">📦 Xuất JSON</button>
+        <button id="save-to-storage">💾 Lưu vào trình duyệt</button>
+        <button id="import-json">📂 Nhập JSON</button>
+        <input type="file" id="json-file-input" accept=".json" style="display:none;" />
+        <pre id="json-preview"></pre>
+      </div>`;
+
+    document.body.appendChild(this.el);
+
+    // Event bindings
+    this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
+    this.el.querySelector("#export-json").addEventListener("click", () => this._export());
+    this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
+    this.el.querySelector("#import-json").addEventListener("click", () => this.el.querySelector("#json-file-input").click());
+    this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
+  }
+
+  _addQuestion(value = "") {
     const input = document.createElement("input");
     input.type = "text";
     input.placeholder = "Câu hỏi...";
     input.className = "question-input";
-    document.getElementById("questions-container").appendChild(input);
-  };
-
-  function generateScenarioJSON() {
-    const name = document.getElementById("scenario-name").value.trim();
-    const inputs = document.querySelectorAll(".question-input");
-    const questions = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
-    if (!name || questions.length === 0) {
-      alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
-      return;
-    }
-    const json = { [name]: questions };
-    document.getElementById("json-preview").textContent = JSON.stringify(json, null, 2);
-    return json;
+    input.value = value;
+    this.el.querySelector("#questions-container").appendChild(input);
   }
 
-  document.getElementById("export-json").onclick = () => {
-    console.log("📤 Xuất JSON");
-    const json = generateScenarioJSON();
+  _collectData() {
+    const name = this.el.querySelector("#scenario-name").value.trim();
+    const questions = Array.from(this.el.querySelectorAll(".question-input"))
+      .map((i) => i.value.trim())
+      .filter(Boolean);
+    if (!name || questions.length === 0) {
+      alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
+      return null;
+    }
+    return { [name]: questions };
+  }
+
+  _export() {
+    const json = this._collectData();
     if (!json) return;
     const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "scenario-template.json";
+    a.download = `${Object.keys(json)[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }
 
-  document.getElementById("save-to-storage").onclick = () => {
-    console.log("💾 Lưu kịch bản vào storage");
-    const json = generateScenarioJSON();
+  _save() {
+    const json = this._collectData();
     if (!json) return;
-    chrome.storage.local.set({ scenarioTemplates: json }, () => {
-      alert("Đã lưu kịch bản vào trình duyệt.");
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const merged = { ...(items.scenarioTemplates || {}), ...json };
+      chrome.storage.local.set({ scenarioTemplates: merged }, () => alert("Đã lưu kịch bản vào trình duyệt."));
     });
-  };
+  }
 
-  document.getElementById("import-json").onclick = () => {
-    console.log("📂 Nhập JSON từ file");
-    document.getElementById("json-file-input").click();
-  };
-
-  document.getElementById("json-file-input").onchange = (e) => {
-    console.log("📑 Đang đọc file JSON...");
-    const file = e.target.files[0];
+  _import(event) {
+    const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = () => {
       try {
-        const data = JSON.parse(event.target.result);
+        const data = JSON.parse(reader.result);
         const name = Object.keys(data)[0];
         const questions = data[name];
-        document.getElementById("scenario-name").value = name;
-        const container = document.getElementById("questions-container");
+        // Populate UI
+        this.el.querySelector("#scenario-name").value = name;
+        const container = this.el.querySelector("#questions-container");
         container.innerHTML = "";
-        questions.forEach(q => {
-          const input = document.createElement("input");
-          input.type = "text";
-          input.placeholder = "Câu hỏi...";
-          input.className = "question-input";
-          input.value = q;
-          container.appendChild(input);
-        });
-        document.getElementById("json-preview").textContent = JSON.stringify(data, null, 2);
+        questions.forEach((q) => this._addQuestion(q));
+        this.el.querySelector("#json-preview").textContent = JSON.stringify(data, null, 2);
       } catch (err) {
         alert("Tệp JSON không hợp lệ.");
       }
     };
     reader.readAsText(file);
-  };
+  }
+
+  destroy() {
+    this.el?.remove();
+    this.onClose();
+  }
 }
 
-function showScenarioRunnerUI() {
-  console.log("▶️ Hiển thị giao diện chạy kịch bản");
-  const existing = document.getElementById("scenario-runner");
-  if (existing) existing.remove();
+/* ===================================================================== */
+/* ScenarioRunner – choose template & auto‑send prompts                   */
+/* ===================================================================== */
+class ScenarioRunner {
+  constructor(onClose) {
+    this.onClose = onClose;
+    this._render();
+  }
 
-  const div = document.createElement("div");
-  div.id = "scenario-runner";
-  div.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 12px;
-    border-radius: 10px;
-    z-index: 9999;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  `;
+  _render() {
+    this.el = document.createElement("div");
+    this.el.id = "scenario-runner";
+    this.el.innerHTML = `
+      <label for="scenario-select">Chọn kịch bản:</label>
+      <select id="scenario-select"></select>
+      <button id="start-scenario">▶️ Bắt đầu</button>`;
 
-  div.innerHTML = `
-    <label for="scenario-select">Chọn kịch bản:</label>
-    <select id="scenario-select"></select>
-    <button id="start-scenario">▶️ Bắt đầu</button>
-  `;
+    document.body.appendChild(this.el);
 
-  document.body.appendChild(div);
-
-  const select = document.getElementById("scenario-select");
-  chrome.storage.local.get(null, (items) => {
-    const templates = items["scenarioTemplates"] || {};
-    Object.entries(templates).forEach(([name]) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      select.appendChild(opt);
+    // Populate select options
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const templates = items.scenarioTemplates || {};
+      const select = this.el.querySelector("#scenario-select");
+      Object.keys(templates).forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
     });
-  });
 
-  document.getElementById("start-scenario").onclick = async () => {
-    console.log("🎬 Bắt đầu chạy kịch bản");
-    const selected = select.value;
-    console.log("📋 Kịch bản được chọn:", selected);
+    this.el.querySelector("#start-scenario").addEventListener("click", () => this._start());
+  }
+
+  async _start() {
+    const name = this.el.querySelector("#scenario-select").value;
+    if (!name) return alert("Vui lòng chọn kịch bản.");
+
     chrome.storage.local.get("scenarioTemplates", async (items) => {
-      console.log("Đã lấy kịch bản từ storage", items);
-      if (!items["scenarioTemplates"]) {
-        alert("Không tìm thấy kịch bản nào.");
-        return;
-      }
-      const questions = items["scenarioTemplates"][selected];
-      console.log("Câu hỏi trong kịch bản:", questions);
-      if (!questions) {
-        alert("Không tìm thấy kịch bản.");
-        return;
-      }
-      for (let i = 0; i < questions.length; i++) {
-        console.log("Gửi câu hỏi:", questions[i]);
-        await sendMessageToChatGPT(questions[i]);
-        await waitForChatGPTResponse();
+      const template = items.scenarioTemplates?.[name];
+      if (!template) return alert("Không tìm thấy kịch bản.");
+      for (const question of template) {
+        await this._sendPrompt(question);
+        await this._waitForResponse();
       }
     });
-  };
-}
-
-async function sendMessageToChatGPT(message) {
-  console.log("💬 Gửi tin nhắn:", message);
-  console.log("🔹 Gửi tin nhắn:", message);
-
-  const editableDiv = document.getElementById("prompt-textarea");
-  if (!editableDiv) {
-    console.error("❌ Không tìm thấy #prompt-textarea");
-    return;
   }
 
-  // Xoá nội dung cũ và thêm nội dung mới
-  editableDiv.innerHTML = "";
-  const paragraph = document.createElement("p");
-  paragraph.textContent = message;
-  editableDiv.appendChild(paragraph);
+  async _sendPrompt(text) {
+    const textarea = document.getElementById("prompt-textarea");
+    if (!textarea) throw new Error("❌ Không tìm thấy #prompt-textarea");
 
-  // Gửi sự kiện input để kích hoạt update
-  editableDiv.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.innerHTML = "";
+    const p = document.createElement("p");
+    p.textContent = text;
+    textarea.appendChild(p);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
 
-  // Chờ nút gửi sẵn sàng rồi click
-  const sendBtn = await waitForButtonToAppear('button[aria-label="Send prompt"]');
-  if (sendBtn) {
-    console.log("✅ Đã tìm thấy nút gửi. Click gửi...");
-    sendBtn.click();
-    console.log("✅ Đã click nút gửi");
-  } else {
-    console.error("❌ Không tìm thấy nút gửi");
+    const sendBtn = await this._waitForElement('button[aria-label="Send prompt"]');
+    sendBtn?.click();
+  }
+
+  _waitForResponse(timeout = 60000) {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const interval = setInterval(() => {
+        const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
+        const sendBtn = document.querySelector('button[aria-label="Send prompt"]');
+        const done = !stopBtn && sendBtn && sendBtn.disabled;
+        if (done) {
+          clearInterval(interval);
+          resolve();
+        }
+        if (Date.now() - start > timeout) {
+          clearInterval(interval);
+          reject(new Error("Timeout waiting for ChatGPT response"));
+        }
+      }, 1000);
+    });
+  }
+
+  _waitForElement(selector, maxRetries = 20, interval = 300) {
+    return new Promise((resolve) => {
+      let retries = 0;
+      const timer = setInterval(() => {
+        const el = document.querySelector(selector);
+        if (el || retries >= maxRetries) {
+          clearInterval(timer);
+          resolve(el);
+        }
+        retries += 1;
+      }, interval);
+    });
+  }
+
+  destroy() {
+    this.el?.remove();
+    this.onClose();
   }
 }
 
-
-
-function waitForChatGPTResponse(timeoutMs = 60000, checkInterval = 1000) {
-  console.log("⏳ Chờ phản hồi từ ChatGPT...");
-
-  return new Promise((resolve, reject) => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      console.log("🔄 Đang kiểm tra trạng thái phản hồi...");
-
-      const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
-
-      // TH1: kiểm tra theo nút send prompt disabled
-      const sendBtn = document.querySelector('button[aria-label="Send prompt"]');
-
-      // Điều kiện hoàn tất: Không còn stopBtn và sendBtn bị disabled
-      if (!stopBtn && sendBtn && sendBtn.disabled) {
-        clearInterval(interval);
-        console.log("✅ Đã nhận phản hồi xong.");
-        resolve();
-      }
-
-      // TH2: kiểm tra theo nút stop
-      const voiceBtn = document.querySelector('button[aria-label="Start voice mode"]');
-
-      if (!stopBtn && voiceBtn) {
-        clearInterval(interval);
-        console.log("Đã nhận phản hồi xong.");
-        console.log("✅ Đã nhận phản hồi xong.");
-        resolve();
-      }
-
-      // Kiểm tra nếu hết thời gian
-      if (Date.now() - startTime > timeoutMs) {
-        clearInterval(interval);
-        console.error("❌ Quá thời gian chờ phản hồi.");
-        reject(new Error("Timeout waiting for ChatGPT response"));
-      }
-    }, checkInterval); // Kiểm tra mỗi 1 giây
-  });
-}
-
-function waitForButtonToAppear(selector, maxRetries = 10, interval = 300) {
-  return new Promise((resolve) => {
-    let retries = 0;
-    const timer = setInterval(() => {
-      const button = document.querySelector(selector);
-      if (button) {
-        clearInterval(timer);
-        resolve(button);
-      } else if (retries >= maxRetries) {
-        clearInterval(timer);
-        resolve(null);
-      }
-      retries++;
-    }, interval);
-  });
-}
-
-
-
-const observer = new MutationObserver(() => insertHelperButton());
-observer.observe(document.body, { childList: true, subtree: true });
+// Kick‑start the helper
+new ChatGPTHelper();
