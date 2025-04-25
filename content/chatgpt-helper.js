@@ -161,6 +161,22 @@ class ChatGPTHelper {
       document.addEventListener("mouseup", onMouseUp);
     });
   }
+
+  /* ---------- helper: add close (×) button ---------- */
+  static addCloseButton(panelEl, onClose) {
+    const btn = document.createElement("button");
+    btn.className = "panel-close";
+    btn.textContent = "×";
+    btn.title = "Close";
+
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      onClose();
+    };
+
+    panelEl.appendChild(btn);
+  }
+
 }
 
 /***********************************
@@ -200,6 +216,9 @@ class ScenarioBuilder {
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
 
     ChatGPTHelper.makeDraggable(this.el, "h2");
+
+    /* thêm nút đóng */
+    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
 
   _addQuestion(value = "") {
@@ -305,6 +324,8 @@ class ScenarioRunner {
 
     this.el.querySelector("#start-scenario").addEventListener("click", () => this._start());
     ChatGPTHelper.makeDraggable(this.el, "label");
+    /* thêm nút đóng */
+    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
 
   async _start() {
@@ -430,6 +451,7 @@ class TextSplitter {
 
 
     ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
+    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
 
   /* ---------- Split logic ---------- */

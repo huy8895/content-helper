@@ -212,3 +212,24 @@
 .ts-results button:hover{ background:#7d3aa1; }
 .ts-results button[disabled]{ background:#6c5ce7; cursor: default; }
 .ts-title{ cursor: move; user-select:none; }
+
+/* nút đóng panel */
+.panel-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: #e74c3c;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 18px;
+  padding: 0;
+}
+.panel-close:hover {
+  background: #c0392b;
+}
+
