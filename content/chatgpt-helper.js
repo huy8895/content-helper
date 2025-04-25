@@ -20,6 +20,8 @@ class ChatGPTHelper {
     /** @type {ScenarioRunner|null} */
     this.runner = null;
 
+    this.splitter = null;      // 👈 thêm
+
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
     this._observer.observe(document.body, { childList: true, subtree: true });
@@ -48,7 +50,14 @@ class ChatGPTHelper {
       onClick: () => this._toggleRunner(),
     });
 
-    container.append(btnBuilder, btnRunner);
+  const btnSplitter = this._createButton({
+    id: "chatgpt-splitter-button",
+    text: "✂️ Text Split",
+    className: "scenario-btn btn-tool",
+    onClick: () => this._toggleSplitter(),   // 👈 đổi hàm
+  });
+
+    container.append(btnBuilder, btnRunner, btnSplitter);
     chatForm.appendChild(container);
   }
 
@@ -81,6 +90,24 @@ class ChatGPTHelper {
     this.builder = new ScenarioBuilder(() => (this.builder = null));
   }
 
+  /* ---------- toggle splitter ---------- */
+  _toggleSplitter() {
+    if (this.splitter) {               // đang mở → đóng
+      console.log("❌ [ChatGPTHelper] Closing TextSplitter");
+      this.splitter.destroy();
+      this.splitter = null;
+      return;
+    }
+    // đóng panel khác nếu đang mở
+    this.builder?.destroy();
+    this.builder = null;
+    this.runner?.destroy();
+    this.runner = null;
+
+    console.log("✂️  [ChatGPTHelper] Opening TextSplitter");
+    this.splitter = new TextSplitter(() => (this.splitter = null));
+  }
+
   _toggleRunner() {
     if (this.runner) {
       console.log("❌ [ChatGPTHelper] Closing ScenarioRunner");
@@ -94,6 +121,45 @@ class ChatGPTHelper {
     }
     console.log("🚀 [ChatGPTHelper] Opening ScenarioRunner");
     this.runner = new ScenarioRunner(() => (this.runner = null));
+  }
+
+  /* ---------- helper kéo-thả dùng chung ---------- */
+  static makeDraggable(el, handleSelector = null) {
+    console.log("🔄 [ChatGPTHelper] Waiting for ChatGPT UI");
+    const handle =
+      typeof handleSelector === "string"
+        ? el.querySelector(handleSelector)
+        : handleSelector || el;
+    if (!handle) return;
+
+    let offsetX = 0,
+      offsetY = 0,
+      dragging = false;
+
+    handle.style.cursor = "move";
+
+    handle.addEventListener("mousedown", (e) => {
+      dragging = true;
+      offsetX = e.clientX - el.offsetLeft;
+      offsetY = e.clientY - el.offsetTop;
+
+      const onMouseMove = (ev) => {
+        if (!dragging) return;
+        el.style.left = `${ev.clientX - offsetX}px`;
+        el.style.top = `${ev.clientY - offsetY}px`;
+        el.style.right = "auto";
+        el.style.bottom = "auto";
+      };
+
+      const onMouseUp = () => {
+        dragging = false;
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
   }
 }
 
@@ -132,6 +198,8 @@ class ScenarioBuilder {
     this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
     this.el.querySelector("#import-json").addEventListener("click", () => this.el.querySelector("#json-file-input").click());
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
+
+    ChatGPTHelper.makeDraggable(this.el, "h2");
   }
 
   _addQuestion(value = "") {
@@ -236,6 +304,7 @@ class ScenarioRunner {
     });
 
     this.el.querySelector("#start-scenario").addEventListener("click", () => this._start());
+    ChatGPTHelper.makeDraggable(this.el, "label");
   }
 
   async _start() {
@@ -311,5 +380,160 @@ class ScenarioRunner {
   }
 }
 
+/********************************************
+ * TextSplitter – split & send chunks inline *
+ * ------------------------------------------
+ * • Shows a floating panel on ChatGPT page
+ * • Splits long text by sentence into ≤ charLimit pieces
+ * • Lets user send any chunk (or all) sequentially
+ * • Re-uses ScenarioRunner’s _sendPrompt / _waitForResponse
+ ********************************************/
+class TextSplitter {
+  /** @param {Function} onClose – callback when panel is destroyed */
+  constructor(onClose) {
+    console.log("✂️ [TextSplitter] init");
+    this.onClose = onClose;
+    this.chunks  = [];        // array of string segments
+    this._render();
+  }
+
+  /* ---------- UI ---------- */
+  _render() {
+    console.log("🎨 [TextSplitter] render UI");
+    /** Panel container */
+    this.el = document.createElement("div");
+    this.el.id = "text-splitter";
+    this.el.className = "ts-panel";
+
+    /** Panel HTML */
+    this.el.innerHTML = `
+      <h3 class="ts-title">✂️ Text Splitter</h3>
+
+      <textarea id="ts-input"  class="ts-textarea"
+                placeholder="Paste or type your long text…"></textarea>
+
+      <div class="ts-toolbar">
+        <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
+        <button id="ts-split"   class="ts-btn">Split</button>
+        <button id="ts-sendall" class="ts-btn ts-btn-accent">Send All</button>
+        <button id="ts-close"   class="ts-btn" title="Close">×</button>
+      </div>
+
+      <div id="ts-results" class="ts-results"></div>
+    `;
+    document.body.appendChild(this.el);
+
+    /* events */
+    this.el.querySelector("#ts-split").onclick = () => this._split();
+    this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
+    this.el.querySelector("#ts-close").onclick = () => this.destroy();
+
+
+    ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
+  }
+
+  /* ---------- Split logic ---------- */
+  _split() {
+    console.log("✂️ [TextSplitter] split text");
+    const raw   = this.el.querySelector("#ts-input").value.trim();
+    const limit = +this.el.querySelector("#ts-limit").value || 1000;
+
+    if (!raw) {
+      alert("Please paste some text first!");
+      return;
+    }
+
+    this.chunks.length = 0;          // reset
+    let buf = "";
+
+    // naive sentence splitter; can swap for NLP later
+    raw.split(/(?<=[.!?])\s+/).forEach(sentence => {
+      if ((buf + " " + sentence).trim().length <= limit) {
+        buf = (buf ? buf + " " : "") + sentence;
+      } else {
+        if (buf) this.chunks.push(buf);
+        buf = sentence;
+      }
+    });
+    if (buf) this.chunks.push(buf);
+
+    this._display();
+  }
+
+  /* ---------- Display buttons for each chunk ---------- */
+  _display() {
+    console.log("✂️ [TextSplitter] display results");
+
+    const wrap = this.el.querySelector("#ts-results");
+    wrap.innerHTML = "";                        // clear
+
+    this.chunks.forEach((chunk, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "ts-send-btn";
+      btn.textContent = `Copy #${idx + 1}`;
+      btn.onclick = () => this._copySegment(idx, btn);
+
+      // preview paragraph (optional)
+      const preview = document.createElement("p");
+      preview.style.margin = "4px 0";
+      preview.style.fontSize = "11px";
+      preview.style.color = "#555";
+      preview.textContent =
+        chunk.length > 100
+          ? `${chunk.slice(0, 40)} … ${chunk.slice(-25)}`
+          : chunk;
+
+      // wrapper element
+      const row = document.createElement("div");
+      row.style.marginBottom = "6px";
+      row.append(btn, preview);
+      wrap.appendChild(row);
+    });
+  }
+
+  /* ---------- Send a single chunk ---------- */
+  async _copySegment(idx, btn) {
+    console.log("🔄 [TextSplitter] copy segment", idx);
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    try {
+      await this._sendPrompt(this.chunks[idx]);
+      await this._waitForResponse();
+      btn.textContent = "✅ Done";
+    } catch (err) {
+      console.error('_copySegment err', err);
+      btn.textContent = "⚠️ Error";
+    }
+  }
+
+  /* ---------- Send ALL chunks sequentially ---------- */
+  async _sendAll() {
+    console.log("🔄 [TextSplitter] send all chunks");
+    const rows = Array.from(this.el.querySelectorAll(".ts-send-btn"));
+    for (let i = 0; i < this.chunks.length; i++) {
+      const btn = rows[i];
+      if (!btn.disabled || btn.textContent.startsWith("⚠️")) {
+        await this._copySegment(i, btn);
+      }
+    }
+  }
+
+  /* ---------- Re-use ScenarioRunner helpers ---------- */
+  _sendPrompt      = ScenarioRunner.prototype._sendPrompt;
+  _waitForResponse = ScenarioRunner.prototype._waitForResponse;
+  _waitForElement   = ScenarioRunner.prototype._waitForElement;   // 👈 thêm dòng này
+
+  /* ---------- Clean up ---------- */
+  destroy() {
+    console.log("❌ [TextSplitter] destroy");
+    this.el?.remove();
+    this.onClose?.();
+  }
+
+}
+
+
+
 // Kick‑start helper
 new ChatGPTHelper();
+

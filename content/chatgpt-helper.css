@@ -133,3 +133,82 @@
   gap: 8px;
   margin-top: 10px;
 }
+
+.btn-tool        { background-color:#17a2b8; }
+.btn-tool:hover  { background-color:#138496; }
+
+/* ---------- Text-Splitter panel ---------- */
+.ts-panel{
+  position:fixed;
+  bottom:90px;      /* bật cao lên 70px so với button bar */
+  right:20px;       /* sát mép phải */
+  width: 360px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  font-family: "Segoe UI",sans-serif;
+}
+.ts-title{
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ts-textarea{
+  width: 100%;
+  height: 90px;
+  resize: vertical;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.ts-toolbar{
+  margin: 6px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ts-limit{
+  width: 90px;
+  padding: 4px 6px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.ts-btn{
+  padding: 4px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4CAF50;
+  color: #fff;
+  transition: background .2s;
+}
+.ts-btn:hover{ background:#45a049; }
+.ts-btn-accent{ background:#1a73e8; }
+.ts-btn-accent:hover{ background:#1669c7; }
+
+.ts-results{
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+.ts-results button{
+  margin: 3px 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background:#8e44ad;
+  color:#fff;
+  transition: background .2s;
+}
+.ts-results button:hover{ background:#7d3aa1; }
+.ts-results button[disabled]{ background:#6c5ce7; cursor: default; }
+.ts-title{ cursor: move; user-select:none; }
