@@ -1,18 +1,38 @@
 /* Giao diện khung tạo kịch bản */
 #scenario-builder {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 350px;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 16px;
-  z-index: 9999;
-  font-family: 'Segoe UI', sans-serif;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  animation: fadeIn 0.3s ease;
+  bottom:90px; right:400px; width:360px;
+  background:#fff;          /* trước là #f9f9f9 */
+  border-radius:10px;       /* trước 12 */
+  padding:12px;             /* trước 16 */
 }
+
+/* helper-box chỉ để canh lề: bỏ nền + padding */
+#scenario-builder .helper-box{
+  background:transparent;
+  padding:0;
+}
+
+.sb-title{
+  margin:0 0 6px;
+  font-size:15px;
+  font-weight:600;
+  cursor:move;              /* để kéo */
+  user-select:none;
+}
+
+.sb-btn{
+  padding:6px 12px;
+  margin:6px 6px 6px 0;
+  font-size:12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#4CAF50;
+  color:#fff;
+  transition:background .2s;
+}
+.sb-btn:hover{background:#45a049;}
 
 /* Tiêu đề */
 #scenario-builder h2 {
@@ -32,19 +52,6 @@
   font-size: 14px;
 }
 
-/* Các nút */
-#scenario-builder button {
-  padding: 8px 12px;
-  margin: 6px 6px 6px 0;
-  background: #10a37f;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
 #scenario-builder button:hover {
   background: #0e8c6a;
 }
@@ -60,12 +67,24 @@
   margin-top: 12px;
 }
 
+/* Giữ style nút Builder nhưng bỏ qua .panel-close */
+#scenario-builder button:not(.panel-close){
+  padding:8px 12px;
+  margin:6px 6px 6px 0;
+  background:#10a37f;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+  transition:background .2s;
+}
+#scenario-builder button:not(.panel-close):hover{ background:#0e8c6a; }
+
 /* Khung chọn chạy kịch bản */
 #scenario-runner {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background: #f9f9f9;
+  bottom:90px; left: 20px; width:260px;
   border: 1px solid #ddd;
   padding: 16px;
   border-radius: 12px;
@@ -213,7 +232,19 @@
 .ts-results button[disabled]{ background:#6c5ce7; cursor: default; }
 .ts-title{ cursor: move; user-select:none; }
 
-/* nút đóng panel */
+/* ==== base style cho mọi panel nổi ==== */
+.panel-box{
+  position:fixed;
+  background:#fff;          /* đồng nhất với Text Splitter */
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:14px;
+  z-index:9999;
+  box-shadow:0 8px 24px rgba(0,0,0,.15);
+  font-family:"Segoe UI",sans-serif;
+}
+
+/* nút đóng, đặt !important để chắc chắn thắng mọi id-selector */
 .panel-close {
   position: absolute;
   top: 6px;
@@ -222,14 +253,11 @@
   height: 20px;
   border: none;
   border-radius: 50%;
-  background: #e74c3c;
+  background: #e74c3c !important;
   color: #fff;
   font-weight: bold;
   cursor: pointer;
   line-height: 18px;
   padding: 0;
 }
-.panel-close:hover {
-  background: #c0392b;
-}
-
+.panel-close:hover{ background:#c0392b !important; }

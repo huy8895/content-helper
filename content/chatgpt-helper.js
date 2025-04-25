@@ -193,19 +193,20 @@ class ScenarioBuilder {
     console.log("🎨 [ScenarioBuilder] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-builder";
+    this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
-      <div class="helper-box">
-        <h2>Tạo kịch bản mới 🎬</h2>
-        <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
-        <div id="questions-container"></div>
-        <button id="add-question">+ Thêm câu hỏi</button>
-        <br><br>
-        <button id="export-json">📦 Xuất JSON</button>
-        <button id="save-to-storage">💾 Lưu vào trình duyệt</button>
-        <button id="import-json">📂 Nhập JSON</button>
-        <input type="file" id="json-file-input" accept=".json" style="display:none;" />
-        <pre id="json-preview"></pre>
-      </div>`;
+      <h3 class="sb-title">🛠 Tạo kịch bản mới</h3>
+      <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
+      <div id="questions-container"></div>
+      <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+      <div style="margin-top:10px">
+        <button id="export-json"  class="sb-btn">📦 Xuất JSON</button>
+        <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
+        <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
+      </div>
+      <input type="file" id="json-file-input" accept=".json" style="display:none;">
+      <pre id="json-preview"></pre>
+`;
 
     document.body.appendChild(this.el);
 
@@ -215,7 +216,7 @@ class ScenarioBuilder {
     this.el.querySelector("#import-json").addEventListener("click", () => this.el.querySelector("#json-file-input").click());
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
 
-    ChatGPTHelper.makeDraggable(this.el, "h2");
+    ChatGPTHelper.makeDraggable(this.el, ".sb-title");
 
     /* thêm nút đóng */
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
@@ -310,6 +311,7 @@ class ScenarioRunner {
     console.log("🎛 [ScenarioRunner] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
+    this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
       <label for="scenario-select">Chọn kịch bản:</label>
       <select id="scenario-select"></select>
