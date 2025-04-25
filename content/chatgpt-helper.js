@@ -275,7 +275,9 @@ class ScenarioRunner {
       const interval = setInterval(() => {
         const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
         const sendBtn = document.querySelector('button[aria-label="Send prompt"]');
-        const done = !stopBtn && sendBtn && sendBtn.disabled;
+        const voiceBtn = document.querySelector('button[aria-label="Start voice mode"]');
+
+        const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn && voiceBtn);
         if (done) {
           clearInterval(interval);
           resolve();
