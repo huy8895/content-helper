@@ -40,6 +40,9 @@ class ChatGPTHelper {
     });
   }
 
+  /* ngay trong class ChatGPTHelper (ngoài mọi hàm) */
+  static zTop = 10000;   // bộ đếm z-index toàn cục
+
   /* UI helpers */
   _insertHelperButtons() {
     const chatForm = document.querySelector("form textarea")?.closest("form");
@@ -135,18 +138,21 @@ class ChatGPTHelper {
     let shiftX = 0, shiftY = 0;
 
     handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();                           // ngăn text-select
-      const rect = el.getBoundingClientRect();      // toạ độ tuyệt đối
+      e.preventDefault();
+
+      /* 👉 luôn đưa panel lên trên cùng */
+      ChatGPTHelper.bringToFront(el);
+
+      const rect = el.getBoundingClientRect();
       shiftX = e.clientX - rect.left;
       shiftY = e.clientY - rect.top;
 
-      /* nếu panel còn trong flex-bar thì tách ra một lần duy nhất */
-      if (!el.dataset.free) {
+      if (!el.dataset.free) {           // tách khỏi bar 1 lần duy nhất
         el.dataset.free = "1";
         el.style.position = "fixed";
-        el.style.left = rect.left + "px";
-        el.style.top  = rect.top  + "px";
-        el.style.width = rect.width + "px";         // giữ nguyên rộng
+        el.style.left  = rect.left  + "px";
+        el.style.top   = rect.top   + "px";
+        el.style.width = rect.width + "px";
         document.body.appendChild(el);
       }
 
@@ -157,7 +163,7 @@ class ChatGPTHelper {
 
       const onMouseUp = () => {
         document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener("mouseup",   onMouseUp);
       };
 
       document.addEventListener("mousemove", onMouseMove);
@@ -187,21 +193,35 @@ class ChatGPTHelper {
    */
   static mountPanel(el){
     el.classList.add('helper-panel');
-    document.getElementById('chatgpt-helper-panel-bar').appendChild(el);
+    const bar = document.getElementById('chatgpt-helper-panel-bar');
+    bar.appendChild(el);
+
+    /* click (hoặc bất kỳ mousedown) => nổi lên trên cùng */
+    el.addEventListener('mousedown', () => ChatGPTHelper.bringToFront(el));
+  }
+
+  /* ----- bringToFront: logic chung cho cả panel trong bar & panel thả tự do ----- */
+  static bringToFront(el){
+    if (el.dataset.free) {               // panel đang “floating”
+      el.style.zIndex = ++ChatGPTHelper.zTop;   // tăng z-index
+    } else {
+      const bar = document.getElementById('chatgpt-helper-panel-bar');
+      bar.appendChild(el);               // đưa về cuối flex-bar
+    }
   }
 
   /** Đóng panel trên cùng (nếu có) */
   static closeTopPanel() {
-    const bar = document.getElementById('chatgpt-helper-panel-bar');
-    if (!bar) return;
+    const barPanels  = Array.from(document.querySelectorAll(
+        '#chatgpt-helper-panel-bar .helper-panel'));
+    const floating   = Array.from(document.querySelectorAll(
+        'body > .helper-panel:not(#chatgpt-helper-panel-bar *)'));
 
-    // panel cuối cùng trong flex-bar = panel được mở sau cùng
-    const last = bar.querySelector('.helper-panel:last-child');
+    // panel mở sau cùng = phần tử cuối của mảng floating, nếu không có thì lấy ở bar
+    const last = floating.at(-1) || barPanels.at(-1);
     if (!last) return;
 
-    // tìm nút close bên trong panel và click
-    const closeBtn = last.querySelector('.panel-close');
-    closeBtn?.click();
+    last.querySelector('.panel-close')?.click();
   }
 }
 
