@@ -123,34 +123,37 @@ class ChatGPTHelper {
 
   /* ---------- helper kéo-thả dùng chung ---------- */
   static makeDraggable(el, handleSelector = null) {
-    console.log("🔄 [ChatGPTHelper] Waiting for ChatGPT UI");
-    const handle =
-      typeof handleSelector === "string"
+    const handle = typeof handleSelector === "string"
         ? el.querySelector(handleSelector)
         : handleSelector || el;
     if (!handle) return;
 
-    let offsetX = 0,
-      offsetY = 0,
-      dragging = false;
-
     handle.style.cursor = "move";
 
+    let shiftX = 0, shiftY = 0;
+
     handle.addEventListener("mousedown", (e) => {
-      dragging = true;
-      offsetX = e.clientX - el.offsetLeft;
-      offsetY = e.clientY - el.offsetTop;
+      e.preventDefault();                           // ngăn text-select
+      const rect = el.getBoundingClientRect();      // toạ độ tuyệt đối
+      shiftX = e.clientX - rect.left;
+      shiftY = e.clientY - rect.top;
+
+      /* nếu panel còn trong flex-bar thì tách ra một lần duy nhất */
+      if (!el.dataset.free) {
+        el.dataset.free = "1";
+        el.style.position = "fixed";
+        el.style.left = rect.left + "px";
+        el.style.top  = rect.top  + "px";
+        el.style.width = rect.width + "px";         // giữ nguyên rộng
+        document.body.appendChild(el);
+      }
 
       const onMouseMove = (ev) => {
-        if (!dragging) return;
-        el.style.left = `${ev.clientX - offsetX}px`;
-        el.style.top = `${ev.clientY - offsetY}px`;
-        el.style.right = "auto";
-        el.style.bottom = "auto";
+        el.style.left = ev.clientX - shiftX + "px";
+        el.style.top  = ev.clientY - shiftY + "px";
       };
 
       const onMouseUp = () => {
-        dragging = false;
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
       };
@@ -159,6 +162,7 @@ class ChatGPTHelper {
       document.addEventListener("mouseup", onMouseUp);
     });
   }
+
 
   /* ---------- helper: add close (×) button ---------- */
   static addCloseButton(panelEl, onClose) {
