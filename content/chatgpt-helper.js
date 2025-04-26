@@ -1067,8 +1067,19 @@ class AudioDownloader {
   constructor(onClose) {
     this.onClose = onClose;
     this.inFlight = 0;
-    this._render();
-    this._loadMessages();
+    this.savedState = {};
+
+    PanelState.load('AudioDownloader', (saved) => {
+      const def = {
+        voice: 'shade',
+        format: 'mp3',
+        downloaded: [],
+        selected: {}
+      };
+      this.savedState = Object.assign(def, saved || {});
+      this._render();
+      this._loadMessages();
+    });
   }
 
   /* ---------- UI ---------- */
@@ -1114,17 +1125,19 @@ class AudioDownloader {
       <div id="ad-list" class="ts-results"></div>
     `;
 
-    ChatGPTHelper.mountPanel(this.el);                 // vào thanh bar
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // kéo
+    ChatGPTHelper.mountPanel(this.el);
+    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
-    // nút Download All
-    this.el.querySelector("#ad-dlall")
-        .onclick = () => this._downloadAll();
+    // Set saved voice and format
+    this.el.querySelector("#ad-voice").value  = this.savedState.voice || 'shade';
+    this.el.querySelector("#ad-format").value = this.savedState.format || 'mp3';
 
-    // checkbox “select all”
-    this.el.querySelector("#ad-select-all")
-        .onchange = (e)=> this._toggleAll(e.target.checked);
+    // Event listeners
+    this.el.querySelector("#ad-voice").onchange  = () => this._syncState();
+    this.el.querySelector("#ad-format").onchange = () => this._syncState();
+    this.el.querySelector("#ad-dlall").onclick   = () => this._downloadAll();
+    this.el.querySelector("#ad-select-all").onchange = (e)=> this._toggleAll(e.target.checked);
   }
 
   /* ---------- Load assistant message-ids ---------- */
@@ -1148,36 +1161,6 @@ class AudioDownloader {
     );
   }
 
-  _addQuestion(value = "") {
-    // ⬇︎ 1. make a row wrapper
-    const row = document.createElement("div");
-    row.style.display = "flex";
-    row.style.gap = "6px";
-    row.style.marginBottom = "6px";
-
-    // ⬇︎ 2. the editable question field
-    const input = document.createElement("input");
-    input.type        = "text";
-    input.placeholder = "Câu hỏi…";
-    input.className   = "question-input";
-    input.value       = value;
-    input.style.flex  = "1 1 auto";
-
-    // ⬇︎ 3. the remove (✖) button
-    const del = document.createElement("button");
-    del.textContent = "✖";
-    del.title       = "Remove this line";
-    del.style.cssText = `
-      flex:0 0 28px;  background:#e74c3c; color:#fff; border:none;
-      border-radius:4px; cursor:pointer; font-weight:bold;`;
-    del.onclick = () => row.remove();   // ← delete the whole row
-
-    // ⬇︎ 4. stitch everything together
-    row.append(input, del);
-    this.el.querySelector("#questions-container").appendChild(row);
-  }
-
-
   _renderRows(rows) {
     const wrap = this.el.querySelector("#ad-list");
     wrap.innerHTML = "";
@@ -1194,20 +1177,20 @@ class AudioDownloader {
       row.style.marginBottom = "6px";
       row.dataset.mid = msg.id;
 
-      // checkbox
       const cb = document.createElement("input");
       cb.type = "checkbox";
-      cb.checked = true;
+      cb.checked = this.savedState.selected[msg.id] ?? true;
       cb.style.marginRight = "6px";
+      cb.onchange = () => this._syncState();
 
-      // button
       const btn = document.createElement("button");
       btn.className = "ts-btn";
       btn.style.flex = "0 0 120px";
-      btn.textContent = `Download #${idx+1}`;
+      const alreadyDownloaded = this.savedState.downloaded.includes(msg.id);
+      btn.textContent = alreadyDownloaded ? "✅ Downloaded" : `Download #${idx+1}`;
+      btn.disabled = alreadyDownloaded;
       btn.onclick = ()=> this._download(btn, idx+1);
 
-      // preview
       const span = document.createElement("span");
       span.style.fontSize = "11px";
       span.style.marginLeft = "8px";
@@ -1223,6 +1206,7 @@ class AudioDownloader {
   _toggleAll(state){
     this.el.querySelectorAll("#ad-list input[type=checkbox]")
         .forEach(cb => cb.checked = state);
+    this._syncState();
   }
 
   _downloadAll(){
@@ -1257,6 +1241,8 @@ class AudioDownloader {
     }, (res)=>{
       if(res?.status==="completed"){
         btn.textContent = "✅ Downloaded";
+        this.savedState.downloaded.push(msgId);
+        this._syncState();
       }else{
         btn.textContent = "⚠️ Failed";
         btn.disabled = false;
@@ -1273,11 +1259,30 @@ class AudioDownloader {
         : "";
   }
 
+  _syncState(){
+    const selected = {};
+    this.el.querySelectorAll("#ad-list > div").forEach(row => {
+      const mid = row.dataset.mid;
+      const cb  = row.querySelector("input[type=checkbox]");
+      selected[mid] = cb.checked;
+    });
+
+    PanelState.save('AudioDownloader', {
+      voice: this.el.querySelector("#ad-voice").value,
+      format: this.el.querySelector("#ad-format").value,
+      downloaded: this.savedState.downloaded || [],
+      selected: selected
+    });
+  }
+
   destroy(){
+    this._syncState();
     this.el?.remove();
     this.onClose?.();
   }
 }
+
+
 
 
 
