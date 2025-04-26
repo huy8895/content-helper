@@ -1072,11 +1072,11 @@ class AudioDownloader {
         format: 'mp3',
         downloaded: [],
         downloading: [],
-        selected: {},
-        inFlight: 0
+        selected: {}
       };
       this.savedState = Object.assign(def, saved || {});
-      this.inFlight = this.savedState.inFlight || 0;
+      // Tính lại inFlight chính xác từ danh sách downloading
+      this.inFlight = this.savedState.downloading.length;
       this._render();
       this._loadMessages();
     });
@@ -1092,7 +1092,7 @@ class AudioDownloader {
       <h3 class="ts-title">🎵 Audio Downloader</h3>
 
       <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <select id="ad-voice"  class="ts-limit" required>
+        <select id="ad-voice"  class="ts-limit">
           <option value="shade">Monday</option>
           <option value="glimmer">Sol</option>
           <option value="vale">Vale</option>
@@ -1135,12 +1135,7 @@ class AudioDownloader {
     // Set saved voice and format
     this.el.querySelector("#ad-voice").value  = this.savedState.voice || 'shade';
     this.el.querySelector("#ad-format").value = this.savedState.format || 'mp3';
-
-    // Hiển thị lại tiến trình nếu đang có inFlight
-    const progressBox = this.el.querySelector("#ad-progress");
-    progressBox.textContent = this.inFlight
-        ? `🔊 Downloading… (${this.inFlight})`
-        : "";
+    this._updateProgressDisplay();
 
     // Event listeners
     this.el.querySelector("#ad-voice").onchange  = () => this._syncState();
@@ -1150,7 +1145,6 @@ class AudioDownloader {
     this.el.querySelector("#ad-select-all").onchange = (e)=> this._toggleAll(e.target.checked);
   }
 
-  /* ---------- Load assistant message-ids ---------- */
   _loadMessages() {
     chrome.storage.local.get(
         ["responseData", "conversationId", "requestHeaders"],
@@ -1200,16 +1194,21 @@ class AudioDownloader {
       const alreadyDownloaded = this.savedState.downloaded.includes(msg.id);
       const isDownloading = this.savedState.downloading.includes(msg.id);
 
+      // Nếu đã download nhưng vẫn còn trong downloading → xoá khỏi downloading
+      if (alreadyDownloaded && isDownloading) {
+        const idx = this.savedState.downloading.indexOf(msg.id);
+        if (idx !== -1) {
+          this.savedState.downloading.splice(idx, 1);
+          this.inFlight = this.savedState.downloading.length;
+        }
+      }
+
       btn.textContent = alreadyDownloaded
           ? "✅ Downloaded"
           : isDownloading
               ? "Downloading…"
               : `Download #${idx+1}`;
       btn.disabled = alreadyDownloaded || isDownloading;
-
-      if (isDownloading) {
-        this._updateProgress(true);
-      }
 
       btn.onclick = ()=> this._download(btn, idx+1);
 
@@ -1222,23 +1221,8 @@ class AudioDownloader {
       row.append(cb, btn, span);
       wrap.appendChild(row);
     });
-  }
 
-  /* ---------- helpers ---------- */
-  _toggleAll(state){
-    this.el.querySelectorAll("#ad-list input[type=checkbox]")
-        .forEach(cb => cb.checked = state);
-    this._syncState();
-  }
-
-  _downloadAll(){
-    const rows = Array.from(
-        this.el.querySelectorAll("#ad-list > div")
-    ).filter(r => r.querySelector("input").checked);
-
-    rows.forEach( (row,i) =>{
-      setTimeout(()=> row.querySelector("button").click(), i*400);
-    });
+    this._updateProgressDisplay();
   }
 
   _download(btn, ordinal){
@@ -1251,7 +1235,8 @@ class AudioDownloader {
     btn.disabled = true;
     btn.textContent = "Downloading…";
     this.savedState.downloading.push(msgId);
-    this._updateProgress(true);
+    this.inFlight = this.savedState.downloading.length;
+    this._updateProgressDisplay();
 
     chrome.runtime.sendMessage({
       action        :"downloadAudio",
@@ -1264,6 +1249,7 @@ class AudioDownloader {
     }, (res)=>{
       const idx = this.savedState.downloading.indexOf(msgId);
       if (idx !== -1) this.savedState.downloading.splice(idx, 1);
+      this.inFlight = this.savedState.downloading.length;
 
       if(res?.status==="completed"){
         btn.textContent = "✅ Downloaded";
@@ -1272,22 +1258,16 @@ class AudioDownloader {
         btn.textContent = "⚠️ Failed";
         btn.disabled = false;
       }
-      this._updateProgress(false);
+      this._updateProgressDisplay();
       this._syncState();
     });
   }
 
-  _updateProgress(start){
-    this.inFlight += start ? 1 : -1;
+  _updateProgressDisplay(){
     const box = this.el.querySelector("#ad-progress");
     box.textContent = this.inFlight
         ? `🔊 Downloading… (${this.inFlight})`
         : "";
-
-    this.savedState.inFlight = this.inFlight;
-    PanelState.save('AudioDownloader', {
-      ...this.savedState
-    });
   }
 
   _syncState(){
@@ -1303,9 +1283,24 @@ class AudioDownloader {
       format: this.el.querySelector("#ad-format").value,
       downloaded: this.savedState.downloaded || [],
       downloading: this.savedState.downloading || [],
-      inFlight: this.inFlight || 0,
       selected: selected
     });
+  }
+
+  _downloadAll(){
+    const rows = Array.from(
+        this.el.querySelectorAll("#ad-list > div")
+    ).filter(r => r.querySelector("input").checked);
+
+    rows.forEach( (row,i) =>{
+      setTimeout(()=> row.querySelector("button").click(), i*400);
+    });
+  }
+
+  _toggleAll(state){
+    this.el.querySelectorAll("#ad-list input[type=checkbox]")
+        .forEach(cb => cb.checked = state);
+    this._syncState();
   }
 
   _reset(){
@@ -1314,12 +1309,11 @@ class AudioDownloader {
     this.savedState.downloaded = [];
     this.savedState.downloading = [];
     this.savedState.selected = {};
-    this.savedState.inFlight = 0;
     this.inFlight = 0;
 
     PanelState.clear('AudioDownloader');
     this._renderRows([]);
-    this.el.querySelector("#ad-progress").textContent = "";
+    this._updateProgressDisplay();
     alert("Reset completed. Reload the panel to refresh messages.");
   }
 
@@ -1329,6 +1323,7 @@ class AudioDownloader {
     this.onClose?.();
   }
 }
+
 
 
 
