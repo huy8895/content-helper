@@ -621,12 +621,21 @@ class TextSplitter {
       PanelState.save('TextSplitter', this._currentState(this.sequencer.idx,true,true));
     };
     btnResume.onclick = () => {
-      this.sequencer?.resume();
-      btnResume.disabled = true;
-      btnPause.disabled = false;
-      PanelState.save('TextSplitter', this._currentState(this.sequencer.idx,false,true));
-    };
+      /* Nếu panel được mở lại sau khi Pause thì sequencer chưa tồn tại */
+      if (!this.sequencer) {
+        const startAt = this.savedState?.nextIdx || 0;   // chỉ số chunk kế tiếp
+        this._resumeSequencer(startAt);                  // tạo & chạy sequencer
+      } else {
+        this.sequencer.resume();                         // panel chưa đóng trước đó
+      }
 
+      btnResume.disabled = true;
+      btnPause.disabled  = false;
+
+      // ghi lại trạng thái mới – nhớ kiểm tra this.sequencer trước khi dùng
+      const idxNow = this.sequencer ? this.sequencer.idx : (this.savedState?.nextIdx || 0);
+      PanelState.save('TextSplitter', this._currentState(idxNow, false, true));
+    };
     // this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
 
     ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
