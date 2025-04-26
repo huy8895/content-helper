@@ -259,7 +259,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .then(files => {
         const zip = new JSZip();
         files.forEach(({id, blob}, i) => {
-          zip.file(`${i+1}_${id}.${format}`, blob);
+          zip.file(`${i+1}_${id}_${selectedVoice}.${format}`, blob);
         });
         return zip.generateAsync({ type:'blob' });
       })

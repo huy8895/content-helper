@@ -1288,6 +1288,7 @@ class AudioDownloader {
   }
 
   _syncState(){
+    console.log("[TextSplitter] sync state : ", this.el.querySelector("#ad-voice").value);
     const selected = {};
     this.el.querySelectorAll("#ad-list > div").forEach(row => {
       const mid = row.dataset.mid;
@@ -1295,9 +1296,12 @@ class AudioDownloader {
       selected[mid] = cb.checked;
     });
 
+    this.savedState.voice = this.el.querySelector("#ad-voice").value;
+    this.savedState.format = this.el.querySelector("#ad-format").value;
+
     PanelState.save('AudioDownloader', {
-      voice: this.el.querySelector("#ad-voice").value,
-      format: this.el.querySelector("#ad-format").value,
+      voice: this.savedState.voice,
+      format: this.savedState.format,
       downloaded: this.savedState.downloaded || [],
       downloading: this.savedState.downloading || [],
       selected: selected
