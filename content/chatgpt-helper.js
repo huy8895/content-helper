@@ -526,10 +526,24 @@ class TextSplitter {
   constructor(onClose) {
     console.log("✂️ [TextSplitter] init");
     this.onClose = onClose;
-    this.chunks  = [];        // array of string segments
+    this.chunks  = [];
     this.sequencer = null;
-    this._render();
+
+    /* ⬇️  Lấy state trước khi render */
+    PanelState.load('TextSplitter', (saved) => {
+      this.savedState = saved || { text:'', limit:1000, chunks:[] };
+      this.chunks = [...this.savedState.chunks];
+      this._render();
+      /* Nếu có dữ liệu cũ thì hiển thị ngay */
+      if (this.savedState.text) {
+        this._display();                       // vẽ list chunk
+        this.el.querySelector('#ts-input').value  = this.savedState.text;
+        this.el.querySelector('#ts-limit').value  = this.savedState.limit;
+        this.el.querySelector('#ts-start').disabled = !this.chunks.length;
+      }
+    });
   }
+
 
   /* ---------- UI ---------- */
   _render() {
@@ -579,6 +593,18 @@ class TextSplitter {
 
     ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+
+    /* Theo dõi thay đổi input + limit → update cache */
+    const syncState = () => {
+      PanelState.save('TextSplitter', {
+        text:  this.el.querySelector('#ts-input').value,
+        limit: +this.el.querySelector('#ts-limit').value || 1000,
+        chunks: this.chunks
+      });
+    };
+    this.el.querySelector('#ts-input').addEventListener('input',  syncState);
+    this.el.querySelector('#ts-limit').addEventListener('change', syncState);
+
   }
 
   /* ---------- Split logic ---------- */
@@ -712,6 +738,12 @@ class TextSplitter {
   /* ---------- Clean up ---------- */
   destroy() {
     console.log("❌ [TextSplitter] destroy");
+    PanelState.save('TextSplitter', {
+      text: this.el.querySelector('#ts-input')?.value || '',
+      limit: +this.el.querySelector('#ts-limit')?.value || 1000,
+      chunks: this.chunks
+    });
+
     this.el?.remove();
     this.onClose?.();
     this.sequencer?.stop();
@@ -752,6 +784,22 @@ class PromptSequencer {
   pause()  { this.paused  = true; }
   resume() { if (this.paused) { this.paused = false; this._resume?.(); } }
   stop()   { this.stopped = true; }
+}
+
+/* ========= PanelState (save / load) ========= */
+class PanelState {
+  /* key = tên panel, data = object tuỳ ý */
+  static save(key, data) {
+    chrome.storage.local.set({ ['panelState__' + key]: data });
+  }
+  static load(key, cb) {
+    chrome.storage.local.get('panelState__' + key, (res) =>
+        cb(res['panelState__' + key] || null)
+    );
+  }
+  static clear(key) {
+    chrome.storage.local.remove('panelState__' + key);
+  }
 }
 
 
