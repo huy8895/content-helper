@@ -368,7 +368,6 @@ class ScenarioRunner {
     const btnResume = this.el.querySelector('#sr-resume');
 
     btnStart.onclick = () => this._start();
-    btnStart.onclick = () => this._start();
     btnPause.onclick = () => { this.sequencer?.pause();
       btnPause.disabled = true;  btnResume.disabled = false; };
     btnResume.onclick = () => { this.sequencer?.resume();
@@ -478,6 +477,7 @@ class TextSplitter {
     console.log("✂️ [TextSplitter] init");
     this.onClose = onClose;
     this.chunks  = [];        // array of string segments
+    this.sequencer = null;
     this._render();
   }
 
@@ -491,24 +491,41 @@ class TextSplitter {
 
     /** Panel HTML */
     this.el.innerHTML = `
-      <h3 class="ts-title">✂️ Text Splitter</h3>
+     
+    <h3 class="ts-title">✂️ Text Splitter</h3>
+    <textarea id="ts-input" class="ts-textarea"
+              placeholder="Paste or type your long text…"></textarea>
+    
+    <div class="ts-toolbar">
+      <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
+      <button id="ts-split"   class="ts-btn">Split</button>
+    </div>
+    
+    <!-- controls mới -->
+    <div class="ts-controls">
+      <button id="ts-start"  disabled>▶️ Send All</button>
+      <button id="ts-pause"  disabled>⏸ Pause</button>
+      <button id="ts-resume" disabled>▶️ Resume</button>
+    </div>
+    
+    <div id="ts-results" class="ts-results"></div>
 
-      <textarea id="ts-input"  class="ts-textarea"
-                placeholder="Paste or type your long text…"></textarea>
-
-      <div class="ts-toolbar">
-        <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
-        <button id="ts-split"   class="ts-btn">Split</button>
-        <button id="ts-sendall" class="ts-btn ts-btn-accent">Send All</button>
-      </div>
-
-      <div id="ts-results" class="ts-results"></div>
     `;
     ChatGPTHelper.mountPanel(this.el);
 
     /* events */
     this.el.querySelector("#ts-split").onclick = () => this._split();
-    this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
+    const btnStart  = this.el.querySelector('#ts-start');
+    const btnPause  = this.el.querySelector('#ts-pause');
+    const btnResume = this.el.querySelector('#ts-resume');
+
+    btnStart.onclick  = () => this._startSend();
+    btnPause.onclick  = () => { this.sequencer?.pause();
+      btnPause.disabled = true;  btnResume.disabled = false; };
+    btnResume.onclick = () => { this.sequencer?.resume();
+      btnResume.disabled = true; btnPause.disabled = false; };
+
+    // this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
 
     ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
@@ -545,6 +562,10 @@ class TextSplitter {
     if (buf) this.chunks.push(buf);
 
     this._display();
+    const btnStart = this.el.querySelector('#ts-start');
+    btnStart.disabled  = this.chunks.length === 0;
+    btnPause.disabled  = true;
+    btnResume.disabled = true;
   }
 
   /* ---------- Display buttons for each chunk ---------- */
@@ -594,15 +615,41 @@ class TextSplitter {
   }
 
   /* ---------- Send ALL chunks sequentially ---------- */
-  async _sendAll() {
-    console.log("🔄 [TextSplitter] send all chunks");
-    const rows = Array.from(this.el.querySelectorAll(".ts-send-btn"));
-    for (let i = 0; i < this.chunks.length; i++) {
-      const btn = rows[i];
-      if (!btn.disabled || btn.textContent.startsWith("⚠️")) {
-        await this._copySegment(i, btn);
-      }
-    }
+  _sendAll(){ this._startSend(); }
+
+
+  _startSend(){
+    if(!this.chunks.length) return alert("No chunks – bấm Split trước đã!");
+
+    const btnStart  = this.el.querySelector('#ts-start');
+    const btnPause  = this.el.querySelector('#ts-pause');
+    const btnResume = this.el.querySelector('#ts-resume');
+
+    // khởi tạo PromptSequencer
+    this.sequencer = new PromptSequencer(
+        this.chunks,
+        this._sendPrompt,
+        this._waitForResponse,
+        (idx)=>{                            // callback sau mỗi chunk
+          const rowBtn = this.el.querySelectorAll('.ts-send-btn')[idx-1];
+          if(rowBtn){ rowBtn.disabled = true; rowBtn.textContent = '✅ Done'; }
+
+          // hoàn tất
+          if(idx === this.chunks.length){
+            btnPause.disabled = true;
+            btnResume.disabled = true;
+            btnStart.disabled = false;
+            this.sequencer = null;
+          }
+        }
+    );
+
+    // cập nhật UI
+    btnStart.disabled  = true;
+    btnPause.disabled  = false;
+    btnResume.disabled = true;
+
+    this.sequencer.start();
   }
 
   /* ---------- Re-use ScenarioRunner helpers ---------- */
@@ -615,6 +662,7 @@ class TextSplitter {
     console.log("❌ [TextSplitter] destroy");
     this.el?.remove();
     this.onClose?.();
+    this.sequencer?.stop();
   }
 
 }
