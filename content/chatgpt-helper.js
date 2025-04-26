@@ -563,6 +563,8 @@ class TextSplitter {
 
     this._display();
     const btnStart = this.el.querySelector('#ts-start');
+    const btnPause  = this.el.querySelector('#ts-pause');
+    const btnResume = this.el.querySelector('#ts-resume');
     btnStart.disabled  = this.chunks.length === 0;
     btnPause.disabled  = true;
     btnResume.disabled = true;
@@ -628,8 +630,8 @@ class TextSplitter {
     // khởi tạo PromptSequencer
     this.sequencer = new PromptSequencer(
         this.chunks,
-        this._sendPrompt,
-        this._waitForResponse,
+        this._sendPrompt.bind(this),
+        this._waitForResponse.bind(this),
         (idx)=>{                            // callback sau mỗi chunk
           const rowBtn = this.el.querySelectorAll('.ts-send-btn')[idx-1];
           if(rowBtn){ rowBtn.disabled = true; rowBtn.textContent = '✅ Done'; }
