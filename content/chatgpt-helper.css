@@ -1,246 +1,129 @@
-/* Giao diện khung tạo kịch bản */
-#scenario-builder {
-  width:360px;
-  background:#fff;          /* trước là #f9f9f9 */
-  border-radius:10px;       /* trước 12 */
-  padding:12px;             /* trước 16 */
-}
-
-/* helper-box chỉ để canh lề: bỏ nền + padding */
-#scenario-builder .helper-box{
-  background:transparent;
-  padding:0;
-}
-
-.sb-title{
-  margin:0 0 6px;
-  font-size:15px;
-  font-weight:600;
-  cursor:move;              /* để kéo */
-  user-select:none;
-}
-
-.sb-btn{
-  padding:6px 12px;
-  margin:6px 6px 6px 0;
-  font-size:12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#4CAF50;
-  color:#fff;
-  transition:background .2s;
-}
-.sb-btn:hover{background:#45a049;}
-
-/* Tiêu đề */
-#scenario-builder h2 {
-  margin-top: 0;
-  font-size: 18px;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-/* Input */
-#scenario-builder input[type="text"] {
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-#scenario-builder button:hover {
-  background: #0e8c6a;
-}
-
-/* Khung hiển thị JSON */
-#scenario-builder pre {
-  background: #f0f0f0;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  max-height: 180px;
-  overflow-y: auto;
-  margin-top: 12px;
-}
-
-/* Giữ style nút Builder nhưng bỏ qua .panel-close */
-#scenario-builder button:not(.panel-close){
-  padding:8px 12px;
-  margin:6px 6px 6px 0;
-  background:#10a37f;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  font-size:13px;
-  cursor:pointer;
-  transition:background .2s;
-}
-#scenario-builder button:not(.panel-close):hover{ background:#0e8c6a; }
-
-/* Khung chọn chạy kịch bản */
-#scenario-runner {
-  width:260px;
-  border: 1px solid #ddd;
-  padding: 16px;
-  border-radius: 12px;
-  z-index: 9999;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  font-family: 'Segoe UI', sans-serif;
-}
-
-#scenario-runner select {
-  width: 100%;
-  padding: 8px;
-  font-size: 14px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-/* Animation mượt */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Nút điều khiển chính */
-.scenario-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  margin-top: 8px;
-  width: 100%;
-  font-size: 14px;
-  font-weight: 500;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-/* Nút Soạn */
-.btn-setup {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.btn-setup:hover {
-  background-color: #45A049;
-}
-
-/* Nút Chạy */
-.btn-run {
-  background-color: #4285F4;
-  color: white;
-}
-
-.btn-run:hover {
-  background-color: #357ae8;
-}
-
-/* Container chứa 2 nút chính */
-#chatgpt-helper-button-container {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.btn-tool        { background-color:#17a2b8; }
-.btn-tool:hover  { background-color:#138496; }
-
-/* ---------- Text-Splitter panel ---------- */
-.ts-panel{
-  width: 360px;
-  background: #fff;
-  border: 1px solid #ddd;
+/* ==== base style cho mọi panel ==== */
+.panel-box, .ts-panel, #scenario-builder, #scenario-runner {
+  background: #f7f7f8;
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 10px;
-  padding: 12px;
-  z-index: 9999;
-  box-shadow: 0 8px 24px rgba(0,0,0,.15);
-  font-family: "Segoe UI",sans-serif;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  flex: 0 0 auto;
+  position: relative;
+  animation: fadeIn 0.3s ease;
 }
-.ts-title{
-  margin: 0 0 6px;
-  font-size: 15px;
+
+/* Tiêu đề các panel */
+.sb-title, .ts-title, .sr-title {
+  margin: 0 0 10px;
+  font-size: 16px;
   font-weight: 600;
+  color: #333;
+  cursor: move;
+  user-select: none;
 }
-.ts-textarea{
+
+/* Input & Textarea style */
+input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   width: 100%;
+  padding: 8px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+/* Textarea riêng */
+.ts-textarea {
   height: 90px;
   resize: vertical;
-  padding: 6px 8px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
 }
-.ts-toolbar{
+
+/* Toolbar */
+.ts-toolbar {
   margin: 6px 0 8px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.ts-limit{
-  width: 90px;
-  padding: 4px 6px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-.ts-btn{
-  padding: 4px 10px;
-  font-size: 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #4CAF50;
-  color: #fff;
-  transition: background .2s;
-}
-.ts-btn:hover{ background:#45a049; }
-.ts-btn-accent{ background:#1a73e8; }
-.ts-btn-accent:hover{ background:#1669c7; }
 
-.ts-results{
+/* Nút bên trong panel */
+.panel-box button:not(.panel-close), .ts-btn, .sr-controls button {
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.panel-box button:not(.panel-close):hover, .ts-btn:hover, .sr-controls button:hover {
+  background: #efefef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ts-btn-accent {
+  background: #e0e7ff;
+  color: #1e40af;
+}
+.ts-btn-accent:hover {
+  background: #c7d2fe;
+  color: #1e3a8a;
+}
+
+.ts-btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.ts-btn-danger:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* Kết quả split */
+.ts-results {
   max-height: 160px;
   overflow-y: auto;
   font-size: 12px;
 }
-.ts-results button{
+.ts-results button {
   margin: 3px 0;
   padding: 4px 8px;
   font-size: 12px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  background:#8e44ad;
-  color:#fff;
+  background: #e0e7ff;
+  color: #1e40af;
   transition: background .2s;
 }
-.ts-results button:hover{ background:#7d3aa1; }
-.ts-results button[disabled]{ background:#6c5ce7; cursor: default; }
-.ts-title{ cursor: move; user-select:none; }
-
-/* ==== base style cho mọi panel ==== */
-.panel-box{
-  /* bỏ position/bottom/left/z-index – giao cho flex-bar */
-  background:#fff;
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:14px;
-  box-shadow:0 8px 24px rgba(0,0,0,.15);
-  font-family:"Segoe UI",sans-serif;
-  flex:0 0 auto;           /* <== giữ kích thước cố định trong flex-bar */
-  position:relative;       /* để .panel-close bám theo */
-  animation: fadeIn 0.3s ease;
+.ts-results button:hover {
+  background: #c7d2fe;
+}
+.ts-results button[disabled] {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: default;
 }
 
-/* nút đóng, đặt !important để chắc chắn thắng mọi id-selector */
+/* Panel bar */
+#chatgpt-helper-panel-bar {
+  position: fixed;
+  bottom: 90px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  gap: 20px;
+  pointer-events: none;
+  justify-content: center;
+}
+.helper-panel {
+  pointer-events: auto;
+}
+
+/* Nút đóng panel */
 .panel-close {
   position: absolute;
   top: 6px;
@@ -255,105 +138,47 @@
   cursor: pointer;
   line-height: 18px;
   padding: 0;
-  z-index:99;
+  z-index: 99;
 }
-.panel-close:hover{ background:#c0392b !important; }
-
-#chatgpt-helper-panel-bar{
-  position:fixed;
-  bottom:90px;             /* cao bằng dãy nút */
-  left:20px; right:20px;
-  display:flex;
-  gap:20px;                /* khoảng giữa các panel */
-  pointer-events:none;     /* click xuyên phần trống */
-  justify-content:center;  /* căn giữa màn hình */
-}
-.helper-panel{pointer-events:auto;}     /* panel vẫn bấm được */
-
-.sr-controls{
-  display:flex;
-  gap:6px;
-  margin-top:8px;
-}
-.sr-controls button{
-  flex:1 1 0;
-  padding:6px;
-  font-size:13px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#4CAF50;
-  color:#fff;
-  transition:background .2s;
-}
-.sr-controls button:hover{background:#45a049;}
-.sr-controls button[disabled]{opacity:.4; cursor:default;}
-.sr-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin:-4px -4px 8px -4px;       /* ăn sát mép panel */
-  cursor:move;
-  user-select:none;
-}
-.sr-title{font-weight:600; font-size:15px;}
-
-       /* đảm bảo luôn nổi trên mọi thành phần */
-.ts-controls{             /* giống sr-controls */
-  display:flex;
-  gap:6px;
-  margin:8px 0;
+.panel-close:hover {
+  background: #c0392b !important;
 }
 
-.ts-controls button:hover{background:#45a049;}
-.ts-controls button[disabled]{opacity:.4; cursor:default;}
-
-.ts-btn-danger { background: #e74c3c; }
-.ts-btn-danger:hover { background: #c0392b; }
-
-.ts-controls button:not(.ts-btn-danger) {
-  flex: 1 1 0;
-  padding: 6px;
-  font-size: 13px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #4CAF50;
-  color: #fff;
-  transition: background .2s;
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
+/* Nút chính ở dưới input */
 .scenario-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  flex: 1 1 0;  /* giãn đều */
+  flex: 1 1 0;
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 500;
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 8px;
   cursor: pointer;
-  background: #f7f7f8;  /* nền sáng giống ChatGPT */
+  background: #f7f7f8;
   color: #333;
   transition: background 0.2s, box-shadow 0.2s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   min-width: 130px;
   max-width: 160px;
 }
-
 .scenario-btn:hover {
   background: #efefef;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+.btn-setup::before { margin-right: 6px; color: #10a37f; }
+.btn-run::before   { margin-right: 6px; color: #4285F4;}
+.btn-tool::before  { margin-right: 6px; color: #17a2b8;}
 
-/* Không cần màu riêng mạnh, chỉ nhấn nhẹ */
-.btn-setup::before {  margin-right: 6px; color: #10a37f; }
-.btn-run::before   { margin-right: 6px; color: #4285F4; }
-.btn-tool::before  { margin-right: 6px; color: #17a2b8; }
-
-/* Container */
+/* Container nút chính */
 #chatgpt-helper-button-container {
   display: flex;
   flex-direction: row;
@@ -361,4 +186,3 @@
   margin-top: 12px;
   justify-content: center;
 }
-
