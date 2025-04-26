@@ -1060,9 +1060,6 @@ class PanelState {
 /*********************************************
  * AudioDownloader – download TTS audio *
  *********************************************/
-/*********************************************
- * AudioDownloader – download TTS audio      *
- *********************************************/
 class AudioDownloader {
   constructor(onClose) {
     this.onClose = onClose;
@@ -1074,9 +1071,12 @@ class AudioDownloader {
         voice: 'shade',
         format: 'mp3',
         downloaded: [],
-        selected: {}
+        downloading: [],
+        selected: {},
+        inFlight: 0
       };
       this.savedState = Object.assign(def, saved || {});
+      this.inFlight = this.savedState.inFlight || 0;
       this._render();
       this._loadMessages();
     });
@@ -1092,8 +1092,8 @@ class AudioDownloader {
       <h3 class="ts-title">🎵 Audio Downloader</h3>
 
       <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <select id="ad-voice"  class="ts-limit">
-          <option value="shade" selected>Monday</option>
+        <select id="ad-voice"  class="ts-limit" required>
+          <option value="shade">Monday</option>
           <option value="glimmer">Sol</option>
           <option value="vale">Vale</option>
           <option value="cove">Cove</option>
@@ -1106,12 +1106,15 @@ class AudioDownloader {
         </select>
 
         <select id="ad-format" class="ts-limit">
-          <option value="mp3" selected>mp3</option>
+          <option value="mp3">mp3</option>
           <option value="aac">aac</option>
         </select>
 
         <button id="ad-dlall" class="ts-btn ts-btn-accent" style="flex:1">
           Download&nbsp;All
+        </button>
+        <button id="ad-reset" class="ts-btn ts-btn-danger">
+          🔄 Reset
         </button>
       </div>
 
@@ -1133,10 +1136,17 @@ class AudioDownloader {
     this.el.querySelector("#ad-voice").value  = this.savedState.voice || 'shade';
     this.el.querySelector("#ad-format").value = this.savedState.format || 'mp3';
 
+    // Hiển thị lại tiến trình nếu đang có inFlight
+    const progressBox = this.el.querySelector("#ad-progress");
+    progressBox.textContent = this.inFlight
+        ? `🔊 Downloading… (${this.inFlight})`
+        : "";
+
     // Event listeners
     this.el.querySelector("#ad-voice").onchange  = () => this._syncState();
     this.el.querySelector("#ad-format").onchange = () => this._syncState();
     this.el.querySelector("#ad-dlall").onclick   = () => this._downloadAll();
+    this.el.querySelector("#ad-reset").onclick   = () => this._reset();
     this.el.querySelector("#ad-select-all").onchange = (e)=> this._toggleAll(e.target.checked);
   }
 
@@ -1186,9 +1196,21 @@ class AudioDownloader {
       const btn = document.createElement("button");
       btn.className = "ts-btn";
       btn.style.flex = "0 0 120px";
+
       const alreadyDownloaded = this.savedState.downloaded.includes(msg.id);
-      btn.textContent = alreadyDownloaded ? "✅ Downloaded" : `Download #${idx+1}`;
-      btn.disabled = alreadyDownloaded;
+      const isDownloading = this.savedState.downloading.includes(msg.id);
+
+      btn.textContent = alreadyDownloaded
+          ? "✅ Downloaded"
+          : isDownloading
+              ? "Downloading…"
+              : `Download #${idx+1}`;
+      btn.disabled = alreadyDownloaded || isDownloading;
+
+      if (isDownloading) {
+        this._updateProgress(true);
+      }
+
       btn.onclick = ()=> this._download(btn, idx+1);
 
       const span = document.createElement("span");
@@ -1228,6 +1250,7 @@ class AudioDownloader {
 
     btn.disabled = true;
     btn.textContent = "Downloading…";
+    this.savedState.downloading.push(msgId);
     this._updateProgress(true);
 
     chrome.runtime.sendMessage({
@@ -1239,24 +1262,32 @@ class AudioDownloader {
       selectedVoice : voice,
       format        : format
     }, (res)=>{
+      const idx = this.savedState.downloading.indexOf(msgId);
+      if (idx !== -1) this.savedState.downloading.splice(idx, 1);
+
       if(res?.status==="completed"){
         btn.textContent = "✅ Downloaded";
         this.savedState.downloaded.push(msgId);
-        this._syncState();
       }else{
         btn.textContent = "⚠️ Failed";
         btn.disabled = false;
       }
       this._updateProgress(false);
+      this._syncState();
     });
   }
 
   _updateProgress(start){
-    this.inFlight += start?1:-1;
+    this.inFlight += start ? 1 : -1;
     const box = this.el.querySelector("#ad-progress");
     box.textContent = this.inFlight
         ? `🔊 Downloading… (${this.inFlight})`
         : "";
+
+    this.savedState.inFlight = this.inFlight;
+    PanelState.save('AudioDownloader', {
+      ...this.savedState
+    });
   }
 
   _syncState(){
@@ -1271,8 +1302,25 @@ class AudioDownloader {
       voice: this.el.querySelector("#ad-voice").value,
       format: this.el.querySelector("#ad-format").value,
       downloaded: this.savedState.downloaded || [],
+      downloading: this.savedState.downloading || [],
+      inFlight: this.inFlight || 0,
       selected: selected
     });
+  }
+
+  _reset(){
+    if (!confirm("Reset all download states and clear saved data?")) return;
+
+    this.savedState.downloaded = [];
+    this.savedState.downloading = [];
+    this.savedState.selected = {};
+    this.savedState.inFlight = 0;
+    this.inFlight = 0;
+
+    PanelState.clear('AudioDownloader');
+    this._renderRows([]);
+    this.el.querySelector("#ad-progress").textContent = "";
+    alert("Reset completed. Reload the panel to refresh messages.");
   }
 
   destroy(){
@@ -1281,6 +1329,8 @@ class AudioDownloader {
     this.onClose?.();
   }
 }
+
+
 
 
 
