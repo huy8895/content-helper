@@ -393,7 +393,7 @@ class ScenarioRunner {
           return resolve();
         }
         if (Date.now() - start > timeout) {
-          console.error("⌛ [ScenarioRunner] timeout");
+          console.log("⛔️⛔️⛔️ ⌛ [ScenarioRunner] timeout");
           clearInterval(timer);
           return reject(new Error("Timeout waiting for ChatGPT response"));
         }
@@ -547,7 +547,7 @@ class TextSplitter {
       await this._waitForResponse();
       btn.textContent = "✅ Done";
     } catch (err) {
-      console.error('_copySegment err', err);
+      console.log('[⛔️⛔️⛔️]_copySegment err', err);
       btn.textContent = "⚠️ Error";
     }
   }
