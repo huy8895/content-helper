@@ -20,7 +20,9 @@ class ChatGPTHelper {
     /** @type {ScenarioRunner|null} */
     this.runner = null;
 
-    this.splitter = null;      // 👈 thêm
+    /** @type {TextSplitter|null} */
+    this.splitter = null;
+
 
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
@@ -328,6 +330,9 @@ class ScenarioRunner {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
     this.onClose = onClose;
+
+    /** @type {PromptSequencer|null} */
+    this.sequencer = null;
     this._render();
   }
 
@@ -337,9 +342,19 @@ class ScenarioRunner {
     this.el.id = "scenario-runner";
     this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
-      <label for="scenario-select">Chọn kịch bản:</label>
-      <select id="scenario-select"></select>
-      <button id="start-scenario">▶️ Bắt đầu</button>`;
+  <div class="sr-header">
+     <span class="sr-title">📤 Scenario Runner</span>
+  </div>
+
+  <label class="sr-label" for="scenario-select">Chọn kịch bản:</label>
+  <select id="scenario-select"></select>
+
+  <div class="sr-controls">
+    <button id="sr-start">▶️ Bắt đầu</button>
+    <button id="sr-pause"  disabled>⏸ Dừng</button>
+    <button id="sr-resume" disabled>▶️ Tiếp</button>
+  </div>`;
+
     ChatGPTHelper.mountPanel(this.el);
 
     chrome.storage.local.get("scenarioTemplates", (items) => {
@@ -348,26 +363,47 @@ class ScenarioRunner {
       Object.keys(templates).forEach((name) => select.add(new Option(name, name)));
     });
 
-    this.el.querySelector("#start-scenario").addEventListener("click", () => this._start());
-    ChatGPTHelper.makeDraggable(this.el, "label");
+    const btnStart  = this.el.querySelector('#sr-start');
+    const btnPause  = this.el.querySelector('#sr-pause');
+    const btnResume = this.el.querySelector('#sr-resume');
+
+    btnStart.onclick = () => this._start();
+    btnStart.onclick = () => this._start();
+    btnPause.onclick = () => { this.sequencer?.pause();
+      btnPause.disabled = true;  btnResume.disabled = false; };
+    btnResume.onclick = () => { this.sequencer?.resume();
+      btnResume.disabled = true; btnPause.disabled = false; };
+
+    ChatGPTHelper.makeDraggable(this.el, ".sr-header");
     /* thêm nút đóng */
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
 
   async _start() {
-    console.log("🎬 [ScenarioRunner] start scenario");
     const name = this.el.querySelector("#scenario-select").value;
     if (!name) return alert("Vui lòng chọn kịch bản.");
 
-    chrome.storage.local.get("scenarioTemplates", async (items) => {
-      const template = items.scenarioTemplates?.[name];
-      if (!template) return alert("Không tìm thấy kịch bản.");
-      for (const prompt of template) {
-        await this._sendPrompt(prompt);
-        await this._waitForResponse();
-      }
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const list = items.scenarioTemplates?.[name];
+      if (!list) return alert("Không tìm thấy kịch bản.");
+
+      /* tạo Sequencer */
+      this.sequencer = new PromptSequencer(
+          list,
+          this._sendPrompt.bind(this),
+          this._waitForResponse.bind(this),
+          (idx, total) => console.log(`📤 ${idx}/${total} done`)
+      );
+
+      /* cập nhật UI */
+      this.el.querySelector('#sr-start').disabled = true;
+      this.el.querySelector('#sr-pause').disabled = false;
+      this.el.querySelector('#sr-resume').disabled = true;
+
+      this.sequencer.start();
     });
   }
+
 
   async _sendPrompt(text) {
     console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
@@ -424,6 +460,7 @@ class ScenarioRunner {
     console.log("❌ [ScenarioRunner] destroy");
     this.el?.remove();
     this.onClose();
+    this.sequencer?.stop();
   }
 }
 
@@ -582,6 +619,40 @@ class TextSplitter {
 
 }
 
+/****************************************
+ * PromptSequencer – run prompts in order
+ * --------------------------------------
+ *  new PromptSequencer(list, sendFn, waitFn, onStep?)
+ *      .start()   .pause()   .resume()   .stop()
+ ****************************************/
+class PromptSequencer {
+  constructor(prompts, send, wait, onStep = () => {}) {
+    this.prompts = prompts;
+    this.send    = send;
+    this.wait    = wait;
+    this.onStep  = onStep;     // callback (idx, total)
+
+    this.idx     = 0;
+    this.paused  = false;
+    this.stopped = false;
+  }
+  async _run() {
+    while (this.idx < this.prompts.length && !this.stopped) {
+      if (this.paused) {
+        await new Promise(r => (this._resume = r));   // treo tại đây
+        continue;
+      }
+      await this.send(this.prompts[this.idx]);
+      await this.wait();
+      this.idx++;
+      this.onStep(this.idx, this.prompts.length);
+    }
+  }
+  start()  { this.stopped = false; this.paused = false; this._run(); }
+  pause()  { this.paused  = true; }
+  resume() { if (this.paused) { this.paused = false; this._resume?.(); } }
+  stop()   { this.stopped = true; }
+}
 
 
 // Kick‑start helper

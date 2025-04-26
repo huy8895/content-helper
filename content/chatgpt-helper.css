@@ -255,6 +255,7 @@
   cursor: pointer;
   line-height: 18px;
   padding: 0;
+  z-index:99;
 }
 .panel-close:hover{ background:#c0392b !important; }
 
@@ -268,3 +269,33 @@
   justify-content:center;  /* căn giữa màn hình */
 }
 .helper-panel{pointer-events:auto;}     /* panel vẫn bấm được */
+
+.sr-controls{
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.sr-controls button{
+  flex:1 1 0;
+  padding:6px;
+  font-size:13px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#4CAF50;
+  color:#fff;
+  transition:background .2s;
+}
+.sr-controls button:hover{background:#45a049;}
+.sr-controls button[disabled]{opacity:.4; cursor:default;}
+.sr-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:-4px -4px 8px -4px;       /* ăn sát mép panel */
+  cursor:move;
+  user-select:none;
+}
+.sr-title{font-weight:600; font-size:15px;}
+
+       /* đảm bảo luôn nổi trên mọi thành phần */
