@@ -1165,6 +1165,14 @@ class AudioDownloader {
     );
   }
 
+  /* Trả về button của messageId nếu panel đang mở, hoặc null */
+  _getBtnById(id){
+    return this.el
+        ? this.el.querySelector(`#ad-list button[data-mid="${id}"]`)
+        : null;
+  }
+
+
   _renderRows(rows) {
     const wrap = this.el.querySelector("#ad-list");
     wrap.innerHTML = "";
@@ -1190,6 +1198,9 @@ class AudioDownloader {
       const btn = document.createElement("button");
       btn.className = "ts-btn";
       btn.style.flex = "0 0 120px";
+
+      /* ➜ thêm dòng này để gắn message-id vào chính button */
+      btn.dataset.mid = msg.id;
 
       const alreadyDownloaded = this.savedState.downloaded.includes(msg.id);
       const isDownloading = this.savedState.downloading.includes(msg.id);
@@ -1226,6 +1237,7 @@ class AudioDownloader {
   }
 
   _download(btn, ordinal){
+    console.log("start download: #", ordinal, btn)
     const row   = btn.parentElement;
     const msgId = row.dataset.mid;
     const {conversationId, requestHeaders} = this.data;
@@ -1247,16 +1259,21 @@ class AudioDownloader {
       selectedVoice : voice,
       format        : format
     }, (res)=>{
+      console.log("✅ Downloaded done ", msgId)
       const idx = this.savedState.downloading.indexOf(msgId);
       if (idx !== -1) this.savedState.downloading.splice(idx, 1);
       this.inFlight = this.savedState.downloading.length;
 
-      if(res?.status==="completed"){
-        btn.textContent = "✅ Downloaded";
-        this.savedState.downloaded.push(msgId);
-      }else{
-        btn.textContent = "⚠️ Failed";
-        btn.disabled = false;
+      const liveBtn = this._getBtnById(msgId);   // ➋ dùng nút hiện có
+      if (liveBtn) {
+        if (res?.status === 'completed') {
+          liveBtn.textContent = '✅ Downloaded';
+          liveBtn.disabled = true;
+          this.savedState.downloaded.push(msgId);
+        } else {
+          liveBtn.textContent = '⚠️ Failed';
+          liveBtn.disabled = false;
+        }
       }
       this._updateProgressDisplay();
       this._syncState();
