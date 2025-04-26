@@ -53,7 +53,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 /* Nút bên trong panel */
-.panel-box button:not(.panel-close), .ts-btn, .sr-controls button {
+.panel-box button:not(.panel-close), .ts-btn, .sr-controls button, .ts-file-wrapper {
   padding: 8px 12px;
   font-size: 13px;
   border: 1px solid rgba(0,0,0,0.1);
@@ -64,7 +64,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   transition: background 0.2s, box-shadow 0.2s;
 }
 
-.panel-box button:not(.panel-close):hover, .ts-btn:hover, .sr-controls button:hover {
+.panel-box button:not(.panel-close):hover, .ts-btn:hover, .sr-controls button:hover, .ts-file-wrapper:hover {
   background: #efefef;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -191,3 +191,52 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   margin-top: 12px;
   justify-content: center;
 }
+
+/* Style nút chọn file */
+.ts-file-wrapper {
+  position: relative;
+  display: inline-block;
+  font-size: 13px;
+  cursor: pointer;
+  background: #ffffff;
+  color: #292828;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+
+.ts-file-wrapper input[type="file"] {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Nút trong .ts-controls */
+.ts-controls button {
+  flex: 1 1 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4CAF50;
+  color: white;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.ts-controls button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.ts-controls button:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+

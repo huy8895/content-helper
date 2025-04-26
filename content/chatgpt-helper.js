@@ -616,8 +616,13 @@ class TextSplitter {
 
   <!-- File input -->
   <div id="ts-file-block" style="margin-bottom: 8px;">
+  <label class="ts-file-wrapper">
+    📂 Choose File
     <input type="file" id="ts-file-input" accept=".txt" />
+  </label>
+  <span id="ts-file-name" style="margin-left: 8px; font-size: 12px; color: #555;">No file chosen</span>
   </div>
+
 
   <!-- Textarea input -->
   <textarea id="ts-input" class="ts-textarea" style="display: none;"
@@ -625,7 +630,7 @@ class TextSplitter {
 
   <div class="ts-toolbar">
     <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
-    <button id="ts-split"   class="ts-btn">Split</button>
+    <button id="ts-split"   class="ts-btn">✂️ Split</button>
   </div>
 
   <!-- controls -->
@@ -717,10 +722,15 @@ class TextSplitter {
     reader.onload = () => {
       const text = reader.result.trim();
       this.el.querySelector("#ts-input").value = text;
+
+      // ✅ Cập nhật tên file sau khi load
+      this.el.querySelector("#ts-file-name").textContent = file.name;
+
       alert("File loaded successfully!");
     };
     reader.readAsText(file);
   }
+
 
   _reset(){
     if(!confirm('Reset all chunks and clear saved state?')) return;
