@@ -479,6 +479,7 @@ class TextSplitter {
     const raw   = this.el.querySelector("#ts-input").value.trim();
     const limit = +this.el.querySelector("#ts-limit").value || 1000;
 
+    console.log("✂️ [TextSplitter] split text", limit, "chars");
     if (!raw) {
       alert("Please paste some text first!");
       return;
@@ -487,8 +488,12 @@ class TextSplitter {
     this.chunks.length = 0;          // reset
     let buf = "";
 
-    // naive sentence splitter; can swap for NLP later
-    raw.split(/(?<=[.!?])\s+/).forEach(sentence => {
+    // NLP sentence splitting using compromise.js
+    console.log("🔍 [TextSplitter] NLP sentence splitting");
+    const doc = nlp(raw);
+    const sentences = doc.sentences().out('array');
+
+    sentences.forEach(sentence => {
       if ((buf + " " + sentence).trim().length <= limit) {
         buf = (buf ? buf + " " : "") + sentence;
       } else {

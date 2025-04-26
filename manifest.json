@@ -14,7 +14,7 @@
   "content_scripts": [
   {
     "matches": ["https://chatgpt.com/*"],
-    "js": ["content/chatgpt-helper.js"],
+    "js": ["libs/compromise.min.js", "content/chatgpt-helper.js"],
     "css": ["content/chatgpt-helper.css"],
     "run_at": "document_idle"
   }
