@@ -31,6 +31,11 @@ class ChatGPTHelper {
       bar.id = 'chatgpt-helper-panel-bar';
       document.body.appendChild(bar);
     }
+
+    // ⌨️  ESC → đóng panel trên cùng
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') ChatGPTHelper.closeTopPanel();
+    });
   }
 
   /* UI helpers */
@@ -177,6 +182,20 @@ class ChatGPTHelper {
   static mountPanel(el){
     el.classList.add('helper-panel');
     document.getElementById('chatgpt-helper-panel-bar').appendChild(el);
+  }
+
+  /** Đóng panel trên cùng (nếu có) */
+  static closeTopPanel() {
+    const bar = document.getElementById('chatgpt-helper-panel-bar');
+    if (!bar) return;
+
+    // panel cuối cùng trong flex-bar = panel được mở sau cùng
+    const last = bar.querySelector('.helper-panel:last-child');
+    if (!last) return;
+
+    // tìm nút close bên trong panel và click
+    const closeBtn = last.querySelector('.panel-close');
+    closeBtn?.click();
   }
 }
 
