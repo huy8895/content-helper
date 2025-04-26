@@ -527,12 +527,19 @@ class TextSplitter {
     console.log("✂️ [TextSplitter] init");
     this.onClose = onClose;
     this.chunks  = [];
+    this.status  = [];      // ← song song chunks: "pending" | "done" | "error"
     this.sequencer = null;
 
     /* ⬇️  Lấy state trước khi render */
     PanelState.load('TextSplitter', (saved) => {
-      this.savedState = saved || { text:'', limit:1000, chunks:[] };
-      this.chunks = [...this.savedState.chunks];
+        // ghép state cũ vào mẫu mặc định ➜ mọi field luôn tồn tại
+        const def = {
+            text: '', limit: 1000, chunks: [], status: [],
+            running: false, paused: false, nextIdx: 0
+        };
+        this.savedState = Object.assign(def, saved || {});
+        this.chunks = [...(this.savedState.chunks  || [])];
+        this.status = [...(this.savedState.status  || [])];
       this._render();
       /* Nếu có dữ liệu cũ thì hiển thị ngay */
       if (this.savedState.text) {
@@ -540,6 +547,29 @@ class TextSplitter {
         this.el.querySelector('#ts-input').value  = this.savedState.text;
         this.el.querySelector('#ts-limit').value  = this.savedState.limit;
         this.el.querySelector('#ts-start').disabled = !this.chunks.length;
+
+
+        // ► Khôi phục nút điều khiển
+        const start  = this.el.querySelector('#ts-start');
+        const pause  = this.el.querySelector('#ts-pause');
+        const resume = this.el.querySelector('#ts-resume');
+
+        if (saved.running) {
+          if (saved.paused) {                  // panel đóng khi đang pause
+            start.disabled  = true;
+            pause.disabled  = true;
+            resume.disabled = false;
+          } else {                             // panel đóng trong khi đang chạy
+            start.disabled  = true;
+            pause.disabled  = false;
+            resume.disabled = true;
+            this._resumeSequencer(saved.nextIdx);   // ⬅ bước 4
+          }
+        } else {                                 // idle
+          start.disabled  = !this.chunks.length;
+          pause.disabled  = true;
+          resume.disabled = true;
+        }
       }
     });
   }
@@ -583,11 +613,19 @@ class TextSplitter {
     const btnPause  = this.el.querySelector('#ts-pause');
     const btnResume = this.el.querySelector('#ts-resume');
 
-    btnStart.onclick  = () => this._startSend();
-    btnPause.onclick  = () => { this.sequencer?.pause();
-      btnPause.disabled = true;  btnResume.disabled = false; };
-    btnResume.onclick = () => { this.sequencer?.resume();
-      btnResume.disabled = true; btnPause.disabled = false; };
+    btnStart.onclick = () => this._startSend();
+    btnPause.onclick = () => {
+      this.sequencer?.pause();
+      btnPause.disabled = true;
+      btnResume.disabled = false;
+      PanelState.save('TextSplitter', this._currentState(this.sequencer.idx,true,true));
+    };
+    btnResume.onclick = () => {
+      this.sequencer?.resume();
+      btnResume.disabled = true;
+      btnPause.disabled = false;
+      PanelState.save('TextSplitter', this._currentState(this.sequencer.idx,false,true));
+    };
 
     // this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
 
@@ -596,11 +634,13 @@ class TextSplitter {
 
     /* Theo dõi thay đổi input + limit → update cache */
     const syncState = () => {
-      PanelState.save('TextSplitter', {
-        text:  this.el.querySelector('#ts-input').value,
-        limit: +this.el.querySelector('#ts-limit').value || 1000,
-        chunks: this.chunks
-      });
+      PanelState.save('TextSplitter',
+          this._currentState(                       // PATCH: lưu full state
+              this.sequencer?.idx    || 0,
+              this.sequencer?.paused || false,
+              !!this.sequencer
+          )
+      );
     };
     this.el.querySelector('#ts-input').addEventListener('input',  syncState);
     this.el.querySelector('#ts-limit').addEventListener('change', syncState);
@@ -620,6 +660,7 @@ class TextSplitter {
     }
 
     this.chunks.length = 0;          // reset
+    this.status.length = 0;
     let buf = "";
 
     // NLP sentence splitting using compromise.js
@@ -636,6 +677,7 @@ class TextSplitter {
       }
     });
     if (buf) this.chunks.push(buf);
+    this.status = this.chunks.map(()=> 'pending');
 
     this._display();
     const btnStart = this.el.querySelector('#ts-start');
@@ -644,6 +686,8 @@ class TextSplitter {
     btnStart.disabled  = this.chunks.length === 0;
     btnPause.disabled  = true;
     btnResume.disabled = true;
+    // (sau this._display(); và set trạng thái nút)
+    PanelState.save('TextSplitter', this._currentState(0, false, false)); // PATCH: đảm bảo lưu sau Split
   }
 
   /* ---------- Display buttons for each chunk ---------- */
@@ -657,6 +701,13 @@ class TextSplitter {
       const btn = document.createElement("button");
       btn.className = "ts-send-btn";
       btn.textContent = `Copy #${idx + 1}`;
+      if (this.status[idx] === 'done'){
+        btn.disabled = true;
+        btn.textContent = '✅ Done';
+      } else if (this.status[idx] === 'error'){
+        btn.disabled = false;
+        btn.textContent = '⚠️ Error';
+      }
       btn.onclick = () => this._copySegment(idx, btn);
 
       // preview paragraph (optional)
@@ -680,49 +731,77 @@ class TextSplitter {
   /* ---------- Send a single chunk ---------- */
   async _copySegment(idx, btn) {
     console.log("🔄 [TextSplitter] copy segment", idx);
-    btn.disabled = true;
+    btn.disabled   = true;
     btn.textContent = "Sending…";
+
     try {
       await this._sendPrompt(this.chunks[idx]);
       await this._waitForResponse();
-      btn.textContent = "✅ Done";
+
+      // --- THÀNH CÔNG ---
+      btn.textContent   = "✅ Done";
+      this.status[idx]  = "done";
+
     } catch (err) {
-      console.log('[⛔️⛔️⛔️]_copySegment err', err);
-      btn.textContent = "⚠️ Error";
+      // --- THẤT BẠI ---
+      console.error("[TextSplitter] send error:", err);
+      btn.disabled      = false;          // cho phép gửi lại
+      btn.textContent   = "⚠️ Error";
+      this.status[idx]  = "error";
     }
+
+    /* Dù thành công hay lỗi đều lưu lại state */
+    PanelState.save("TextSplitter",
+        this._currentState(
+            this.sequencer ? this.sequencer.idx    : 0,
+            this.sequencer ? this.sequencer.paused : false,
+            !!this.sequencer                        // PATCH: thêm tham số thứ 3 = running
+        )
+    );
   }
 
   /* ---------- Send ALL chunks sequentially ---------- */
   _sendAll(){ this._startSend(); }
 
 
-  _startSend(){
-    if(!this.chunks.length) return alert("No chunks – bấm Split trước đã!");
+  _startSend() {
+    if (!this.chunks.length) return alert("No chunks – bấm Split trước đã!");
 
     const btnStart  = this.el.querySelector('#ts-start');
     const btnPause  = this.el.querySelector('#ts-pause');
     const btnResume = this.el.querySelector('#ts-resume');
 
-    // khởi tạo PromptSequencer
+    /* === lấy danh sách còn pending, giữ lại chỉ số gốc === */
+    const todo = this.chunks
+        .map((c, i) => ({ c, i }))
+        .filter(o => this.status[o.i] === 'pending');
+
+    if (!todo.length) return;   // chẳng còn gì để gửi
+
     this.sequencer = new PromptSequencer(
-        this.chunks,
+        todo.map(o => o.c),                // chỉ văn bản
         this._sendPrompt.bind(this),
         this._waitForResponse.bind(this),
-        (idx)=>{                            // callback sau mỗi chunk
-          const rowBtn = this.el.querySelectorAll('.ts-send-btn')[idx-1];
-          if(rowBtn){ rowBtn.disabled = true; rowBtn.textContent = '✅ Done'; }
+        (idx) => {                         // idx bắt đầu từ 1
+          const real   = todo[idx - 1].i;  // chỉ số gốc
+          const rowBtn = this.el.querySelectorAll('.ts-send-btn')[real];
+          if (rowBtn) { rowBtn.disabled = true; rowBtn.textContent = '✅ Done'; }
+          this.status[real] = 'done';      // <– cập nhật trạng thái
 
-          // hoàn tất
-          if(idx === this.chunks.length){
-            btnPause.disabled = true;
+          PanelState.save('TextSplitter', this._currentState(real + 1, false, true));
+
+          if (idx === todo.length) {       // <– so với todo
+            btnPause.disabled  = true;
             btnResume.disabled = true;
-            btnStart.disabled = false;
+            btnStart.disabled  = false;
             this.sequencer = null;
+            PanelState.save('TextSplitter', this._currentState(0, false, false));
           }
         }
     );
 
-    // cập nhật UI
+    // Lưu & cập nhật UI
+    PanelState.save('TextSplitter', this._currentState(0, false, true));
     btnStart.disabled  = true;
     btnPause.disabled  = false;
     btnResume.disabled = true;
@@ -730,6 +809,65 @@ class TextSplitter {
     this.sequencer.start();
   }
 
+
+  _currentState(nextIdx = 0, paused = false, running = false){
+    return {
+      text : this.el.querySelector('#ts-input').value,
+      limit: +this.el.querySelector('#ts-limit').value || 1000,
+      chunks: this.chunks,
+      status: this.status,
+      nextIdx,
+      paused,
+      running
+    };
+  }
+
+  _resumeSequencer(startIdx = 0) {
+    // lấy những chunk còn PENDING kể từ startIdx
+    const todo = this.chunks
+        .map((c, i) => ({c, i}))
+        .filter(o => o.i >= startIdx && this.status[o.i] === 'pending');
+
+    if (!todo.length) return;        // không còn gì để làm
+
+    const btnStart = this.el.querySelector('#ts-start');
+    const btnPause = this.el.querySelector('#ts-pause');
+    const btnResume = this.el.querySelector('#ts-resume');
+
+    this.sequencer = new PromptSequencer(
+        todo.map(o => o.c),
+        async (text) => {
+          await this._sendPrompt(text);
+        },
+        this._waitForResponse.bind(this),
+        (idx) => {                               // idx bắt đầu từ 1
+          const real = todo[idx - 1].i;
+          const rowBtn = this.el.querySelectorAll('.ts-send-btn')[real];
+          if (rowBtn) {
+            rowBtn.disabled = true;
+            rowBtn.textContent = '✅ Done';
+          }
+          this.status[real] = 'done';
+          PanelState.save('TextSplitter',
+              this._currentState(real + 1, false, true)   // PATCH: truyền running = true
+          );
+
+          if (idx === todo.length) {            // hoàn tất
+            btnPause.disabled = true;
+            btnResume.disabled = true;
+            btnStart.disabled = false;
+            this.sequencer = null;
+            PanelState.save('TextSplitter',
+                this._currentState(0, false, false)         // PATCH: hết vòng – running = false
+            );          }
+        }
+    );
+    btnStart.disabled = true;
+    btnPause.disabled = false;
+    btnResume.disabled = true;
+    PanelState.save('TextSplitter', this._currentState(startIdx, false, true));
+    this.sequencer.start();
+  }
   /* ---------- Re-use ScenarioRunner helpers ---------- */
   _sendPrompt      = ScenarioRunner.prototype._sendPrompt;
   _waitForResponse = ScenarioRunner.prototype._waitForResponse;
@@ -738,11 +876,12 @@ class TextSplitter {
   /* ---------- Clean up ---------- */
   destroy() {
     console.log("❌ [TextSplitter] destroy");
-    PanelState.save('TextSplitter', {
-      text: this.el.querySelector('#ts-input')?.value || '',
-      limit: +this.el.querySelector('#ts-limit')?.value || 1000,
-      chunks: this.chunks
-    });
+    PanelState.save('TextSplitter', this._currentState(
+        this.sequencer?.idx || 0,
+        this.sequencer?.paused || false,
+        !!this.sequencer
+    ));
+
 
     this.el?.remove();
     this.onClose?.();
