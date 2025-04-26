@@ -597,9 +597,10 @@ class TextSplitter {
     
     <!-- controls mới -->
     <div class="ts-controls">
-      <button id="ts-start"  disabled>▶️ Send All</button>
-      <button id="ts-pause"  disabled>⏸ Pause</button>
-      <button id="ts-resume" disabled>▶️ Resume</button>
+    <button id="ts-start"  disabled>▶️ Send All</button>
+    <button id="ts-pause"  disabled>⏸ Pause</button>
+    <button id="ts-resume" disabled>▶️ Resume</button>
+    <button id="ts-reset"  class="ts-btn ts-btn-danger">🔄 Reset</button>
     </div>
     
     <div id="ts-results" class="ts-results"></div>
@@ -612,6 +613,7 @@ class TextSplitter {
     const btnStart  = this.el.querySelector('#ts-start');
     const btnPause  = this.el.querySelector('#ts-pause');
     const btnResume = this.el.querySelector('#ts-resume');
+    const btnReset  = this.el.querySelector('#ts-reset');   // ⬅️ lấy nút reset
 
     btnStart.onclick = () => this._startSend();
     btnPause.onclick = () => {
@@ -636,7 +638,8 @@ class TextSplitter {
       const idxNow = this.sequencer ? this.sequencer.idx : (this.savedState?.nextIdx || 0);
       PanelState.save('TextSplitter', this._currentState(idxNow, false, true));
     };
-    // this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
+    /* ✅ gán handler reset */
+    btnReset.onclick  = () => this._reset();     // ⬅️ dòng bạn hỏi
 
     ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
@@ -654,6 +657,33 @@ class TextSplitter {
     this.el.querySelector('#ts-input').addEventListener('input',  syncState);
     this.el.querySelector('#ts-limit').addEventListener('change', syncState);
 
+  }
+
+  _reset(){
+    if(!confirm('Reset all chunks and clear saved state?')) return;
+
+    // 1️⃣ Ngưng sequencer nếu đang chạy
+    if (this.sequencer){
+      this.sequencer.stop();
+      this.sequencer = null;
+    }
+
+    // 2️⃣ Xoá dữ liệu trong bộ nhớ
+    this.chunks = [];
+    this.status = [];
+
+    // 3️⃣ Dọn sạch UI
+    this.el.querySelector('#ts-input').value = '';
+    this.el.querySelector('#ts-results').innerHTML = '';
+
+    this.el.querySelector('#ts-start').disabled  = true;
+    this.el.querySelector('#ts-pause').disabled  = true;
+    this.el.querySelector('#ts-resume').disabled = true;
+
+    // 4️⃣ Xoá cache đã lưu
+    PanelState.clear('TextSplitter');
+
+    console.log('🔄 [TextSplitter] reset hoàn tất');
   }
 
   /* ---------- Split logic ---------- */

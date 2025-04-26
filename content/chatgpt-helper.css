@@ -304,16 +304,21 @@
   gap:6px;
   margin:8px 0;
 }
-.ts-controls button{
-  flex:1 1 0;
-  padding:6px;
-  font-size:13px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#4CAF50;
-  color:#fff;
-  transition:background .2s;
-}
+
 .ts-controls button:hover{background:#45a049;}
 .ts-controls button[disabled]{opacity:.4; cursor:default;}
+
+.ts-btn-danger { background: #e74c3c; }
+.ts-btn-danger:hover { background: #c0392b; }
+
+.ts-controls button:not(.ts-btn-danger) {
+  flex: 1 1 0;
+  padding: 6px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4CAF50;
+  color: #fff;
+  transition: background .2s;
+}
