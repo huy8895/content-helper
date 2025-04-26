@@ -179,10 +179,21 @@ class ChatGPTHelper {
     btn.textContent = "×";
     btn.title = "Close";
 
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      onClose();
+    // Ngăn *tuyệt đối* sự kiện lan toả
+    const stopAll = (ev) => {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();   // chặn hoàn toàn
     };
+
+    // 1️⃣ Chặn mousedown/mouseup – không cho panel nhận bringToFront
+    btn.addEventListener("mousedown", stopAll, true); // capture phase
+    btn.addEventListener("mouseup",   stopAll, true);
+
+    // 2️⃣ Khi click → đóng panel
+    btn.addEventListener("click", (ev) => {
+      stopAll(ev);        // chặn thêm một lần
+      onClose();          // gọi hàm hủy
+    });
 
     panelEl.appendChild(btn);
   }
