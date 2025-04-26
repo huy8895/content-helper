@@ -908,7 +908,11 @@ class TextSplitter {
     this.sequencer.start();
   }
   /* ---------- Re-use ScenarioRunner helpers ---------- */
-  _sendPrompt      = ScenarioRunner.prototype._sendPrompt;
+  _sendPrompt(text) {
+    const prefixed = `Repeat this text for me, please. Your reply must only the text: ${text}`;
+    return ScenarioRunner.prototype._sendPrompt.call(this, prefixed);
+  }
+
   _waitForResponse = ScenarioRunner.prototype._waitForResponse;
   _waitForElement   = ScenarioRunner.prototype._waitForElement;   // 👈 thêm dòng này
 
