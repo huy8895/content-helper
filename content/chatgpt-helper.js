@@ -149,12 +149,17 @@ class ChatGPTHelper {
 
       if (!el.dataset.free) {           // tách khỏi bar 1 lần duy nhất
         el.dataset.free = "1";
+
+        /* ✨ tắt animation để không flash */
+        el.style.animation = "none";
+
         el.style.position = "fixed";
         el.style.left  = rect.left  + "px";
         el.style.top   = rect.top   + "px";
         el.style.width = rect.width + "px";
         document.body.appendChild(el);
       }
+
 
       const onMouseMove = (ev) => {
         el.style.left = ev.clientX - shiftX + "px";
@@ -202,22 +207,36 @@ class ChatGPTHelper {
    * Hàm tiện ích đưa panel vào bar
    * @param {T} el
    */
+  /* ---------- mountPanel: đưa panel vào thanh bar ---------- */
   static mountPanel(el){
     el.classList.add('helper-panel');
+
     const bar = document.getElementById('chatgpt-helper-panel-bar');
     bar.appendChild(el);
 
-    /* click (hoặc bất kỳ mousedown) => nổi lên trên cùng */
-    el.addEventListener('mousedown', () => ChatGPTHelper.bringToFront(el));
+    /* CHỈ khi bấm vào tiêu đề/đầu thanh mới đưa panel lên trên.
+       – ScenarioBuilder:  .sb-title
+       – ScenarioRunner :  .sr-header
+       – TextSplitter   :  .ts-title                                  */
+    const handle = el.querySelector('.sb-title, .sr-header, .ts-title');
+    if(handle){
+      handle.style.userSelect = 'none';          // tránh chọn chữ khi kéo
+      handle.addEventListener('mousedown', () => ChatGPTHelper.bringToFront(el));
+    }
   }
 
-  /* ----- bringToFront: logic chung cho cả panel trong bar & panel thả tự do ----- */
+  /* ---------- bringToFront: luôn đưa panel lên trên cùng ---------- */
   static bringToFront(el){
-    if (el.dataset.free) {               // panel đang “floating”
-      el.style.zIndex = ++ChatGPTHelper.zTop;   // tăng z-index
-    } else {
+    if (el.dataset.free){                        // panel đã “floating”
+      el.style.zIndex = ++ChatGPTHelper.zTop;    // chỉ đổi z-index
+    }else{                                       // panel còn trong thanh bar
       const bar = document.getElementById('chatgpt-helper-panel-bar');
-      bar.appendChild(el);               // đưa về cuối flex-bar
+
+      // Nếu đã là phần tử cuối rồi thì thôi – tránh re-append gây nháy
+      if (bar.lastElementChild !== el){
+        el.style.animation = 'none';             // tắt hiệu ứng fadeIn
+        bar.appendChild(el);                     // đưa về cuối thanh
+      }
     }
   }
 
