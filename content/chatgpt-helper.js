@@ -1140,7 +1140,7 @@ class AudioDownloader {
     // Event listeners
     this.el.querySelector("#ad-voice").onchange  = () => this._syncState();
     this.el.querySelector("#ad-format").onchange = () => this._syncState();
-    this.el.querySelector("#ad-dlall").onclick   = () => this._downloadAll();
+    this.el.querySelector("#ad-dlall").onclick   = () => this._downloadAllZip();
     this.el.querySelector("#ad-reset").onclick   = () => this._reset();
     this.el.querySelector("#ad-select-all").onchange = (e)=> this._toggleAll(e.target.checked);
   }
@@ -1313,6 +1313,40 @@ class AudioDownloader {
       setTimeout(()=> row.querySelector("button").click(), i*400);
     });
   }
+
+  _downloadAllZip() {
+    console.log(      "🔊 [AudioDownloader] download all audio files audio.zip");
+    const ids = Array.from(
+        this.el.querySelectorAll('#ad-list > div')
+    )
+        .filter(r => r.querySelector('input').checked)
+        .map(r => r.dataset.mid);
+
+    if (!ids.length) return alert('Chọn ít nhất 1 mục để zip');
+
+    chrome.runtime.sendMessage({
+      action        : 'downloadAudioZip',
+      messageIds    : ids,
+      conversationId: this.data.conversationId,
+      requestHeaders: this.data.requestHeaders,
+      selectedVoice : this.savedState.voice,
+      format        : this.savedState.format
+    }, (res) => {
+      if (res.status === 'completed') {
+        // đánh dấu đã xong
+        ids.forEach(id => {
+          if (!this.savedState.downloaded.includes(id))
+            this.savedState.downloaded.push(id);
+        });
+        this._syncState();
+        alert('Tải audio.zip thành công');
+        this._renderRows(this._lastMessages); // hoặc reload list
+      } else {
+        alert('Zip thất bại: ' + res.error);
+      }
+    });
+  }
+
 
   _toggleAll(state){
     this.el.querySelectorAll("#ad-list input[type=checkbox]")
