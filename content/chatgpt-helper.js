@@ -1008,9 +1008,13 @@ class PanelState {
 /*********************************************
  * AudioDownloader – download TTS audio *
  *********************************************/
+/*********************************************
+ * AudioDownloader – download TTS audio      *
+ *********************************************/
 class AudioDownloader {
   constructor(onClose) {
     this.onClose = onClose;
+    this.inFlight = 0;
     this._render();
     this._loadMessages();
   }
@@ -1019,14 +1023,14 @@ class AudioDownloader {
   _render() {
     this.el = document.createElement("div");
     this.el.id = "audio-downloader";
-    this.el.className = "panel-box ts-panel";   // re-use TS style
+    this.el.className = "panel-box ts-panel";
 
     this.el.innerHTML = `
       <h3 class="ts-title">🎵 Audio Downloader</h3>
 
       <div style="display:flex; gap:8px; margin-bottom:8px;">
         <select id="ad-voice"  class="ts-limit">
-          <option value="shade">Monday</option>
+          <option value="shade" selected>Monday</option>
           <option value="glimmer">Sol</option>
           <option value="vale">Vale</option>
           <option value="cove">Cove</option>
@@ -1043,23 +1047,32 @@ class AudioDownloader {
           <option value="aac">aac</option>
         </select>
 
-        <button id="ad-dlall" class="ts-btn ts-btn-accent" style="flex:1">Download All</button>
+        <button id="ad-dlall" class="ts-btn ts-btn-accent" style="flex:1">
+          Download&nbsp;All
+        </button>
       </div>
 
-      <div id="ad-progress" style="font-size:12px; margin:4px 0 8px; color:#0369a1;"></div>
+      <label style="font-size:12px;display:block;margin-bottom:4px;">
+        <input type="checkbox" id="ad-select-all" /> Select all
+      </label>
+
+      <div id="ad-progress"
+           style="font-size:12px; margin:4px 0 8px; color:#0369a1;"></div>
+
       <div id="ad-list" class="ts-results"></div>
     `;
 
-    ChatGPTHelper.mountPanel(this.el);
-
-    /* 👇  Đưa panel về đầu thanh bar (trái nhất) */
-    const bar = document.getElementById('chatgpt-helper-panel-bar');
-    if (bar.firstChild) bar.insertBefore(this.el, bar.firstChild);
-
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
+    ChatGPTHelper.mountPanel(this.el);                 // vào thanh bar
+    ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // kéo
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
-    this.el.querySelector("#ad-dlall").onclick = () => this._downloadAll();
+    // nút Download All
+    this.el.querySelector("#ad-dlall")
+        .onclick = () => this._downloadAll();
+
+    // checkbox “select all”
+    this.el.querySelector("#ad-select-all")
+        .onchange = (e)=> this._toggleAll(e.target.checked);
   }
 
   /* ---------- Load assistant message-ids ---------- */
@@ -1067,61 +1080,132 @@ class AudioDownloader {
     chrome.storage.local.get(
         ["responseData", "conversationId", "requestHeaders"],
         (data) => {
-          this.data = data;                          // lưu lại để dùng khi gửi
+          this.data = data;
           const mapping = data.responseData?.mapping || {};
           const msgs = Object.values(mapping)
               .filter(m => m.message?.author?.role === "assistant"
                   && m.message?.content?.content_type === "text")
-              .sort((a, b) => a.message.create_time - b.message.create_time)
-              .map(m => m.message.id);
+              .sort((a,b)=>a.message.create_time - b.message.create_time)
+              .map(m => ({
+                id   : m.message.id,
+                text : m.message.content.parts[0].slice(0,80) + "…"
+              }));
 
-          this._renderButtons(msgs);
+          this._renderRows(msgs);
         }
     );
   }
 
-  _renderButtons(ids) {
+  _addQuestion(value = "") {
+    // ⬇︎ 1. make a row wrapper
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.gap = "6px";
+    row.style.marginBottom = "6px";
+
+    // ⬇︎ 2. the editable question field
+    const input = document.createElement("input");
+    input.type        = "text";
+    input.placeholder = "Câu hỏi…";
+    input.className   = "question-input";
+    input.value       = value;
+    input.style.flex  = "1 1 auto";
+
+    // ⬇︎ 3. the remove (✖) button
+    const del = document.createElement("button");
+    del.textContent = "✖";
+    del.title       = "Remove this line";
+    del.style.cssText = `
+      flex:0 0 28px;  background:#e74c3c; color:#fff; border:none;
+      border-radius:4px; cursor:pointer; font-weight:bold;`;
+    del.onclick = () => row.remove();   // ← delete the whole row
+
+    // ⬇︎ 4. stitch everything together
+    row.append(input, del);
+    this.el.querySelector("#questions-container").appendChild(row);
+  }
+
+
+  _renderRows(rows) {
     const wrap = this.el.querySelector("#ad-list");
     wrap.innerHTML = "";
-    if (!ids.length) {
+
+    if (!rows.length){
       wrap.textContent = "No assistant messages detected.";
       return;
     }
 
-    ids.forEach((id, idx) => {
+    rows.forEach((msg, idx)=>{
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.marginBottom = "6px";
+      row.dataset.mid = msg.id;
+
+      // checkbox
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = true;
+      cb.style.marginRight = "6px";
+
+      // button
       const btn = document.createElement("button");
       btn.className = "ts-btn";
-      btn.style.width = "100%";
-      btn.style.marginBottom = "6px";
-      btn.textContent = `Download #${idx + 1}`;
-      btn.dataset.mid = id;
-      btn.onclick = () => this._download(btn, idx + 1);
-      wrap.appendChild(btn);
+      btn.style.flex = "0 0 120px";
+      btn.textContent = `Download #${idx+1}`;
+      btn.onclick = ()=> this._download(btn, idx+1);
+
+      // preview
+      const span = document.createElement("span");
+      span.style.fontSize = "11px";
+      span.style.marginLeft = "8px";
+      span.style.color = "#555";
+      span.textContent = msg.text;
+
+      row.append(cb, btn, span);
+      wrap.appendChild(row);
     });
   }
 
-  /* ---------- Download helpers ---------- */
-  _download(btn, ordinal) {
+  /* ---------- helpers ---------- */
+  _toggleAll(state){
+    this.el.querySelectorAll("#ad-list input[type=checkbox]")
+        .forEach(cb => cb.checked = state);
+  }
+
+  _downloadAll(){
+    const rows = Array.from(
+        this.el.querySelectorAll("#ad-list > div")
+    ).filter(r => r.querySelector("input").checked);
+
+    rows.forEach( (row,i) =>{
+      setTimeout(()=> row.querySelector("button").click(), i*400);
+    });
+  }
+
+  _download(btn, ordinal){
+    const row   = btn.parentElement;
+    const msgId = row.dataset.mid;
+    const {conversationId, requestHeaders} = this.data;
     const voice  = this.el.querySelector("#ad-voice").value;
     const format = this.el.querySelector("#ad-format").value;
-    const { conversationId, requestHeaders } = this.data;
 
     btn.disabled = true;
     btn.textContent = "Downloading…";
     this._updateProgress(true);
 
     chrome.runtime.sendMessage({
-      action        : "downloadAudio",
+      action        :"downloadAudio",
       indexCell     : ordinal,
       conversationId: conversationId,
-      messageId     : btn.dataset.mid,
+      messageId     : msgId,
       requestHeaders: requestHeaders,
       selectedVoice : voice,
       format        : format
-    }, (res) => {
-      if (res?.status === "completed") {
+    }, (res)=>{
+      if(res?.status==="completed"){
         btn.textContent = "✅ Downloaded";
-      } else {
+      }else{
         btn.textContent = "⚠️ Failed";
         btn.disabled = false;
       }
@@ -1129,27 +1213,20 @@ class AudioDownloader {
     });
   }
 
-  _downloadAll() {
-    const buttons = Array.from(this.el.querySelectorAll("button.ts-btn"))
-        .filter(b => !b.disabled);
-    buttons.forEach((b, idx) => {
-      setTimeout(() => b.click(), idx * 450); // nhẹ nhàng xếp hàng
-    });
-  }
-
-  _updateProgress(starting) {
-    this.inFlight = (this.inFlight || 0) + (starting ? 1 : -1);
-    const p = this.el.querySelector("#ad-progress");
-    p.textContent = this.inFlight
-        ? `🔊 Downloading… (${this.inFlight} running)`
+  _updateProgress(start){
+    this.inFlight += start?1:-1;
+    const box = this.el.querySelector("#ad-progress");
+    box.textContent = this.inFlight
+        ? `🔊 Downloading… (${this.inFlight})`
         : "";
   }
 
-  destroy() {
+  destroy(){
     this.el?.remove();
     this.onClose?.();
   }
 }
+
 
 
 

@@ -9,7 +9,14 @@
   "background": {
     "service_worker": "background/background.js"
   },
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "webRequest",
+    "downloads",
+    "windows"
+  ],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
   {
