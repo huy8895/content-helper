@@ -89,7 +89,6 @@
   z-index: 9999;
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   font-family: 'Segoe UI', sans-serif;
-  animation: fadeIn 0.3s ease;
 }
 
 #scenario-runner select {
@@ -238,6 +237,7 @@
   font-family:"Segoe UI",sans-serif;
   flex:0 0 auto;           /* <== giữ kích thước cố định trong flex-bar */
   position:relative;       /* để .panel-close bám theo */
+  animation: fadeIn 0.3s ease;
 }
 
 /* nút đóng, đặt !important để chắc chắn thắng mọi id-selector */
