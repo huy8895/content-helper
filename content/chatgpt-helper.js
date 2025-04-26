@@ -25,6 +25,12 @@ class ChatGPTHelper {
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
     this._observer.observe(document.body, { childList: true, subtree: true });
+
+    if(!document.getElementById('chatgpt-helper-panel-bar')){
+      const bar = document.createElement('div');
+      bar.id = 'chatgpt-helper-panel-bar';
+      document.body.appendChild(bar);
+    }
   }
 
   /* UI helpers */
@@ -94,11 +100,6 @@ class ChatGPTHelper {
       this.splitter = null;
       return;
     }
-    // đóng panel khác nếu đang mở
-    this.builder?.destroy();
-    this.builder = null;
-    this.runner?.destroy();
-    this.runner = null;
 
     console.log("✂️  [ChatGPTHelper] Opening TextSplitter");
     this.splitter = new TextSplitter(() => (this.splitter = null));
@@ -169,6 +170,14 @@ class ChatGPTHelper {
     panelEl.appendChild(btn);
   }
 
+  /**
+   * Hàm tiện ích đưa panel vào bar
+   * @param {T} el
+   */
+  static mountPanel(el){
+    el.classList.add('helper-panel');
+    document.getElementById('chatgpt-helper-panel-bar').appendChild(el);
+  }
 }
 
 /***********************************
@@ -200,7 +209,7 @@ class ScenarioBuilder {
       <pre id="json-preview"></pre>
 `;
 
-    document.body.appendChild(this.el);
+    ChatGPTHelper.mountPanel(this.el);
 
     this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
     this.el.querySelector("#export-json").addEventListener("click", () => this._export());
@@ -308,7 +317,7 @@ class ScenarioRunner {
       <label for="scenario-select">Chọn kịch bản:</label>
       <select id="scenario-select"></select>
       <button id="start-scenario">▶️ Bắt đầu</button>`;
-    document.body.appendChild(this.el);
+    ChatGPTHelper.mountPanel(this.el);
 
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const select    = this.el.querySelector("#scenario-select");
@@ -418,7 +427,7 @@ class TextSplitter {
     /** Panel container */
     this.el = document.createElement("div");
     this.el.id = "text-splitter";
-    this.el.className = "ts-panel";
+    this.el.className = "ts-panel panel-box";
 
     /** Panel HTML */
     this.el.innerHTML = `
@@ -431,18 +440,15 @@ class TextSplitter {
         <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
         <button id="ts-split"   class="ts-btn">Split</button>
         <button id="ts-sendall" class="ts-btn ts-btn-accent">Send All</button>
-        <button id="ts-close"   class="ts-btn" title="Close">×</button>
       </div>
 
       <div id="ts-results" class="ts-results"></div>
     `;
-    document.body.appendChild(this.el);
+    ChatGPTHelper.mountPanel(this.el);
 
     /* events */
     this.el.querySelector("#ts-split").onclick = () => this._split();
     this.el.querySelector("#ts-sendall").onclick = () => this._sendAll();
-    this.el.querySelector("#ts-close").onclick = () => this.destroy();
-
 
     ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());

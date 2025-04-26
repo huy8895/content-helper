@@ -1,7 +1,6 @@
 /* Giao diện khung tạo kịch bản */
 #scenario-builder {
-  position: fixed;
-  bottom:90px; right:400px; width:360px;
+  width:360px;
   background:#fff;          /* trước là #f9f9f9 */
   border-radius:10px;       /* trước 12 */
   padding:12px;             /* trước 16 */
@@ -83,8 +82,7 @@
 
 /* Khung chọn chạy kịch bản */
 #scenario-runner {
-  position: fixed;
-  bottom:90px; left: 20px; width:260px;
+  width:260px;
   border: 1px solid #ddd;
   padding: 16px;
   border-radius: 12px;
@@ -158,9 +156,6 @@
 
 /* ---------- Text-Splitter panel ---------- */
 .ts-panel{
-  position:fixed;
-  bottom:90px;      /* bật cao lên 70px so với button bar */
-  right:20px;       /* sát mép phải */
   width: 360px;
   background: #fff;
   border: 1px solid #ddd;
@@ -232,16 +227,17 @@
 .ts-results button[disabled]{ background:#6c5ce7; cursor: default; }
 .ts-title{ cursor: move; user-select:none; }
 
-/* ==== base style cho mọi panel nổi ==== */
+/* ==== base style cho mọi panel ==== */
 .panel-box{
-  position:fixed;
-  background:#fff;          /* đồng nhất với Text Splitter */
+  /* bỏ position/bottom/left/z-index – giao cho flex-bar */
+  background:#fff;
   border:1px solid #ddd;
   border-radius:10px;
   padding:14px;
-  z-index:9999;
   box-shadow:0 8px 24px rgba(0,0,0,.15);
   font-family:"Segoe UI",sans-serif;
+  flex:0 0 auto;           /* <== giữ kích thước cố định trong flex-bar */
+  position:relative;       /* để .panel-close bám theo */
 }
 
 /* nút đóng, đặt !important để chắc chắn thắng mọi id-selector */
@@ -261,3 +257,14 @@
   padding: 0;
 }
 .panel-close:hover{ background:#c0392b !important; }
+
+#chatgpt-helper-panel-bar{
+  position:fixed;
+  bottom:90px;             /* cao bằng dãy nút */
+  left:20px; right:20px;
+  display:flex;
+  gap:20px;                /* khoảng giữa các panel */
+  pointer-events:none;     /* click xuyên phần trống */
+  justify-content:center;  /* căn giữa màn hình */
+}
+.helper-panel{pointer-events:auto;}     /* panel vẫn bấm được */
