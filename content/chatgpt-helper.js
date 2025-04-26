@@ -1315,15 +1315,31 @@ class AudioDownloader {
   }
 
   _downloadAllZip() {
-    console.log(      "🔊 [AudioDownloader] download all audio files audio.zip");
+    console.log("🔊 [AudioDownloader] download all audio files audio.zip");
+
+    // 1) Lấy reference đến nút Download All
+    const dlAllBtn = this.el.querySelector('#ad-dlall');
+
+    // 2) Chuyển UI sang trạng thái downloading
+    dlAllBtn.textContent = 'Downloading…';
+    dlAllBtn.disabled = true;
+
+    // 3) Thu thập các messageId được chọn
     const ids = Array.from(
         this.el.querySelectorAll('#ad-list > div')
     )
         .filter(r => r.querySelector('input').checked)
         .map(r => r.dataset.mid);
 
-    if (!ids.length) return alert('Chọn ít nhất 1 mục để zip');
+    if (!ids.length) {
+      alert('Chọn ít nhất 1 mục để zip');
+      // Phục hồi UI nếu không có mục nào
+      dlAllBtn.textContent = 'Download All';
+      dlAllBtn.disabled = false;
+      return;
+    }
 
+    // 4) Gửi yêu cầu downloadAudioZip vào background
     chrome.runtime.sendMessage({
       action        : 'downloadAudioZip',
       messageIds    : ids,
@@ -1332,6 +1348,7 @@ class AudioDownloader {
       selectedVoice : this.savedState.voice,
       format        : this.savedState.format
     }, (res) => {
+      // 5) Khi kết thúc (thành công hoặc lỗi), phục hồi lại nút
       if (res.status === 'completed') {
         // đánh dấu đã xong
         ids.forEach(id => {
@@ -1339,13 +1356,16 @@ class AudioDownloader {
             this.savedState.downloaded.push(id);
         });
         this._syncState();
-        alert('Tải audio.zip thành công');
-        this._renderRows(this._lastMessages); // hoặc reload list
+        // this._renderRows(this._lastMessages); // hoặc reload list
       } else {
         alert('Zip thất bại: ' + res.error);
       }
+
+      // 6) Phục hồi UI cho nút Download All
+      dlAllBtn.textContent = 'Download Done ✅';
     });
   }
+
 
 
   _toggleAll(state){
@@ -1355,8 +1375,6 @@ class AudioDownloader {
   }
 
   _reset(){
-    if (!confirm("Reset all download states and clear saved data?")) return;
-
     this.savedState.downloaded = [];
     this.savedState.downloading = [];
     this.savedState.selected = {};
@@ -1365,7 +1383,6 @@ class AudioDownloader {
     PanelState.clear('AudioDownloader');
     this._renderRows([]);
     this._updateProgressDisplay();
-    alert("Reset completed. Reload the panel to refresh messages.");
   }
 
   destroy(){
