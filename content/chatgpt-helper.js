@@ -488,7 +488,7 @@ class ScenarioRunner {
     sendBtn?.click();
   }
 
-  _waitForResponse(timeout = 60000) {
+  _waitForResponse(timeout = 60000 * 10) {
     console.log("⏳ [ScenarioRunner] waiting for response");
     return new Promise((resolve, reject) => {
       const start = Date.now();
