@@ -606,69 +606,99 @@ class TextSplitter {
 
     /** Panel HTML */
     this.el.innerHTML = `
-     
-    <h3 class="ts-title">✂️ Text Splitter</h3>
-    <textarea id="ts-input" class="ts-textarea"
-              placeholder="Paste or type your long text…"></textarea>
-    
-    <div class="ts-toolbar">
-      <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
-      <button id="ts-split"   class="ts-btn">Split</button>
-    </div>
-    
-    <!-- controls mới -->
-    <div class="ts-controls">
+  <h3 class="ts-title">✂️ Text Splitter</h3>
+
+  <!-- Radio chọn nguồn dữ liệu -->
+  <div style="margin-bottom: 8px; font-size: 13px;">
+    <label><input type="radio" name="ts-input-mode" value="file" checked> Load from file</label>
+    <label style="margin-left: 12px;"><input type="radio" name="ts-input-mode" value="text"> Enter text manually</label>
+  </div>
+
+  <!-- File input -->
+  <div id="ts-file-block" style="margin-bottom: 8px;">
+    <input type="file" id="ts-file-input" accept=".txt" />
+  </div>
+
+  <!-- Textarea input -->
+  <textarea id="ts-input" class="ts-textarea" style="display: none;"
+            placeholder="Paste or type your long text…"></textarea>
+
+  <div class="ts-toolbar">
+    <input id="ts-limit" type="number" value="1000" class="ts-limit"> chars
+    <button id="ts-split"   class="ts-btn">Split</button>
+  </div>
+
+  <!-- controls -->
+  <div class="ts-controls">
     <button id="ts-start"  disabled>▶️ Send All</button>
     <button id="ts-pause"  disabled>⏸ Pause</button>
     <button id="ts-resume" disabled>▶️ Resume</button>
     <button id="ts-reset"  class="ts-btn ts-btn-danger">🔄 Reset</button>
-    </div>
-    
-    <div id="ts-results" class="ts-results"></div>
+  </div>
 
-    `;
+  <div id="ts-results" class="ts-results"></div>
+`;
+
+    // Sự kiện thay đổi giữa File / Text
+    const radios = this.el.querySelectorAll('input[name="ts-input-mode"]');
+    const fileBlock = this.el.querySelector('#ts-file-block');
+    const textarea  = this.el.querySelector('#ts-input');
+
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'file' && radio.checked) {
+          fileBlock.style.display = 'block';
+          textarea.style.display = 'none';
+        } else if (radio.value === 'text' && radio.checked) {
+          fileBlock.style.display = 'none';
+          textarea.style.display = 'block';
+        }
+      });
+    });
+
     ChatGPTHelper.mountPanel(this.el);
 
     /* events */
     this.el.querySelector("#ts-split").onclick = () => this._split();
+    this.el.querySelector("#ts-file-input").addEventListener("change", (e) => this._loadFile(e)); // ⬅️ Thêm ở đây
+
     const btnStart  = this.el.querySelector('#ts-start');
     const btnPause  = this.el.querySelector('#ts-pause');
     const btnResume = this.el.querySelector('#ts-resume');
-    const btnReset  = this.el.querySelector('#ts-reset');   // ⬅️ lấy nút reset
+    const btnReset  = this.el.querySelector('#ts-reset');
 
     btnStart.onclick = () => this._startSend();
     btnPause.onclick = () => {
       this.sequencer?.pause();
       btnPause.disabled = true;
       btnResume.disabled = false;
-      PanelState.save('TextSplitter', this._currentState(this.sequencer.idx,true,true));
+      PanelState.save('TextSplitter', this._currentState(this.sequencer.idx, true, true));
     };
     btnResume.onclick = () => {
       /* Nếu panel được mở lại sau khi Pause thì sequencer chưa tồn tại */
       if (!this.sequencer) {
-        const startAt = this.savedState?.nextIdx || 0;   // chỉ số chunk kế tiếp
-        this._resumeSequencer(startAt);                  // tạo & chạy sequencer
+        const startAt = this.savedState?.nextIdx || 0;
+        this._resumeSequencer(startAt);
       } else {
-        this.sequencer.resume();                         // panel chưa đóng trước đó
+        this.sequencer.resume();
       }
 
       btnResume.disabled = true;
-      btnPause.disabled  = false;
+      btnPause.disabled = false;
 
       // ghi lại trạng thái mới – nhớ kiểm tra this.sequencer trước khi dùng
       const idxNow = this.sequencer ? this.sequencer.idx : (this.savedState?.nextIdx || 0);
       PanelState.save('TextSplitter', this._currentState(idxNow, false, true));
     };
-    /* ✅ gán handler reset */
-    btnReset.onclick  = () => this._reset();     // ⬅️ dòng bạn hỏi
+    btnReset.onclick = () => this._reset();
 
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title"); // ⇦ thêm dòng này
+    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
     /* Theo dõi thay đổi input + limit → update cache */
     const syncState = () => {
       PanelState.save('TextSplitter',
-          this._currentState(                       // PATCH: lưu full state
+          this._currentState(
               this.sequencer?.idx    || 0,
               this.sequencer?.paused || false,
               !!this.sequencer
@@ -677,7 +707,19 @@ class TextSplitter {
     };
     this.el.querySelector('#ts-input').addEventListener('input',  syncState);
     this.el.querySelector('#ts-limit').addEventListener('change', syncState);
+  }
 
+  _loadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result.trim();
+      this.el.querySelector("#ts-input").value = text;
+      alert("File loaded successfully!");
+    };
+    reader.readAsText(file);
   }
 
   _reset(){
