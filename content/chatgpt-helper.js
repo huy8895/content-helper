@@ -23,6 +23,10 @@ class ChatGPTHelper {
     /** @type {TextSplitter|null} */
     this.splitter = null;
 
+    /** @type {AudioDownloader|null} */
+    this.audioDownloader = null;   // 🎵 new panel
+
+
 
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
@@ -66,14 +70,21 @@ class ChatGPTHelper {
       onClick: () => this._toggleRunner(),
     });
 
-  const btnSplitter = this._createButton({
-    id: "chatgpt-splitter-button",
-    text: "✂️ Text Split",
-    className: "scenario-btn btn-tool",
-    onClick: () => this._toggleSplitter(),   // 👈 đổi hàm
-  });
+    const btnSplitter = this._createButton({
+      id: "chatgpt-splitter-button",
+      text: "✂️ Text Split",
+      className: "scenario-btn btn-tool",
+      onClick: () => this._toggleSplitter(),   // 👈 đổi hàm
+    });
 
-    container.append(btnBuilder, btnRunner, btnSplitter);
+    const btnAudio = this._createButton({
+      id       : "chatgpt-audio-button",
+      text     : "🎵 Audio",
+      className: "scenario-btn btn-tool",
+      onClick  : () => this._toggleAudioDownloader(),
+    });
+
+    container.append(btnBuilder, btnRunner, btnSplitter, btnAudio);
     chatForm.appendChild(container);
   }
 
@@ -125,6 +136,16 @@ class ChatGPTHelper {
     console.log("🚀 [ChatGPTHelper] Opening ScenarioRunner");
     this.runner = new ScenarioRunner(() => (this.runner = null));
   }
+
+  _toggleAudioDownloader() {
+    if (this.audioDownloader) {
+      this.audioDownloader.destroy();
+      this.audioDownloader = null;
+      return;
+    }
+    this.audioDownloader = new AudioDownloader(() => (this.audioDownloader = null));
+  }
+
 
   /* ---------- helper kéo-thả dùng chung ---------- */
   static makeDraggable(el, handleSelector = null) {
@@ -983,6 +1004,153 @@ class PanelState {
     chrome.storage.local.remove('panelState__' + key);
   }
 }
+
+/*********************************************
+ * AudioDownloader – download TTS audio *
+ *********************************************/
+class AudioDownloader {
+  constructor(onClose) {
+    this.onClose = onClose;
+    this._render();
+    this._loadMessages();
+  }
+
+  /* ---------- UI ---------- */
+  _render() {
+    this.el = document.createElement("div");
+    this.el.id = "audio-downloader";
+    this.el.className = "panel-box ts-panel";   // re-use TS style
+
+    this.el.innerHTML = `
+      <h3 class="ts-title">🎵 Audio Downloader</h3>
+
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <select id="ad-voice"  class="ts-limit">
+          <option value="shade">Monday</option>
+          <option value="glimmer">Sol</option>
+          <option value="vale">Vale</option>
+          <option value="cove">Cove</option>
+          <option value="fathom">Arbor</option>
+          <option value="juniper">Juniper</option>
+          <option value="maple">Maple</option>
+          <option value="breeze">Breeze</option>
+          <option value="ember">Ember</option>
+          <option value="orbit">Spruce</option>
+        </select>
+
+        <select id="ad-format" class="ts-limit">
+          <option value="mp3" selected>mp3</option>
+          <option value="aac">aac</option>
+        </select>
+
+        <button id="ad-dlall" class="ts-btn ts-btn-accent" style="flex:1">Download All</button>
+      </div>
+
+      <div id="ad-progress" style="font-size:12px; margin:4px 0 8px; color:#0369a1;"></div>
+      <div id="ad-list" class="ts-results"></div>
+    `;
+
+    ChatGPTHelper.mountPanel(this.el);
+
+    /* 👇  Đưa panel về đầu thanh bar (trái nhất) */
+    const bar = document.getElementById('chatgpt-helper-panel-bar');
+    if (bar.firstChild) bar.insertBefore(this.el, bar.firstChild);
+
+    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
+    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+
+    this.el.querySelector("#ad-dlall").onclick = () => this._downloadAll();
+  }
+
+  /* ---------- Load assistant message-ids ---------- */
+  _loadMessages() {
+    chrome.storage.local.get(
+        ["responseData", "conversationId", "requestHeaders"],
+        (data) => {
+          this.data = data;                          // lưu lại để dùng khi gửi
+          const mapping = data.responseData?.mapping || {};
+          const msgs = Object.values(mapping)
+              .filter(m => m.message?.author?.role === "assistant"
+                  && m.message?.content?.content_type === "text")
+              .sort((a, b) => a.message.create_time - b.message.create_time)
+              .map(m => m.message.id);
+
+          this._renderButtons(msgs);
+        }
+    );
+  }
+
+  _renderButtons(ids) {
+    const wrap = this.el.querySelector("#ad-list");
+    wrap.innerHTML = "";
+    if (!ids.length) {
+      wrap.textContent = "No assistant messages detected.";
+      return;
+    }
+
+    ids.forEach((id, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "ts-btn";
+      btn.style.width = "100%";
+      btn.style.marginBottom = "6px";
+      btn.textContent = `Download #${idx + 1}`;
+      btn.dataset.mid = id;
+      btn.onclick = () => this._download(btn, idx + 1);
+      wrap.appendChild(btn);
+    });
+  }
+
+  /* ---------- Download helpers ---------- */
+  _download(btn, ordinal) {
+    const voice  = this.el.querySelector("#ad-voice").value;
+    const format = this.el.querySelector("#ad-format").value;
+    const { conversationId, requestHeaders } = this.data;
+
+    btn.disabled = true;
+    btn.textContent = "Downloading…";
+    this._updateProgress(true);
+
+    chrome.runtime.sendMessage({
+      action        : "downloadAudio",
+      indexCell     : ordinal,
+      conversationId: conversationId,
+      messageId     : btn.dataset.mid,
+      requestHeaders: requestHeaders,
+      selectedVoice : voice,
+      format        : format
+    }, (res) => {
+      if (res?.status === "completed") {
+        btn.textContent = "✅ Downloaded";
+      } else {
+        btn.textContent = "⚠️ Failed";
+        btn.disabled = false;
+      }
+      this._updateProgress(false);
+    });
+  }
+
+  _downloadAll() {
+    const buttons = Array.from(this.el.querySelectorAll("button.ts-btn"))
+        .filter(b => !b.disabled);
+    buttons.forEach((b, idx) => {
+      setTimeout(() => b.click(), idx * 450); // nhẹ nhàng xếp hàng
+    });
+  }
+
+  _updateProgress(starting) {
+    this.inFlight = (this.inFlight || 0) + (starting ? 1 : -1);
+    const p = this.el.querySelector("#ad-progress");
+    p.textContent = this.inFlight
+        ? `🔊 Downloading… (${this.inFlight} running)`
+        : "";
+  }
+
+  destroy() {
+    this.el?.remove();
+    this.onClose?.();
+  }
+}
+
 
 
 // Kick‑start helper
