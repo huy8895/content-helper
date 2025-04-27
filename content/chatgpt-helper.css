@@ -241,9 +241,9 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 #scenario-builder {
-  width: 360px;
-  min-height: 320px;  /* 👈 thấp nhất */
-  max-height: 500px;  /* 👈 cao nhất */
+  width: 400px;
+  min-height: 480px;  /* 👈 thấp nhất */
+  max-height: 600px;  /* 👈 cao nhất */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -264,6 +264,20 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   white-space: normal;     /* 👈 Cho phép xuống dòng */
   word-break: break-word;  /* 👈 Nếu quá dài */
 }
+
+#questions-container textarea.question-input {
+  width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  resize: vertical;
+  font-size: 13px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
 
 .sb-btn {
   padding: 6px 8px !important;

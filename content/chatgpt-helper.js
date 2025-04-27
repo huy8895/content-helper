@@ -298,6 +298,7 @@ class ScenarioBuilder {
       <select id="scenario-list" style="width:100%; margin-bottom:8px;">
         <option value="">-- Chọn kịch bản để chỉnh sửa --</option>
       </select>
+      <label for="scenario-name">Tên kịch bản</label>
       <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
       <div id="questions-container"></div>
       <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
@@ -372,13 +373,14 @@ class ScenarioBuilder {
 
   _addQuestion(value = "") {
     console.log("➕ [ScenarioBuilder] add question");
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Câu hỏi...";
-    input.className = "question-input";
-    input.value = value;
-    this.el.querySelector("#questions-container").appendChild(input);
+    const textarea = document.createElement("textarea");
+    textarea.placeholder = "Câu hỏi...";
+    textarea.className = "question-input";
+    textarea.value = value;
+    textarea.rows = 2; // 👈 hiện 2 dòng, tự mở rộng
+    this.el.querySelector("#questions-container").appendChild(textarea);
   }
+
 
   _collectData() {
     console.log("📑 [ScenarioBuilder] collect data");
