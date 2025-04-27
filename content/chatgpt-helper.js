@@ -1438,6 +1438,7 @@ class AudioDownloader {
     PanelState.clear('AudioDownloader');
     this._renderRows([]);
     this._updateProgressDisplay();
+    location.reload();  // 👈 Thêm dòng này để refresh trang
   }
 
   destroy(){
