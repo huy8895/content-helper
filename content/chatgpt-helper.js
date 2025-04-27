@@ -717,6 +717,7 @@ class TextSplitter {
   _loadFile(event) {
     const file = event.target.files[0];
     if (!file) return;
+    console.log("_loadFile : ",file)
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -726,7 +727,6 @@ class TextSplitter {
       // ✅ Cập nhật tên file sau khi load
       this.el.querySelector("#ts-file-name").textContent = file.name;
 
-      alert("File loaded successfully!");
     };
     reader.readAsText(file);
   }
