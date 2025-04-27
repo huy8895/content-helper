@@ -308,7 +308,7 @@ class ScenarioBuilder {
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
       <input type="file" id="json-file-input" accept=".json" style="display:none;">
-      <pre id="json-preview"></pre>
+
 `;
 
     ChatGPTHelper.mountPanel(this.el);
@@ -339,7 +339,6 @@ class ScenarioBuilder {
         alert(`Đã xoá kịch bản "${name}".`);
         this.el.querySelector("#scenario-name").value = "";
         this.el.querySelector("#questions-container").innerHTML = "";
-        this.el.querySelector("#json-preview").textContent = "";
         this._loadScenarioList();
       });
     });
@@ -367,7 +366,6 @@ class ScenarioBuilder {
         const container = this.el.querySelector("#questions-container");
         container.innerHTML = "";
         questions.forEach((q) => this._addQuestion(q));
-        this.el.querySelector("#json-preview").textContent = JSON.stringify({ [selected]: questions }, null, 2);
       };
     });
   }
@@ -433,7 +431,6 @@ class ScenarioBuilder {
         const container = this.el.querySelector("#questions-container");
         container.innerHTML = "";
         questions.forEach((q) => this._addQuestion(q));
-        this.el.querySelector("#json-preview").textContent = JSON.stringify(data, null, 2);
       } catch (err) {
         alert("Tệp JSON không hợp lệ.");
       }
