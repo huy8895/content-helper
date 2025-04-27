@@ -284,6 +284,7 @@ class ScenarioBuilder {
     console.log("📦 [ScenarioBuilder] init");
     this.onClose = onClose;
     this._render();
+    this._loadScenarioList();
   }
 
   _render() {
@@ -321,6 +322,32 @@ class ScenarioBuilder {
 
     /* thêm nút đóng */
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+  }
+
+  _loadScenarioList() {
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const select = this.el.querySelector("#scenario-list");
+      select.innerHTML = '<option value="">-- Chọn kịch bản để chỉnh sửa --</option>';
+      const templates = items.scenarioTemplates || {};
+      Object.keys(templates).forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+
+      // Khi chọn kịch bản → load nội dung
+      select.onchange = () => {
+        const selected = select.value;
+        if (!selected) return;
+        const questions = templates[selected];
+        this.el.querySelector("#scenario-name").value = selected;
+        const container = this.el.querySelector("#questions-container");
+        container.innerHTML = "";
+        questions.forEach((q) => this._addQuestion(q));
+        this.el.querySelector("#json-preview").textContent = JSON.stringify({ [selected]: questions }, null, 2);
+      };
+    });
   }
 
   _addQuestion(value = "") {
