@@ -293,6 +293,10 @@ class ScenarioBuilder {
     this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
       <h3 class="sb-title">🛠 Tạo kịch bản mới</h3>
+      <label for="scenario-list">📄 Danh sách kịch bản:</label>
+      <select id="scenario-list" style="width:100%; margin-bottom:8px;">
+        <option value="">-- Chọn kịch bản để chỉnh sửa --</option>
+      </select>
       <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
       <div id="questions-container"></div>
       <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
