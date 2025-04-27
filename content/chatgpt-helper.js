@@ -58,7 +58,7 @@ class ChatGPTHelper {
 
     const btnBuilder = this._createButton({
       id: "chatgpt-helper-button",
-      text: "🛠 Soạn kịch bản",
+      text: "🛠 Quản lý kịch bản",
       className: "scenario-btn btn-setup",
       onClick: () => this._toggleBuilder(),
     });
