@@ -304,5 +304,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "SHOW_NOTIFICATION") {
+    logInfo("Nhận thông báo từ popup:", message);
+    chrome.notifications.create({
+      type: "basic",
+      // iconUrl: "https://www.google.com/favicon.ico",
+      iconUrl: chrome.runtime.getURL("assets/icon.png"),
+      title: message.title,
+      message: message.message
+    }, (notificationId) => {
+      if (chrome.runtime.lastError) {
+        console.error("❌ Notification error:", chrome.runtime.lastError.message);
+      } else {
+        console.log("🔔 Notification created with ID:", notificationId);
+      }
+    });
+  }
+});
+
 
 logInfo("Service worker đang chạy!");

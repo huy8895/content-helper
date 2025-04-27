@@ -15,7 +15,8 @@
     "scripting",
     "webRequest",
     "downloads",
-    "windows"
+    "windows",
+    "notifications"
   ],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
