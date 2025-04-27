@@ -515,7 +515,8 @@ class ScenarioRunner {
           list,
           this._sendPrompt.bind(this),
           this._waitForResponse.bind(this),
-          (idx, total) => console.log(`📤 ${idx}/${total} done`)
+          (idx, total) => console.log(`📤 ${idx}/${total} done`),
+          "ScenarioRunner"
       );
 
       /* cập nhật UI */
@@ -960,7 +961,8 @@ class TextSplitter {
             this.sequencer = null;
             PanelState.save('TextSplitter', this._currentState(0, false, false));
           }
-        }
+        },
+        "TextSplitter"
     );
 
     // Lưu & cập nhật UI
@@ -1023,7 +1025,8 @@ class TextSplitter {
             PanelState.save('TextSplitter',
                 this._currentState(0, false, false)         // PATCH: hết vòng – running = false
             );          }
-        }
+        },
+        "_resumeSequencer"
     );
     btnStart.disabled = true;
     btnPause.disabled = false;
