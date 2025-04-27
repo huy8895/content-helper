@@ -415,6 +415,7 @@ class ScenarioBuilder {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const merged = { ...(items.scenarioTemplates || {}), ...json };
       chrome.storage.local.set({ scenarioTemplates: merged }, () => alert("Đã lưu kịch bản vào trình duyệt."));
+      this._loadScenarioList();
     });
   }
 
