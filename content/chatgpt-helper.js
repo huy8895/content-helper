@@ -305,6 +305,7 @@ class ScenarioBuilder {
         <button id="export-json"  class="sb-btn">📦 Xuất JSON</button>
         <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
         <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
+        <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
       <input type="file" id="json-file-input" accept=".json" style="display:none;">
       <pre id="json-preview"></pre>
@@ -317,12 +318,33 @@ class ScenarioBuilder {
     this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
     this.el.querySelector("#import-json").addEventListener("click", () => this.el.querySelector("#json-file-input").click());
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
+    this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
 
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
 
     /* thêm nút đóng */
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
+
+  _deleteScenario() {
+    const name = this.el.querySelector("#scenario-name").value.trim();
+    if (!name) return alert("Vui lòng nhập tên kịch bản để xoá.");
+    if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
+
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const templates = items.scenarioTemplates || {};
+      if (!templates[name]) return alert("Không tìm thấy kịch bản.");
+      delete templates[name];
+      chrome.storage.local.set({ scenarioTemplates: templates }, () => {
+        alert(`Đã xoá kịch bản "${name}".`);
+        this.el.querySelector("#scenario-name").value = "";
+        this.el.querySelector("#questions-container").innerHTML = "";
+        this.el.querySelector("#json-preview").textContent = "";
+        this._loadScenarioList();
+      });
+    });
+  }
+
 
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
