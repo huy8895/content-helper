@@ -733,8 +733,6 @@ class TextSplitter {
 
 
   _reset(){
-    if(!confirm('Reset all chunks and clear saved state?')) return;
-
     // 1️⃣ Ngưng sequencer nếu đang chạy
     if (this.sequencer){
       this.sequencer.stop();
