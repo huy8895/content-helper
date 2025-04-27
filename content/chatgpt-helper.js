@@ -301,7 +301,7 @@ class ScenarioBuilder {
       <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
       <div id="questions-container"></div>
       <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
-      <div style="margin-top:10px">
+      <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
         <button id="export-json"  class="sb-btn">📦 Xuất JSON</button>
         <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
         <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
