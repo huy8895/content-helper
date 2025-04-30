@@ -232,19 +232,22 @@ class ChatGPTHelper {
   static mountPanel(el){
     el.classList.add('helper-panel');
 
-    const bar = document.getElementById('chatgpt-helper-panel-bar');
+    let bar = document.getElementById('chatgpt-helper-panel-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'chatgpt-helper-panel-bar';
+      document.body.appendChild(bar);
+    }
+
     bar.appendChild(el);
 
-    /* CHỈ khi bấm vào tiêu đề/đầu thanh mới đưa panel lên trên.
-       – ScenarioBuilder:  .sb-title
-       – ScenarioRunner :  .sr-header
-       – TextSplitter   :  .ts-title                                  */
     const handle = el.querySelector('.sb-title, .sr-header, .ts-title');
     if(handle){
-      handle.style.userSelect = 'none';          // tránh chọn chữ khi kéo
+      handle.style.userSelect = 'none';
       handle.addEventListener('mousedown', () => ChatGPTHelper.bringToFront(el));
     }
   }
+
 
   /* ---------- bringToFront: luôn đưa panel lên trên cùng ---------- */
   static bringToFront(el){
