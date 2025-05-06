@@ -4,16 +4,27 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly'
 ];
 
+const $login  = document.getElementById('google-login-btn');
+const $logout = document.getElementById('google-logout-btn');
+
+/* ------- khởi tạo UI tuỳ theo đã có token hay chưa ------- */
 document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('google-signin-btn');
-  if (!btn) return console.error('Button not found');
-  btn.addEventListener('click', startOAuth);
+  chrome.storage.local.get('gg_access_token', data => {
+    toggleUI(!!data.gg_access_token);
+  });
+
+  $login .addEventListener('click', startOAuth);
+  $logout.addEventListener('click', doLogout);
 });
 
-function startOAuth() {
-  /* ⬇️  DO NOT pass a path – Chrome‑App credential only allows root URI */
-  const redirect = chrome.identity.getRedirectURL();      // e.g. https://<ID>.chromiumapp.org/
+function toggleUI(loggedIn) {
+  $login .style.display = loggedIn ? 'none' : 'inline-block';
+  $logout.style.display = loggedIn ? 'inline-block' : 'none';
+}
 
+/* -------------- Đăng nhập -------------- */
+function startOAuth() {
+  const redirect = chrome.identity.getRedirectURL();   // gốc /
   const url =
     'https://accounts.google.com/o/oauth2/v2/auth' +
     '?response_type=token' +
@@ -21,30 +32,35 @@ function startOAuth() {
     `&redirect_uri=${encodeURIComponent(redirect)}` +
     `&scope=${encodeURIComponent(SCOPES.join(' '))}`;
 
-  // chèn tạm vào popup.js trước khi gọi launchWebAuthFlow
-  console.log('[DEBUG] redirect  =', redirect);
-  console.log('[DEBUG] full url  =', url);
-  chrome.identity.launchWebAuthFlow({ url, interactive: true }, returned => {
+  chrome.identity.launchWebAuthFlow({ url, interactive:true }, returned => {
     if (chrome.runtime.lastError || !returned) {
       console.error('OAuth error:', chrome.runtime.lastError);
       return;
     }
-    /* extract access_token from #fragment */
     const params = new URLSearchParams(new URL(returned).hash.substring(1));
     const token  = params.get('access_token');
-    if (!token) return console.error('No access_token in redirect');
+    if (!token) return console.error('No access_token');
 
-    chrome.storage.local.set({gg_access_token: token}, () => {
-      console.log('✅ Access token saved');
-
-      // tìm tab đang ở ChatGPT (hoặc tab đang active)
-      chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-        if (tabs[0]) {
-          chrome.tabs.sendMessage(tabs[0].id, {action: 'show_buttons'});
-        } else {
-          console.warn('No active tab to send message');
-        }
-      });
+    chrome.storage.local.set({ gg_access_token: token }, () => {
+      console.log('✅ Token saved');
+      toggleUI(true);
+      sendToActiveTab({ action: 'show_buttons' });
     });
+  });
+}
+
+/* -------------- Đăng xuất -------------- */
+function doLogout() {
+  chrome.storage.local.remove('gg_access_token', () => {
+    console.log('🔓 Token cleared');
+    toggleUI(false);
+    sendToActiveTab({ action: 'hide_buttons' });
+  });
+}
+
+/* -------------- Helper gửi message tới tab ChatGPT -------------- */
+function sendToActiveTab(msg) {
+  chrome.tabs.query({ active:true, currentWindow:true }, tabs => {
+    if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, msg);
   });
 }
