@@ -277,6 +277,15 @@ class ChatGPTHelper {
 
     last.querySelector('.panel-close')?.click();
   }
+
+    /* 👇  thêm vào cuối class */
+  destroy() {
+    console.log("❌ [ChatGPTHelper] destroy");
+    // ngắt quan sát
+    this._observer?.disconnect();
+    // gỡ khung nút nếu còn
+    document.getElementById('chatgpt-helper-button-container')?.remove();
+  }
 }
 
 /***********************************
@@ -1470,12 +1479,52 @@ class AudioDownloader {
 
 
 
+// content.js
+chrome.runtime.onMessage.addListener((req) => {
+  if (req.action === 'show_buttons') {
+    showButtons();
+  }
+  if (req.action === 'hide_buttons') {
+    hideButtons();
+  }
+});
 
 
+// ❶  auto‑check ngay khi trang / script được load
+chrome.storage.local.get('gg_access_token', data => {
+  if (data.gg_access_token) {
+    showButtons();
+  }
+});
 
 
+// function showButtons() {
+//   console.log("show button")
+//   // nếu khung đã tồn tại → thoát
+//   if (document.getElementById('chatgpt-helper-button-container')) return;
+//
+//   console.log('[Helper] injecting buttons');
+//   new ChatGPTHelper();          // hàm này tự tạo container
+// }
 
+function showButtons() {
+  if (window.__helperInjected) return;       // đã có → thoát
+  window.__helperInjected = new ChatGPTHelper();
+}
 
-// Kick‑start helper
-new ChatGPTHelper();
+function hideButtons() {
+  if (!window.__helperInjected) return;      // chưa hiển thị
+
+  // hủy panel con (nếu còn mở)
+  const h = window.__helperInjected;
+  h.builder        ?.destroy?.();
+  h.runner         ?.destroy?.();
+  h.splitter       ?.destroy?.();
+  h.audioDownloader?.destroy?.();
+
+  // ngắt observer & xóa khung nút
+  h.destroy();                               // ⬅️ gọi hàm mới
+
+  window.__helperInjected = null;            // reset flag
+}
 

@@ -10,6 +10,7 @@
     "service_worker": "background/background.js"
   },
   "permissions": [
+    "identity",
     "storage",
     "activeTab",
     "scripting",
@@ -18,13 +19,32 @@
     "windows",
     "notifications"
   ],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
-  {
-    "matches": ["https://chatgpt.com/*"],
-    "js": ["libs/compromise.min.js", "content/chatgpt-helper.js"],
-    "css": ["content/chatgpt-helper.css"],
-    "run_at": "document_idle"
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "libs/compromise.min.js",
+        "content/chatgpt-helper.js"
+      ],
+      "css": [
+        "content/chatgpt-helper.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "oauth2": {
+    "client_id": "517231603315-unill9qgp7iq7f9evp7l9h2mk676kc4u.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/drive.readonly"
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none';"
   }
-]
 }

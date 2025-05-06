@@ -1,12 +1,19 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-  <title>My Extension</title>
-  <link rel="stylesheet" href="popup.css" />
+  <meta charset="utf-8">
+  <title>Google Login</title>
+  <style>
+    button {
+      padding: 6px 14px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello, Chrome!</h1>
-  <button id="changeColor">Change Color</button>
-  <script src="popup.js"></script>
+<button id="google-login-btn">Login with Google</button>
+<button id="google-logout-btn" style="display:none">Logout</button>
+
+<script src="popup.js"></script>
 </body>
 </html>
