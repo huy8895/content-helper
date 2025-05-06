@@ -331,4 +331,10 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     background: #444;
     color: #f0f0f0;
   }
+
+  #questions-container textarea.question-input {
+    background: #444;       /* nền tối hơn */
+    color: #f0f0f0;         /* chữ sáng */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
 }
