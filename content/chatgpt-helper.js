@@ -470,6 +470,9 @@ class ScenarioBuilder {
 
       try {
         const helper = new GoogleDriveHelper(token);
+        const folderId = await helper.getOrCreateFolder('_chatgptContentHelper');
+        helper.folderId = folderId;
+
         const result = await helper.uploadJson(allScenarios, fileId);
         chrome.storage.local.set({ gg_drive_file_id: result.id });
         alert("✅ Đã đồng bộ kịch bản lên Google Drive!");

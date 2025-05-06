@@ -22,15 +22,27 @@ window.GoogleDriveHelper = class {
     async uploadJson(jsonObj, existingFileId = null) {
         const blob = new Blob([JSON.stringify(jsonObj, null, 2)], { type: 'application/json' });
         const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify({
+        const metadata = {
             name: this.fileName,
             mimeType: 'application/json'
-        })], { type: 'application/json' }));
+        };
+
+// 🟢 Chỉ gán parents khi TẠO MỚI file (POST)
+        if (!existingFileId && this.folderId) {
+            metadata.parents = [this.folderId];
+        }
+
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
         form.append('file', blob);
 
-        const url = existingFileId
-            ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart`
-            : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        let url;
+        if (existingFileId) {
+            // Nếu đang UPDATE và có folderId ➔ thêm addParents vào URL
+            const addParents = this.folderId ? `&addParents=${this.folderId}` : '';
+            url = `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart${addParents}`;
+        } else {
+            url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        }
 
         const res = await fetch(url, {
             method: existingFileId ? 'PATCH' : 'POST',
@@ -101,4 +113,42 @@ window.GoogleDriveHelper = class {
         }
         console.log(`✅ Deleted file: ${fileId}`);
     }
+
+    /**
+     * Tìm hoặc tạo thư mục Google Drive.
+     * @param {string} folderName - Tên thư mục (ví dụ: "_chatgptContentHelper").
+     * @returns {Promise<string>} - Trả về fileId của thư mục.
+     */
+    async getOrCreateFolder(folderName) {
+        const query = encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`);
+        const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`;
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + this.token }
+        });
+        const data = await res.json();
+        if (res.ok && data.files && data.files.length > 0) {
+            console.log(`📁 Found folder '${folderName}':`, data.files[0]);
+            return data.files[0].id;
+        }
+
+        // Chưa có ➔ tạo mới
+        console.log(`📁 Folder '${folderName}' not found. Creating...`);
+        const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + this.token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: folderName,
+                mimeType: 'application/vnd.google-apps.folder'
+            })
+        });
+        const createData = await createRes.json();
+        if (!createRes.ok) throw new Error('Failed to create folder');
+        console.log(`✅ Created folder '${folderName}':`, createData);
+        return createData.id;
+    }
+
 }
