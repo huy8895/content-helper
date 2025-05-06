@@ -1480,10 +1480,11 @@ class AudioDownloader {
 
 // content.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  console.log("Received message from background script:", request);
   if (request.action === 'show_buttons') {
     // Kiểm tra nếu người dùng đã đăng nhập
-    chrome.storage.local.get('access_token', function(data) {
-      if (data.access_token) {
+    chrome.storage.local.get('gg_access_token', function(data) {
+      if (data.gg_access_token) {
         // Nếu có access token, hiển thị các button
         showButtons();
       } else {
@@ -1493,8 +1494,22 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 });
 
+// ❶  auto‑check ngay khi trang / script được load
+chrome.storage.local.get('gg_access_token', data => {
+  if (data.gg_access_token) {
+    showButtons();
+  }
+});
+
 function showButtons() {
   console.log('Content script loaded.');
+  // tránh tạo lại nhiều lần khi F5 + login
+  if (window.__helperInjected) {
+    return;
+  }
+  window.__helperInjected = true;
+  console.log('[ChatGPT‑Helper] injecting buttons');
+
 // Kick‑start helper
   new ChatGPTHelper();
 }

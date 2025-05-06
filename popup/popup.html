@@ -1,11 +1,16 @@
 ﻿<!DOCTYPE html>
 <html>
-  <head>
-    <title>Login</title>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="popup.js"></script>
-  </head>
-  <body>
-    <button id="google-signin-btn">Login with Google</button>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <title>Google Login</title>
+  <style>
+    button { padding:6px 14px; font-size:14px; }
+  </style>
+</head>
+<body>
+  <button id="google-signin-btn">Login with Google</button>
+
+  <!-- đặt script CUỐI body hoặc dùng defer -->
+  <script src="popup.js"></script>
+</body>
 </html>
