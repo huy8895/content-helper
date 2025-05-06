@@ -1476,6 +1476,25 @@ class AudioDownloader {
 
 
 
-// Kick‑start helper
-new ChatGPTHelper();
 
+
+// content.js
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.action === 'show_buttons') {
+    // Kiểm tra nếu người dùng đã đăng nhập
+    chrome.storage.local.get('access_token', function(data) {
+      if (data.access_token) {
+        // Nếu có access token, hiển thị các button
+        showButtons();
+      } else {
+        console.log("User not logged in.");
+      }
+    });
+  }
+});
+
+function showButtons() {
+  console.log('Content script loaded.');
+// Kick‑start helper
+  new ChatGPTHelper();
+}

@@ -18,13 +18,19 @@
     "windows",
     "notifications"
   ],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
-  {
-    "matches": ["https://chatgpt.com/*"],
-    "js": ["libs/compromise.min.js", "content/chatgpt-helper.js"],
-    "css": ["content/chatgpt-helper.css"],
-    "run_at": "document_idle"
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["libs/compromise.min.js", "content/chatgpt-helper.js"],
+      "css": ["content/chatgpt-helper.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "script-src": ["'self'", "https://apis.google.com"],
+    "object-src": "'none'"
   }
-]
 }
