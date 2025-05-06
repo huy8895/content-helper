@@ -29,6 +29,7 @@
       ],
       "js": [
         "libs/compromise.min.js",
+        "content/google-drive-helper.js",
         "content/chatgpt-helper.js"
       ],
       "css": [

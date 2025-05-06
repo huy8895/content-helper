@@ -317,6 +317,8 @@ class ScenarioBuilder {
       <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
         <button id="export-json"  class="sb-btn">📦 Xuất JSON</button>
         <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
+        <button id="sync-to-drive" class="sb-btn">☁️ Sync to Google Drive</button>
+        <button id="download-from-drive" class="sb-btn">⬇️ Tải từ Google Drive</button>
         <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
@@ -332,6 +334,8 @@ class ScenarioBuilder {
     this.el.querySelector("#import-json").addEventListener("click", () => this.el.querySelector("#json-file-input").click());
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
     this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
+    this.el.querySelector("#sync-to-drive").addEventListener("click", () => this._syncToDrive());
+    this.el.querySelector("#download-from-drive").addEventListener("click", () => this._downloadFromDrive());
 
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
 
@@ -357,6 +361,53 @@ class ScenarioBuilder {
     });
   }
 
+  _downloadFromDrive() {
+    chrome.storage.local.get(["gg_access_token", "gg_drive_file_id"], async (items) => {
+      const token = items.gg_access_token;
+      let fileId = items.gg_drive_file_id;
+
+      if (!token) {
+        alert("Vui lòng đăng nhập Google trước khi tải.");
+        return;
+      }
+
+      const helper = new GoogleDriveHelper(token);
+
+      try {
+        // Nếu chưa có fileId, tự động tìm kiếm trong folder
+        if (!fileId) {
+          const folderId = await helper.getOrCreateFolder('_chatgptContentHelper');
+          const query = encodeURIComponent(`name='chatgpt-scenarios.json' and '${folderId}' in parents and trashed=false`);
+          const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`;
+          const res = await fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await res.json();
+          if (res.ok && data.files && data.files.length > 0) {
+            fileId = data.files[0].id;
+            console.log("🔍 Tìm thấy file:", data.files[0]);
+            // Lưu lại fileId để lần sau dùng nhanh
+            chrome.storage.local.set({ gg_drive_file_id: fileId });
+          } else {
+            alert("Không tìm thấy file 'chatgpt-scenarios.json' trong thư mục _chatgptContentHelper.");
+            return;
+          }
+        }
+
+        // Download JSON từ fileId đã có/tìm được
+        const data = await helper.downloadJson(fileId);
+        chrome.storage.local.set({ scenarioTemplates: data }, () => {
+          alert("✅ Đã tải và cập nhật kịch bản từ Google Drive!");
+          this._loadScenarioList();
+        });
+        console.log("⬇️ Đã lấy dữ liệu từ Google Drive:", data);
+
+      } catch (err) {
+        console.error("❌ Lỗi khi tải từ Drive:", err);
+        alert("Đã xảy ra lỗi khi tải dữ liệu từ Google Drive.");
+      }
+    });
+  }
 
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
@@ -451,6 +502,37 @@ class ScenarioBuilder {
     };
     reader.readAsText(file);
   }
+
+  _syncToDrive() {
+    const json = this._collectData();
+    if (!json) return;
+
+    chrome.storage.local.get(["gg_access_token", "gg_drive_file_id", "scenarioTemplates"], async (items) => {
+      const token = items.gg_access_token;
+      const fileId = items.gg_drive_file_id || null;
+      const allScenarios = items.scenarioTemplates || {};
+
+      if (!token) {
+        alert("Vui lòng đăng nhập Google trước khi đồng bộ.");
+        return;
+      }
+
+      try {
+        const helper = new GoogleDriveHelper(token);
+        const folderId = await helper.getOrCreateFolder('_chatgptContentHelper');
+        helper.folderId = folderId;
+
+        const result = await helper.uploadJson(allScenarios, fileId);
+        chrome.storage.local.set({ gg_drive_file_id: result.id });
+        alert("✅ Đã đồng bộ kịch bản lên Google Drive!");
+        console.log("📁 Google Drive file:", result);
+      } catch (err) {
+        console.error("❌ Lỗi khi đồng bộ Drive:", err);
+        alert("Đã xảy ra lỗi khi đồng bộ Google Drive.");
+      }
+    });
+  }
+
 
   destroy() {
     console.log("❌ [ScenarioBuilder] destroy");
