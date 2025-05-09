@@ -319,6 +319,8 @@ class ScenarioBuilder {
         <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
         <button id="sync-to-drive" class="sb-btn">☁️ Sync to Google Drive</button>
         <button id="download-from-drive" class="sb-btn">⬇️ Tải từ Google Drive</button>
+        <button id="sync-to-firestore" class="sb-btn">☁️ Sync to Firestore</button>
+        <button id="download-from-firestore" class="sb-btn">⬇️ Tải từ Firestore</button>
         <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
@@ -334,14 +336,51 @@ class ScenarioBuilder {
     this.el.querySelector("#import-json").addEventListener("click", () => this.el.querySelector("#json-file-input").click());
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
     this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
+    //gg drive
     this.el.querySelector("#sync-to-drive").addEventListener("click", () => this._syncToDrive());
     this.el.querySelector("#download-from-drive").addEventListener("click", () => this._downloadFromDrive());
+
+    //firestore
+    this.el.querySelector("#sync-to-firestore").addEventListener("click", () => this._syncToFirestore());
+    this.el.querySelector("#download-from-firestore").addEventListener("click", () => this._downloadFromFirestore());
 
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
 
     /* thêm nút đóng */
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
+
+  _syncToFirestore() {
+    console.log("☁️ [ScenarioBuilder] sync to Firestore");
+    chrome.storage.local.get("scenarioTemplates", async (items) => {
+      const allScenarios = items.scenarioTemplates || {};
+      const helper = new FirestoreHelper(firebaseConfig);
+      try {
+        await helper.saveScenarios(allScenarios);
+        alert("✅ Đã đồng bộ kịch bản lên Firestore!");
+      } catch (err) {
+        alert("❌ Lỗi khi đồng bộ lên Firestore.");
+      }
+    });
+  }
+
+  _downloadFromFirestore() {
+    console.log("☁️ [ScenarioBuilder] download from Firestore");
+    const helper = new FirestoreHelper(firebaseConfig);
+    helper.loadScenarios()
+    .then(data => {
+      if (data) {
+        chrome.storage.local.set({scenarioTemplates: data}, () => {
+          alert("✅ Đã tải và cập nhật kịch bản từ Firestore!");
+          this._loadScenarioList();
+        });
+      } else {
+        alert("⚠️ Không tìm thấy kịch bản trong Firestore.");
+      }
+    })
+    .catch(() => alert("❌ Lỗi khi tải từ Firestore."));
+  }
+
 
   _deleteScenario() {
     const name = this.el.querySelector("#scenario-name").value.trim();
