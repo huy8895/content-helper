@@ -13,40 +13,31 @@ const firebaseConfig = {
 
 window.FirestoreHelper = class {
   constructor(firebaseConfig) {
-    console.log("📦 Initializing FirestoreHelper...");
-    if (!firebase.apps || !firebase.apps.length) {
+    if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
     this.db = firebase.firestore();
-    this.collection = '_chatgptContentHelper';
-    this.document = 'chatgpt-scenarios';
-    console.log("✅ FirestoreHelper initialized");
+    this.collection = 'configs';
   }
 
-  async saveScenarios(data) {
-    console.log("📝 Saving scenarios to Firestore:", data);
-    if (!data) {
-      console.error('❌ No data to save');
-      return;
-    }
+  async saveUserConfig(userId, data) {
     try {
-      await this.db.collection(this.collection).doc(this.document).set(data);
-      console.log('✅ Saved scenarios to Firestore');
+      await this.db.collection(this.collection).doc(userId).set(data);
+      console.log('✅ Saved user config to Firestore');
     } catch (err) {
       console.error('❌ Firestore save error:', err);
       throw err;
     }
   }
 
-  async loadScenarios() {
-    console.log("📥 Loading scenarios from Firestore...");
+  async loadUserConfig(userId) {
     try {
-      const doc = await this.db.collection(this.collection).doc(this.document).get();
+      const doc = await this.db.collection(this.collection).doc(userId).get();
       if (doc.exists) {
-        console.log('✅ Loaded scenarios from Firestore:', doc.data());
+        console.log('✅ Loaded user config:', doc.data());
         return doc.data();
       } else {
-        console.warn('⚠️ No scenarios found in Firestore');
+        console.warn('⚠️ No config found for user');
         return null;
       }
     } catch (err) {
@@ -55,3 +46,4 @@ window.FirestoreHelper = class {
     }
   }
 };
+

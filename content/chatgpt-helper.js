@@ -317,8 +317,6 @@ class ScenarioBuilder {
       <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
         <button id="export-json"  class="sb-btn">📦 Xuất JSON</button>
         <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
-        <button id="sync-to-drive" class="sb-btn">☁️ Sync to Google Drive</button>
-        <button id="download-from-drive" class="sb-btn">⬇️ Tải từ Google Drive</button>
         <button id="sync-to-firestore" class="sb-btn">☁️ Sync to Firestore</button>
         <button id="download-from-firestore" class="sb-btn">⬇️ Tải từ Firestore</button>
         <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
@@ -337,8 +335,6 @@ class ScenarioBuilder {
     this.el.querySelector("#json-file-input").addEventListener("change", (e) => this._import(e));
     this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
     //gg drive
-    this.el.querySelector("#sync-to-drive").addEventListener("click", () => this._syncToDrive());
-    this.el.querySelector("#download-from-drive").addEventListener("click", () => this._downloadFromDrive());
 
     //firestore
     this.el.querySelector("#sync-to-firestore").addEventListener("click", () => this._syncToFirestore());
@@ -352,33 +348,53 @@ class ScenarioBuilder {
 
   _syncToFirestore() {
     console.log("☁️ [ScenarioBuilder] sync to Firestore");
-    chrome.storage.local.get("scenarioTemplates", async (items) => {
-      const allScenarios = items.scenarioTemplates || {};
-      const helper = new FirestoreHelper(firebaseConfig);
-      try {
-        await helper.saveScenarios(allScenarios);
-        alert("✅ Đã đồng bộ kịch bản lên Firestore!");
-      } catch (err) {
-        alert("❌ Lỗi khi đồng bộ lên Firestore.");
-      }
-    });
+    chrome.storage.local.get(["scenarioTemplates", "google_user_email"],
+        async (items) => {
+          const allScenarios = items.scenarioTemplates || {};
+          const userId = items.google_user_email;
+
+          if (!userId) {
+            alert("⚠️ Bạn chưa đăng nhập Google, không thể sync Firestore.");
+            return;
+          }
+
+          const helper = new FirestoreHelper(firebaseConfig);
+          try {
+            await helper.saveUserConfig(userId, allScenarios);
+            alert("✅ Đã đồng bộ kịch bản lên Firestore!");
+          } catch (err) {
+            console.error(err);
+            alert("❌ Lỗi khi đồng bộ lên Firestore.");
+          }
+        });
   }
 
   _downloadFromFirestore() {
     console.log("☁️ [ScenarioBuilder] download from Firestore");
-    const helper = new FirestoreHelper(firebaseConfig);
-    helper.loadScenarios()
-    .then(data => {
-      if (data) {
-        chrome.storage.local.set({scenarioTemplates: data}, () => {
-          alert("✅ Đã tải và cập nhật kịch bản từ Firestore!");
-          this._loadScenarioList();
-        });
-      } else {
-        alert("⚠️ Không tìm thấy kịch bản trong Firestore.");
+    chrome.storage.local.get("google_user_email", async (items) => {
+      const userId = items.google_user_email;
+
+      if (!userId) {
+        alert("⚠️ Bạn chưa đăng nhập Google, không thể tải từ Firestore.");
+        return;
       }
-    })
-    .catch(() => alert("❌ Lỗi khi tải từ Firestore."));
+
+      const helper = new FirestoreHelper(firebaseConfig);
+      try {
+        const data = await helper.loadUserConfig(userId);
+        if (data) {
+          chrome.storage.local.set({scenarioTemplates: data}, () => {
+            alert("✅ Đã tải và cập nhật kịch bản từ Firestore!");
+            this._loadScenarioList();
+          });
+        } else {
+          alert("⚠️ Không tìm thấy kịch bản trong Firestore.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("❌ Lỗi khi tải từ Firestore.");
+      }
+    });
   }
 
 
