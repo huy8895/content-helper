@@ -62,8 +62,8 @@ function startOAuth() {
 
 /* -------------- Đăng xuất -------------- */
 function doLogout() {
-  chrome.storage.local.remove('gg_access_token', () => {
-    console.log('🔓 Token cleared');
+  chrome.storage.local.clear(() => {
+    console.log('🔓 All local storage cleared');
     toggleUI(false);
     sendToActiveTab({ action: 'hide_buttons' });
   });
