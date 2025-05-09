@@ -305,7 +305,7 @@ class ScenarioBuilder {
     this.el.id = "scenario-builder";
     this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
-      <h3 class="sb-title">🛠 Tạo kịch bản mới</h3>
+      <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
       <label for="scenario-list">📄 Danh sách kịch bản:</label>
       <select id="scenario-list" style="width:100%; margin-bottom:8px;">
         <option value="">-- Chọn kịch bản để chỉnh sửa --</option>
@@ -317,7 +317,6 @@ class ScenarioBuilder {
       <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
         <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
 <!--        <button id="sync-to-firestore" class="sb-btn">☁️ Sync</button>-->
-        <button id="download-from-firestore" class="sb-btn">⬇️ Firestore</button>
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
       <input type="file" id="json-file-input" accept=".json" style="display:none;">
@@ -332,7 +331,6 @@ class ScenarioBuilder {
 
     //firestore
     // this.el.querySelector("#sync-to-firestore").addEventListener("click", () => this._syncToFirestore());
-    this.el.querySelector("#download-from-firestore").addEventListener("click", () => this._downloadFromFirestore());
 
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
 
@@ -355,7 +353,7 @@ class ScenarioBuilder {
           const helper = new FirestoreHelper(firebaseConfig);
           try {
             await helper.saveUserConfig(userId, allScenarios);
-            alert("✅ Đã đồng bộ kịch bản lên Firestore!");
+            console.log("☁️ Đã đồng bộ lên Firestore:");
           } catch (err) {
             console.error(err);
             alert("❌ Lỗi khi đồng bộ lên Firestore.");
@@ -376,10 +374,11 @@ class ScenarioBuilder {
       if (!templates[name]) return alert("Không tìm thấy kịch bản.");
       delete templates[name];
       chrome.storage.local.set({ scenarioTemplates: templates }, () => {
-        alert(`Đã xoá kịch bản "${name}".`);
+        console.log("🗑️ Đã xoá kịch bản:", name);
         this.el.querySelector("#scenario-name").value = "";
         this.el.querySelector("#questions-container").innerHTML = "";
         this._loadScenarioList();
+        this._syncToFirestore();
       });
     });
   }
@@ -502,8 +501,8 @@ class ScenarioBuilder {
       const merged = { ...(items.scenarioTemplates || {}), ...json };
       chrome.storage.local.set({ scenarioTemplates: merged }, () => alert("Đã lưu kịch bản vào trình duyệt."));
       this._loadScenarioList();
+      this._syncToFirestore();
     });
-    this._syncToFirestore();
   }
 
   _import(event) {
