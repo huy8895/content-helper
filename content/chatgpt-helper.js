@@ -315,11 +315,9 @@ class ScenarioBuilder {
       <div id="questions-container"></div>
       <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
       <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
-        <button id="export-json"  class="sb-btn">📦 Xuất JSON</button>
-        <button id="save-to-storage" class="sb-btn">💾 Lưu vào trình duyệt</button>
+        <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
         <button id="sync-to-firestore" class="sb-btn">☁️ Sync to Firestore</button>
         <button id="download-from-firestore" class="sb-btn">⬇️ Tải từ Firestore</button>
-        <button id="import-json" class="sb-btn">📂 Nhập JSON</button>
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
       <input type="file" id="json-file-input" accept=".json" style="display:none;">
