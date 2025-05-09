@@ -46,17 +46,17 @@ function startOAuth() {
     getGoogleUserInfo(token).then(userInfo => {
       chrome.storage.local.set({
         google_user_id: userInfo.sub,
-        google_user_email: userInfo.email
+        google_user_email: userInfo.email,
+        gg_access_token: token
       }, () => {
         console.log('✅ Saved Google user ID + email');
+        console.log('✅ Token saved');
+        toggleUI(true);
+        sendToActiveTab({ action: 'show_buttons' });
       });
     });
 
-    chrome.storage.local.set({ gg_access_token: token }, () => {
-      console.log('✅ Token saved');
-      toggleUI(true);
-      sendToActiveTab({ action: 'show_buttons' });
-    });
+
   });
 }
 
