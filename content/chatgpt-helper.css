@@ -338,3 +338,9 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 }
+
+#scenario-runner {
+  width: 360px;
+  max-width: 100%;
+}
+
