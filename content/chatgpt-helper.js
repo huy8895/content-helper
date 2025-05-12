@@ -1013,10 +1013,10 @@ class TextSplitter {
       btn.textContent = `Copy #${idx + 1}`;
       if (this.status[idx] === 'done'){
         btn.disabled = true;
-        btn.textContent = '✅ Done';
+        btn.textContent = `✅ Done #${idx + 1}`;
       } else if (this.status[idx] === 'error'){
         btn.disabled = false;
-        btn.textContent = '⚠️ Error';
+        btn.textContent = `⚠️ Error #${idx + 1}`;
       }
       btn.onclick = () => this._copySegment(idx, btn);
 
@@ -1049,7 +1049,7 @@ class TextSplitter {
       await this._waitForResponse();
 
       // --- THÀNH CÔNG ---
-      btn.textContent   = "✅ Done";
+      btn.textContent   = `✅ Done #${idx + 1}`;
       this.status[idx]  = "done";
 
     } catch (err) {
@@ -1156,7 +1156,7 @@ class TextSplitter {
           const rowBtn = this.el.querySelectorAll('.ts-send-btn')[real];
           if (rowBtn) {
             rowBtn.disabled = true;
-            rowBtn.textContent = '✅ Done';
+            rowBtn.textContent = `✅ Done #${idx + 1}`;
           }
           this.status[real] = 'done';
           PanelState.save('TextSplitter',
