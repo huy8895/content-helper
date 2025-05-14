@@ -2,7 +2,8 @@ window.ContentCopyPanel = class {
   constructor(onClose) {
     this.onClose = onClose;
     this.elements = Array.from(document.getElementsByClassName(
-        'markdown prose dark:prose-invert w-full break-words light'));
+        'markdown prose dark:prose-invert w-full break-words'));
+    console.log("ContentCopyPanel elements:", this.elements);
     this._render();
   }
 
