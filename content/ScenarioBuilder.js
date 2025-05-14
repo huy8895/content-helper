@@ -20,13 +20,17 @@ window.ScenarioBuilder = class {
       <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
       <div id="scenario-dropdown"></div>
 
-      <label for="scenario-name">Tên kịch bản</label>
-      <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
-      <div id="questions-container"></div>
-      <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+      <div id="scenario-editor" style="display: none; margin-top: 8px;">
+        <label for="scenario-name">Tên kịch bản</label>
+        <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
+        <div id="questions-container"></div>
+        <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+      </div>
+
+      
       <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
+        <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
         <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
-<!--        <button id="sync-to-firestore" class="sb-btn">☁️ Sync</button>-->
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
       </div>
       <input type="file" id="json-file-input" accept=".json" style="display:none;">
@@ -38,6 +42,13 @@ window.ScenarioBuilder = class {
     this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
     this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
     this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
+    this.el.querySelector("#new-scenario-btn").addEventListener("click", () => {
+      const editor = this.el.querySelector("#scenario-editor");
+      editor.style.display = "block";
+
+      this.el.querySelector("#scenario-name").value = "";
+      this.el.querySelector("#questions-container").innerHTML = "";
+    });
 
     //firestore
     // this.el.querySelector("#sync-to-firestore").addEventListener("click", () => this._syncToFirestore());
