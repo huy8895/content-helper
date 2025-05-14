@@ -3,7 +3,7 @@
   background: #f7f7f8;
   border: 1px solid rgba(16, 23, 42, 0.08); /* viền nhẹ xanh xám */
   border-radius: 10px;
-  padding: 14px;
+  padding: 16px 18px 14px 18px; /* top right bottom left */
   box-shadow:
           0 8px 10px rgba(0, 0, 0, 0.12),
           0 20px 25px rgba(0, 0, 0, 0.1),
@@ -14,6 +14,37 @@
   animation: fadeIn 0.3s ease;
 }
 
+#scenario-builder {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: 600px;
+  width: 360px;
+  max-width: 100%;
+  min-height: 480px;
+  overflow: hidden;
+  gap: 5px;
+}
+#scenario-editor{
+  margin-top: auto;
+}
+#scenario-browser {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;       /* ✅ chỉ chiếm đúng nội dung thật */
+  overflow: visible;
+  margin-bottom: 0px;
+}
+
+#scenario-dropdown {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  box-sizing: border-box;
+}
 
 
 /* Tiêu đề các panel */
@@ -240,24 +271,17 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   opacity: 0.6;
 }
 
-#scenario-builder {
-  width: 400px;
-  min-height: 480px;  /* 👈 thấp nhất */
-  max-height: 600px;  /* 👈 cao nhất */
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
 
 #questions-container {
   flex: 1 1 auto;
   overflow-y: auto;
-  margin-bottom: 8px;
-  border: 1px solid #eee;
+  max-height: 220px;  /* giống dropdown */
+  border: 1px solid #ccc;
   border-radius: 6px;
   padding: 6px;
-  background: #fafafa;
-  max-height: 200px;
+  background: #fff;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 
 #questions-container input.question-input {
@@ -267,22 +291,73 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 #questions-container textarea.question-input {
   width: 100%;
-  white-space: normal;
-  word-break: break-word;
   resize: vertical;
-  font-size: 13px;
-  padding: 6px 8px;
-  margin-bottom: 6px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  font-size: 12px; /* 👈 chữ nhỏ hơn */
+  padding: 4px 6px;
+  margin: 0 0 6px 0;
+  border: none;
+  border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
+  background: #f9f9f9;
+  min-height: 24px; /* ~1 dòng */
+  line-height: 1.2;
+  overflow-y: auto;
   box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
+
+/* Hiệu ứng hover/focus */
+#questions-container textarea.question-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  background: #fff;
+}
+
+/* Thanh scroll cho textarea */
+#questions-container textarea.question-input::-webkit-scrollbar {
+  width: 6px;
+}
+#questions-container textarea.question-input::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}
+#questions-container textarea.question-input::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+/* ===== Thanh scroll đẹp cho mọi khối cuộn ===== */
+
+/* Áp dụng cho dropdown và câu hỏi */
+#scenario-dropdown::-webkit-scrollbar,
+#questions-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#scenario-dropdown::-webkit-scrollbar-thumb,
+#questions-container::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}
+
+/* Nền phía sau thanh cuộn */
+#scenario-dropdown::-webkit-scrollbar-track,
+#questions-container::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+#scenario-dropdown.hidden-dropdown {
+  height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
 
 
 .sb-btn {
   padding: 6px 8px !important;
   font-size: 12px;
-  margin: 4px 4px 4px 0;
+  margin: 4px 4px 0 0;
 }
 
 /* Dark mode */
@@ -290,6 +365,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   .panel-box, .ts-panel, #scenario-builder, #scenario-runner {
     background: #2c2c2c; /* màu nền tối */
     color: #f0f0f0; /* màu chữ sáng */
+    padding: 16px 18px 14px 18px; /* top right bottom left */
+    border-radius: 10px;
   }
 
   .sb-title, .ts-title, .sr-title {
@@ -313,10 +390,18 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     background: #555;
   }
 
+  /* Phần bọc danh sách câu hỏi */
   #questions-container {
-    background: #3a3a3a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 1 1 auto;
+    overflow-y: auto;
+    max-height: 220px;
+    background: #fff;
+    font-size: 13px;
+    padding: 0; /* Xoá padding để không tạo khoảng cách bao */
+    border: none; /* ❌ Bỏ viền container nếu cần */
+    box-sizing: border-box;
   }
+
 
   /* Input & Textarea & Select */
   input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select, #scenario-builder select {
@@ -332,10 +417,22 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     color: #f0f0f0;
   }
 
+  /* Mỗi ô textarea câu hỏi */
   #questions-container textarea.question-input {
     background: #444;       /* nền tối hơn */
     color: #f0f0f0;         /* chữ sáng */
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
+    resize: vertical;
+    font-size: 12px;           /* 👈 chữ nhỏ hơn */
+    padding: 4px 6px;
+    margin: 0 0 6px 0;
+    border: none;
+    border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
+    min-height: 24px; /* ~1 dòng */
+    line-height: 1.2;
+    overflow-y: auto;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
 }
 
@@ -343,4 +440,47 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   width: 360px;
   max-width: 100%;
 }
+/* === Scenario dropdown with search === */
+#scenario-search {
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 6px 5px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+#scenario-dropdown {
+  height: 220px;              /* khoảng ~10 dòng */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+}
+
+/* Scrollbar đẹp */
+#scenario-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+#scenario-dropdown::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}
+
+/* Item bên trong dropdown */
+#scenario-dropdown div {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+#scenario-dropdown div:hover {
+  background: #e0e7ff;
+}
+
+
 

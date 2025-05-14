@@ -15,21 +15,31 @@ window.ScenarioBuilder = class {
     this.el.id = "scenario-builder";
     this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
-      <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
-      <label for="scenario-list">📄 Danh sách kịch bản:</label>
-      <select id="scenario-list" style="width:100%; margin-bottom:8px;">
-        <option value="">-- Chọn kịch bản để chỉnh sửa --</option>
-      </select>
-      <label for="scenario-name">Tên kịch bản</label>
-      <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
-      <div id="questions-container"></div>
-      <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
-      <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
-        <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
-<!--        <button id="sync-to-firestore" class="sb-btn">☁️ Sync</button>-->
-        <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
-      </div>
-      <input type="file" id="json-file-input" accept=".json" style="display:none;">
+<h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
+
+<div id="scenario-browser">
+  <div id="scenario-searchbox">
+    <label>📄 Danh sách kịch bản:</label>
+    <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
+  </div>
+  <div id="scenario-dropdown"></div>
+</div>
+
+
+<div id="scenario-editor" style="display: none; margin-top: 8px;">
+  <label for="scenario-name">Tên kịch bản</label>
+  <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
+  <div id="questions-container"></div>
+  <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+</div>
+
+
+<div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
+  <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
+  <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
+  <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
+</div>
+<input type="file" id="json-file-input" accept=".json" style="display:none;">
 
 `;
 
@@ -38,6 +48,13 @@ window.ScenarioBuilder = class {
     this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
     this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
     this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
+    this.el.querySelector("#new-scenario-btn").addEventListener("click", () => {
+      const editor = this.el.querySelector("#scenario-editor");
+      editor.style.display = "block";
+
+      this.el.querySelector("#scenario-name").value = "";
+      this.el.querySelector("#questions-container").innerHTML = "";
+    });
 
     //firestore
     // this.el.querySelector("#sync-to-firestore").addEventListener("click", () => this._syncToFirestore());
@@ -143,28 +160,58 @@ window.ScenarioBuilder = class {
 
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
-      const select = this.el.querySelector("#scenario-list");
-      select.innerHTML = '<option value="">-- Chọn kịch bản để chỉnh sửa --</option>';
       const templates = items.scenarioTemplates || {};
+      this.allScenarios = templates;
+
+      const dropdown = this.el.querySelector("#scenario-dropdown");
+      dropdown.innerHTML = ""; // clear old
+
       Object.keys(templates).forEach((name) => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        select.appendChild(option);
+        const item = document.createElement("div");
+        item.textContent = name;
+        item.style.padding = "6px 10px";
+        item.style.cursor = "pointer";
+        item.style.borderBottom = "1px solid #eee";
+
+        item.addEventListener("click", () => {
+          this.el.querySelector("#scenario-name").value = name;
+          const container = this.el.querySelector("#questions-container");
+          container.innerHTML = "";
+          templates[name].forEach((q) => this._addQuestion(q));
+
+          // Ẩn chỉ danh sách dropdown
+          this.el.querySelector("#scenario-dropdown").classList.add("hidden-dropdown");
+
+          // Hiện phần editor
+          this.el.querySelector("#scenario-editor").style.display = "block";
+        });
+
+
+        dropdown.appendChild(item);
       });
 
-      // Khi chọn kịch bản → load nội dung
-      select.onchange = () => {
-        const selected = select.value;
-        if (!selected) return;
-        const questions = templates[selected];
-        this.el.querySelector("#scenario-name").value = selected;
-        const container = this.el.querySelector("#questions-container");
-        container.innerHTML = "";
-        questions.forEach((q) => this._addQuestion(q));
-      };
+      // thêm sự kiện filter khi nhập vào ô tìm kiếm
+      const searchBox = this.el.querySelector("#scenario-search");
+      searchBox.addEventListener("input", () => {
+        const keyword = searchBox.value.trim().toLowerCase();
+        dropdown.querySelectorAll("div").forEach(div => {
+          div.style.display = div.textContent.toLowerCase().includes(keyword)
+              ? "block" : "none";
+        });
+      });
+
+
+      searchBox.addEventListener("focus", () => {
+        const dropdown = this.el.querySelector("#scenario-dropdown");
+        const editor = this.el.querySelector("#scenario-editor");
+
+        dropdown.classList.remove("hidden-dropdown");
+        editor.style.display = "none";
+      });
+
     });
   }
+
 
   _addQuestion(value = "") {
     console.log("➕ [ScenarioBuilder] add question");
