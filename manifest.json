@@ -33,7 +33,13 @@
         "libs/firebase-firestore-compat.js",
         "content/google-drive-helper.js",
         "content/chatgpt-helper.js",
-        "content/firestore-helper.js"
+        "content/firestore-helper.js",
+        "content/PanelState.js",
+        "content/PromptSequencer.js",
+        "content/ScenarioBuilder.js",
+        "content/ScenarioRunner.js",
+        "content/TextSplitter.js",
+        "content/AudioDownloader.js"
       ],
       "css": [
         "content/chatgpt-helper.css"
