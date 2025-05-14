@@ -3,7 +3,7 @@
   background: #f7f7f8;
   border: 1px solid rgba(16, 23, 42, 0.08); /* viền nhẹ xanh xám */
   border-radius: 10px;
-  padding: 14px;
+  padding: 16px 18px 14px 18px; /* top right bottom left */
   box-shadow:
           0 8px 10px rgba(0, 0, 0, 0.12),
           0 20px 25px rgba(0, 0, 0, 0.1),
@@ -23,14 +23,17 @@
   max-width: 100%;
   min-height: 480px;
   overflow: hidden;
+  gap: 5px;
 }
-
+#scenario-editor{
+  margin-top: auto;
+}
 #scenario-browser {
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;       /* ✅ chỉ chiếm đúng nội dung thật */
   overflow: visible;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 
 #scenario-dropdown {
@@ -354,7 +357,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 .sb-btn {
   padding: 6px 8px !important;
   font-size: 12px;
-  margin: 4px 4px 4px 0;
+  margin: 4px 4px 0 0;
 }
 
 /* Dark mode */
@@ -362,6 +365,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   .panel-box, .ts-panel, #scenario-builder, #scenario-runner {
     background: #2c2c2c; /* màu nền tối */
     color: #f0f0f0; /* màu chữ sáng */
+    padding: 16px 18px 14px 18px; /* top right bottom left */
+    border-radius: 10px;
   }
 
   .sb-title, .ts-title, .sr-title {
@@ -438,11 +443,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 /* === Scenario dropdown with search === */
 #scenario-search {
   width: 100%;
-  margin-bottom: 6px;
-  padding: 6px 10px;
+  margin-bottom: 4px;
+  padding: 6px 5px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 13px;
+  font-size: 12px;
   box-sizing: border-box;
 }
 
