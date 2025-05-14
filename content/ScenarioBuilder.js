@@ -215,12 +215,26 @@ window.ScenarioBuilder = class {
 
   _addQuestion(value = "") {
     console.log("➕ [ScenarioBuilder] add question");
+    const container = document.createElement("div");
+    container.className = "question-item";
+
     const textarea = document.createElement("textarea");
     textarea.placeholder = "Câu hỏi...";
     textarea.className = "question-input";
     textarea.value = value;
-    textarea.rows = 2; // 👈 hiện 2 dòng, tự mở rộng
-    this.el.querySelector("#questions-container").appendChild(textarea);
+    textarea.rows = 2;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑";
+    deleteBtn.className = "delete-question-btn";
+    deleteBtn.title = "Xoá câu hỏi";
+    deleteBtn.onclick = () => container.remove();
+
+    container.appendChild(textarea);
+    container.appendChild(deleteBtn);
+
+    this.el.querySelector("#questions-container").appendChild(container);
+
   }
 
 

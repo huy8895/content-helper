@@ -19,7 +19,7 @@
   flex-direction: column;
   height: auto;
   max-height: 600px;
-  width: 360px;
+  width: 400px;
   max-width: 100%;
   min-height: 480px;
   overflow: hidden;
@@ -483,4 +483,24 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 
+.question-item {
+  position: relative;
+  margin-bottom: 6px;
+}
+
+.delete-question-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.delete-question-btn:hover {
+  color: #e74c3c;
+}
 
