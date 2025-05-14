@@ -15,25 +15,28 @@ window.ScenarioBuilder = class {
     this.el.id = "scenario-builder";
     this.el.classList.add("panel-box");   // 👈 thêm
     this.el.innerHTML = `
-      <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
-      <label for="scenario-list">📄 Danh sách kịch bản:</label>
-      <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
-      <div id="scenario-dropdown"></div>
+<h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
 
-      <div id="scenario-editor" style="display: none; margin-top: 8px;">
-        <label for="scenario-name">Tên kịch bản</label>
-        <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
-        <div id="questions-container"></div>
-        <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
-      </div>
+<div id="scenario-searchbox">
+  <label>📄 Danh sách kịch bản:</label>
+  <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
+</div>
+<div id="scenario-dropdown"></div>
 
-      
-      <div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
-        <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
-        <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
-        <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
-      </div>
-      <input type="file" id="json-file-input" accept=".json" style="display:none;">
+<div id="scenario-editor" style="display: none; margin-top: 8px;">
+  <label for="scenario-name">Tên kịch bản</label>
+  <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
+  <div id="questions-container"></div>
+  <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+</div>
+
+
+<div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
+  <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
+  <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
+  <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
+</div>
+<input type="file" id="json-file-input" accept=".json" style="display:none;">
 
 `;
 
@@ -172,7 +175,14 @@ window.ScenarioBuilder = class {
           const container = this.el.querySelector("#questions-container");
           container.innerHTML = "";
           templates[name].forEach((q) => this._addQuestion(q));
+
+          // Ẩn chỉ danh sách dropdown
+          this.el.querySelector("#scenario-dropdown").style.display = "none";
+
+          // Hiện phần editor
+          this.el.querySelector("#scenario-editor").style.display = "block";
         });
+
 
         dropdown.appendChild(item);
       });
@@ -186,6 +196,16 @@ window.ScenarioBuilder = class {
               ? "block" : "none";
         });
       });
+
+
+      searchBox.addEventListener("focus", () => {
+        const dropdown = this.el.querySelector("#scenario-dropdown");
+        const editor = this.el.querySelector("#scenario-editor");
+
+        dropdown.style.display = "block";
+        editor.style.display = "none";
+      });
+
     });
   }
 
