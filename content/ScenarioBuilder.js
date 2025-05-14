@@ -17,11 +17,14 @@ window.ScenarioBuilder = class {
     this.el.innerHTML = `
 <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
 
-<div id="scenario-searchbox">
-  <label>📄 Danh sách kịch bản:</label>
-  <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
+<div id="scenario-browser">
+  <div id="scenario-searchbox">
+    <label>📄 Danh sách kịch bản:</label>
+    <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
+  </div>
+  <div id="scenario-dropdown"></div>
 </div>
-<div id="scenario-dropdown"></div>
+
 
 <div id="scenario-editor" style="display: none; margin-top: 8px;">
   <label for="scenario-name">Tên kịch bản</label>
@@ -177,7 +180,7 @@ window.ScenarioBuilder = class {
           templates[name].forEach((q) => this._addQuestion(q));
 
           // Ẩn chỉ danh sách dropdown
-          this.el.querySelector("#scenario-dropdown").style.display = "none";
+          this.el.querySelector("#scenario-dropdown").classList.add("hidden-dropdown");
 
           // Hiện phần editor
           this.el.querySelector("#scenario-editor").style.display = "block";
@@ -202,7 +205,7 @@ window.ScenarioBuilder = class {
         const dropdown = this.el.querySelector("#scenario-dropdown");
         const editor = this.el.querySelector("#scenario-editor");
 
-        dropdown.style.display = "block";
+        dropdown.classList.remove("hidden-dropdown");
         editor.style.display = "none";
       });
 
