@@ -20,6 +20,7 @@ window.ContentCopyPanel = class {
         <button id="ccp-copy-all" class="ts-btn ts-btn-accent">Copy All</button>
         <input type="number" id="ccp-index" placeholder="From index…" min="0" style="width:80px;margin-left:8px;" />
         <button id="ccp-copy-from" class="ts-btn">Copy From Index</button>
+        <button id="ccp-download" class="ts-btn ts-btn-accent" style="margin-left:8px;">⬇️ Download File</button>
       </div>
       <div id="ccp-list" class="ts-results"></div>
     `;
@@ -88,6 +89,25 @@ window.ContentCopyPanel = class {
           '\n\n');
       this._copyToClipboard(text, `✅ Copied from index ${index}`);
     };
+
+    this.el.querySelector("#ccp-download").onclick = () => {
+      const indexInput = this.el.querySelector("#ccp-index");
+      const index = parseInt(indexInput.value || "0", 10);
+      let content = '';
+
+      if (indexInput.value && (!Number.isInteger(index) || index < 0 || index
+          > this.elements.length)) {
+        alert("Invalid index");
+        return;
+      }
+
+      const fromIndex = indexInput.value ? index - 1 : 0;
+      content = this.elements.slice(fromIndex).map(el => el.innerText).join(
+          '\n\n');
+
+      this._downloadFile(content, 'content.txt');
+    };
+
   }
 
   _copyToClipboard(text, successMessage) {
@@ -101,6 +121,19 @@ window.ContentCopyPanel = class {
       alert('❌ Failed to copy text.');
     });
   }
+
+  _downloadFile(content, filename) {
+    const blob = new Blob([content], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
 
   destroy() {
     this.el?.remove();
