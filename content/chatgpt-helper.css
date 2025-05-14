@@ -343,4 +343,46 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   width: 360px;
   max-width: 100%;
 }
+/* === Scenario dropdown with search === */
+#scenario-search {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+#scenario-dropdown {
+  height: 220px;              /* khoảng ~10 dòng */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+/* Scrollbar đẹp */
+#scenario-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+#scenario-dropdown::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}
+
+/* Item bên trong dropdown */
+#scenario-dropdown div {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+#scenario-dropdown div:hover {
+  background: #e0e7ff;
+}
+
+
 

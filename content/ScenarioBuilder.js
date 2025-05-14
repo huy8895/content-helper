@@ -17,9 +17,9 @@ window.ScenarioBuilder = class {
     this.el.innerHTML = `
       <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
       <label for="scenario-list">📄 Danh sách kịch bản:</label>
-      <select id="scenario-list" style="width:100%; margin-bottom:8px;">
-        <option value="">-- Chọn kịch bản để chỉnh sửa --</option>
-      </select>
+      <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
+      <div id="scenario-dropdown"></div>
+
       <label for="scenario-name">Tên kịch bản</label>
       <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
       <div id="questions-container"></div>
@@ -143,28 +143,41 @@ window.ScenarioBuilder = class {
 
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
-      const select = this.el.querySelector("#scenario-list");
-      select.innerHTML = '<option value="">-- Chọn kịch bản để chỉnh sửa --</option>';
       const templates = items.scenarioTemplates || {};
+      this.allScenarios = templates;
+
+      const dropdown = this.el.querySelector("#scenario-dropdown");
+      dropdown.innerHTML = ""; // clear old
+
       Object.keys(templates).forEach((name) => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        select.appendChild(option);
+        const item = document.createElement("div");
+        item.textContent = name;
+        item.style.padding = "6px 10px";
+        item.style.cursor = "pointer";
+        item.style.borderBottom = "1px solid #eee";
+
+        item.addEventListener("click", () => {
+          this.el.querySelector("#scenario-name").value = name;
+          const container = this.el.querySelector("#questions-container");
+          container.innerHTML = "";
+          templates[name].forEach((q) => this._addQuestion(q));
+        });
+
+        dropdown.appendChild(item);
       });
 
-      // Khi chọn kịch bản → load nội dung
-      select.onchange = () => {
-        const selected = select.value;
-        if (!selected) return;
-        const questions = templates[selected];
-        this.el.querySelector("#scenario-name").value = selected;
-        const container = this.el.querySelector("#questions-container");
-        container.innerHTML = "";
-        questions.forEach((q) => this._addQuestion(q));
-      };
+      // thêm sự kiện filter khi nhập vào ô tìm kiếm
+      const searchBox = this.el.querySelector("#scenario-search");
+      searchBox.addEventListener("input", () => {
+        const keyword = searchBox.value.trim().toLowerCase();
+        dropdown.querySelectorAll("div").forEach(div => {
+          div.style.display = div.textContent.toLowerCase().includes(keyword)
+              ? "block" : "none";
+        });
+      });
     });
   }
+
 
   _addQuestion(value = "") {
     console.log("➕ [ScenarioBuilder] add question");
