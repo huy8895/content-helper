@@ -84,7 +84,20 @@ class ChatGPTHelper {
       onClick  : () => this._toggleAudioDownloader(),
     });
 
-    container.append(btnBuilder, btnRunner, btnSplitter, btnAudio);
+    const btnCopyContent = this._createButton({
+      id: "chatgpt-copy-content-button",
+      text: "📋 Copy Content",
+      className: "scenario-btn btn-tool",
+      onClick: () => this._toggleContentCopyPanel(),
+    });
+
+    //append vào container theo thứ tụ
+    container.append(btnBuilder);
+    container.append(btnRunner);
+    container.append(btnCopyContent);
+    container.append(btnSplitter);
+    container.append(btnAudio);
+
     chatForm.appendChild(container);
   }
 
@@ -145,6 +158,15 @@ class ChatGPTHelper {
     }
     this.audioDownloader = new AudioDownloader(() => (this.audioDownloader = null));
   }
+
+  _toggleContentCopyPanel() {
+  if (this.contentCopyPanel) {
+    this.contentCopyPanel.destroy();
+    this.contentCopyPanel = null;
+    return;
+  }
+  this.contentCopyPanel = new ContentCopyPanel(() => (this.contentCopyPanel = null));
+}
 
 
   /* ---------- helper kéo-thả dùng chung ---------- */

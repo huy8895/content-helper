@@ -39,7 +39,8 @@
         "content/ScenarioBuilder.js",
         "content/ScenarioRunner.js",
         "content/TextSplitter.js",
-        "content/AudioDownloader.js"
+        "content/AudioDownloader.js",
+        "content/ContentCopyPanel.js"
       ],
       "css": [
         "content/chatgpt-helper.css"
