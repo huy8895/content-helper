@@ -540,3 +540,45 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   background: #e0e7ff;
 }
 
+#scenario-inputs {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff;
+  box-sizing: border-box;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.sr-input-group {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sr-input-group label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.sr-input-group input[type="text"],
+.sr-input-group textarea {
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+  resize: vertical;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sr-input-group textarea {
+  min-height: 60px;
+  line-height: 1.4;
+}
+
+
