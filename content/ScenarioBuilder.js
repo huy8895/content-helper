@@ -1,6 +1,3 @@
-/***********************************
- * ScenarioBuilder – template editor
- ***********************************/
 window.ScenarioBuilder = class {
   constructor(onClose) {
     console.log("📦 [ScenarioBuilder] init");
@@ -13,56 +10,126 @@ window.ScenarioBuilder = class {
     console.log("🎨 [ScenarioBuilder] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-builder";
-    this.el.classList.add("panel-box");   // 👈 thêm
+    this.el.classList.add("panel-box");
     this.el.innerHTML = `
-<h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
+      <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
 
-<div id="scenario-browser">
-  <div id="scenario-searchbox">
-    <label>📄 Danh sách kịch bản:</label>
-    <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản..." />
-  </div>
-  <div id="scenario-dropdown"></div>
-</div>
+      <div id="scenario-browser">
+        <label>📄 Danh sách kịch bản:</label>
+        <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản...">
+        <div id="scenario-dropdown" class="hidden-dropdown"></div>
+      </div>
 
+      <div id="scenario-editor" style="display:none; margin-top:8px;">
+        <label for="scenario-name">Tên kịch bản</label>
+        <input type="text" id="scenario-name" placeholder="Tên kịch bản">
+        <div id="questions-container"></div>
+        <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+      </div>
 
-<div id="scenario-editor" style="display: none; margin-top: 8px;">
-  <label for="scenario-name">Tên kịch bản</label>
-  <input type="text" id="scenario-name" placeholder="Tên kịch bản" />
-  <div id="questions-container"></div>
-  <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
-</div>
-
-
-<div id="scenario-buttons" style="margin-top: auto; padding-top: 8px;">
-  <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
-  <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
-  <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
-</div>
-<input type="file" id="json-file-input" accept=".json" style="display:none;">
-
-`;
+      <div id="scenario-buttons" style="margin-top:auto; padding-top:8px;">
+        <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
+        <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
+        <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
+      </div>
+    `;
 
     ChatGPTHelper.mountPanel(this.el);
+    ChatGPTHelper.makeDraggable(this.el, ".sb-title");
+    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
-    this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
-    this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
-    this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
+    this.el.querySelector("#add-question").addEventListener("click",
+        () => this._addQuestion());
+    this.el.querySelector("#save-to-storage").addEventListener("click",
+        () => this._save());
+    this.el.querySelector("#delete-scenario").addEventListener("click",
+        () => this._deleteScenario());
     this.el.querySelector("#new-scenario-btn").addEventListener("click", () => {
-      const editor = this.el.querySelector("#scenario-editor");
-      editor.style.display = "block";
-
+      this.el.querySelector("#scenario-editor").style.display = "block";
       this.el.querySelector("#scenario-name").value = "";
       this.el.querySelector("#questions-container").innerHTML = "";
     });
+  }
 
-    //firestore
-    // this.el.querySelector("#sync-to-firestore").addEventListener("click", () => this._syncToFirestore());
+  _addQuestion(q = {text: "", type: "text"}) {
+    const container = document.createElement("div");
+    container.className = "question-item";
 
-    ChatGPTHelper.makeDraggable(this.el, ".sb-title");
+    const textarea = document.createElement("textarea");
+    textarea.placeholder = "Câu hỏi...";
+    textarea.className = "question-input";
+    textarea.value = q.text || "";
+    textarea.rows = 2;
 
-    /* thêm nút đóng */
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    const select = document.createElement("select");
+    select.className = "question-type";
+    ["text", "variable", "loop"].forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      if (q.type === t) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑";
+    deleteBtn.className = "delete-question-btn";
+    deleteBtn.onclick = () => {
+      container.remove();
+      this._saveToStorageImmediately();
+    };
+
+    container.appendChild(textarea);
+    container.appendChild(select);
+    container.appendChild(deleteBtn);
+
+    textarea.addEventListener("input", () => this._saveToStorageImmediately());
+    select.addEventListener("change", () => this._saveToStorageImmediately());
+
+    this.el.querySelector("#questions-container").appendChild(container);
+  }
+
+  _collectDataFromDOM() {
+    const name = this.el.querySelector("#scenario-name").value.trim();
+    const items = this.el.querySelectorAll(".question-item");
+    const questions = Array.from(items).map(div => {
+      return {
+        text: div.querySelector(".question-input").value.trim(),
+        type: div.querySelector(".question-type").value
+      };
+    }).filter(q => q.text);
+
+    if (!name || questions.length === 0) {
+      alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
+      return null;
+    }
+    return {[name]: questions};
+  }
+
+  async _collectDataFromStorage() {
+    return new Promise(resolve => {
+      chrome.storage.local.get("scenarioTemplates", (items) => {
+        resolve(items.scenarioTemplates || {});
+      });
+    });
+  }
+
+  _save() {
+    const json = this._collectDataFromDOM();
+    if (!json) {
+      return;
+    }
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const merged = {...(items.scenarioTemplates || {}), ...json};
+      chrome.storage.local.set({scenarioTemplates: merged}, () => {
+        alert("✅ Đã lưu kịch bản.");
+        this._loadScenarioList();
+        this._syncToFirestore(); // ✅ Gọi lại ở đây
+
+      });
+    });
   }
 
   _syncToFirestore() {
@@ -88,75 +155,37 @@ window.ScenarioBuilder = class {
         });
   }
 
-
-
+  _saveToStorageImmediately() {
+    const json = this._collectDataFromDOM();
+    if (!json) {
+      return;
+    }
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const merged = {...(items.scenarioTemplates || {}), ...json};
+      chrome.storage.local.set({scenarioTemplates: merged});
+    });
+  }
 
   _deleteScenario() {
-    const name = this.el.querySelector("#scenario-name").value.trim();
-    if (!name) return alert("Vui lòng nhập tên kịch bản để xoá.");
-    if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
+  const name = this.el.querySelector("#scenario-name").value.trim();
+  if (!name) return alert("Vui lòng nhập tên kịch bản để xoá.");
+  if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
 
-    chrome.storage.local.get("scenarioTemplates", (items) => {
-      const templates = items.scenarioTemplates || {};
-      if (!templates[name]) return alert("Không tìm thấy kịch bản.");
-      delete templates[name];
-      chrome.storage.local.set({ scenarioTemplates: templates }, () => {
-        console.log("🗑️ Đã xoá kịch bản:", name);
-        this.el.querySelector("#scenario-name").value = "";
-        this.el.querySelector("#questions-container").innerHTML = "";
-        this._loadScenarioList();
-        this._syncToFirestore();
-      });
+  chrome.storage.local.get("scenarioTemplates", (items) => {
+    const templates = items.scenarioTemplates || {};
+    if (!templates[name]) return alert("Không tìm thấy kịch bản.");
+    delete templates[name];
+
+    chrome.storage.local.set({ scenarioTemplates: templates }, () => {
+      console.log("🗑️ Đã xoá kịch bản:", name);
+      this.el.querySelector("#scenario-name").value = "";
+      this.el.querySelector("#questions-container").innerHTML = "";
+      this._loadScenarioList();
+      this._syncToFirestore(); // ✅ Bắt buộc phải có dòng này
     });
-  }
+  });
+}
 
-  _downloadFromDrive() {
-    chrome.storage.local.get(["gg_access_token", "gg_drive_file_id"], async (items) => {
-      const token = items.gg_access_token;
-      let fileId = items.gg_drive_file_id;
-
-      if (!token) {
-        alert("Vui lòng đăng nhập Google trước khi tải.");
-        return;
-      }
-
-      const helper = new GoogleDriveHelper(token);
-
-      try {
-        // Nếu chưa có fileId, tự động tìm kiếm trong folder
-        if (!fileId) {
-          const folderId = await helper.getOrCreateFolder('_chatgptContentHelper');
-          const query = encodeURIComponent(`name='chatgpt-scenarios.json' and '${folderId}' in parents and trashed=false`);
-          const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`;
-          const res = await fetch(url, {
-            headers: { 'Authorization': 'Bearer ' + token }
-          });
-          const data = await res.json();
-          if (res.ok && data.files && data.files.length > 0) {
-            fileId = data.files[0].id;
-            console.log("🔍 Tìm thấy file:", data.files[0]);
-            // Lưu lại fileId để lần sau dùng nhanh
-            chrome.storage.local.set({ gg_drive_file_id: fileId });
-          } else {
-            alert("Không tìm thấy file 'chatgpt-scenarios.json' trong thư mục _chatgptContentHelper.");
-            return;
-          }
-        }
-
-        // Download JSON từ fileId đã có/tìm được
-        const data = await helper.downloadJson(fileId);
-        chrome.storage.local.set({ scenarioTemplates: data }, () => {
-          alert("✅ Đã tải và cập nhật kịch bản từ Google Drive!");
-          this._loadScenarioList();
-        });
-        console.log("⬇️ Đã lấy dữ liệu từ Google Drive:", data);
-
-      } catch (err) {
-        console.error("❌ Lỗi khi tải từ Drive:", err);
-        alert("Đã xảy ra lỗi khi tải dữ liệu từ Google Drive.");
-      }
-    });
-  }
 
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
@@ -164,7 +193,7 @@ window.ScenarioBuilder = class {
       this.allScenarios = templates;
 
       const dropdown = this.el.querySelector("#scenario-dropdown");
-      dropdown.innerHTML = ""; // clear old
+      dropdown.innerHTML = "";
 
       Object.keys(templates).forEach((name) => {
         const item = document.createElement("div");
@@ -177,20 +206,16 @@ window.ScenarioBuilder = class {
           this.el.querySelector("#scenario-name").value = name;
           const container = this.el.querySelector("#questions-container");
           container.innerHTML = "";
-          templates[name].forEach((q) => this._addQuestion(q));
+          (templates[name] || []).forEach((q) => this._addQuestion(q));
 
-          // Ẩn chỉ danh sách dropdown
-          this.el.querySelector("#scenario-dropdown").classList.add("hidden-dropdown");
-
-          // Hiện phần editor
+          this.el.querySelector("#scenario-dropdown").classList.add(
+              "hidden-dropdown");
           this.el.querySelector("#scenario-editor").style.display = "block";
         });
-
 
         dropdown.appendChild(item);
       });
 
-      // thêm sự kiện filter khi nhập vào ô tìm kiếm
       const searchBox = this.el.querySelector("#scenario-search");
       searchBox.addEventListener("input", () => {
         const keyword = searchBox.value.trim().toLowerCase();
@@ -200,133 +225,12 @@ window.ScenarioBuilder = class {
         });
       });
 
-
       searchBox.addEventListener("focus", () => {
-        const dropdown = this.el.querySelector("#scenario-dropdown");
-        const editor = this.el.querySelector("#scenario-editor");
-
         dropdown.classList.remove("hidden-dropdown");
-        editor.style.display = "none";
+        this.el.querySelector("#scenario-editor").style.display = "none";
       });
-
     });
   }
-
-
-  _addQuestion(value = "") {
-    console.log("➕ [ScenarioBuilder] add question");
-    const container = document.createElement("div");
-    container.className = "question-item";
-
-    const textarea = document.createElement("textarea");
-    textarea.placeholder = "Câu hỏi...";
-    textarea.className = "question-input";
-    textarea.value = value;
-    textarea.rows = 2;
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "🗑";
-    deleteBtn.className = "delete-question-btn";
-    deleteBtn.title = "Xoá câu hỏi";
-    deleteBtn.onclick = () => container.remove();
-
-    container.appendChild(textarea);
-    container.appendChild(deleteBtn);
-
-    this.el.querySelector("#questions-container").appendChild(container);
-
-  }
-
-
-  _collectData() {
-    console.log("📑 [ScenarioBuilder] collect data");
-    const name = this.el.querySelector("#scenario-name").value.trim();
-    const questions = [...this.el.querySelectorAll(".question-input")]
-      .map((i) => i.value.trim())
-      .filter(Boolean);
-    if (!name || questions.length === 0) {
-      alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
-      return null;
-    }
-    return { [name]: questions };
-  }
-
-  _export() {
-    console.log("📤 [ScenarioBuilder] export JSON");
-    const json = this._collectData();
-    if (!json) return;
-    const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${Object.keys(json)[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  _save() {
-    console.log("💾 [ScenarioBuilder] save to Chrome storage");
-    const json = this._collectData();
-    if (!json) return;
-    chrome.storage.local.get("scenarioTemplates", (items) => {
-      const merged = { ...(items.scenarioTemplates || {}), ...json };
-      chrome.storage.local.set({ scenarioTemplates: merged }, () => alert("Đã lưu kịch bản vào trình duyệt."));
-      this._loadScenarioList();
-      this._syncToFirestore();
-    });
-  }
-
-  _import(event) {
-    console.log("📂 [ScenarioBuilder] import JSON");
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        const name = Object.keys(data)[0];
-        const questions = data[name];
-        this.el.querySelector("#scenario-name").value = name;
-        const container = this.el.querySelector("#questions-container");
-        container.innerHTML = "";
-        questions.forEach((q) => this._addQuestion(q));
-      } catch (err) {
-        alert("Tệp JSON không hợp lệ.");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  _syncToDrive() {
-    const json = this._collectData();
-    if (!json) return;
-
-    chrome.storage.local.get(["gg_access_token", "gg_drive_file_id", "scenarioTemplates"], async (items) => {
-      const token = items.gg_access_token;
-      const fileId = items.gg_drive_file_id || null;
-      const allScenarios = items.scenarioTemplates || {};
-
-      if (!token) {
-        alert("Vui lòng đăng nhập Google trước khi đồng bộ.");
-        return;
-      }
-
-      try {
-        const helper = new GoogleDriveHelper(token);
-        const folderId = await helper.getOrCreateFolder('_chatgptContentHelper');
-        helper.folderId = folderId;
-
-        const result = await helper.uploadJson(allScenarios, fileId);
-        chrome.storage.local.set({ gg_drive_file_id: result.id });
-        alert("✅ Đã đồng bộ kịch bản lên Google Drive!");
-        console.log("📁 Google Drive file:", result);
-      } catch (err) {
-        console.error("❌ Lỗi khi đồng bộ Drive:", err);
-        alert("Đã xảy ra lỗi khi đồng bộ Google Drive.");
-      }
-    });
-  }
-
 
   destroy() {
     console.log("❌ [ScenarioBuilder] destroy");
