@@ -171,9 +171,9 @@ window.ScenarioRunner = class {
         result.push(filled);
       } else if (q.type === "loop") {
         const loopKey = (q.text.match(/\$\{(\w+)\}/) || [])[1];
-        const loopList = values[loopKey] || [];
-        for (const val of loopList) {
-          const prompt = q.text.replace(new RegExp(`\\$\\{${loopKey}\\}`, 'g'), val);
+        const loopList = values[loopKey] || 0;
+        for (let index = 0; index < loopList[0]; index++) {
+          const prompt = q.text.replace(new RegExp(`\\$\\{${loopKey}\\}`, 'g'), index + 1);
           result.push(prompt);
         }
       }
