@@ -96,6 +96,7 @@ window.ScenarioBuilder = class {
     select.addEventListener("change", () => this._saveToStorageImmediately());
 
     this.el.querySelector("#questions-container").appendChild(container);
+    textarea.focus(); // 👈 Focus vào textarea mới thêm
   }
 
   _collectDataFromDOM() {
