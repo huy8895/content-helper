@@ -60,7 +60,7 @@
 /* Input & Textarea style */
 input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   width: 100%;
-  padding: 8px;
+  padding: 4px;
   border: 1px solid rgba(0,0,0,0.15);
   border-radius: 6px;
   font-size: 14px;
@@ -276,10 +276,6 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   flex: 1 1 auto;
   overflow-y: auto;
   max-height: 220px;  /* giống dropdown */
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px;
-  background: #fff;
   font-size: 13px;
   box-sizing: border-box;
 }
@@ -424,8 +420,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     width: 100%;
     resize: vertical;
     font-size: 12px;           /* 👈 chữ nhỏ hơn */
-    padding: 4px 6px;
-    margin: 0 0 6px 0;
+    padding: 4px;
+    margin: 0;
     border: none;
     border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
     min-height: 24px; /* ~1 dòng */
@@ -443,8 +439,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 /* === Scenario dropdown with search === */
 #scenario-search {
   width: 100%;
-  margin-bottom: 4px;
-  padding: 6px 5px;
+  margin-top: 4px;
+  padding: 1px;
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 12px;
@@ -482,45 +478,19 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   background: #e0e7ff;
 }
 
-
 .question-item {
-  position: relative;
-  margin-bottom: 6px;
-}
-
-.delete-question-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: transparent;
-  border: none;
-  color: #999;
-  font-size: 14px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.delete-question-btn:hover {
-  color: #e74c3c;
-}
-
-/* === Optimized Question Item Styling === */
-.question-item {
-  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin-bottom: 8px;
   border: 1px solid #ddd;
   border-radius: 8px;
   background: #fdfdfd;
-  padding: 10px 100px 10px 12px;
-  transition: box-shadow 0.2s, border-color 0.2s;
-}
-.question-item:hover {
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-  border-color: #c3c3f3;
+  padding: 10px;
 }
 
-#questions-container textarea.question-input {
-  width: 100%;
+.question-input {
+  flex: 1;
   resize: vertical;
   font-size: 13px;
   padding: 6px 8px;
@@ -528,22 +498,18 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   border-radius: 6px;
   background: #fff;
   color: #333;
-  font-family: inherit;
-  line-height: 1.4;
   min-height: 32px;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
-#questions-container textarea.question-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-  outline: none;
+
+.question-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
 }
 
 .question-type {
-  position: absolute;
-  top: 10px;
-  right: 44px;
   height: 32px;
   padding: 4px 8px;
   border-radius: 6px;
@@ -551,24 +517,15 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   border: 1px solid #ccc;
   font-size: 12px;
   color: #333;
-  font-family: inherit;
   cursor: pointer;
-  box-sizing: border-box;
-}
-.question-type:hover {
-  background: #e5e7eb;
 }
 
 .delete-question-btn {
-  position: absolute;
-  top: 10px;
-  right: 8px;
-  background: transparent;
-  border: none;
   font-size: 16px;
+  border: none;
+  background: transparent;
   color: #999;
   cursor: pointer;
-  padding: 0;
 }
 .delete-question-btn:hover {
   color: #e74c3c;

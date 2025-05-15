@@ -20,14 +20,14 @@ window.ScenarioBuilder = class {
         <div id="scenario-dropdown" class="hidden-dropdown"></div>
       </div>
 
-      <div id="scenario-editor" style="display:none; margin-top:8px;">
+      <div id="scenario-editor">
         <label for="scenario-name">Tên kịch bản</label>
         <input type="text" id="scenario-name" placeholder="Tên kịch bản">
         <div id="questions-container"></div>
         <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
       </div>
 
-      <div id="scenario-buttons" style="margin-top:auto; padding-top:8px;">
+      <div id="scenario-buttons">
         <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
         <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
         <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
@@ -61,6 +61,9 @@ window.ScenarioBuilder = class {
     textarea.value = q.text || "";
     textarea.rows = 2;
 
+    const actionWrap = document.createElement("div");
+    actionWrap.className = "question-actions";
+
     const select = document.createElement("select");
     select.className = "question-type";
     ["text", "variable", "loop"].forEach(t => {
@@ -81,10 +84,14 @@ window.ScenarioBuilder = class {
       this._saveToStorageImmediately();
     };
 
-    container.appendChild(textarea);
-    container.appendChild(select);
-    container.appendChild(deleteBtn);
+    // gắn vào DOM
+    actionWrap.appendChild(select);
+    actionWrap.appendChild(deleteBtn);
 
+    container.appendChild(textarea);
+    container.appendChild(actionWrap);
+
+    // auto save khi sửa
     textarea.addEventListener("input", () => this._saveToStorageImmediately());
     select.addEventListener("change", () => this._saveToStorageImmediately());
 
