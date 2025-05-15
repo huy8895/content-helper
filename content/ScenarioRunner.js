@@ -1,17 +1,11 @@
-/**********************************************
- * ScenarioRunner – run template sequentially  *
- **********************************************/
-window.ScenarioRunner = class  {
+window.ScenarioRunner = class {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
     this.onClose = onClose;
 
     /** @type {PromptSequencer|null} */
     this.sequencer = null;
-
-    /** @type {Record<string, string[]>} */
-    this.templates = {};  // 🧠 cache localStorage data
-
+    this.templates = {};
     this._render();
   }
 
@@ -19,7 +13,7 @@ window.ScenarioRunner = class  {
     console.log("🎛 [ScenarioRunner] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
-    this.el.classList.add("panel-box");   // 👈 thêm
+    this.el.classList.add("panel-box");
     this.el.innerHTML = `
       <div class="sr-header">
         <span class="sr-title">📤 Scenario Runner</span>
@@ -42,7 +36,7 @@ window.ScenarioRunner = class  {
 
     ChatGPTHelper.mountPanel(this.el);
 
-    // Load tất cả kịch bản từ local storage
+    // Load tất cả kịch bản từ localStorage
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const select = this.el.querySelector("#scenario-select");
       this.templates = items.scenarioTemplates || {};
@@ -55,10 +49,10 @@ window.ScenarioRunner = class  {
         const name = select.value;
         const list = this.templates[name] || [];
         const stepSelect = this.el.querySelector("#step-select");
-        stepSelect.innerHTML = list.map((q, idx) =>
-          `<option value="${idx}" title="${q}">#${idx + 1}: ${q.slice(0, 40)}...</option>`
-        ).join('');
-
+        stepSelect.innerHTML = list.map((q, idx) => {
+          const preview = q.text?.slice(0, 40) || "";  // lấy q.text
+          return `<option value="${idx}" title="${preview}">#${idx + 1}: ${preview}...</option>`;
+        }).join('');
         stepSelect.disabled = false;
       };
     });
@@ -91,7 +85,7 @@ window.ScenarioRunner = class  {
     if (!list) return alert("Không tìm thấy kịch bản.");
 
     const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
-    const slicedList = list.slice(startAt);
+    const slicedList = list.slice(startAt).map(q => q.text); // 👈 lấy .text
 
     this.sequencer = new PromptSequencer(
       slicedList,
@@ -101,7 +95,7 @@ window.ScenarioRunner = class  {
       "ScenarioRunner"
     );
 
-    // Cập nhật UI
+    // UI update
     this.el.querySelector('#sr-start').disabled = true;
     this.el.querySelector('#sr-pause').disabled = false;
     this.el.querySelector('#sr-resume').disabled = true;
@@ -122,7 +116,7 @@ window.ScenarioRunner = class  {
     sendBtn?.click();
   }
 
-  _waitForResponse(timeout = 60000 * 10) {
+  _waitForResponse(timeout = 600000) {
     console.log("⏳ [ScenarioRunner] waiting for response");
     return new Promise((resolve, reject) => {
       const start = Date.now();
@@ -166,4 +160,4 @@ window.ScenarioRunner = class  {
     this.onClose();
     this.sequencer?.stop();
   }
-}
+};
