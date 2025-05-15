@@ -80,7 +80,7 @@ window.ScenarioRunner = class {
               wrapper.className = "sr-input-group";
 
               const label = document.createElement("label");
-              label.textContent = `🧩 ${varName}:`;
+              label.textContent = `🧩[${q.type}] ${varName}:`;
 
               if (q.type === "variable") {
                 const textarea = document.createElement("textarea");
