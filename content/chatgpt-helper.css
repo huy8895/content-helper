@@ -530,3 +530,13 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 .delete-question-btn:hover {
   color: #e74c3c;
 }
+
+.scenario-dropdown-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+.scenario-dropdown-item:hover {
+  background: #e0e7ff;
+}
+

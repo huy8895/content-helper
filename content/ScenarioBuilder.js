@@ -205,9 +205,8 @@ window.ScenarioBuilder = class {
       Object.keys(templates).forEach((name) => {
         const item = document.createElement("div");
         item.textContent = name;
-        item.style.padding = "6px 10px";
-        item.style.cursor = "pointer";
-        item.style.borderBottom = "1px solid #eee";
+        item.className = "scenario-dropdown-item";
+
 
         item.addEventListener("click", () => {
           this.el.querySelector("#scenario-name").value = name;
