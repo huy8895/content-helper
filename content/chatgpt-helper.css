@@ -286,13 +286,6 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 
-/* Hiệu ứng hover/focus */
-#questions-container textarea.question-input:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-  background: #fff;
-}
-
 /* Thanh scroll cho textarea */
 #questions-container textarea.question-input::-webkit-scrollbar {
   width: 6px;
