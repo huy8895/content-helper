@@ -82,7 +82,7 @@ window.ScenarioRunner = class {
               const label = document.createElement("label");
               label.textContent = `🧩 ${varName}:`;
 
-              if (q.type === "loop") {
+              if (q.type === "variable") {
                 const textarea = document.createElement("textarea");
                 textarea.dataset.key = varName;
                 textarea.placeholder = "Nhập mỗi giá trị một dòng...";
@@ -91,7 +91,7 @@ window.ScenarioRunner = class {
                 wrapper.appendChild(textarea);
               } else {
                 const input = document.createElement("input");
-                input.type = "text";
+                input.type = "number";
                 input.dataset.key = varName;
                 wrapper.appendChild(label);
                 wrapper.appendChild(input);

@@ -285,21 +285,6 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   word-break: break-word;  /* 👈 Nếu quá dài */
 }
 
-#questions-container textarea.question-input {
-  width: 100%;
-  resize: vertical;
-  font-size: 12px; /* 👈 chữ nhỏ hơn */
-  padding: 4px 6px;
-  margin: 0 0 6px 0;
-  border: none;
-  border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
-  background: #f9f9f9;
-  min-height: 24px; /* ~1 dòng */
-  line-height: 1.2;
-  overflow-y: auto;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
 
 /* Hiệu ứng hover/focus */
 #questions-container textarea.question-input:focus {
@@ -412,24 +397,6 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     background: #444;
     color: #f0f0f0;
   }
-
-  /* Mỗi ô textarea câu hỏi */
-  #questions-container textarea.question-input {
-    background: #444;       /* nền tối hơn */
-    color: #f0f0f0;         /* chữ sáng */
-    width: 100%;
-    resize: vertical;
-    font-size: 12px;           /* 👈 chữ nhỏ hơn */
-    padding: 4px;
-    margin: 0;
-    border: none;
-    border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
-    min-height: 24px; /* ~1 dòng */
-    line-height: 1.2;
-    overflow-y: auto;
-    box-sizing: border-box;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
 }
 
 #scenario-runner {
@@ -488,6 +455,28 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   background: #fdfdfd;
   padding: 10px;
 }
+
+.question-item input[type="text"],
+.question-item input[type="number"],
+.question-item textarea {
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+  resize: vertical;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+
+  margin: 0 0 6px 0;
+  border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
+  min-height: 24px; /* ~1 dòng */
+  line-height: 1.2;
+  overflow-y: auto;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
 
 .question-input {
   flex: 1;
@@ -564,6 +553,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 .sr-input-group input[type="text"],
+.sr-input-group input[type="number"],
 .sr-input-group textarea {
   padding: 6px 8px;
   font-size: 13px;
