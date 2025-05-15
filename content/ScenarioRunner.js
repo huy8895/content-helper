@@ -2,8 +2,6 @@ window.ScenarioRunner = class {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
     this.onClose = onClose;
-
-    /** @type {PromptSequencer|null} */
     this.sequencer = null;
     this.templates = {};
     this._render();
@@ -27,6 +25,8 @@ window.ScenarioRunner = class {
         <option value="0">(Chọn kịch bản để hiện danh sách)</option>
       </select>
 
+      <div id="scenario-inputs" style="margin-top: 10px;"></div>
+
       <div class="sr-controls">
         <button id="sr-start">▶️ Bắt đầu</button>
         <button id="sr-pause" disabled>⏸ Dừng</button>
@@ -40,23 +40,71 @@ window.ScenarioRunner = class {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const select = this.el.querySelector("#scenario-select");
       this.templates = items.scenarioTemplates || {};
+      select.add(new Option("-- Chọn kịch bản --", ""));
+
       Object.keys(this.templates).forEach((name) => {
         select.add(new Option(name, name));
       });
 
-      // Khi chọn kịch bản → hiển thị dropdown bước
+      // ✅ Sau khi đã add toàn bộ option
+      if (select.options.length > 0) {
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event("change"));
+      }
+
       select.onchange = () => {
         const name = select.value;
         const list = this.templates[name] || [];
+        console.log("📋 Đã chọn kịch bản:", name);
         const stepSelect = this.el.querySelector("#step-select");
         stepSelect.innerHTML = list.map((q, idx) => {
-          const preview = q.text?.slice(0, 40) || "";  // lấy q.text
+          const preview = q.text?.slice(0, 40) || "";
           return `<option value="${idx}" title="${preview}">#${idx + 1}: ${preview}...</option>`;
-        }).join('');
+        }).join("");
         stepSelect.disabled = false;
+
+        // Hiển thị input cho variable và loop
+        const inputPanel = this.el.querySelector("#scenario-inputs");
+        inputPanel.innerHTML = "";
+
+        const shown = new Set();
+        list.forEach(q => {
+          if (q.type === "variable" || q.type === "loop") {
+            const matches = [...q.text.matchAll(/\$\{(\w+)\}/g)];
+            matches.forEach(match => {
+              const varName = match[1];
+              if (shown.has(varName)) return;
+              shown.add(varName);
+
+              const wrapper = document.createElement("div");
+              wrapper.className = "sr-input-group";
+
+              const label = document.createElement("label");
+              label.textContent = `🧩 ${varName}:`;
+
+              if (q.type === "loop") {
+                const textarea = document.createElement("textarea");
+                textarea.dataset.key = varName;
+                textarea.placeholder = "Nhập mỗi giá trị một dòng...";
+                textarea.rows = 3;
+                wrapper.appendChild(label);
+                wrapper.appendChild(textarea);
+              } else {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.dataset.key = varName;
+                wrapper.appendChild(label);
+                wrapper.appendChild(input);
+              }
+
+              inputPanel.appendChild(wrapper);
+            });
+          }
+        });
       };
     });
 
+      // Khi chọn kịch bản → hiển thị dropdown bước và inputs
     const btnStart = this.el.querySelector('#sr-start');
     const btnPause = this.el.querySelector('#sr-pause');
     const btnResume = this.el.querySelector('#sr-resume');
@@ -80,27 +128,57 @@ window.ScenarioRunner = class {
   async _start() {
     const name = this.el.querySelector("#scenario-select").value;
     if (!name) return alert("Vui lòng chọn kịch bản.");
+    console.log("▶️ Bắt đầu chạy:", name);
 
     const list = this.templates[name];
     if (!list) return alert("Không tìm thấy kịch bản.");
 
+    // Thu thập giá trị biến
+    const variableValues = {};
+    this.el.querySelectorAll("#scenario-inputs [data-key]").forEach(el => {
+      const key = el.dataset.key;
+      variableValues[key] = el.tagName === "TEXTAREA"
+        ? el.value.split("\n").map(v => v.trim()).filter(Boolean)
+        : el.value.trim();
+    });
+
     const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
-    const slicedList = list.slice(startAt).map(q => q.text); // 👈 lấy .text
+    const slicedList = list.slice(startAt);
+    const expandedList = this._expandScenario(slicedList, variableValues);
 
     this.sequencer = new PromptSequencer(
-      slicedList,
+      expandedList,
       this._sendPrompt.bind(this),
       this._waitForResponse.bind(this),
       (idx, total) => console.log(`📤 ${startAt + idx}/${startAt + total} done`),
       "ScenarioRunner"
     );
 
-    // UI update
     this.el.querySelector('#sr-start').disabled = true;
     this.el.querySelector('#sr-pause').disabled = false;
     this.el.querySelector('#sr-resume').disabled = true;
 
     this.sequencer.start();
+  }
+
+  _expandScenario(questions, values) {
+    const result = [];
+    for (const q of questions) {
+      if (q.type === "text") {
+        result.push(q.text);
+      } else if (q.type === "variable") {
+        const filled = q.text.replace(/\$\{(\w+)\}/g, (_, k) => values[k] || "");
+        result.push(filled);
+      } else if (q.type === "loop") {
+        const loopKey = (q.text.match(/\$\{(\w+)\}/) || [])[1];
+        const loopList = values[loopKey] || [];
+        for (const val of loopList) {
+          const prompt = q.text.replace(new RegExp(`\\$\\{${loopKey}\\}`, 'g'), val);
+          result.push(prompt);
+        }
+      }
+    }
+    return result;
   }
 
   async _sendPrompt(text) {
