@@ -36,7 +36,6 @@ window.ScenarioRunner = class {
 
     ChatGPTHelper.mountPanel(this.el);
 
-    // Load tất cả kịch bản từ localStorage
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const select = this.el.querySelector("#scenario-select");
       this.templates = items.scenarioTemplates || {};
@@ -46,12 +45,7 @@ window.ScenarioRunner = class {
         select.add(new Option(name, name));
       });
 
-      // ✅ Sau khi đã add toàn bộ option
-      if (select.options.length > 0) {
-        select.selectedIndex = 0;
-        select.dispatchEvent(new Event("change"));
-      }
-
+      // Tự động gọi onchange nếu cần
       select.onchange = () => {
         const name = select.value;
         const list = this.templates[name] || [];
@@ -63,48 +57,61 @@ window.ScenarioRunner = class {
         }).join("");
         stepSelect.disabled = false;
 
-        // Hiển thị input cho variable và loop
         const inputPanel = this.el.querySelector("#scenario-inputs");
         inputPanel.innerHTML = "";
 
         const shown = new Set();
         list.forEach(q => {
-          if (q.type === "variable" || q.type === "loop") {
-            const matches = [...q.text.matchAll(/\$\{(\w+)\}/g)];
-            matches.forEach(match => {
-              const varName = match[1];
-              if (shown.has(varName)) return;
-              shown.add(varName);
+          const matches = [...q.text.matchAll(/\$\{(\w+)\}/g)];
+          matches.forEach(match => {
+            const varName = match[1];
+            if (shown.has(varName)) return;
+            shown.add(varName);
 
-              const wrapper = document.createElement("div");
-              wrapper.className = "sr-input-group";
+            const wrapper = document.createElement("div");
+            wrapper.className = "sr-input-group";
 
-              const label = document.createElement("label");
-              label.textContent = `🧩[${q.type}] ${varName}:`;
+            const label = document.createElement("label");
+            label.textContent = `🧩 ${varName}:`;
 
-              if (q.type === "variable") {
-                const textarea = document.createElement("textarea");
-                textarea.dataset.key = varName;
-                textarea.placeholder = "Nhập mỗi giá trị một dòng...";
-                textarea.rows = 3;
-                wrapper.appendChild(label);
-                wrapper.appendChild(textarea);
+            let inputEl;
+            if (q.type === "loop") {
+              inputEl = document.createElement("input");
+              inputEl.type = "number";
+              inputEl.placeholder = "Số lần lặp (ví dụ 3)";
+            } else {
+              inputEl = document.createElement("textarea");
+              inputEl.rows = 2;
+              inputEl.placeholder = "Nhập nội dung...";
+            }
+
+            inputEl.dataset.key = varName;
+            inputEl.addEventListener("input", () => this._saveVariableValues(name));
+            wrapper.appendChild(label);
+            wrapper.appendChild(inputEl);
+            inputPanel.appendChild(wrapper);
+          });
+        });
+
+        // ⏬ Load giá trị đã lưu
+        chrome.storage.local.get("scenarioInputValues", (result) => {
+          const saved = result.scenarioInputValues?.[name] || {};
+          inputPanel.querySelectorAll("[data-key]").forEach(el => {
+            const key = el.dataset.key;
+            const val = saved[key];
+            if (val !== undefined) {
+              if (el.tagName === "TEXTAREA") {
+                el.value = Array.isArray(val) ? val.join("\n") : val;
               } else {
-                const input = document.createElement("input");
-                input.type = "number";
-                input.dataset.key = varName;
-                wrapper.appendChild(label);
-                wrapper.appendChild(input);
+                el.value = val;
               }
-
-              inputPanel.appendChild(wrapper);
-            });
-          }
+            }
+          });
         });
       };
     });
 
-      // Khi chọn kịch bản → hiển thị dropdown bước và inputs
+    // Controls
     const btnStart = this.el.querySelector('#sr-start');
     const btnPause = this.el.querySelector('#sr-pause');
     const btnResume = this.el.querySelector('#sr-resume');
@@ -125,6 +132,26 @@ window.ScenarioRunner = class {
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
 
+  _saveVariableValues(templateName) {
+    const inputPanel = this.el.querySelector("#scenario-inputs");
+    const data = {};
+    inputPanel.querySelectorAll("[data-key]").forEach(el => {
+      const key = el.dataset.key;
+      if (el.tagName === "TEXTAREA") {
+        const lines = el.value.split("\n").map(v => v.trim()).filter(Boolean);
+        data[key] = lines.length === 1 ? lines[0] : lines;
+      } else {
+        data[key] = el.value.trim();
+      }
+    });
+
+    chrome.storage.local.get("scenarioInputValues", (items) => {
+      const all = items.scenarioInputValues || {};
+      all[templateName] = data;
+      chrome.storage.local.set({ scenarioInputValues: all });
+    });
+  }
+
   async _start() {
     const name = this.el.querySelector("#scenario-select").value;
     if (!name) return alert("Vui lòng chọn kịch bản.");
@@ -133,18 +160,15 @@ window.ScenarioRunner = class {
     const list = this.templates[name];
     if (!list) return alert("Không tìm thấy kịch bản.");
 
-    // Thu thập giá trị biến
-    const variableValues = {};
-    this.el.querySelectorAll("#scenario-inputs [data-key]").forEach(el => {
-      const key = el.dataset.key;
-      variableValues[key] = el.tagName === "TEXTAREA"
-        ? el.value.split("\n").map(v => v.trim()).filter(Boolean)
-        : el.value.trim();
+    const values = await new Promise(resolve => {
+      chrome.storage.local.get("scenarioInputValues", (result) => {
+        resolve(result.scenarioInputValues?.[name] || {});
+      });
     });
 
     const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
     const slicedList = list.slice(startAt);
-    const expandedList = this._expandScenario(slicedList, variableValues);
+    const expandedList = this._expandScenario(slicedList, values);
 
     this.sequencer = new PromptSequencer(
       expandedList,
@@ -171,9 +195,9 @@ window.ScenarioRunner = class {
         result.push(filled);
       } else if (q.type === "loop") {
         const loopKey = (q.text.match(/\$\{(\w+)\}/) || [])[1];
-        const loopList = values[loopKey];
-        for (let index = 0; index < parseInt(loopList || "0", 10) ; index++) {
-          const prompt = q.text.replace(new RegExp(`\\$\\{${loopKey}\\}`, 'g'), index + 1);
+        const count = parseInt(values[loopKey] || "0", 10);
+        for (let i = 1; i <= count; i++) {
+          const prompt = q.text.replace(new RegExp(`\\$\\{${loopKey}\\}`, 'g'), String(i));
           result.push(prompt);
         }
       }
@@ -199,8 +223,8 @@ window.ScenarioRunner = class {
     return new Promise((resolve, reject) => {
       const start = Date.now();
       const timer = setInterval(() => {
-        const stopBtn  = document.querySelector('button[aria-label="Stop generating"]');
-        const sendBtn  = document.querySelector('button[aria-label="Send prompt"]');
+        const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
+        const sendBtn = document.querySelector('button[aria-label="Send prompt"]');
         const voiceBtn = document.querySelector('button[aria-label="Start voice mode"]');
         const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn && voiceBtn);
         if (done) {
