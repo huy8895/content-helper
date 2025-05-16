@@ -564,4 +564,10 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   line-height: 1.4;
 }
 
-
+.question-loopkey{
+  width: 50px;
+  padding: 2px 4px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}

@@ -7,6 +7,10 @@ window.ScenarioRunner = class {
     this._render();
   }
 
+  _getLoopKey(q) {
+    return q.loopKey || (q.text.match(/\$\{(\w+)\}/) || [])[1];
+  }
+
   _render() {
     console.log("🎛 [ScenarioRunner] render UI");
     this.el = document.createElement("div");
@@ -63,34 +67,41 @@ window.ScenarioRunner = class {
         const shown = new Set();
         list.forEach(q => {
           const matches = [...q.text.matchAll(/\$\{(\w+)\}/g)];
+          const loopKey = this._getLoopKey(q);   // 🌟 mới
+
           matches.forEach(match => {
             const varName = match[1];
-            if (shown.has(varName)) return;
+            if (shown.has(varName)) {
+              return;
+            }
             shown.add(varName);
 
             const wrapper = document.createElement("div");
             wrapper.className = "sr-input-group";
-
             const label = document.createElement("label");
             label.textContent = `🧩 ${varName}:`;
 
             let inputEl;
-            if (q.type === "loop") {
+            if (q.type === "loop" && varName === loopKey) {
+              // chỉ loopKey => input number (số lần lặp)
               inputEl = document.createElement("input");
               inputEl.type = "number";
-              inputEl.placeholder = "Số lần lặp (ví dụ 3)";
+              inputEl.placeholder = "Số lần lặp (vd: 3)";
             } else {
+              // các biến còn lại => textarea
               inputEl = document.createElement("textarea");
               inputEl.rows = 2;
               inputEl.placeholder = "Nhập nội dung...";
             }
 
             inputEl.dataset.key = varName;
-            inputEl.addEventListener("input", () => this._saveVariableValues(name));
+            inputEl.addEventListener("input",
+                () => this._saveVariableValues(name));
             wrapper.appendChild(label);
             wrapper.appendChild(inputEl);
             inputPanel.appendChild(wrapper);
           });
+
         });
 
         // ⏬ Load giá trị đã lưu
@@ -194,13 +205,21 @@ window.ScenarioRunner = class {
         const filled = q.text.replace(/\$\{(\w+)\}/g, (_, k) => values[k] || "");
         result.push(filled);
       } else if (q.type === "loop") {
-        const loopKey = (q.text.match(/\$\{(\w+)\}/) || [])[1];
-        const count = parseInt(values[loopKey] || "0", 10);
+        const loopKey = this._getLoopKey(q);                 // 🌟 dùng hàm mới
+        const count = parseInt(values[loopKey] || "0", 10); // số lần lặp
+
         for (let i = 1; i <= count; i++) {
-          const prompt = q.text.replace(new RegExp(`\\$\\{${loopKey}\\}`, 'g'), String(i));
+          // Thay loopKey bằng i, đồng thời replace các biến thường
+          const prompt = q.text.replace(/\$\{(\w+)\}/g, (_, k) => {
+            if (k === loopKey) {
+              return String(i);
+            }     // biến loop
+            return values[k] || "";                  // biến thường
+          });
           result.push(prompt);
         }
       }
+
     }
     return result;
   }

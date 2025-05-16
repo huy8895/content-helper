@@ -84,8 +84,24 @@ window.ScenarioBuilder = class {
       this._saveToStorageImmediately();
     };
 
+    /* === THÊM NGAY SAU const select = ... === */
+    const loopKeyInput = document.createElement("input");
+    loopKeyInput.className   = "question-loopkey";
+    loopKeyInput.placeholder = "loopKey";
+    loopKeyInput.style.display = q.type === "loop" ? "inline-block" : "none";
+    loopKeyInput.value = q.loopKey || "";
+
+    /* Toggle ẩn/hiện khi đổi type */
+    select.addEventListener("change", () => {
+      loopKeyInput.style.display = select.value === "loop" ? "inline-block" : "none";
+      this._saveToStorageImmediately();
+    });
+    /* === HẾT KHỐI THÊM MỚI === */
+
+
     // gắn vào DOM
     actionWrap.appendChild(select);
+    actionWrap.appendChild(loopKeyInput);
     actionWrap.appendChild(deleteBtn);
 
     container.appendChild(textarea);
@@ -105,7 +121,8 @@ window.ScenarioBuilder = class {
     const questions = Array.from(items).map(div => {
       return {
         text: div.querySelector(".question-input").value.trim(),
-        type: div.querySelector(".question-type").value
+        type: div.querySelector(".question-type").value,
+        loopKey: div.querySelector(".question-loopkey")?.value.trim() || undefined
       };
     }).filter(q => q.text);
 
