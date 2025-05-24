@@ -41,10 +41,12 @@ window.PromptSequencer = class {
     }
   }
 
-  start() {
+  start(onDone) {
     this.stopped = false;
     this.paused = false;
-    this._run();
+    return this._run().then(() => {
+      if (!this.stopped) onDone?.();
+    });
   }
 
   pause() {

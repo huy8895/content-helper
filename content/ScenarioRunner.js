@@ -193,7 +193,11 @@ window.ScenarioRunner = class {
     this.el.querySelector('#sr-pause').disabled = false;
     this.el.querySelector('#sr-resume').disabled = true;
 
-    this.sequencer.start();
+    this.sequencer.start(() => {
+      this.el.querySelector('#sr-start').disabled = false;
+      this.el.querySelector('#sr-pause').disabled = true;
+      this.el.querySelector('#sr-resume').disabled = true;
+    });
   }
 
   _expandScenario(questions, values) {
