@@ -6,6 +6,7 @@ window.AudioDownloader = class  {
     this.onClose = onClose;
     this.inFlight = 0;
     this.savedState = {};
+    this._zipListener = null;
 
     PanelState.load('AudioDownloader', (saved) => {
       const def = {
@@ -261,7 +262,8 @@ window.AudioDownloader = class  {
 
   _downloadAllZip() {
     console.log("🔊 [AudioDownloader] download all audio files audio.zip");
-
+    // 0) Chuẩn bị progressBox
+    const progressBox = this.el.querySelector('#ad-progress');
     // 1) Lấy reference đến nút Download All
     const dlAllBtn = this.el.querySelector('#ad-dlall');
 
@@ -284,7 +286,23 @@ window.AudioDownloader = class  {
       return;
     }
 
-    // 4) Gửi yêu cầu downloadAudioZip vào background
+    /* 4) TẠO & ĐĂNG KÝ listener */
+    this._zipListener = (msg) => {
+      if (msg.action === 'downloadAudioZipProgress') {
+        progressBox.textContent =
+          `📦 Zipping… (${msg.current}/${msg.total})`;
+      } else if (msg.action === 'downloadAudioZipCompleted') {
+        progressBox.textContent =
+          `✅ Zip completed (${ids.length} files)`;
+        cleanup();
+      } else if (msg.action === 'downloadAudioZipFailed') {
+        alert('Zip thất bại: ' + msg.error);
+        cleanup();
+      }
+    };
+    chrome.runtime.onMessage.addListener(this._zipListener);
+
+    /* 5) Gửi yêu cầu ZIP */
     chrome.runtime.sendMessage({
       action        : 'downloadAudioZip',
       messageIds    : ids,
@@ -293,23 +311,25 @@ window.AudioDownloader = class  {
       selectedVoice : this.savedState.voice,
       format        : this.savedState.format
     }, (res) => {
-      // 5) Khi kết thúc (thành công hoặc lỗi), phục hồi lại nút
-      if (res.status === 'completed') {
-        // đánh dấu đã xong
-        ids.forEach(id => {
-          if (!this.savedState.downloaded.includes(id))
-            this.savedState.downloaded.push(id);
-        });
-        this._syncState();
-        // this._renderRows(this._lastMessages); // hoặc reload list
-      } else {
+      if (res.status === 'failed') {          // fallback nếu BG không gửi lỗi
         alert('Zip thất bại: ' + res.error);
+        cleanup();
       }
-
-      // 6) Phục hồi UI cho nút Download All
-      dlAllBtn.textContent = 'Download Done ✅';
     });
-  }
+
+    /* 6) Hiển thị 0/N ngay khi bắt đầu */
+    progressBox.textContent = `📦 Zipping… (0/${ids.length})`;
+
+    /* 7) Hàm dọn dẹp listener + UI */
+    const cleanup = () => {
+      if (this._zipListener) {
+        chrome.runtime.onMessage.removeListener(this._zipListener);
+        this._zipListener = null;
+      }
+      dlAllBtn.textContent = 'Download Done ✅';
+      dlAllBtn.disabled = false;
+    };
+   }
 
 
 
@@ -332,6 +352,11 @@ window.AudioDownloader = class  {
   }
 
   destroy(){
+    /* 👇 Nếu panel đóng giữa chừng, gỡ listener còn treo */
+    if (this._zipListener) {
+      chrome.runtime.onMessage.removeListener(this._zipListener);
+      this._zipListener = null;
+    }
     this._syncState();
     this.el?.remove();
     this.onClose?.();

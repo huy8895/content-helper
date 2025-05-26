@@ -229,55 +229,69 @@ function downloadAudio(request, callback, retryCount = 0) {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action !== 'downloadAudioZip') return;
-  console.log("Nhận yêu cầu tải xuống zip:", request);
-  const {
-    messageIds,
-    conversationId,
-    requestHeaders,
-    selectedVoice,
-    format
-  } = request;
+  if (request.action !== 'downloadAudioZip') {
+    return;
+  }
 
-  // 1) fetch all blobs
-  Promise.all(messageIds.map(id =>
-      fetch(
-          `https://chatgpt.com/backend-api/synthesize?` +
-          `message_id=${id}&conversation_id=${conversationId}` +
-          `&voice=${selectedVoice}&format=${format}`,
-          {
-            headers: Object.fromEntries(requestHeaders.map(h=>[h.name,h.value])),
-            credentials:'include'
-          }
-      )
-          .then(r => {
-            if (!r.ok) throw new Error(r.statusText);
-            return r.blob().then(blob => ({ id, blob }));
-          })
-  ))
-      // 2) zip them
-      .then(files => {
-        const zip = new JSZip();
-        files.forEach(({id, blob}, i) => {
-          zip.file(`${i+1}_${id}_${selectedVoice}.${format}`, blob);
+  (async () => {
+    const {
+      messageIds, conversationId, requestHeaders,
+      selectedVoice, format
+    } = request;
+
+    try {
+      const zip = new JSZip();
+      const total = messageIds.length;
+
+      for (let i = 0; i < total; i++) {
+        const id = messageIds[i];
+        const res = await fetch(
+            `https://chatgpt.com/backend-api/synthesize?` +
+            `message_id=${id}&conversation_id=${conversationId}` +
+            `&voice=${selectedVoice}&format=${format}`,
+            {
+              headers: Object.fromEntries(
+                  requestHeaders.map(h => [h.name, h.value])),
+              credentials: 'include'
+            }
+        );
+        if (!res.ok) {
+          throw new Error(res.statusText);
+        }
+
+        const blob = await res.blob();
+        zip.file(`${i + 1}_${id}_${selectedVoice}.${format}`, blob);
+
+        /* 🔔 Gửi progress về popup */
+        chrome.runtime.sendMessage({
+          action: 'downloadAudioZipProgress',
+          current: i + 1,
+          total
         });
-        return zip.generateAsync({ type:'blob' });
-      })
-      // 3) convert to data URL & download
-      .then(zipBlob => zipBlob.arrayBuffer())
-      .then(buffer => {
-        const b64 = btoa(new Uint8Array(buffer).reduce((s,c)=>s+String.fromCharCode(c), ''));
-        const dataUrl = 'data:application/zip;base64,' + b64;
-        chrome.downloads.download({
-          url: dataUrl,
-          filename:'audio.zip',
-          conflictAction:'overwrite'
-        }, () => sendResponse({ status:'completed' }));
-      })
-      .catch(err => {
-        console.error('zip error', err);
-        sendResponse({ status:'failed', error:err.message });
+      }
+
+      /* Generate ZIP + download */
+      const zipBlob = await zip.generateAsync({type: 'blob'});
+      const b64 = btoa(
+          String.fromCharCode(...new Uint8Array(await zipBlob.arrayBuffer()))
+      );
+      await new Promise(r => chrome.downloads.download(
+          {
+            url: 'data:application/zip;base64,' + b64,
+            filename: 'audio.zip',
+            conflictAction: 'overwrite'
+          }, r));
+
+      chrome.runtime.sendMessage({action: 'downloadAudioZipCompleted'});
+      sendResponse({status: 'completed'});
+    } catch (err) {
+      chrome.runtime.sendMessage({
+        action: 'downloadAudioZipFailed',
+        error: err.message
       });
+      sendResponse({status: 'failed', error: err.message});
+    }
+  })();
 
   return true; // keep channel open for sendResponse
 });
