@@ -54,6 +54,7 @@ class ChatGPTHelper {
   /* UI helpers */
   _insertHelperButtons() {
     const chatForm = this.chatSitAdapter.getForm();
+    console.log("_insertHelperButtons chatForm :", chatForm)
     if (!chatForm || chatForm.querySelector("#chatgpt-helper-button")) return;
 
     console.log("✨ [ChatGPTHelper] Inserting helper buttons");

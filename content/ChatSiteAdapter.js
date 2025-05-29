@@ -32,7 +32,7 @@ class BaseChatAdapter {
   getSendBtn()  { throw new Error("getSendBtn() not implemented"); }
 
   /* ---- Optional interface (override if the site supports it) ---- */
-  getForm()     { return this.getTextarea()?.closest("form") ?? null; }
+  getForm()     { return this.getTextarea() }
   getStopBtn()  { return null; }
   getVoiceBtn() { return null; }
 
@@ -58,7 +58,7 @@ class ChatGPTAdapter extends BaseChatAdapter {
     return /(?:chat\.openai|chatgpt)\.com$/i.test(host);
   }
 
-  getTextarea() { return this._q("#prompt-textarea"); }
+  getTextarea() { return this._q("#prompt-textarea")?.closest("form") ?? null; }
   getSendBtn()  { return this._q('button[aria-label="Send prompt"]'); }
   getStopBtn()  { return this._q('button[aria-label="Stop generating"]'); }
   getVoiceBtn() { return this._q('button[aria-label="Start voice mode"]'); }
@@ -68,7 +68,10 @@ class ChatGPTAdapter extends BaseChatAdapter {
 class DeepSeekAdapter extends BaseChatAdapter {
   static matches(host) { return /deepseek\.com$/i.test(host); }
 
-  getTextarea() { return this._q("textarea[data-testid='chat-input']"); }
+  getTextarea () {
+    // phần tử nhập chat duy nhất của DeepSeek
+    return this._q('textarea#chat-input');
+  }
   getSendBtn()  { return this._q("button[data-testid='send-btn']"); }
   getStopBtn()  { return this._q("button[data-testid='stop-btn']"); }
   // DeepSeek places everything inside a <form>; inherit default getForm()
