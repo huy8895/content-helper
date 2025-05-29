@@ -25,7 +25,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://chatgpt.com/*"
+        "https://chatgpt.com/*",
+        "https://chat.deepseek.com/*"
       ],
       "js": [
         "libs/compromise.min.js",
@@ -40,7 +41,8 @@
         "content/ScenarioRunner.js",
         "content/TextSplitter.js",
         "content/AudioDownloader.js",
-        "content/ContentCopyPanel.js"
+        "content/ContentCopyPanel.js",
+        "content/ChatSiteAdapter.js"
       ],
       "css": [
         "content/chatgpt-helper.css"

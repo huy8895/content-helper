@@ -26,7 +26,11 @@ class ChatGPTHelper {
     /** @type {AudioDownloader|null} */
     this.audioDownloader = null;   // 🎵 new panel
 
-
+    this.chatSitAdapter = new ChatSiteAdapter();
+    if (!this.chatSitAdapter) {
+      console.warn("⚠️ No adapter for this site – helper disabled");
+      return;
+    }
 
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
@@ -49,7 +53,7 @@ class ChatGPTHelper {
 
   /* UI helpers */
   _insertHelperButtons() {
-    const chatForm = document.querySelector("form textarea")?.closest("form");
+    const chatForm = this.chatSitAdapter.getForm();
     if (!chatForm || chatForm.querySelector("#chatgpt-helper-button")) return;
 
     console.log("✨ [ChatGPTHelper] Inserting helper buttons");
