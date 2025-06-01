@@ -23,6 +23,10 @@ window.ContentCopyPanel = class {
         <button id="ccp-copy-from" class="ts-btn">Copy From Index</button>
         <button id="ccp-download" class="ts-btn ts-btn-accent" style="margin-left:8px;">⬇️ Download File</button>
       </div>
+      <label style="font-size: 13px;">
+          <input type="checkbox" id="ccp-prefix-part" />
+          Add "Part X" prefix
+        </label>
       <div id="ccp-list" class="ts-results"></div>
     `;
 
@@ -93,6 +97,8 @@ window.ContentCopyPanel = class {
 
     this.el.querySelector("#ccp-download").onclick = () => {
       const indexInput = this.el.querySelector("#ccp-index");
+      const prefixCheckbox = this.el.querySelector("#ccp-prefix-part");
+
       const index = parseInt(indexInput.value || "0", 10);
 
       if (indexInput.value && (!Number.isInteger(index) || index < 0 || index > this.elements.length)) {
@@ -101,9 +107,12 @@ window.ContentCopyPanel = class {
       }
 
       const fromIndex = indexInput.value ? index - 1 : 0;
+      const addPrefix = prefixCheckbox?.checked;
+
 
       const content = this.elements.slice(fromIndex).map((el, idx) => {
-        return `Part ${idx + 1}\n${el.innerText}`;
+        const partLabel = `Part ${idx + 1}\n`;
+        return addPrefix ? partLabel + el.innerText : el.innerText;
       }).join('\n\n');
 
       this._downloadFile(content, 'content.txt');
