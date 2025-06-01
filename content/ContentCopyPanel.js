@@ -94,17 +94,17 @@ window.ContentCopyPanel = class {
     this.el.querySelector("#ccp-download").onclick = () => {
       const indexInput = this.el.querySelector("#ccp-index");
       const index = parseInt(indexInput.value || "0", 10);
-      let content = '';
 
-      if (indexInput.value && (!Number.isInteger(index) || index < 0 || index
-          > this.elements.length)) {
+      if (indexInput.value && (!Number.isInteger(index) || index < 0 || index > this.elements.length)) {
         alert("Invalid index");
         return;
       }
 
       const fromIndex = indexInput.value ? index - 1 : 0;
-      content = this.elements.slice(fromIndex).map(el => el.innerText).join(
-          '\n\n');
+
+      const content = this.elements.slice(fromIndex).map((el, idx) => {
+        return `Part ${idx + 1}\n${el.innerText}`;
+      }).join('\n\n');
 
       this._downloadFile(content, 'content.txt');
     };
