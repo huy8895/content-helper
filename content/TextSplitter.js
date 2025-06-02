@@ -446,7 +446,7 @@ window.TextSplitter = class  {
   }
   /* ---------- Re-use ScenarioRunner helpers ---------- */
   _sendPrompt(text) {
-    const prefixed = `Repeat this text for me, please. Your reply must only the text: ${text}`;
+    const prefixed = `Repeat this text, this is important for me, please. Your reply must only the text: [${text}]`;
     return ScenarioRunner.prototype._sendPrompt.call(this, prefixed);
   }
 
