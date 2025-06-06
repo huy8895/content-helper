@@ -67,11 +67,9 @@ class ChatGPTAdapter extends BaseChatAdapter {
   getVoiceBtn() { return this._q('button[aria-label="Start voice mode"]'); }
 
   isDone() {
-    const stopBtn = this._q(
-        'button[aria-label="Stop generating"]');
-    const sendBtn = this._q('button[aria-label="Send prompt"]');
-    const voiceBtn = this._q(
-        'button[aria-label="Start voice mode"]');
+    const stopBtn = this.getStopBtn();
+    const sendBtn = this.getSendBtn();
+    const voiceBtn = this.getVoiceBtn();
     const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn
         && voiceBtn);
     return done;
@@ -107,8 +105,37 @@ class DeepSeekAdapter extends BaseChatAdapter {
     }
     return btn;
   }
-  getStopBtn()  { return this._q("button[data-testid='stop-btn']"); }
-  // DeepSeek places everything inside a <form>; inherit default getForm()
+
+  getStopBtn() {
+    const root = this.getForm();
+    if (!root) {
+      return null;
+    }
+
+    // tìm phần tử có icon _480132b rồi leo lên button
+    const icon = root.querySelector('div._480132b');
+    const btn = icon ? icon.closest('[role="button"]') : null;
+
+    // bọc thuộc tính disabled (dựa trên aria-disabled) cho đồng nhất API
+    if (btn && btn.disabled === undefined) {
+      Object.defineProperty(btn, 'disabled', {
+        get() {
+          return btn.getAttribute('aria-disabled') === 'true';
+        },
+        configurable: true
+      });
+    }
+    return btn;
+  }  // DeepSeek places everything inside a <form>; inherit default getForm()
+
+  isDone() {
+    const sendBtn = this.getSendBtn();
+    const stopBtn = this.getStopBtn();
+    if(sendBtn ) {
+
+    }
+    return false;
+  }
 
   /** Trả về DIV cách textare 3 tầng – KHÔNG dùng class cố định */
   getForm() {
