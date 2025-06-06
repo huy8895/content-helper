@@ -53,9 +53,10 @@ class ChatGPTHelper {
 
   /* UI helpers */
   _insertHelperButtons() {
-    const chatForm = this.chatSitAdapter.getForm();
-    console.log("_insertHelperButtons chatForm :", chatForm)
-    if (!chatForm || chatForm.querySelector("#chatgpt-helper-button")) return;
+    if (document.querySelector('#chatgpt-helper-button-container')) return; // đã gắn
+    const chatForm = window.ChatAdapter.getForm();
+    console.log('chatForm: ', chatForm)
+    if (!chatForm) return;
 
     console.log("✨ [ChatGPTHelper] Inserting helper buttons");
     const container = document.createElement("div");
@@ -103,7 +104,8 @@ class ChatGPTHelper {
     container.append(btnSplitter);
     container.append(btnAudio);
 
-    chatForm.appendChild(container);
+  chatForm.after(container);          // luôn chèn BÊN NGOÀI khung nhập
+
   }
 
   _createButton({ id, text, className, onClick }) {

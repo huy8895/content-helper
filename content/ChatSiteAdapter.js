@@ -75,6 +75,16 @@ class DeepSeekAdapter extends BaseChatAdapter {
   getSendBtn()  { return this._q("button[data-testid='send-btn']"); }
   getStopBtn()  { return this._q("button[data-testid='stop-btn']"); }
   // DeepSeek places everything inside a <form>; inherit default getForm()
+
+  /** Trả về DIV cách textarea 2 tầng – KHÔNG dùng class cố định */
+  getForm() {
+    let el = this.getTextarea();
+    for (let i = 0; i < 3 && el; i++) {
+      // nhảy tới DIV cha liền kề
+      do { el = el.parentElement; } while (el && el.tagName !== 'DIV');
+    }
+    return el ?? null;                       // null nếu không tìm được
+  }
 }
 
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
