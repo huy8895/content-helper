@@ -1,6 +1,11 @@
 window.ScenarioRunner = class {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
+    if (!window.ChatAdapter) {
+      alert("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.");
+      throw new Error("ChatAdapter not available");
+    }
+
     this.onClose = onClose;
     this.sequencer = null;
     this.templates = {};
@@ -228,28 +233,35 @@ window.ScenarioRunner = class {
     return result;
   }
 
-  async _sendPrompt(text) {
-    console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
-    const textarea = document.getElementById("prompt-textarea");
-    if (!textarea) throw new Error("❌ Không tìm thấy #prompt-textarea");
+async _sendPrompt(text) {
+  console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
+  const chat = window.ChatAdapter;
+  const textarea = chat.getTextarea();
+  if (!textarea) throw new Error("❌ Không tìm thấy ô nhập");
 
-    textarea.innerHTML = "";
-    textarea.appendChild(Object.assign(document.createElement("p"), { textContent: text }));
-    textarea.dispatchEvent(new Event("input", { bubbles: true }));
-
-    const sendBtn = await this._waitForElement('button[aria-label="Send prompt"]');
-    sendBtn?.click();
+  if (textarea.tagName === 'TEXTAREA') {
+    /* DeepSeek & các site thuần textarea */
+    textarea.value = text;
+  } else {
+    /* ChatGPT (div[contenteditable]) – giữ nguyên cách cũ */
+    textarea.innerHTML = '';
+    textarea.appendChild(Object.assign(document.createElement('p'), { textContent: text }));
   }
+
+  /* Kích hoạt sự kiện input để React/Vue nhận thay đổi */
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+  /* Đợi nút Send rồi click */
+  const sendBtn = await this._waitForAdapterBtn(() => chat.getSendBtn());
+  sendBtn?.click();
+}
 
   _waitForResponse(timeout = 600000) {
     console.log("⏳ [ScenarioRunner] waiting for response");
     return new Promise((resolve, reject) => {
       const start = Date.now();
       const timer = setInterval(() => {
-        const stopBtn = document.querySelector('button[aria-label="Stop generating"]');
-        const sendBtn = document.querySelector('button[aria-label="Send prompt"]');
-        const voiceBtn = document.querySelector('button[aria-label="Start voice mode"]');
-        const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn && voiceBtn);
+        const done = window.ChatAdapter.isDone();
         if (done) {
           console.log("✅ [ScenarioRunner] response received");
           clearInterval(timer);
@@ -269,6 +281,20 @@ window.ScenarioRunner = class {
       let tries = 0;
       const id = setInterval(() => {
         const el = document.querySelector(selector);
+        if (el || tries >= maxRetries) {
+          clearInterval(id);
+          if (!el) console.warn("⚠️ [ScenarioRunner] element not found", selector);
+          resolve(el);
+        }
+        tries += 1;
+      }, interval);
+    });
+  }
+  _waitForAdapterBtn(fnGet, maxRetries = 25, interval = 300) {
+    return new Promise((resolve) => {
+      let tries = 0;
+      const id = setInterval(() => {
+        const el = fnGet();
         if (el || tries >= maxRetries) {
           clearInterval(id);
           if (!el) console.warn("⚠️ [ScenarioRunner] element not found", selector);

@@ -26,12 +26,6 @@ class ChatGPTHelper {
     /** @type {AudioDownloader|null} */
     this.audioDownloader = null;   // 🎵 new panel
 
-    this.chatSitAdapter = new ChatSiteAdapter();
-    if (!this.chatSitAdapter) {
-      console.warn("⚠️ No adapter for this site – helper disabled");
-      return;
-    }
-
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
     this._observer.observe(document.body, { childList: true, subtree: true });
