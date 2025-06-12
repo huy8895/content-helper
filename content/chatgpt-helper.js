@@ -33,6 +33,7 @@ class ChatGPTHelper {
     if(!document.getElementById('chatgpt-helper-panel-bar')){
       const bar = document.createElement('div');
       bar.id = 'chatgpt-helper-panel-bar';
+      bar.style.zIndex = '2147483647';  // 👈 thêm dòng này
       document.body.appendChild(bar);
     }
 
@@ -43,7 +44,7 @@ class ChatGPTHelper {
   }
 
   /* ngay trong class ChatGPTHelper (ngoài mọi hàm) */
-  static zTop = 10000;   // bộ đếm z-index toàn cục
+  static zTop = 2147483000;   // cao nhưng vẫn < 2^31-1 để còn ++
 
   /* UI helpers */
   _insertHelperButtons() {
