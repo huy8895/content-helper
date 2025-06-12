@@ -42,7 +42,7 @@
         "content/TextSplitter.js",
         "content/AudioDownloader.js",
         "content/ContentCopyPanel.js",
-        "content/ChatSiteAdapter.js"
+        "content/ChatAdapter.js"
       ],
       "css": [
         "content/chatgpt-helper.css"

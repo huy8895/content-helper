@@ -172,10 +172,5 @@ window.ChatAdapter = active;
 // Optional: export class references for power users (tree‑shakable bundlers)
 window.ChatAdapters = { BaseChatAdapter, ChatGPTAdapter, DeepSeekAdapter };
 
-function ChatSiteAdapter() {
-  return window.ChatAdapter;     // factory pattern
-}
 console.log("[Adapter factory] host =", window.location.hostname);
 console.log("[Adapter factory] picked =", window.ChatAdapter?.constructor.name);
-
-window.ChatSiteAdapter = ChatSiteAdapter;
