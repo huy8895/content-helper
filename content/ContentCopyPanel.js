@@ -1,8 +1,7 @@
 window.ContentCopyPanel = class {
   constructor(onClose) {
     this.onClose = onClose;
-    this.elements = Array.from(document.getElementsByClassName(
-        'markdown prose dark:prose-invert w-full break-words'));
+    this.elements = window.ChatAdapter.getContentElements();
     console.log("ContentCopyPanel elements:", this.elements);
     this._render();
   }

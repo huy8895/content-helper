@@ -26,8 +26,6 @@ class ChatGPTHelper {
     /** @type {AudioDownloader|null} */
     this.audioDownloader = null;   // 🎵 new panel
 
-
-
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => this._insertHelperButtons());
     this._observer.observe(document.body, { childList: true, subtree: true });
@@ -35,6 +33,7 @@ class ChatGPTHelper {
     if(!document.getElementById('chatgpt-helper-panel-bar')){
       const bar = document.createElement('div');
       bar.id = 'chatgpt-helper-panel-bar';
+      bar.style.zIndex = '2147483647';  // 👈 thêm dòng này
       document.body.appendChild(bar);
     }
 
@@ -45,12 +44,14 @@ class ChatGPTHelper {
   }
 
   /* ngay trong class ChatGPTHelper (ngoài mọi hàm) */
-  static zTop = 10000;   // bộ đếm z-index toàn cục
+  static zTop = 2147483000;   // cao nhưng vẫn < 2^31-1 để còn ++
 
   /* UI helpers */
   _insertHelperButtons() {
-    const chatForm = document.querySelector("form textarea")?.closest("form");
-    if (!chatForm || chatForm.querySelector("#chatgpt-helper-button")) return;
+    if (document.querySelector('#chatgpt-helper-button-container')) return; // đã gắn
+    const chatForm = window.ChatAdapter.getForm();
+    console.log('chatForm: ', chatForm)
+    if (!chatForm) return;
 
     console.log("✨ [ChatGPTHelper] Inserting helper buttons");
     const container = document.createElement("div");
@@ -98,7 +99,8 @@ class ChatGPTHelper {
     container.append(btnSplitter);
     container.append(btnAudio);
 
-    chatForm.appendChild(container);
+  chatForm.after(container);          // luôn chèn BÊN NGOÀI khung nhập
+
   }
 
   _createButton({ id, text, className, onClick }) {

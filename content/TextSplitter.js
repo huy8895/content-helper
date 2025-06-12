@@ -450,8 +450,10 @@ window.TextSplitter = class  {
     return ScenarioRunner.prototype._sendPrompt.call(this, prefixed);
   }
 
+      // 🎯 Alias hàm đợi nút để ScenarioRunner._sendPrompt dùng được
   _waitForResponse = ScenarioRunner.prototype._waitForResponse;
-  _waitForElement   = ScenarioRunner.prototype._waitForElement;   // 👈 thêm dòng này
+  _waitForAdapterBtn = ScenarioRunner.prototype._waitForAdapterBtn;
+  _waitForElement    = ScenarioRunner.prototype._waitForAdapterBtn;  // alias phụ (tuỳ dùng)
 
   /* ---------- Clean up ---------- */
   destroy() {

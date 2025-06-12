@@ -159,6 +159,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   pointer-events: auto;
 }
 
+#chatgpt-helper-panel-bar,
+.helper-panel {
+  z-index: 2147483647 !important;
+}
+
 /* Nút đóng panel */
 .panel-close {
   position: absolute;
