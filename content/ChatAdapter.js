@@ -160,7 +160,7 @@ class QwenAdapter extends BaseChatAdapter {
 
   getTextarea () {
     // phần tử nhập chat duy nhất của DeepSeek
-    return this._q("#chat-message-input-func-type")
+    return this._q("#chat-input")
   }
   getSendBtn () {
   }
