@@ -156,32 +156,43 @@ class DeepSeekAdapter extends BaseChatAdapter {
 
 /* ----------------------------  qwen.ai  ----------------------------- */
 class QwenAdapter extends BaseChatAdapter {
-  static matches(host) { return /qwen\.ai$/i.test(host); }
+  /** Khớp domain Qwen */
+  static matches (host) { return /(?:qwen\.ai)$/i.test(host); }
 
+  /** Ô nhập prompt */
   getTextarea () {
-    // phần tử nhập chat duy nhất của DeepSeek
-    return this._q("#chat-input")
+    return this._q('#chat-input');
   }
+
+  /** Nút GỬI – luôn có id cố định */
   getSendBtn () {
+    return this._q('#send-message-button');
   }
 
-  getStopBtn() {
+  /** Nút STOP khi đang sinh lời đáp */
+  getStopBtn () {
+    // Qwen không đặt id, nhưng icon bên trong có class "icon-StopIcon"
+    const icon = this._q('button i.icon-StopIcon');
+    return icon ? icon.closest('button') : null;
+  }
 
-  }  // DeepSeek places everything inside a <form>; inherit default getForm()
-
-  isDone() {
-    const sendBtn = this.getSendBtn();
+  /**
+   * Hoàn tất sinh nội dung khi:
+   *   – KHÔNG còn nút stop, và
+   *   – Nút send tồn tại & đang disabled
+   */
+  isDone () {
     const stopBtn = this.getStopBtn();
-    if(sendBtn ) {
-
-    }
-    return false;
+    const sendBtn = this.getSendBtn();
+    return !stopBtn && sendBtn && sendBtn.disabled;
   }
 
-    getForm() {
-    return this.getTextarea()?.closest("form") ?? null;
+  /** Form bao quanh textarea (dùng để submit) */
+  getForm () {
+    return this.getTextarea()?.closest('form') ?? null;
   }
 }
+
 
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [ChatGPTAdapter, DeepSeekAdapter, QwenAdapter];
