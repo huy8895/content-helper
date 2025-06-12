@@ -191,6 +191,18 @@ class QwenAdapter extends BaseChatAdapter {
   getForm () {
     return this.getTextarea()?.closest('form') ?? null;
   }
+
+  /** Phần HTML chứa nội dung phản hồi của bot (markdown) */
+  getContentElements () {
+    /* 1️⃣ Mỗi message của Qwen bọc trong .response-message-body  */
+    /* 2️⃣ Phần markdown luôn nằm trong .markdown-content-container / .markdown-prose */
+    /* 3️⃣ Mỗi khối còn có id #response-content-container (lặp lại)                  */
+    return Array.from(document.querySelectorAll(
+      '.response-message-body .markdown-content-container,' +  // phần mới nhất
+      '.response-message-body .markdown-prose,' +              // fallback
+      '#response-content-container'                            // id (không unique)
+    ));
+  }
 }
 
 
