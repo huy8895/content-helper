@@ -26,7 +26,8 @@
     {
       "matches": [
         "https://chatgpt.com/*",
-        "https://chat.deepseek.com/*"
+        "https://chat.deepseek.com/*",
+        "https://chat.qwen.ai/*"
       ],
       "js": [
         "libs/compromise.min.js",

@@ -154,8 +154,37 @@ class DeepSeekAdapter extends BaseChatAdapter {
   }
 }
 
+/* ----------------------------  qwen.ai  ----------------------------- */
+class QwenAdapter extends BaseChatAdapter {
+  static matches(host) { return /qwen\.ai$/i.test(host); }
+
+  getTextarea () {
+    // phần tử nhập chat duy nhất của DeepSeek
+    return this._q("#chat-message-input-func-type")
+  }
+  getSendBtn () {
+  }
+
+  getStopBtn() {
+
+  }  // DeepSeek places everything inside a <form>; inherit default getForm()
+
+  isDone() {
+    const sendBtn = this.getSendBtn();
+    const stopBtn = this.getStopBtn();
+    if(sendBtn ) {
+
+    }
+    return false;
+  }
+
+    getForm() {
+    return this.getTextarea()?.closest("form") ?? null;
+  }
+}
+
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
-const ADAPTER_CTORS = [ChatGPTAdapter, DeepSeekAdapter];
+const ADAPTER_CTORS = [ChatGPTAdapter, DeepSeekAdapter, QwenAdapter];
 let active = null;
 
 for (const Ctor of ADAPTER_CTORS) {
