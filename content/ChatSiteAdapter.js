@@ -29,6 +29,7 @@ class BaseChatAdapter {
 
   /* ---- Mandatory interface (override in subclass) ---- */
   getTextarea() { throw new Error("getTextarea() not implemented"); }
+  getContentElements() { throw new Error("getContentElements() not implemented"); }
   getSendBtn()  { throw new Error("getSendBtn() not implemented"); }
   isDone()  { throw new Error("isDone() not implemented"); }
 
@@ -76,6 +77,11 @@ class ChatGPTAdapter extends BaseChatAdapter {
   }
   getForm() {
     return this.getTextarea()?.closest("form") ?? null;
+  }
+
+  getContentElements(){
+    return Array.from(document.getElementsByClassName(
+        'markdown prose dark:prose-invert w-full break-words'));
   }
 }
 
