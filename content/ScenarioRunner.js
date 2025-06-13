@@ -1,4 +1,4 @@
-const innerHTML = `
+const ScenarioRunnerInnerHTML = `
   <div class="sr-header">
     <span class="sr-title">📤 Scenario Runner</span>
   </div>
@@ -69,7 +69,7 @@ window.ScenarioRunner = class {
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
     this.el.classList.add("panel-box");
-    this.el.innerHTML = innerHTML;
+    this.el.innerHTML = ScenarioRunnerInnerHTML;
 
     ChatGPTHelper.mountPanel(this.el);
 

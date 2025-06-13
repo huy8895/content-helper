@@ -1,4 +1,4 @@
-const innerHTML = `
+const ScenarioBuilderInnerHTML = `
   <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
 
   <div id="scenario-browser">
@@ -37,7 +37,7 @@ window.ScenarioBuilder = class {
     this.el = document.createElement("div");
     this.el.id = "scenario-builder";
     this.el.classList.add("panel-box");
-    this.el.innerHTML = innerHTML;
+    this.el.innerHTML = ScenarioBuilderInnerHTML;
 
     ChatGPTHelper.mountPanel(this.el);
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
