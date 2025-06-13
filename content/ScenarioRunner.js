@@ -1,3 +1,30 @@
+const innerHTML = `
+  <div class="sr-header">
+    <span class="sr-title">📤 Scenario Runner</span>
+  </div>
+
+  <label class="sr-label" for="scenario-select">Chọn kịch bản:</label>
+  <select id="scenario-select"></select>
+
+  <label class="sr-label" for="step-select">Bắt đầu từ câu số:</label>
+  <select id="step-select" disabled>
+    <option value="0">(Chọn kịch bản để hiện danh sách)</option>
+  </select>
+
+  <div id="scenario-inputs" style="margin-top: 10px;"></div>
+
+  <div class="sr-controls">
+    <button id="sr-addqueue">➕ Thêm vào hàng đợi <span id="sr-queue-count">0</span></button>
+    <button id="sr-start">▶️ Bắt đầu</button>
+    <button id="sr-pause" disabled>⏸ Dừng</button>
+    <button id="sr-resume" disabled>▶️ Tiếp</button>
+  </div>
+  <!-- ngay dưới .sr-controls -->
+  <div class="sr-queue-box">
+    <strong>Hàng đợi:</strong>
+    <ul id="sr-queue-list"></ul>
+  </div>
+`;
 window.ScenarioRunner = class {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
@@ -42,28 +69,7 @@ window.ScenarioRunner = class {
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
     this.el.classList.add("panel-box");
-    this.el.innerHTML = `
-      <div class="sr-header">
-        <span class="sr-title">📤 Scenario Runner</span>
-      </div>
-
-      <label class="sr-label" for="scenario-select">Chọn kịch bản:</label>
-      <select id="scenario-select"></select>
-
-      <label class="sr-label" for="step-select">Bắt đầu từ câu số:</label>
-      <select id="step-select" disabled>
-        <option value="0">(Chọn kịch bản để hiện danh sách)</option>
-      </select>
-
-      <div id="scenario-inputs" style="margin-top: 10px;"></div>
-
-      <div class="sr-controls">
-        <button id="sr-addqueue">➕ Thêm vào hàng đợi <span id="sr-queue-count">0</span></button>
-        <button id="sr-start">▶️ Bắt đầu</button>
-        <button id="sr-pause" disabled>⏸ Dừng</button>
-        <button id="sr-resume" disabled>▶️ Tiếp</button>
-      </div>
-    `;
+    this.el.innerHTML = innerHTML;
 
     ChatGPTHelper.mountPanel(this.el);
 
@@ -180,7 +186,7 @@ window.ScenarioRunner = class {
       const values = this._readVariableValues();   // dùng hàm mới
       this.queue.push({name, startAt, values});
 
-      this._updateQueueIndicator();                  // hiển thị số hàng đợi
+      this._refreshQueueUI();                 // hiển thị số hàng đợi
       alert(`✅ Đã thêm bộ biến vào hàng đợi (#${this.queue.length}). Bạn có thể nhập bộ tiếp theo.`);
     };
 
@@ -245,6 +251,7 @@ window.ScenarioRunner = class {
 
     /* 4️⃣  Xóa queue & cập nhật bộ đếm */
     this.queue = [];
+    this._refreshQueueUI();   // danh sách trống lại
     this._updateQueueIndicator();
 
     if (bigList.length === 0) {
@@ -379,4 +386,22 @@ async _sendPrompt(text) {
     this.onClose();
     this.sequencer?.stop();
   }
+
+  /* Cập nhật số đếm & danh sách queue */
+  _refreshQueueUI() {
+    // Cập nhật số hiển thị trên nút
+    this._updateQueueIndicator();
+
+    // Render danh sách
+    const listEl = this.el.querySelector("#sr-queue-list");
+    listEl.innerHTML = this.queue.map((job, i) => {
+      // gộp biến thành chuỗi “key=value”
+      const vars = Object.entries(job.values)
+      .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('|') : v}`)
+      .join(', ');
+      return `<li>#${i + 1} <em>${job.name}</em> (bắt đầu từ ${job.startAt
+      + 1}) – <b>${vars}</b></li>`;
+    }).join("");
+  }
+
 };

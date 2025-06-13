@@ -19,7 +19,7 @@
   flex-direction: column;
   height: auto;
   max-height: 600px;
-  width: 400px;
+  width: 520px;
   max-width: 100%;
   min-height: 480px;
   overflow: hidden;
@@ -398,7 +398,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 #scenario-runner {
-  width: 360px;
+  width: 480px;
   max-width: 100%;
 }
 /* === Scenario dropdown with search === */
@@ -575,4 +575,88 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   font-size: 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+/* === Scenario Runner – Queue box === */
+.sr-queue-box {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+#sr-queue-list {
+  max-height: 100px;            /* ≈ 8–9 dòng */
+  overflow-y: auto;
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* scrollbar giống dropdown */
+#sr-queue-list::-webkit-scrollbar {
+  width: 6px;
+}
+#sr-queue-list::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}
+#sr-queue-list::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+#sr-queue-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  cursor: default;
+}
+#sr-queue-list li:last-child {
+  border-bottom: none;
+}
+#sr-queue-list li:hover {
+  background: #e0e7ff;
+}
+
+#sr-queue-list em {
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* nút xoá ❌ trong hàng-đợi */
+.sr-queue-remove {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+}
+.sr-queue-remove:hover {
+  color: #e74c3c;
+}
+
+/* 🌙 Dark-mode */
+@media (prefers-color-scheme: dark) {
+  #sr-queue-list {
+    background: #444;
+    border-color: rgba(255,255,255,0.2);
+  }
+  #sr-queue-list li {
+    border-bottom: 1px solid #555;
+  }
+  #sr-queue-list li:hover {
+    background: #555;
+  }
+  .sr-queue-remove {
+    color: #bbb;
+  }
+  .sr-queue-remove:hover {
+    color: #ff6b6b;
+  }
 }
