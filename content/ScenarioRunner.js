@@ -85,7 +85,12 @@ window.ScenarioRunner = class {
       // Tự động gọi onchange nếu cần
       select.onchange = () => {
         const name = select.value;
-        const list = this.templates[name] || [];
+          /* 🩹 chuyển template về mảng object bảo đảm .map() dùng được  */
+        const raw  = this.templates[name] || {};
+        const list = Array.isArray(raw)          // kịch bản “cũ”
+                   ? raw
+                   : (raw.questions || []);      // kịch bản có {group,questions}
+        // const list = this.templates[name] || [];
         console.log("📋 Đã chọn kịch bản:", name);
         const stepSelect = this.el.querySelector("#step-select");
         stepSelect.innerHTML = list.map((q, idx) => {
