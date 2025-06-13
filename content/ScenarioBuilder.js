@@ -1,3 +1,25 @@
+const innerHTML = `
+  <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
+
+  <div id="scenario-browser">
+    <label>📄 Danh sách kịch bản:</label>
+    <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản...">
+    <div id="scenario-dropdown" class="hidden-dropdown"></div>
+  </div>
+
+  <div id="scenario-editor">
+    <label for="scenario-name">Tên kịch bản</label>
+    <input type="text" id="scenario-name" placeholder="Tên kịch bản">
+    <div id="questions-container"></div>
+    <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+  </div>
+
+  <div id="scenario-buttons">
+    <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
+    <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
+    <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
+  </div>
+`;
 window.ScenarioBuilder = class {
   constructor(onClose) {
     console.log("📦 [ScenarioBuilder] init");
@@ -11,28 +33,7 @@ window.ScenarioBuilder = class {
     this.el = document.createElement("div");
     this.el.id = "scenario-builder";
     this.el.classList.add("panel-box");
-    this.el.innerHTML = `
-      <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
-
-      <div id="scenario-browser">
-        <label>📄 Danh sách kịch bản:</label>
-        <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản...">
-        <div id="scenario-dropdown" class="hidden-dropdown"></div>
-      </div>
-
-      <div id="scenario-editor">
-        <label for="scenario-name">Tên kịch bản</label>
-        <input type="text" id="scenario-name" placeholder="Tên kịch bản">
-        <div id="questions-container"></div>
-        <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
-      </div>
-
-      <div id="scenario-buttons">
-        <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
-        <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
-        <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
-      </div>
-    `;
+    this.el.innerHTML = innerHTML;
 
     ChatGPTHelper.mountPanel(this.el);
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
