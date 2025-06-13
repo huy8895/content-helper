@@ -10,8 +10,29 @@ window.ScenarioRunner = class {
     this.sequencer = null;
     this.templates = {};
     this._render();
+    this.queue = [];            // 🌟 hàng đợi các lần chạy
   }
 
+  /* Đọc toàn bộ giá trị biến hiện trên panel */
+  _readVariableValues() {
+    const data = {};
+    this.el.querySelectorAll("[data-key]").forEach(el => {
+      const k = el.dataset.key;
+      if (el.tagName === "TEXTAREA") {
+        const lines = el.value.split("\n").map(v => v.trim()).filter(Boolean);
+        data[k] = lines.length === 1 ? lines[0] : lines;
+      } else {
+        data[k] = el.value.trim();
+      }
+    });
+    return data;
+  }
+
+  /* Cập nhật con số hàng đợi trên nút */
+  _updateQueueIndicator() {
+    this.el.querySelector("#sr-queue-count").textContent = String(
+        this.queue.length);
+  }
   _getLoopKey(q) {
     return q.loopKey || (q.text.match(/\$\{(\w+)\}/) || [])[1];
   }
@@ -37,6 +58,7 @@ window.ScenarioRunner = class {
       <div id="scenario-inputs" style="margin-top: 10px;"></div>
 
       <div class="sr-controls">
+        <button id="sr-addqueue">➕ Thêm vào hàng đợi <span id="sr-queue-count">0</span></button>
         <button id="sr-start">▶️ Bắt đầu</button>
         <button id="sr-pause" disabled>⏸ Dừng</button>
         <button id="sr-resume" disabled>▶️ Tiếp</button>
@@ -146,6 +168,22 @@ window.ScenarioRunner = class {
 
     ChatGPTHelper.makeDraggable(this.el, ".sr-header");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    const btnAdd = this.el.querySelector("#sr-addqueue");
+    btnAdd.onclick = () => {
+      const name = this.el.querySelector("#scenario-select").value;
+      if (!name) {
+        return alert("Chọn kịch bản trước đã!");
+      }
+
+      const startAt = parseInt(
+          this.el.querySelector("#step-select").value || "0", 10);
+      const values = this._readVariableValues();   // dùng hàm mới
+      this.queue.push({name, startAt, values});
+
+      this._updateQueueIndicator();                  // hiển thị số hàng đợi
+      alert(`✅ Đã thêm bộ biến vào hàng đợi (#${this.queue.length}). Bạn có thể nhập bộ tiếp theo.`);
+    };
+
   }
 
   _saveVariableValues(templateName) {
@@ -168,41 +206,71 @@ window.ScenarioRunner = class {
     });
   }
 
+  /* ----------------------------------------------
+   * ScenarioRunner – rewritten _start() + helper
+   * ----------------------------------------------*/
   async _start() {
-    const name = this.el.querySelector("#scenario-select").value;
-    if (!name) return alert("Vui lòng chọn kịch bản.");
-    console.log("▶️ Bắt đầu chạy:", name);
+    /* 1️⃣  Nếu chưa có gì trong queue, lấy bộ cấu hình hiện tại */
+    if (this.queue.length === 0) {
+      const name = this.el.querySelector("#scenario-select").value;
+      if (!name) {
+        return alert("Vui lòng chọn kịch bản.");
+      }
 
-    const list = this.templates[name];
-    if (!list) return alert("Không tìm thấy kịch bản.");
+      const startAt = parseInt(
+          this.el.querySelector("#step-select").value || "0", 10);
+      const values = this._readVariableValues();
+      this.queue.push({name, startAt, values});
+    }
 
-    const values = await new Promise(resolve => {
-      chrome.storage.local.get("scenarioInputValues", (result) => {
-        resolve(result.scenarioInputValues?.[name] || {});
-      });
-    });
+    /* 2️⃣  Khóa nút khi đang chạy */
+    this.el.querySelector("#sr-start").disabled = true;
+    this.el.querySelector("#sr-addqueue").disabled = true;
+    this.el.querySelector("#sr-pause").disabled = false;
+    this.el.querySelector("#sr-resume").disabled = true;
 
-    const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
-    const slicedList = list.slice(startAt);
-    const expandedList = this._expandScenario(slicedList, values);
+    /* 3️⃣  Mở rộng tất cả job trong queue → bigList */
+    const bigList = [];
+    for (const job of this.queue) {
+      const tpl = this.templates[job.name];
+      if (!tpl) {
+        console.warn("⚠️ Template not found:", job.name);
+        continue;
+      }
 
+      const slice = tpl.slice(job.startAt);
+      const prompts = this._expandScenario(slice, job.values);
+      bigList.push(...prompts);
+    }
+
+    /* 4️⃣  Xóa queue & cập nhật bộ đếm */
+    this.queue = [];
+    this._updateQueueIndicator();
+
+    if (bigList.length === 0) {
+      alert("Không có prompt nào để chạy.");
+      this._resetControls();
+      return;
+    }
+
+    /* 5️⃣  Khởi chạy Sequencer một mạch */
     this.sequencer = new PromptSequencer(
-      expandedList,
-      this._sendPrompt.bind(this),
-      this._waitForResponse.bind(this),
-      (idx, total) => console.log(`📤 ${startAt + idx}/${startAt + total} done`),
-      "ScenarioRunner"
+        bigList,
+        this._sendPrompt.bind(this),
+        this._waitForResponse.bind(this),
+        (idx, total) => console.log(`📤 ${idx}/${total} done`),
+        "ScenarioRunner"
     );
 
-    this.el.querySelector('#sr-start').disabled = true;
-    this.el.querySelector('#sr-pause').disabled = false;
-    this.el.querySelector('#sr-resume').disabled = true;
+    this.sequencer.start(() => this._resetControls());
+  }
 
-    this.sequencer.start(() => {
-      this.el.querySelector('#sr-start').disabled = false;
-      this.el.querySelector('#sr-pause').disabled = true;
-      this.el.querySelector('#sr-resume').disabled = true;
-    });
+  /* Helper: khôi phục trạng thái nút sau khi chạy xong hoặc có lỗi */
+  _resetControls() {
+    this.el.querySelector("#sr-start").disabled = false;
+    this.el.querySelector("#sr-addqueue").disabled = false;
+    this.el.querySelector("#sr-pause").disabled = true;
+    this.el.querySelector("#sr-resume").disabled = true;
   }
 
   _expandScenario(questions, values) {
