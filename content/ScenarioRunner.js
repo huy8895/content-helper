@@ -215,62 +215,75 @@ window.ScenarioRunner = class {
   /* ----------------------------------------------
    * ScenarioRunner – rewritten _start() + helper
    * ----------------------------------------------*/
-  async _start() {
-    /* 1️⃣  Nếu chưa có gì trong queue, lấy bộ cấu hình hiện tại */
-    if (this.queue.length === 0) {
-      const name = this.el.querySelector("#scenario-select").value;
-      if (!name) {
-        return alert("Vui lòng chọn kịch bản.");
-      }
+  /** --------------------------------------------------------------
+ *  ScenarioRunner::_start – chạy toàn bộ prompt trong queue
+ *  --------------------------------------------------------------
+ *  • Tương thích 2 kiểu lưu template:
+ *      1) legacy  :  "name": [ {text,type,…}, … ]
+ *      2) mới     :  "name": { group:"podcast", questions:[…] }
+ *  • Mọi thứ khác (queue, pause, resume…) giữ nguyên
+ * ----------------------------------------------------------------*/
+async _start() {
+  /* 1️⃣  Nếu queue rỗng → lấy cấu hình trên UI hiện tại */
+  if (this.queue.length === 0) {
+    const name = this.el.querySelector("#scenario-select").value.trim();
+    if (!name) return alert("Vui lòng chọn kịch bản.");
 
-      const startAt = parseInt(
-          this.el.querySelector("#step-select").value || "0", 10);
-      const values = this._readVariableValues();
-      this.queue.push({name, startAt, values});
-    }
-
-    /* 2️⃣  Khóa nút khi đang chạy */
-    this.el.querySelector("#sr-start").disabled = true;
-    this.el.querySelector("#sr-addqueue").disabled = true;
-    this.el.querySelector("#sr-pause").disabled = false;
-    this.el.querySelector("#sr-resume").disabled = true;
-
-    /* 3️⃣  Mở rộng tất cả job trong queue → bigList */
-    const bigList = [];
-    for (const job of this.queue) {
-      const tpl = this.templates[job.name];
-      if (!tpl) {
-        console.warn("⚠️ Template not found:", job.name);
-        continue;
-      }
-
-      const slice = tpl.slice(job.startAt);
-      const prompts = this._expandScenario(slice, job.values);
-      bigList.push(...prompts);
-    }
-
-    /* 4️⃣  Xóa queue & cập nhật bộ đếm */
-    this.queue = [];
-    this._refreshQueueUI();   // danh sách trống lại
-    this._updateQueueIndicator();
-
-    if (bigList.length === 0) {
-      alert("Không có prompt nào để chạy.");
-      this._resetControls();
-      return;
-    }
-
-    /* 5️⃣  Khởi chạy Sequencer một mạch */
-    this.sequencer = new PromptSequencer(
-        bigList,
-        this._sendPrompt.bind(this),
-        this._waitForResponse.bind(this),
-        (idx, total) => console.log(`📤 ${idx}/${total} done`),
-        "ScenarioRunner"
+    const startAt = parseInt(
+      this.el.querySelector("#step-select").value || "0",
+      10
     );
-
-    this.sequencer.start(() => this._resetControls());
+    const values = this._readVariableValues();          // 🟢 hàm sẵn có
+    this.queue.push({ name, startAt, values });
   }
+
+  /* 2️⃣  Khoá các nút khi bắt đầu chạy */
+  this.el.querySelector("#sr-start").disabled   = true;
+  this.el.querySelector("#sr-addqueue").disabled = true;
+  this.el.querySelector("#sr-pause").disabled    = false;
+  this.el.querySelector("#sr-resume").disabled   = true;
+
+  /* 3️⃣  Trải queue thành bigList (danh sách prompt thực tế) */
+  const bigList = [];
+  for (const job of this.queue) {
+    /* --- lấy template, hỗ trợ cả 2 định dạng --- */
+    const raw = this.templates[job.name];
+    if (!raw) {
+      console.warn("⚠️ Template not found:", job.name);
+      continue;
+    }
+    const tplArr = Array.isArray(raw) ? raw           // legacy
+                                       : (raw.questions || []); // kiểu mới
+
+    const slice   = tplArr.slice(job.startAt);
+    const prompts = this._expandScenario(slice, job.values);   // 🟢 hàm sẵn có
+    bigList.push(...prompts);
+  }
+
+  /* 4️⃣  Dọn queue & UI */
+  this.queue = [];
+  this._refreshQueueUI();
+  this._updateQueueIndicator();
+
+  if (bigList.length === 0) {
+    alert("Không có prompt nào để chạy.");
+    this._resetControls();
+    return;
+  }
+
+  /* 5️⃣  Khởi chạy một mạch với PromptSequencer */
+  this.sequencer = new PromptSequencer(
+    bigList,
+    this._sendPrompt.bind(this),
+    this._waitForResponse.bind(this),
+    (idx, total) => console.log(`📤 ${idx}/${total} done`),
+    "ScenarioRunner"
+  );
+
+  // Khi sequencer kết thúc → reset nút
+  this.sequencer.start(() => this._resetControls());
+}
+
 
   /* Helper: khôi phục trạng thái nút sau khi chạy xong hoặc có lỗi */
   _resetControls() {
