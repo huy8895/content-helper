@@ -1,3 +1,29 @@
+const ScenarioBuilderInnerHTML = `
+  <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
+
+  <div id="scenario-browser">
+    <label>📄 Danh sách kịch bản:</label>
+    <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản...">
+    <div id="scenario-dropdown" class="hidden-dropdown"></div>
+  </div>
+
+  <div id="scenario-editor">
+    <label for="scenario-name">Tên kịch bản</label>
+    <input type="text" id="scenario-name" placeholder="Tên kịch bản">
+      <!-- 🆕  input nhóm -->
+    <label for="scenario-group">Nhóm</label>
+    <input type="text" id="scenario-group" placeholder="Ví dụ: podcast / video / blog">
+
+    <div id="questions-container"></div>
+    <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
+  </div>
+
+  <div id="scenario-buttons">
+    <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
+    <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
+    <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
+  </div>
+`;
 window.ScenarioBuilder = class {
   constructor(onClose) {
     console.log("📦 [ScenarioBuilder] init");
@@ -11,28 +37,7 @@ window.ScenarioBuilder = class {
     this.el = document.createElement("div");
     this.el.id = "scenario-builder";
     this.el.classList.add("panel-box");
-    this.el.innerHTML = `
-      <h3 class="sb-title">🛠 Quản lý Kịch bản</h3>
-
-      <div id="scenario-browser">
-        <label>📄 Danh sách kịch bản:</label>
-        <input type="text" id="scenario-search" placeholder="🔍 Tìm kịch bản...">
-        <div id="scenario-dropdown" class="hidden-dropdown"></div>
-      </div>
-
-      <div id="scenario-editor">
-        <label for="scenario-name">Tên kịch bản</label>
-        <input type="text" id="scenario-name" placeholder="Tên kịch bản">
-        <div id="questions-container"></div>
-        <button id="add-question" class="sb-btn">+ Thêm câu hỏi</button>
-      </div>
-
-      <div id="scenario-buttons">
-        <button id="new-scenario-btn" class="sb-btn">➕ Thêm mới kịch bản</button>
-        <button id="save-to-storage" class="sb-btn">💾 Lưu</button>
-        <button id="delete-scenario" class="sb-btn">🗑️ Xoá kịch bản</button>
-      </div>
-    `;
+    this.el.innerHTML = ScenarioBuilderInnerHTML;
 
     ChatGPTHelper.mountPanel(this.el);
     ChatGPTHelper.makeDraggable(this.el, ".sb-title");
@@ -48,6 +53,7 @@ window.ScenarioBuilder = class {
       this.el.querySelector("#scenario-editor").style.display = "block";
       this.el.querySelector("#scenario-name").value = "";
       this.el.querySelector("#questions-container").innerHTML = "";
+      this.el.querySelector("#scenario-group").value = "";
     });
   }
 
@@ -117,20 +123,24 @@ window.ScenarioBuilder = class {
 
   _collectDataFromDOM() {
     const name = this.el.querySelector("#scenario-name").value.trim();
+    const group = this.el.querySelector("#scenario-group").value.trim();
     const items = this.el.querySelectorAll(".question-item");
-    const questions = Array.from(items).map(div => {
-      return {
-        text: div.querySelector(".question-input").value.trim(),
-        type: div.querySelector(".question-type").value,
-        loopKey: div.querySelector(".question-loopkey")?.value.trim() || undefined
-      };
-    }).filter(q => q.text);
 
-    if (!name || questions.length === 0) {
+    const questions = Array.from(items).map(div => ({
+      text: div.querySelector(".question-input").value.trim(),
+      type: div.querySelector(".question-type").value,
+      loopKey: div.querySelector(".question-loopkey")?.value.trim() || undefined
+    })).filter(q => q.text);
+
+    if (!name || !questions.length) {
       alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
       return null;
     }
-    return {[name]: questions};
+
+    /* 🔑  cấu trúc mới – vẫn tương thích ngược */
+    return {
+      [name]: {group, questions}
+    };
   }
 
   async _collectDataFromStorage() {
@@ -211,7 +221,6 @@ window.ScenarioBuilder = class {
   });
 }
 
-
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const templates = items.scenarioTemplates || {};
@@ -221,17 +230,22 @@ window.ScenarioBuilder = class {
       dropdown.innerHTML = "";
 
       Object.keys(templates).forEach((name) => {
-        const item = document.createElement("div");
-        item.textContent = name;
-        item.className = "scenario-dropdown-item";
+        const raw = templates[name];
+        const group = Array.isArray(raw) ? "" : (raw.group || "");
+        const qs = Array.isArray(raw) ? raw : raw.questions || [];
 
+        /* hiển thị kèm group cho dễ nhìn */
+        const item = document.createElement("div");
+        item.textContent = group ? `[${group}] ${name}` : name;
+        item.className = "scenario-dropdown-item";
+        item.dataset.group = group.toLowerCase();
 
         item.addEventListener("click", () => {
           this.el.querySelector("#scenario-name").value = name;
+          this.el.querySelector("#scenario-group").value = group;
           const container = this.el.querySelector("#questions-container");
           container.innerHTML = "";
-          (templates[name] || []).forEach((q) => this._addQuestion(q));
-
+          qs.forEach((q) => this._addQuestion(q));
           this.el.querySelector("#scenario-dropdown").classList.add(
               "hidden-dropdown");
           this.el.querySelector("#scenario-editor").style.display = "block";
@@ -240,12 +254,14 @@ window.ScenarioBuilder = class {
         dropdown.appendChild(item);
       });
 
+      /* 🔎 filter theo tên **hoặc** group */
       const searchBox = this.el.querySelector("#scenario-search");
       searchBox.addEventListener("input", () => {
-        const keyword = searchBox.value.trim().toLowerCase();
+        const k = searchBox.value.trim().toLowerCase();
         dropdown.querySelectorAll("div").forEach(div => {
-          div.style.display = div.textContent.toLowerCase().includes(keyword)
-              ? "block" : "none";
+          const hit = div.textContent.toLowerCase().includes(k) ||
+                      div.dataset.group.includes(k);
+          div.style.display = hit ? "block" : "none";
         });
       });
 
@@ -255,6 +271,7 @@ window.ScenarioBuilder = class {
       });
     });
   }
+
 
   destroy() {
     console.log("❌ [ScenarioBuilder] destroy");
