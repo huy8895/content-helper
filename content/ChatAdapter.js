@@ -205,9 +205,78 @@ class QwenAdapter extends BaseChatAdapter {
   }
 }
 
+/* -----------------------------  Grok (x.ai)  ----------------------------- */
+class GrokAdapter extends BaseChatAdapter {
+  /** Khớp các domain Grok thường gặp trên web-app */
+  static matches (host) {
+    /*  grok.com  |  grok.x.ai  |  x.com (grok sub-page)  */
+    return /(?:^|\.)grok\.com$|(?:^|\.)grok\.x\.ai$|^x\.com$/i.test(host);
+  }
+
+  /* ── Các selector chính ──────────────────────────────────────────────── */
+
+  /** Ô nhập prompt – duy nhất có aria-label như sau */
+  getTextarea () {
+    return this._q('textarea[aria-label="Ask Grok anything"]');
+  }
+
+  /** Nút SEND (submit) nằm trong form, có aria-label="Submit" */
+  getSendBtn () {
+    const btn = this._q('form button[type="submit"][aria-label="Submit"]');
+    return btn;
+  }
+
+  /** Nút STOP hiển thị khi Grok đang sinh đáp án (nếu có) */
+  getStopBtn () {
+    /* Grok hiện dùng cùng văn phạm với ChatGPT: aria-label="Stop generating" */
+    return this._q('button[aria-label="Stop generating"]');
+  }
+
+  /** Form bao quanh textarea */
+  getForm () {
+    return this.getTextarea()?.closest('form') ?? null;
+  }
+
+  /** Xác định đã sinh xong trả lời hay chưa */
+  isDone () {
+    const stopBtn = this.getStopBtn();
+    const sendBtn = this.getSendBtn();
+
+    /* Khi đang generate: có stopBtn.
+       Khi xong: stopBtn biến mất, sendBtn tồn tại & disabled (textarea rỗng). */
+    return !stopBtn && sendBtn && sendBtn.disabled;
+  }
+
+  /** Trả về các khối markdown chứa phản hồi của bot */
+  getContentElements () {
+    /* Grok render markdown trong .markdown-content-container / .markdown-prose */
+    return Array.from(document.querySelectorAll(
+        '.markdown-content-container, .markdown-prose'
+    ));
+  }
+}
 
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
-const ADAPTER_CTORS = [ChatGPTAdapter, DeepSeekAdapter, QwenAdapter];
+/* Thêm GrokAdapter vào mảng khởi tạo */
+const ADAPTER_CTORS = [
+  ChatGPTAdapter,
+  DeepSeekAdapter,
+  QwenAdapter,
+  GrokAdapter
+];
+
+/* (Không cần thay đổi gì khác – phần factory bên dưới vẫn hoạt động) */
+
+/* Tùy chọn: export để dev tiện debug */
+window.ChatAdapters = {
+  BaseChatAdapter,
+  ChatGPTAdapter,
+  DeepSeekAdapter,
+  QwenAdapter,
+  GrokAdapter
+};
+
+
 let active = null;
 
 for (const Ctor of ADAPTER_CTORS) {
@@ -220,9 +289,6 @@ for (const Ctor of ADAPTER_CTORS) {
 
 // Expose – every other script simply grabs the instance.
 window.ChatAdapter = active;
-
-// Optional: export class references for power users (tree‑shakable bundlers)
-window.ChatAdapters = { BaseChatAdapter, ChatGPTAdapter, DeepSeekAdapter };
 
 console.log("[Adapter factory] host =", window.location.hostname);
 console.log("[Adapter factory] picked =", window.ChatAdapter?.constructor.name);
