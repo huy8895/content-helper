@@ -13,6 +13,39 @@
 //   chat.getSendBtn()?.click();
 // ----------------------------------------------------------------------------
 
+  // Các button chung (dùng cho mọi adapter)
+  BUTTONS = {
+    MANAGE_SCENARIO: {
+      id: "chatgpt-helper-button",
+      text: "🛠 Quản lý kịch bản",
+      className: "scenario-btn btn-setup",
+      onClick: () => window.__helperInjected?._toggleBuilder(),
+    },
+    RUN_SCENARIO: {
+      id: "chatgpt-run-button",
+      text: "📤 Chạy kịch bản",
+      className: "scenario-btn btn-run",
+      onClick: () => window.__helperInjected?._toggleRunner(),
+    },
+    COPY_CONTENT: {
+      id: "chatgpt-copy-content-button",
+      text: "📋 Copy Content",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
+    },
+    SPLITTER: {
+      id: "chatgpt-splitter-button",
+      text: "✂️ Text Split",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleSplitter(),
+    },
+    AUDIO: {
+      id: "chatgpt-audio-button",
+      text: "🎵 Audio",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleAudioDownloader(),
+    },
+  };
 /* ---------------------------  Base (Abstract)  --------------------------- */
 class BaseChatAdapter {
   constructor() {
@@ -53,34 +86,14 @@ class BaseChatAdapter {
   /* ---- Static matcher – each subclass MUST implement ---- */
   static matches(/* hostname */) { return false; }
 
-  // Các button chung (dùng cho mọi adapter)
-  static BUTTONS = {
-    MANAGE_SCENARIO: {
-      id: "chatgpt-helper-button",
-      text: "🛠 Quản lý kịch bản",
-      className: "scenario-btn btn-setup",
-      onClick: () => window.__helperInjected?._toggleBuilder(),
-    },
-    RUN_SCENARIO: {
-      id: "chatgpt-run-button",
-      text: "📤 Chạy kịch bản",
-      className: "scenario-btn btn-run",
-      onClick: () => window.__helperInjected?._toggleRunner(),
-    },
-    COPY_CONTENT: {
-      id: "chatgpt-copy-content-button",
-      text: "📋 Copy Content",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
-    },
-  };
+
 
   // Hàm mặc định trả về danh sách button cần dùng (chỉ có 3 button chung)
   getButtonConfigs() {
     return [
-      BaseChatAdapter.BUTTONS.MANAGE_SCENARIO,
-      BaseChatAdapter.BUTTONS.RUN_SCENARIO,
-      BaseChatAdapter.BUTTONS.COPY_CONTENT,
+      BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.RUN_SCENARIO,
+      BUTTONS.COPY_CONTENT,
     ];
   }
 
@@ -150,28 +163,13 @@ class ChatGPTAdapter extends BaseChatAdapter {
         'markdown prose dark:prose-invert w-full break-words'));
   }
 
-  // Button đặc thù của ChatGPT
-  static BUTTONS = {
-    SPLITTER: {
-      id: "chatgpt-splitter-button",
-      text: "✂️ Text Split",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleSplitter(),
-    },
-    AUDIO: {
-      id: "chatgpt-audio-button",
-      text: "🎵 Audio",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleAudioDownloader(),
-    },
-  };
 
   // Trả về danh sách button cần dùng (3 chung + 2 đặc thù)
   getButtonConfigs() {
     return [
       ...super.getButtonConfigs(), // 3 button chung
-      ChatGPTAdapter.BUTTONS.SPLITTER,
-      ChatGPTAdapter.BUTTONS.AUDIO,
+      BUTTONS.SPLITTER,
+      BUTTONS.AUDIO,
     ];
   }
 }

@@ -193,11 +193,18 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 /* Nút chính ở dưới input */
 .scenario-btn {
+  /* Loại bỏ min-width/max-width */
+  /* min-width: 130px; */
+  /* max-width: 160px; */
+
+  /* Sử dụng flex để tự động điều chỉnh kích thước */
+  flex: 1 1 auto;  /* Cho phép nút giãn ra/giảm xuống dựa trên nội dung */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  flex: 1 1 0;
+
+  /* Các thuộc tính khác giữ nguyên */
   font-size: 14px;
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 8px;
@@ -206,13 +213,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   color: #333;
   transition: background 0.2s, box-shadow 0.2s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  min-width: 130px;
-  max-width: 160px;
-  box-sizing: content-box;
-    padding: 5px 6px;
-    font-weight: 300;
-    line-height: normal;
-    letter-spacing: 0px;
+  padding: 5px 6px;
+  font-weight: 300;
+  line-height: normal;
+  letter-spacing: 0px;
+  white-space: nowrap;  /* Tránh văn bản bị xuống dòng */
 }
 .scenario-btn:hover {
   background: #efefef;
@@ -226,8 +231,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #chatgpt-helper-button-container {
   display: flex;
   flex-direction: row;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 8px;
   justify-content: center;
 }
 
