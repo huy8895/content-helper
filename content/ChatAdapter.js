@@ -370,21 +370,61 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   insertHelperButtons() {
     if (document.querySelector('#chatgpt-helper-button-container')) {
-      return;
+      return; // Đã chèn rồi, không làm gì cả
     }
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
+
+    // === START: THÊM STYLE CHO CONTAINER (VỊ TRÍ DÍNH CỐ ĐỊNH) ===
+    Object.assign(container.style, {
+      position: 'fixed',
+      bottom: '20px',
+      left: '20px',
+      zIndex: '10000', // Đảm bảo nổi lên trên các phần tử khác
+      transition: 'transform 0.2s ease-in-out'
+    });
+    // === END: THÊM STYLE CHO CONTAINER ===
+
     const config = BUTTONS.MANAGE_SCENARIO;
     const btn = this._createButton({
       ...config,
       text: "⚙️ Settings",
+      className: '', // Bỏ class cũ để style thủ công
       onClick: () => {
-        new window.GoogleAIStudioPanel(this); // `this` vẫn đúng
+        new window.GoogleAIStudioPanel(this);
       }
     });
 
+    // === START: THÊM STYLE CHO BUTTON (DẠNG "BONG BÓNG") ===
+    Object.assign(btn.style, {
+      backgroundColor: '#f0f4f9',
+      color: '#041e49',
+      border: 'none',
+      borderRadius: '24px', // Bo tròn
+      padding: '12px 20px',
+      fontSize: '14px',
+      fontWeight: '500',
+      cursor: 'pointer',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.2)', // Đổ bóng
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      lineHeight: '1'
+    });
+
+    // Thêm hiệu ứng khi hover
+    btn.onmouseover = () => {
+        btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+        btn.style.transform = 'translateY(-2px)';
+    };
+    btn.onmouseout = () => {
+        btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+        btn.style.transform = 'translateY(0px)';
+    };
+    // === END: THÊM STYLE CHO BUTTON ===
+
     container.appendChild(btn);
-    document.body.appendChild(container); // ←←← THÊM DÒNG NÀY  }
+    document.body.appendChild(container);
   }
 }
 
