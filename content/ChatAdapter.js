@@ -52,6 +52,72 @@ class BaseChatAdapter {
 
   /* ---- Static matcher – each subclass MUST implement ---- */
   static matches(/* hostname */) { return false; }
+
+  // Các button chung (dùng cho mọi adapter)
+  static BUTTONS = {
+    MANAGE_SCENARIO: {
+      id: "chatgpt-helper-button",
+      text: "🛠 Quản lý kịch bản",
+      className: "scenario-btn btn-setup",
+      onClick: () => window.__helperInjected?._toggleBuilder(),
+    },
+    RUN_SCENARIO: {
+      id: "chatgpt-run-button",
+      text: "📤 Chạy kịch bản",
+      className: "scenario-btn btn-run",
+      onClick: () => window.__helperInjected?._toggleRunner(),
+    },
+    COPY_CONTENT: {
+      id: "chatgpt-copy-content-button",
+      text: "📋 Copy Content",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
+    },
+  };
+
+  // Hàm mặc định trả về danh sách button cần dùng (chỉ có 3 button chung)
+  getButtonConfigs() {
+    return [
+      BaseChatAdapter.BUTTONS.MANAGE_SCENARIO,
+      BaseChatAdapter.BUTTONS.RUN_SCENARIO,
+      BaseChatAdapter.BUTTONS.COPY_CONTENT,
+    ];
+  }
+
+  // Hàm chèn button (dùng chung cho mọi adapter)
+  insertHelperButtons() {
+    if (document.querySelector('#chatgpt-helper-button-container')) return; // Đã tồn tại
+    const chatForm = this.getForm();
+    if (!chatForm) return;
+
+    const container = document.createElement("div");
+    container.id = "chatgpt-helper-button-container";
+
+    // Lấy danh sách button từ lớp con
+    const buttons = this.getButtonConfigs();
+
+    // Tạo button từ config
+    buttons.forEach(config => {
+      const btn = this._createButton(config);
+      container.appendChild(btn);
+    });
+
+    chatForm.after(container);
+  }
+
+  // Helper method để tạo button
+  _createButton({ id, text, className, onClick }) {
+    const btn = document.createElement("button");
+    btn.id = id;
+    btn.textContent = text;
+    btn.className = className;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    });
+    return btn;
+  }
 }
 
 /* -----------------------------  ChatGPT.com  ----------------------------- */
@@ -82,6 +148,31 @@ class ChatGPTAdapter extends BaseChatAdapter {
   getContentElements(){
     return Array.from(document.getElementsByClassName(
         'markdown prose dark:prose-invert w-full break-words'));
+  }
+
+  // Button đặc thù của ChatGPT
+  static BUTTONS = {
+    SPLITTER: {
+      id: "chatgpt-splitter-button",
+      text: "✂️ Text Split",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleSplitter(),
+    },
+    AUDIO: {
+      id: "chatgpt-audio-button",
+      text: "🎵 Audio",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleAudioDownloader(),
+    },
+  };
+
+  // Trả về danh sách button cần dùng (3 chung + 2 đặc thù)
+  getButtonConfigs() {
+    return [
+      ...super.getButtonConfigs(), // 3 button chung
+      ChatGPTAdapter.BUTTONS.SPLITTER,
+      ChatGPTAdapter.BUTTONS.AUDIO,
+    ];
   }
 }
 

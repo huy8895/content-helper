@@ -27,7 +27,13 @@ class ChatGPTHelper {
     this.audioDownloader = null;   // 🎵 new panel
 
     // Observe DOM mutations so we can inject buttons when chat UI appears
-    this._observer = new MutationObserver(() => this._insertHelperButtons());
+    this._observer = new MutationObserver(() => {
+          if (window.ChatAdapter) {
+            window.ChatAdapter.insertHelperButtons();
+          }
+        }
+    )
+    ;
     this._observer.observe(document.body, { childList: true, subtree: true });
 
     if(!document.getElementById('chatgpt-helper-panel-bar')){
@@ -47,62 +53,6 @@ class ChatGPTHelper {
   static zTop = 2147483000;   // cao nhưng vẫn < 2^31-1 để còn ++
 
   /* UI helpers */
-  _insertHelperButtons() {
-    if (document.querySelector('#chatgpt-helper-button-container')) return; // đã gắn
-    const chatForm = window.ChatAdapter.getForm();
-    console.log('chatForm: ', chatForm)
-    if (!chatForm) return;
-
-    console.log("✨ [ChatGPTHelper] Inserting helper buttons");
-    const container = document.createElement("div");
-    container.id = "chatgpt-helper-button-container";
-
-    const btnBuilder = this._createButton({
-      id: "chatgpt-helper-button",
-      text: "🛠 Quản lý kịch bản",
-      className: "scenario-btn btn-setup",
-      onClick: () => this._toggleBuilder(),
-    });
-
-    const btnRunner = this._createButton({
-      id: "chatgpt-run-button",
-      text: "📤 Chạy kịch bản",
-      className: "scenario-btn btn-run",
-      onClick: () => this._toggleRunner(),
-    });
-
-    const btnSplitter = this._createButton({
-      id: "chatgpt-splitter-button",
-      text: "✂️ Text Split",
-      className: "scenario-btn btn-tool",
-      onClick: () => this._toggleSplitter(),   // 👈 đổi hàm
-    });
-
-    const btnAudio = this._createButton({
-      id       : "chatgpt-audio-button",
-      text     : "🎵 Audio",
-      className: "scenario-btn btn-tool",
-      onClick  : () => this._toggleAudioDownloader(),
-    });
-
-    const btnCopyContent = this._createButton({
-      id: "chatgpt-copy-content-button",
-      text: "📋 Copy Content",
-      className: "scenario-btn btn-tool",
-      onClick: () => this._toggleContentCopyPanel(),
-    });
-
-    //append vào container theo thứ tụ
-    container.append(btnBuilder);
-    container.append(btnRunner);
-    container.append(btnCopyContent);
-    container.append(btnSplitter);
-    container.append(btnAudio);
-
-  chatForm.after(container);          // luôn chèn BÊN NGOÀI khung nhập
-
-  }
-
   _createButton({ id, text, className, onClick }) {
     const btn = document.createElement("button");
     btn.id = id;
