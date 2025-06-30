@@ -1,6 +1,13 @@
 window.GoogleAIStudioPanel = class {
-  constructor(adapter) {
-    console.log("📢 GoogleAIStudioPanel constructed!")
+  constructor(adapter, isToggle = true) {
+    console.log("📢 GoogleAIStudioPanel constructed!");
+
+    if(isToggle){
+      const done = this.closePanel();
+      console.log("close panel")
+      if(done) return;
+    }
+
     this.adapter = adapter;
     this.panelId = 'chatgpt-helper-ai-studio-panel';
     this.storageKey = 'google_ai_studio_settings';
@@ -11,6 +18,15 @@ window.GoogleAIStudioPanel = class {
     this.createPanel();
     this.loadSettings();
     this.attachEvents();
+  }
+
+  closePanel(){
+    const panel = document.getElementById('chatgpt-helper-ai-studio-panel');
+    if (panel) {
+      panel.remove();
+      return true;
+    }
+    return false;
   }
 
   createPanel() {
