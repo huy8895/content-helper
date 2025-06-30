@@ -198,7 +198,9 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   /* max-width: 160px; */
 
   /* Sử dụng flex để tự động điều chỉnh kích thước */
-  flex: 1 1 auto;  /* Cho phép nút giãn ra/giảm xuống dựa trên nội dung */
+  /*flex: 1 1 auto;  !* Cho phép nút giãn ra/giảm xuống dựa trên nội dung *!*/
+  /* Loại bỏ flex: 1 1 auto */
+  flex-shrink: 0;  /* Đảm bảo nút không co khi không đủ chỗ */
   display: flex;
   align-items: center;
   justify-content: center;

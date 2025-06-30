@@ -288,7 +288,7 @@ class QwenAdapter extends BaseChatAdapter {
 
   /** Form bao quanh textarea (dùng để submit) */
   getForm () {
-    return this.getTextarea()?.closest('form') ?? null;
+    return this._q('.chat-message-input-container-inner');
   }
 
   /** Phần HTML chứa nội dung phản hồi của bot (markdown) */
