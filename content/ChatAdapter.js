@@ -386,12 +386,13 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     // === END: THÊM STYLE CHO CONTAINER ===
 
     const config = BUTTONS.MANAGE_SCENARIO;
+    const googleAIStudioPanel = new window.GoogleAIStudioPanel(this);
     const btn = this._createButton({
       ...config,
       text: "⚙️ Settings",
       className: '', // Bỏ class cũ để style thủ công
       onClick: () => {
-        new window.GoogleAIStudioPanel(this);
+        googleAIStudioPanel.toggleClosePanel();
       }
     });
 

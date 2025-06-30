@@ -137,18 +137,11 @@ const PANEL_CSS = `
 // =================================================================
 
 window.GoogleAIStudioPanel = class {
-  constructor(adapter, isToggle = true) {
+  constructor(adapter) {
     console.log("📢 GoogleAIStudioPanel constructed!");
     this.panelId = 'chatgpt-helper-ai-studio-panel';
     this.styleId = `${this.panelId}-styles`;
     this.storageKey = 'google_ai_studio_settings';
-
-    if (isToggle) {
-      const done = this.closePanel();
-      console.log("close panel")
-      if (done) return;
-    }
-
     this.adapter = adapter;
     this.init();
   }
@@ -160,12 +153,14 @@ window.GoogleAIStudioPanel = class {
     this.attachEvents();
   }
 
-  closePanel() {
+  toggleClosePanel() {
+    console.log("💢 toggleClosePanel()  called")
     const panel = document.getElementById(this.panelId);
     if (panel) {
       panel.remove();
       return true;
     }
+    this.init();
     return false;
   }
 
