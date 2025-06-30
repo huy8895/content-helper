@@ -101,7 +101,9 @@ class BaseChatAdapter {
   insertHelperButtons() {
     if (document.querySelector('#chatgpt-helper-button-container')) return; // Đã tồn tại
     const chatForm = this.getForm();
-    if (!chatForm) return;
+    if (!chatForm) {
+      return;
+    }
 
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
@@ -355,31 +357,58 @@ class GrokAdapter extends BaseChatAdapter {
   }
 }
 
+/* -----------------------------  Google AI Studio  ----------------------------- */
+class GoogleAIStudioAdapter extends BaseChatAdapter {
+  static matches(host) {
+    return /aistudio\.google\.com$/i.test(host);
+  }
+
+  constructor() {
+    console.log("GoogleAIStudioAdapter constructed!")
+    super();
+  }
+
+  getTextarea() {
+    return this._q('textarea[aria-label="Type something or tab to choose an example prompt"]');
+  }
+
+  getSendBtn() {
+    return this._q('button[aria-label="Run"][type="submit"]');
+  }
+
+  getStopBtn() {
+    // Hiện tại không thấy nút dừng trong DOM bạn cung cấp
+    return null;
+  }
+
+  getForm() {
+    const textarea = this.getTextarea();
+    return textarea?.closest("form") ?? null;
+  }
+
+  isDone() {
+    const sendBtn = this.getSendBtn();
+    return sendBtn && sendBtn.disabled;
+  }
+
+  getContentElements() {
+    // Giả sử phản hồi nằm trong div có class chứa "response"
+    return Array.from(document.querySelectorAll('.response-message-body, .markdown-content'));
+  }
+}
+
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
-/* Thêm GrokAdapter vào mảng khởi tạo */
 const ADAPTER_CTORS = [
   ChatGPTAdapter,
   DeepSeekAdapter,
   QwenAdapter,
-  GrokAdapter
+  GrokAdapter,
+  GoogleAIStudioAdapter
 ];
-
-/* (Không cần thay đổi gì khác – phần factory bên dưới vẫn hoạt động) */
-
-/* Tùy chọn: export để dev tiện debug */
-window.ChatAdapters = {
-  BaseChatAdapter,
-  ChatGPTAdapter,
-  DeepSeekAdapter,
-  QwenAdapter,
-  GrokAdapter
-};
-
 
 let active = null;
 
 for (const Ctor of ADAPTER_CTORS) {
-  console.log('get Ctor: ', Ctor)
   if (Ctor.matches(window.location.hostname)) {
     active = new Ctor();
     break;
