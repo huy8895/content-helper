@@ -195,22 +195,22 @@ window.GoogleAIStudioPanel = class {
   attachEvents() {
     document.getElementById('save-settings-btn').addEventListener('click',
         () => {
-          const settings = {
-            InputValue1: document.getElementById('input-value1').value,
-            InputValue2: document.getElementById('input-value2').value,
-            Voice1: document.getElementById('voice1').value,
-            Voice2: document.getElementById('voice2').value,
-            autoSetValue: document.getElementById('auto-set-value').checked
-          };
-
-          chrome.storage.local.set({[this.storageKey]: settings}, () => {
-            console.log('✅ Đã lưu thiết lập vào storage');
-          });
-
-          if (settings.autoSetValue) {
-            this.setValueScript(settings);
-          }
+          this.saveSetting();
         });
+  }
+
+  saveSetting() {
+    const settings = {
+      InputValue1: document.getElementById('input-value1').value,
+      InputValue2: document.getElementById('input-value2').value,
+      Voice1: document.getElementById('voice1').value,
+      Voice2: document.getElementById('voice2').value,
+      autoSetValue: document.getElementById('auto-set-value').checked
+    };
+
+    chrome.storage.local.set({[this.storageKey]: settings}, () => {
+      console.log('✅ Đã lưu thiết lập vào storage');
+    });
   }
 
   loadSettings() {
@@ -224,6 +224,10 @@ window.GoogleAIStudioPanel = class {
       document.getElementById('voice2').value = settings.Voice2 || '';
       document.getElementById('auto-set-value').checked = settings.autoSetValue
           || false;
+
+      if(settings.autoSetValue) {
+        this.setValueScript(settings);
+      }
     });
   }
 
