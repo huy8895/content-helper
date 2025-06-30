@@ -1,32 +1,186 @@
+// =================================================================
+// CONSTANTS FOR HTML AND CSS
+// Việc tách biệt này giúp code dễ đọc và quản lý hơn.
+// =================================================================
+
+/**
+ * HTML structure for the settings panel.
+ * All inline styles have been removed and are now handled by CSS.
+ */
+const PANEL_HTML = `
+  <h4>📌 Google AI Studio Settings</h4>
+  
+  <div class="form-group">
+    <label for="input-value1">InputValue 1:</label>
+    <input id="input-value1" type="text" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="input-value2">InputValue 2:</label>
+    <input id="input-value2" type="text" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="voice1">Voice 1:</label>
+    <input id="voice1" type="text" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="voice2">Voice 2:</label>
+    <input id="voice2" type="text" class="form-control">
+  </div>
+
+  <div class="form-group form-check">
+    <label>
+      <input type="checkbox" id="auto-set-value">
+      Auto Set Value
+    </label>
+  </div>
+
+  <button id="save-settings-btn" class="btn-save">Lưu</button>
+`;
+
+
+/**
+ * CSS styles for the panel (Light Theme).
+ * This can be easily modified without touching the class logic.
+ */
+const PANEL_CSS = `
+  #chatgpt-helper-ai-studio-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    padding: 20px;
+    z-index: 10000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333333;
+    font-size: 14px;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  #chatgpt-helper-ai-studio-panel h4 {
+    margin: 0 0 15px;
+    font-size: 16px;
+    color: #111;
+    font-weight: 600;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .form-group {
+    margin-bottom: 12px;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .form-group.form-check {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+  }
+  
+  #chatgpt-helper-ai-studio-panel label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .form-check label {
+     margin-bottom: 0;
+     cursor: pointer;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .form-control {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    box-sizing: border-box; /* Important for consistent sizing */
+    color: #333;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  #chatgpt-helper-ai-studio-panel input[type="checkbox"] {
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .btn-save {
+    width: 100%;
+    padding: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  #chatgpt-helper-ai-studio-panel .btn-save:hover {
+    background: #0056b3;
+  }
+`;
+
+// =================================================================
+// THE REFACTORED CLASS
+// =================================================================
+
 window.GoogleAIStudioPanel = class {
   constructor(adapter, isToggle = true) {
     console.log("📢 GoogleAIStudioPanel constructed!");
+    this.panelId = 'chatgpt-helper-ai-studio-panel';
+    this.styleId = `${this.panelId}-styles`;
+    this.storageKey = 'google_ai_studio_settings';
 
-    if(isToggle){
+    if (isToggle) {
       const done = this.closePanel();
       console.log("close panel")
-      if(done) return;
+      if (done) return;
     }
 
     this.adapter = adapter;
-    this.panelId = 'chatgpt-helper-ai-studio-panel';
-    this.storageKey = 'google_ai_studio_settings';
     this.init();
   }
 
   init() {
-    this.createPanel();
+    this.injectStyles(); // Chèn CSS vào trang
+    this.createPanel();  // Tạo panel HTML
     this.loadSettings();
     this.attachEvents();
   }
 
-  closePanel(){
-    const panel = document.getElementById('chatgpt-helper-ai-studio-panel');
+  closePanel() {
+    const panel = document.getElementById(this.panelId);
     if (panel) {
       panel.remove();
       return true;
     }
     return false;
+  }
+
+  /**
+   * Injects the panel's CSS into the document's head.
+   * Avoids duplicate injection by checking for an existing style element.
+   */
+  injectStyles() {
+    if (document.getElementById(this.styleId)) {
+      return; // CSS đã được chèn, không cần làm lại
+    }
+    const styleElement = document.createElement('style');
+    styleElement.id = this.styleId;
+    styleElement.textContent = PANEL_CSS;
+    document.head.appendChild(styleElement);
   }
 
   createPanel() {
@@ -37,60 +191,8 @@ window.GoogleAIStudioPanel = class {
 
     const panel = document.createElement('div');
     panel.id = this.panelId;
-    panel.style = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 300px;
-      background: #1e1e2f;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 15px;
-      z-index: 10000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      font-family: Arial, sans-serif;
-      color: white;
-    `;
-
-    panel.innerHTML = `
-      <h4 style="margin: 0 0 10px; font-size: 14px;">📌 Google AI Studio Settings</h4>
-      
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px;">InputValue 1:</label>
-        <input id="input-value1" type="text" style="width: 100%; padding: 5px; border-radius: 4px; border: none;">
-      </div>
-
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px;">InputValue 2:</label>
-        <input id="input-value2" type="text" style="width: 100%; padding: 5px; border-radius: 4px; border: none;">
-      </div>
-
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px;">Voice 1:</label>
-        <input id="voice1" type="text" style="width: 100%; padding: 5px; border-radius: 4px; border: none;">
-      </div>
-
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px;">Voice 2:</label>
-        <input id="voice2" type="text" style="width: 100%; padding: 5px; border-radius: 4px; border: none;">
-      </div>
-
-      <div style="margin-bottom: 10px;">
-        <label>
-          <input type="checkbox" id="auto-set-value"> Auto Set Value
-        </label>
-      </div>
-
-      <button id="save-settings-btn" style="
-        width: 100%;
-        padding: 8px;
-        background: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      ">Lưu</button>
-    `;
+    // HTML được lấy từ hằng số
+    panel.innerHTML = PANEL_HTML;
 
     document.body.appendChild(panel);
   }
@@ -131,16 +233,18 @@ window.GoogleAIStudioPanel = class {
   }
 
   injectAutoSetValueScript(settings) {
-        this.selectVoice(2, settings.Voice1);
-        this.selectVoice(3, settings.Voice2);
-        this.setInputValue(0, settings.InputValue1);
-        this.setInputValue(1, settings.InputValue2);
+    this.selectVoice(2, settings.Voice1);
+    this.selectVoice(3, settings.Voice2);
+    this.setInputValue(0, settings.InputValue1);
+    this.setInputValue(1, settings.InputValue2);
   }
 
   selectVoice(matSelectId, voiceName) {
+    if (!voiceName) return; // Không làm gì nếu tên giọng nói rỗng
     const trigger = document.querySelector(
         `#mat-select-${matSelectId} .mat-mdc-select-trigger`);
     if (!trigger) {
+      console.warn(`Could not find voice trigger for mat-select-${matSelectId}`);
       return;
     }
 
