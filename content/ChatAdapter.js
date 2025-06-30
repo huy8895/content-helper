@@ -61,10 +61,10 @@ class BaseChatAdapter {
   }
 
   /* ---- Mandatory interface (override in subclass) ---- */
-  getTextarea() { throw new Error("getTextarea() not implemented"); }
-  getContentElements() { throw new Error("getContentElements() not implemented"); }
-  getSendBtn()  { throw new Error("getSendBtn() not implemented"); }
-  isDone()  { throw new Error("isDone() not implemented"); }
+  getTextarea() { return null; }
+  getContentElements(){ return null; }
+  getSendBtn()  { return null; }
+  isDone()  { return null; }
 
   /* ---- Optional interface (override if the site supports it) ---- */
   getForm()     { return this.getTextarea() }
@@ -364,40 +364,31 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   }
 
   constructor() {
-    console.log("GoogleAIStudioAdapter constructed!")
     super();
+    console.log("✅ GoogleAIStudioAdapter được khởi tạo");
   }
 
-  getTextarea() {
-    return this._q('textarea[aria-label="Type something or tab to choose an example prompt"]');
-  }
+  insertHelperButtons() {
+    if (document.querySelector('#chatgpt-helper-button-container')) {
+      return;
+    }
+    const container = document.createElement("div");
+    container.id = "chatgpt-helper-button-container";
+    const config = BUTTONS.MANAGE_SCENARIO;
+    const btn = this._createButton({
+      ...config,
+      text: "⚙️ Settings",
+      onClick: () => {
+        new window.GoogleAIStudioPanel(this); // `this` vẫn đúng
+      }
+    });
 
-  getSendBtn() {
-    return this._q('button[aria-label="Run"][type="submit"]');
-  }
-
-  getStopBtn() {
-    // Hiện tại không thấy nút dừng trong DOM bạn cung cấp
-    return null;
-  }
-
-  getForm() {
-    const textarea = this.getTextarea();
-    return textarea?.closest("form") ?? null;
-  }
-
-  isDone() {
-    const sendBtn = this.getSendBtn();
-    return sendBtn && sendBtn.disabled;
-  }
-
-  getContentElements() {
-    // Giả sử phản hồi nằm trong div có class chứa "response"
-    return Array.from(document.querySelectorAll('.response-message-body, .markdown-content'));
+    container.appendChild(btn);
+    document.body.appendChild(container); // ←←← THÊM DÒNG NÀY  }
   }
 }
 
-/* -----------------------  Adapter Factory (runtime)  ---------------------- */
+  /* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [
   ChatGPTAdapter,
   DeepSeekAdapter,
