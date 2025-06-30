@@ -208,7 +208,7 @@ window.GoogleAIStudioPanel = class {
           });
 
           if (settings.autoSetValue) {
-            this.injectAutoSetValueScript(settings);
+            this.setValueScript(settings);
           }
         });
   }
@@ -227,7 +227,7 @@ window.GoogleAIStudioPanel = class {
     });
   }
 
-  injectAutoSetValueScript(settings) {
+  setValueScript(settings) {
     this.selectVoice(2, settings.Voice1);
     this.selectVoice(3, settings.Voice2);
     this.setInputValue(0, settings.InputValue1);
