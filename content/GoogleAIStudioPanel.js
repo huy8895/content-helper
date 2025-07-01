@@ -143,7 +143,7 @@ window.GoogleAIStudioPanel = class {
     this.styleId = `${this.panelId}-styles`;
     this.storageKey = 'google_ai_studio_settings';
     this.adapter = adapter;
-    this.init();
+    setTimeout(() => this.loadSettings(), 5000)
   }
 
   init() {
@@ -214,24 +214,35 @@ window.GoogleAIStudioPanel = class {
   }
 
   loadSettings() {
+    console.log("start loadSettings..")
     chrome.storage.local.get([this.storageKey], (result) => {
-      const settings = result[this.storageKey] || {};
-      document.getElementById('input-value1').value = settings.InputValue1
-          || '';
-      document.getElementById('input-value2').value = settings.InputValue2
-          || '';
-      document.getElementById('voice1').value = settings.Voice1 || '';
-      document.getElementById('voice2').value = settings.Voice2 || '';
-      document.getElementById('auto-set-value').checked = settings.autoSetValue
-          || false;
+      console.log("start loadSettings.. key: {}, result: {}", this.storageKey,
+          result);
 
-      if(settings.autoSetValue) {
+      const settings = result[this.storageKey] || {};
+
+      const panel = document.getElementById(this.panelId);
+      if (panel) {
+        document.getElementById('input-value1').value = settings.InputValue1
+            || '';
+        document.getElementById('input-value2').value = settings.InputValue2
+            || '';
+        document.getElementById('voice1').value = settings.Voice1 || '';
+        document.getElementById('voice2').value = settings.Voice2 || '';
+        document.getElementById(
+            'auto-set-value').checked = settings.autoSetValue
+            || false;
+      }
+
+      console.log("done loadSettings.. settings: ", settings)
+      if (settings.autoSetValue) {
         this.setValueScript(settings);
       }
     });
   }
 
   setValueScript(settings) {
+    console.log("start setValueScript: ", settings)
     this.selectVoice(2, settings.Voice1);
     this.selectVoice(3, settings.Voice2);
     this.setInputValue(0, settings.InputValue1);
