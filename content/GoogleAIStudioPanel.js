@@ -143,7 +143,7 @@ window.GoogleAIStudioPanel = class {
     this.styleId = `${this.panelId}-styles`;
     this.storageKey = 'google_ai_studio_settings';
     this.adapter = adapter;
-    setTimeout(() => this.loadSettings(), 5000)
+    setTimeout(() => this.loadSettings(), 1000)
   }
 
   init() {
@@ -252,7 +252,7 @@ window.GoogleAIStudioPanel = class {
   selectVoice(matSelectId, voiceName) {
     if (!voiceName) return; // Không làm gì nếu tên giọng nói rỗng
     const trigger = document.querySelector(
-        `#mat-select-${matSelectId} .mat-mdc-select-trigger`);
+        `#mat-select-${matSelectId}`);
     if (!trigger) {
       console.warn(`Could not find voice trigger for mat-select-${matSelectId}`);
       return;
