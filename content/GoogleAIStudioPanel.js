@@ -243,8 +243,8 @@ window.GoogleAIStudioPanel = class {
 
   setValueScript(settings) {
     console.log("start setValueScript: ", settings)
-    this.selectVoice(2, settings.Voice1);
-    this.selectVoice(3, settings.Voice2);
+    this.selectVoice(1, settings.Voice1);
+    this.selectVoice(2, settings.Voice2);
     this.setInputValue(0, settings.InputValue1);
     this.setInputValue(1, settings.InputValue2);
   }
@@ -264,11 +264,11 @@ window.GoogleAIStudioPanel = class {
       const panel = document.getElementById(`mat-select-${matSelectId}-panel`);
       if (panel) {
         clearInterval(checkPanel);
-        const options = panel.querySelectorAll('.gmat-body-medium');
+        const options = panel.querySelectorAll('.mdc-list-item');
         for (let option of options) {
-          if (option.textContent.trim().toLowerCase()
+          if (option.querySelector('.description .v3-font-body')?.textContent.trim().toLowerCase()
               === voiceName.toLowerCase()) {
-            option.closest('.mat-mdc-option').click();
+            option.click();
             console.log(
                 `✅ Đã chọn giọng: ${voiceName} cho Speaker ${matSelectId}`);
             break;
