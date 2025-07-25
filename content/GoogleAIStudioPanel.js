@@ -243,8 +243,8 @@ window.GoogleAIStudioPanel = class {
 
   setValueScript(settings) {
     console.log("start setValueScript: ", settings)
-    this.selectVoice(1, settings.Voice1);
-    this.selectVoice(2, settings.Voice2);
+    this.selectVoice(2, settings.Voice1);
+    this.selectVoice(3, settings.Voice2);
     this.setInputValue(0, settings.InputValue1);
     this.setInputValue(1, settings.InputValue2);
   }
