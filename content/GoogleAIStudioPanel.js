@@ -245,8 +245,8 @@ window.GoogleAIStudioPanel = class {
     console.log("start setValueScript: ", settings)
     this.selectVoice(2, settings.Voice1);
     this.selectVoice(3, settings.Voice2);
-    this.setInputValue(0, settings.InputValue1);
-    this.setInputValue(1, settings.InputValue2);
+    this.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
+    this.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
   }
 
   selectVoice(matSelectId, voiceName) {
@@ -301,5 +301,46 @@ window.GoogleAIStudioPanel = class {
     });
 
     observer.observe(document.body, {childList: true, subtree: true});
+  }
+
+  /**
+   * Tìm một phần tử input dựa trên aria-label và vị trí (index), sau đó điền giá trị.
+   * Hàm này rất hữu ích khi có nhiều input trùng aria-label trên trang.
+   *
+   * @param {string} labelText - Giá trị của thuộc tính 'aria-label' của các ô input.
+   * @param {string} valueToSet - Giá trị bạn muốn điền vào.
+   * @param {number} index - Vị trí của phần tử muốn chọn (bắt đầu từ 0 cho phần tử đầu tiên).
+   */
+  setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
+    // 1. Tạo selector
+    const selector = `input[aria-label="${labelText}"]`;
+
+    // 2. Dùng querySelectorAll để lấy TẤT CẢ các phần tử khớp
+    const allMatchingElements = document.querySelectorAll(selector);
+
+    // 3. Kiểm tra xem có đủ phần tử ở vị trí (index) yêu cầu không
+    if (allMatchingElements.length === 0) {
+      console.error(
+          `Không tìm thấy phần tử input nào có aria-label là "${labelText}".`);
+      return; // Dừng hàm
+    }
+
+    if (index >= allMatchingElements.length) {
+      console.error(`Bạn muốn chọn phần tử thứ ${index
+      + 1} (index=${index}), nhưng chỉ tìm thấy ${allMatchingElements.length} phần tử có aria-label là "${labelText}".`);
+      return; // Dừng hàm
+    }
+
+    // 4. Lấy đúng phần tử input tại vị trí (index) mong muốn
+    const inputElement = allMatchingElements[index];
+
+    // 5. Gán giá trị và kích hoạt sự kiện như cũ
+    inputElement.value = valueToSet;
+    inputElement.dispatchEvent(new Event('input', {bubbles: true}));
+    inputElement.dispatchEvent(new Event('change', {bubbles: true}));
+
+    console.log(
+        `Đã điền thành công giá trị "${valueToSet}" vào phần tử THỨ ${index
+        + 1} có aria-label là "${labelText}".`);
   }
 }
