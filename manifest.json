@@ -29,7 +29,8 @@
         "https://chat.deepseek.com/*",
         "https://chat.qwen.ai/*",
         "https://grok.com/*",
-        "https://aistudio.google.com/*"
+        "https://aistudio.google.com/*",
+        "https://studio.youtube.com/video/*"
       ],
       "js": [
         "libs/compromise.min.js",

@@ -429,13 +429,149 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   }
 }
 
-  /* -----------------------  Adapter Factory (runtime)  ---------------------- */
+// ... (code của các class adapter khác) ...
+
+/* ------------------------- YouTube Studio Adapter ------------------------- */
+class YoutubeStudioAdapter extends BaseChatAdapter {
+  static matches(host) {
+    return /studio\.youtube\.com$/i.test(host);
+  }
+
+  constructor() {
+    super();
+    console.log("✅ YoutubeStudioAdapter được khởi tạo");
+    // Chờ một chút để UI của Youtube Studio ổn định rồi mới chèn nút
+    setTimeout(() => this.insertHelperButtons(), 2000);
+  }
+
+  // Các phương thức trừu tượng không cần thiết cho trang này
+  getTextarea() { return null; }
+  getSendBtn()  { return null; }
+  isDone()      { return true; }
+
+  /**
+   * Chèn nút "Add My Languages" vào trang.
+   */
+  insertHelperButtons() {
+    if (document.getElementById('helper-add-my-languages')) {
+      return; // Nút đã được chèn
+    }
+
+    const addLanguageButton = this._q('#add-translations-button');
+    if (!addLanguageButton) {
+      console.warn("Không tìm thấy nút 'Add language'.");
+      return;
+    }
+
+    const container = addLanguageButton.parentElement;
+    if (!container) return;
+
+    const myButton = this._createButton({
+      id: 'helper-add-my-languages',
+      text: '🌐 Add My Languages',
+      className: 'style-scope ytcp-button', // Dùng class của YT cho giống
+      onClick: () => this.addMyLanguages()
+    });
+
+    // Style cho nút để nổi bật hơn
+    myButton.style.marginLeft = '10px';
+    myButton.style.backgroundColor = '#c00'; // Màu đỏ của YouTube
+    myButton.style.color = 'white';
+
+    // Chèn nút của chúng ta vào sau nút "Add language"
+    container.appendChild(myButton);
+  }
+
+  /**
+   * Hàm sleep để chờ giữa các hành động.
+   * @param {number} ms - Thời gian chờ (mili giây).
+   */
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Logic chính để tự động thêm các ngôn ngữ.
+   */
+  async addMyLanguages() {
+    // === CÓ THỂ TÙY CHỈNH DANH SÁCH NGÔN NGỮ TẠI ĐÂY ===
+    const LANGUAGES_TO_ADD = [
+      'English',
+      'Vietnamese',
+      'Spanish',
+      'Hindi',
+      'French'
+    ];
+    // ======================================================
+
+    const addLanguageBtn = this._q('#add-translations-button');
+    if (!addLanguageBtn) {
+      alert("Không thể tìm thấy nút 'Add language'!");
+      return;
+    }
+
+    console.log(`Bắt đầu thêm ${LANGUAGES_TO_ADD.length} ngôn ngữ...`);
+
+    for (const langName of LANGUAGES_TO_ADD) {
+      // Mỗi lần lặp, phải click lại nút "Add language" để mở menu
+      addLanguageBtn.click();
+
+      // Chờ cho menu ngôn ngữ xuất hiện
+      await this.sleep(500);
+
+      // Tìm đúng ngôn ngữ trong danh sách
+      const allItems = document.querySelectorAll('tp-yt-paper-item .item-text');
+      let foundItem = null;
+
+      for (const item of allItems) {
+        if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
+           // Lấy phần tử cha có thể click được
+          const clickableParent = item.closest('tp-yt-paper-item');
+
+          // Kiểm tra xem ngôn ngữ đã được thêm (bị disable) chưa
+          if (clickableParent && !clickableParent.hasAttribute('disabled')) {
+            foundItem = clickableParent;
+            break;
+          } else {
+            console.log(`Ngôn ngữ "${langName}" đã tồn tại hoặc bị vô hiệu hóa.`);
+            foundItem = 'DISABLED'; // Đánh dấu để bỏ qua
+            // Cần đóng menu lại để tiếp tục
+            const menu = item.closest('tp-yt-paper-listbox');
+            if (menu) {
+               // Một cách đơn giản để đóng menu là click ra ngoài
+               document.body.click();
+            }
+            break;
+          }
+        }
+      }
+
+      if (foundItem && foundItem !== 'DISABLED') {
+        console.log(`Đang thêm ngôn ngữ: ${langName}`);
+        foundItem.click();
+        // Chờ một chút để UI cập nhật sau khi thêm
+        await this.sleep(1000);
+      } else if (!foundItem) {
+         console.warn(`Không tìm thấy ngôn ngữ "${langName}" trong danh sách.`);
+         // Đóng menu nếu không tìm thấy
+         document.body.click();
+         await this.sleep(500);
+      }
+    }
+
+    console.log("Hoàn tất quá trình thêm ngôn ngữ!");
+    alert("Đã thêm xong các ngôn ngữ đã chọn!");
+  }
+}
+
+/* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [
   ChatGPTAdapter,
   DeepSeekAdapter,
   QwenAdapter,
   GrokAdapter,
-  GoogleAIStudioAdapter
+  GoogleAIStudioAdapter,
+  YoutubeStudioAdapter // <-- THÊM ADAPTER MỚI VÀO ĐÂY
 ];
 
 let active = null;
