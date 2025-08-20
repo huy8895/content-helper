@@ -431,7 +431,8 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
 // ... (code của các class adapter khác) ...
 
-/* ------------------------- YouTube Studio Adapter ------------------------- */
+/* ------------------------- YouTube Studio Adapter (Original Logic + Dynamic Config) ------------------------- */
+/* ------------------------- YouTube Studio Adapter (Final, Safe Integration) ------------------------- */
 class YoutubeStudioAdapter extends BaseChatAdapter {
   static matches(host) {
     return /studio\.youtube\.com$/i.test(host);
@@ -444,48 +445,59 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     setTimeout(() => this.insertHelperButtons(), 2000);
   }
 
-  // Các phương thức trừu tượng không cần thiết cho trang này
+  // Các phương thức trừu tượng không cần thiết
   getTextarea() { return null; }
   getSendBtn()  { return null; }
   isDone()      { return true; }
 
   /**
-   * Chèn nút "Add My Languages" vào trang.
+   * Chèn các nút vào trang.
    */
   insertHelperButtons() {
-    if (document.getElementById('helper-add-my-languages')) {
-      return; // Nút đã được chèn
-    }
+    if (document.getElementById('helper-config-languages')) return;
 
     const addLanguageButton = this._q('#add-translations-button');
     if (!addLanguageButton) {
-      console.warn("Không tìm thấy nút 'Add language'.");
+      console.warn("Không tìm thấy nút 'Add language'. Thử lại...");
+      setTimeout(() => this.insertHelperButtons(), 1000);
       return;
     }
 
     const container = addLanguageButton.parentElement;
     if (!container) return;
 
-    const myButton = this._createButton({
+        const youtubeStudioPanel = new window.YoutubeStudioPanel(this);
+
+    // Nút Cấu hình
+    const configButton = this._createButton({
+      id: 'helper-config-languages',
+      text: '⚙️ Configure',
+      className: 'style-scope ytcp-button',
+      onClick: () => {
+        console.log("click ⚙️ Configure")
+        // Điều này đảm bảo window.YoutubeStudioPanel đã tồn tại.
+        console.log("togglePanel")
+        youtubeStudioPanel.togglePanel();
+      }
+    });
+    configButton.style.marginLeft = '10px';
+
+    // Nút Chạy
+    const runButton = this._createButton({
       id: 'helper-add-my-languages',
-      text: '🌐 Add My Languages',
-      className: 'style-scope ytcp-button', // Dùng class của YT cho giống
+      text: '🌐 Add Languages',
+      className: 'style-scope ytcp-button',
       onClick: () => this.addMyLanguages()
     });
+    runButton.style.marginLeft = '10px';
+    runButton.style.backgroundColor = '#c00';
+    runButton.style.color = 'white';
 
-    // Style cho nút để nổi bật hơn
-    myButton.style.marginLeft = '10px';
-    myButton.style.backgroundColor = '#c00'; // Màu đỏ của YouTube
-    myButton.style.color = 'white';
-
-    // Chèn nút của chúng ta vào sau nút "Add language"
-    container.appendChild(myButton);
+    // Chèn cả hai nút
+    container.appendChild(configButton);
+    container.appendChild(runButton);
   }
 
-  /**
-   * Hàm sleep để chờ giữa các hành động.
-   * @param {number} ms - Thời gian chờ (mili giây).
-   */
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -494,73 +506,57 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
    * Logic chính để tự động thêm các ngôn ngữ.
    */
   async addMyLanguages() {
-    // === CÓ THỂ TÙY CHỈNH DANH SÁCH NGÔN NGỮ TẠI ĐÂY ===
-    const LANGUAGES_TO_ADD = [
-      'English',
-      'Vietnamese',
-      'Spanish',
-      'Hindi',
-      'French'
-    ];
-    // ======================================================
-
     const addLanguageBtn = this._q('#add-translations-button');
     if (!addLanguageBtn) {
       alert("Không thể tìm thấy nút 'Add language'!");
       return;
     }
 
-    console.log(`Bắt đầu thêm ${LANGUAGES_TO_ADD.length} ngôn ngữ...`);
+    // Key để đọc từ storage
+    const storageKey = 'youtube_subtitle_languages';
 
-    for (const langName of LANGUAGES_TO_ADD) {
-      // Mỗi lần lặp, phải click lại nút "Add language" để mở menu
-      addLanguageBtn.click();
+    chrome.storage.local.get([storageKey], async (result) => {
+        const LANGUAGES_TO_ADD = result[storageKey] || [];
 
-      // Chờ cho menu ngôn ngữ xuất hiện
-      await this.sleep(500);
+        if (LANGUAGES_TO_ADD.length === 0) {
+            alert('No languages configured. Click "⚙️ Configure" to select languages.');
+            return;
+        }
 
-      // Tìm đúng ngôn ngữ trong danh sách
-      const allItems = document.querySelectorAll('tp-yt-paper-item .item-text');
-      let foundItem = null;
+        console.log(`Bắt đầu thêm ${LANGUAGES_TO_ADD.length} ngôn ngữ...`);
 
-      for (const item of allItems) {
-        if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
-           // Lấy phần tử cha có thể click được
-          const clickableParent = item.closest('tp-yt-paper-item');
+      const AWAIT_MS = 100;
+      for (const langName of LANGUAGES_TO_ADD) {
+          addLanguageBtn.click();
+          await this.sleep(AWAIT_MS);
 
-          // Kiểm tra xem ngôn ngữ đã được thêm (bị disable) chưa
-          if (clickableParent && !clickableParent.hasAttribute('disabled')) {
-            foundItem = clickableParent;
-            break;
-          } else {
-            console.log(`Ngôn ngữ "${langName}" đã tồn tại hoặc bị vô hiệu hóa.`);
-            foundItem = 'DISABLED'; // Đánh dấu để bỏ qua
-            // Cần đóng menu lại để tiếp tục
-            const menu = item.closest('tp-yt-paper-listbox');
-            if (menu) {
-               // Một cách đơn giản để đóng menu là click ra ngoài
-               document.body.click();
+          const allItems = document.querySelectorAll('tp-yt-paper-item .item-text');
+          let foundItem = null;
+
+          for (const item of allItems) {
+            if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
+              const clickableParent = item.closest('tp-yt-paper-item');
+              if (clickableParent && !clickableParent.hasAttribute('disabled')) {
+                foundItem = clickableParent;
+                break;
+              } else {
+                foundItem = 'DISABLED';
+                document.body.click();
+                break;
+              }
             }
-            break;
+          }
+
+          if (foundItem && foundItem !== 'DISABLED') {
+            foundItem.click();
+            await this.sleep(AWAIT_MS);
+          } else if (!foundItem) {
+            document.body.click();
+            await this.sleep(AWAIT_MS);
           }
         }
-      }
-
-      if (foundItem && foundItem !== 'DISABLED') {
-        console.log(`Đang thêm ngôn ngữ: ${langName}`);
-        foundItem.click();
-        // Chờ một chút để UI cập nhật sau khi thêm
-        await this.sleep(1000);
-      } else if (!foundItem) {
-         console.warn(`Không tìm thấy ngôn ngữ "${langName}" trong danh sách.`);
-         // Đóng menu nếu không tìm thấy
-         document.body.click();
-         await this.sleep(500);
-      }
-    }
-
-    console.log("Hoàn tất quá trình thêm ngôn ngữ!");
-    alert("Đã thêm xong các ngôn ngữ đã chọn!");
+        alert("Đã thêm xong các ngôn ngữ đã cấu hình!");
+    });
   }
 }
 
@@ -574,17 +570,31 @@ const ADAPTER_CTORS = [
   YoutubeStudioAdapter // <-- THÊM ADAPTER MỚI VÀO ĐÂY
 ];
 
-let active = null;
-
-for (const Ctor of ADAPTER_CTORS) {
-  if (Ctor.matches(window.location.hostname)) {
-    active = new Ctor();
-    break;
+// --- DÁN ĐOẠN NÀY VÀO THAY THẾ ---
+function initializeAdapter() {
+  console.log("[Adapter Factory] DOM is ready. Initializing adapter...");
+  let active = null;
+  for (const Ctor of ADAPTER_CTORS) {
+    if (Ctor.matches(window.location.hostname)) {
+      try {
+        active = new Ctor();
+      } catch (e) {
+        console.error(`[Adapter Factory] Error constructing ${Ctor.name}:`, e);
+      }
+      break;
+    }
   }
+
+  window.ChatAdapter = active;
+
+  console.log("[Adapter Factory] Host =", window.location.hostname);
+  console.log("[Adapter Factory] Picked =", window.ChatAdapter?.constructor.name || 'None');
 }
 
-// Expose – every other script simply grabs the instance.
-window.ChatAdapter = active;
-
-console.log("[Adapter factory] host =", window.location.hostname);
-console.log("[Adapter factory] picked =", window.ChatAdapter?.constructor.name);
+// Đảm bảo chạy sau khi tất cả các script đã được tải và DOM sẵn sàng.
+// Dùng setTimeout(0) để đẩy việc thực thi xuống cuối hàng đợi sự kiện.
+if (document.readyState === 'complete') {
+    setTimeout(initializeAdapter, 0);
+} else {
+    window.addEventListener('load', () => setTimeout(initializeAdapter, 0));
+}
