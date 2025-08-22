@@ -4,10 +4,57 @@
 // CONSTANTS FOR PANEL
 // =================================================================
 
+// const AVAILABLE_LANGUAGES = [
+//   'Arabic', 'Chinese (Simplified)', 'Chinese (Traditional)', 'English', 'French',
+//   'German', 'Hindi', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Malay',
+//   'Polish', 'Portuguese (Brazil)', 'Russian', 'Spanish', 'Thai', 'Turkish', 'Vietnamese'
+// ];
+
 const AVAILABLE_LANGUAGES = [
-  'Arabic', 'Chinese (Simplified)', 'Chinese (Traditional)', 'English', 'French',
-  'German', 'Hindi', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Malay',
-  'Polish', 'Portuguese (Brazil)', 'Russian', 'Spanish', 'Thai', 'Turkish', 'Vietnamese'
+  'Abkhazian', 'Afar', 'Afrikaans', 'Akan', 'Akkadian', 'Albanian',
+  'American Sign Language', 'Amharic', 'Arabic', 'Aramaic', 'Armenian',
+  'Assamese', 'Aymara', 'Azerbaijani', 'Bambara', 'Bangla', 'Bangla (India)',
+  'Bashkir', 'Basque', 'Belarusian', 'Bhojpuri', 'Bislama', 'Bodo',
+  'Bosnian', 'Breton', 'Bulgarian', 'Burmese', 'Cantonese',
+  'Cantonese (Hong Kong)', 'Catalan', 'Cherokee', 'Chinese', 'Chinese (China)',
+  'Chinese (Hong Kong)', 'Chinese (Simplified)', 'Chinese (Singapore)',
+  'Chinese (Taiwan)', 'Chinese (Traditional)', 'Choctaw', 'Coptic', 'Corsican',
+  'Cree', 'Croatian', 'Czech', 'Danish', 'Dogri', 'Dutch', 'Dutch (Belgium)',
+  'Dutch (Netherlands)', 'Dzongkha', 'English', 'English (Australia)',
+  'English (Canada)', 'English (India)', 'English (Ireland)',
+  'English (United Kingdom)', 'English (United States)', 'Esperanto',
+  'Estonian', 'Ewe', 'Faroese', 'Fijian', 'Filipino', 'Finnish', 'French',
+  'French (Belgium)', 'French (Canada)', 'French (France)',
+  'French (Switzerland)', 'Fula', 'Galician', 'Ganda', 'Georgian', 'German',
+  'German (Austria)', 'German (Germany)', 'German (Switzerland)', 'Greek',
+  'Guarani', 'Gujarati', 'Gusii', 'Haitian Creole', 'Hakka Chinese',
+  'Hakka Chinese (Taiwan)', 'Haryanvi', 'Hausa', 'Hawaiian', 'Hebrew', 'Hindi',
+  'Hindi (Latin)', 'Hiri Motu', 'Hungarian', 'Icelandic', 'Igbo', 'Indonesian',
+  'Interlingua', 'Interlingue', 'Inuktitut', 'Inupiaq', 'Irish', 'Italian',
+  'Japanese', 'Javanese', 'Kalaallisut', 'Kalenjin', 'Kamba', 'Kannada',
+  'Kashmiri', 'Kazakh', 'Khmer', 'Kikuyu', 'Kinyarwanda', 'Klingon', 'Konkani',
+  'Korean', 'Kurdish', 'Kyrgyz', 'Ladino', 'Lao', 'Latin', 'Latvian', 'Lingala',
+  'Lithuanian', 'Lower Sorbian', 'Luba-Katanga', 'Luo', 'Luxembourgish', 'Luyia',
+  'Macedonian', 'Maithili', 'Malagasy', 'Malay', 'Malay (Singapore)',
+  'Malayalam', 'Maltese', 'Manipuri', 'Māori', 'Marathi', 'Masai', 'Meru',
+  'Min Nan Chinese', 'Min Nan Chinese (Taiwan)', 'Mixe', 'Mizo', 'Mongolian',
+  'Mongolian (Mongolian)', 'Nauru', 'Navajo', 'Nepali', 'Nigerian Pidgin',
+  'North Ndebele', 'Northern Sotho', 'Norwegian', 'Occitan', 'Odia', 'Oromo',
+  'Papiamento', 'Pashto', 'Persian', 'Persian (Afghanistan)', 'Persian (Iran)',
+  'Polish', 'Portuguese', 'Portuguese (Brazil)', 'Portuguese (Portugal)',
+  'Punjabi', 'Quechua', 'Romanian', 'Romanian (Moldova)', 'Romansh', 'Rundi',
+  'Russian', 'Russian (Latin)', 'Samoan', 'Sango', 'Sanskrit', 'Santali',
+  'Sardinian', 'Scottish Gaelic', 'Serbian', 'Serbian (Cyrillic)',
+  'Serbian (Latin)', 'Serbo-Croatian', 'Sherdukpen', 'Shona', 'Sicilian',
+  'Sindhi', 'Sinhala', 'Slovak', 'Slovenian', 'Somali', 'South Ndebele',
+  'Southern Sotho', 'Spanish', 'Spanish (Latin America)', 'Spanish (Mexico)',
+  'Spanish (Spain)', 'Spanish (United States)', 'Sundanese', 'Swahili',
+  'Swati', 'Swedish', 'Tagalog', 'Tajik', 'Tamil', 'Tatar', 'Telugu', 'Thai',
+  'Tibetan', 'Tigrinya', 'Tok Pisin', 'Toki Pona', 'Tongan', 'Tsonga',
+  'Tswana', 'Turkish', 'Turkmen', 'Twi', 'Ukrainian', 'Upper Sorbian',
+  'Urdu', 'Uyghur', 'Uzbek', 'Venda', 'Vietnamese', 'Volapük', 'Võro',
+  'Welsh', 'Western Frisian', 'Wolaytta', 'Wolof', 'Xhosa', 'Yiddish',
+  'Yoruba', 'Zulu'
 ];
 
 const YTB_PANEL_HTML = `
