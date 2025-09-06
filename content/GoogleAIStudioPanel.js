@@ -266,12 +266,12 @@ window.GoogleAIStudioPanel = class {
         clearInterval(checkPanel);
         const options = panel.querySelectorAll('.mdc-list-item');
         for (let option of options) {
-          if (option.querySelector('.description .v3-font-body')?.textContent.trim().toLowerCase()
-              === voiceName.toLowerCase()) {
+          const nameElement = option.querySelector('.description .name');
+
+          if (nameElement && nameElement.textContent.trim().toLowerCase() === voiceName.toLowerCase()) {
             option.click();
-            console.log(
-                `✅ Đã chọn giọng: ${voiceName} cho Speaker ${matSelectId}`);
-            break;
+            console.log(`✅ Đã chọn giọng: ${voiceName} cho Speaker có mat-select-id là ${matSelectId}`);
+            break; // Thoát khỏi vòng lặp khi đã tìm thấy và click
           }
         }
       }
