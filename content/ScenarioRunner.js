@@ -45,9 +45,10 @@ window.ScenarioRunner = class {
     const data = {};
     this.el.querySelectorAll("[data-key]").forEach(el => {
       const k = el.dataset.key;
+      // Code MỚI (Khuyến khích)
       if (el.tagName === "TEXTAREA") {
-        const lines = el.value.split("\n").map(v => v.trim()).filter(Boolean);
-        data[k] = lines.length === 1 ? lines[0] : lines;
+        // Luôn giữ nguyên giá trị gốc của textarea, chỉ cần trim() toàn bộ là đủ
+        data[k] = el.value.trim();
       } else {
         data[k] = el.value.trim();
       }
