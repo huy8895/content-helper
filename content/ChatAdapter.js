@@ -363,9 +363,8 @@ class GrokAdapter extends BaseChatAdapter {
   }
 }
 
-/* -----------------------------  Google AI Studio  ----------------------------- */
-/* -----------------------------  Google AI Studio (Updated with new selectors) ----------------------------- */
-/* -----------------------------  Google AI Studio (Hybrid Version) ----------------------------- */
+
+/* -----------------------------  Google AI Studio (Hybrid Version with Auto-Set) ----------------------------- */
 class GoogleAIStudioAdapter extends BaseChatAdapter {
   static matches(host) {
     return /aistudio.google.com$/i.test(host);
@@ -373,23 +372,31 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   constructor() {
     super();
-    // Biến cờ để xác định chúng ta đang ở trang nào
     this.isSpeechPage = window.location.pathname.includes('/generate-speech');
     console.log(`✅ GoogleAIStudioAdapter khởi tạo. Đang ở trang Speech: ${this.isSpeechPage}`);
+
+    // === ĐIỂM THAY ĐỔI QUAN TRỌNG ===
+    // Nếu đang ở trang Speech, gọi hàm triggerAutoSet ngay lập tức
+    if (this.isSpeechPage) {
+      // Đợi một chút để đảm bảo trang đã tải xong hoàn toàn
+      setTimeout(() => {
+        window.GoogleAIStudioPanel.triggerAutoSet();
+      }, 1500); // Đợi 1.5 giây
+    }
   }
+
+  // Các hàm còn lại (insertHelperButtons, getForm, getButtonConfigs, etc.)
+  // GIỮ NGUYÊN NHƯ PHIÊN BẢN TRƯỚC.
+  // Bạn có thể copy-paste lại toàn bộ phần bên dưới từ câu trả lời trước của tôi.
 
   // =================================================================
   // LOGIC CHUNG CHO CẢ HAI TRANG
   // =================================================================
 
-  // Phương thức insertHelperButtons sẽ quyết định chèn nút nào
   insertHelperButtons() {
-    // Nếu là trang Speech, chúng ta sẽ tự chèn nút "Settings" ở vị trí cố định
     if (this.isSpeechPage) {
       this.insertSpeechPageButton();
     } else {
-      // Nếu là các trang khác, dùng logic chèn nút chung của BaseChatAdapter
-      // để chèn các nút vào gần ô input.
       super.insertHelperButtons();
     }
   }
@@ -399,35 +406,21 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   // =================================================================
 
   insertSpeechPageButton() {
-    // Tránh chèn lại nếu nút đã tồn tại
     if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) return;
-
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
-
-    // Style để nút nằm ở góc dưới bên trái
     Object.assign(container.style, {
-      position: 'fixed',
-      bottom: '20px',
-      left: '20px',
-      zIndex: '2147483647',
+      position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647',
     });
-
-    // Tạo nút Settings
     const btn = this._createButton({
-      id: 'chatgpt-helper-aistudio-speech-settings',
-      text: "⚙️ Settings",
-      className: 'scenario-btn btn-tool', // Dùng class chung cho đẹp
+      id: 'chatgpt-helper-aistudio-speech-settings', text: "⚙️ Settings",
+      className: 'scenario-btn btn-tool',
       onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
     });
-
-    // Thêm một chút style để nút nổi bật hơn
     Object.assign(btn.style, {
-      padding: '12px 20px',
-      borderRadius: '24px',
+      padding: '12px 20px', borderRadius: '24px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
     });
-
     container.appendChild(btn);
     document.body.appendChild(container);
   }
@@ -437,41 +430,27 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   // =================================================================
 
   getForm() {
-    // Chỉ cần thiết cho trang chat
     return this.isSpeechPage ? null : this._q('div.prompt-input-wrapper-container');
   }
-
   getTextarea() {
     return this.isSpeechPage ? null : this._q('textarea[aria-label="Start typing a prompt"]');
   }
-
   getSendBtn() {
     return this.isSpeechPage ? null : this._q('button[aria-label="Run"]');
   }
-
   getStopBtn() {
     return this.isSpeechPage ? null : (this._q('button[aria-label="Stop"]') || this._q('button[aria-label="Cancel"]'));
   }
-
   isDone() {
     return this.isSpeechPage ? true : !this.getStopBtn();
   }
-
   getContentElements() {
     return this.isSpeechPage ? [] : Array.from(document.querySelectorAll('div.output-chunk'));
   }
-
-  // getButtonConfigs sẽ quyết định danh sách nút cho trang chat
   getButtonConfigs() {
-    // Nếu là trang Speech, không cần nút nào trong thanh bar
-    if (this.isSpeechPage) {
-      return [];
-    }
-
-    // Nếu là trang chat, hiển thị bộ nút đầy đủ
+    if (this.isSpeechPage) return [];
     return [
-      BUTTONS.AI_STUDIO_SETTINGS,
-      BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.AI_STUDIO_SETTINGS, BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
     ];
   }

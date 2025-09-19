@@ -42,37 +42,29 @@ const PANEL_HTML = `
 window.GoogleAIStudioPanel = class {
   constructor(onClose) {
     console.log("📢 GoogleAIStudioPanel constructed!");
-    this.onClose = onClose; // 👈 Thêm onClose callback
+    this.onClose = onClose;
     this.storageKey = 'google_ai_studio_settings';
 
-    this._render(); // 👈 Render ngay khi khởi tạo
-
-    // Tải cài đặt sau khi panel đã được render
-    setTimeout(() => this.loadSettings(), 100);
+    this._render();
+    this.loadAndFillPanel(); // Chỉ tải và điền cho panel, không auto-set
   }
 
   _render() {
     this.el = document.createElement('div');
-    this.el.id = "google-ai-studio-panel"; // Đặt ID nếu cần
-    this.el.className = "panel-box ts-panel"; // 👈 SỬ DỤNG CLASS CHUNG
+    this.el.id = "google-ai-studio-panel";
+    this.el.className = "panel-box ts-panel";
     this.el.innerHTML = PANEL_HTML;
 
-    // 1. Dùng hệ thống panel chung
     ChatGPTHelper.mountPanel(this.el);
-
-    // 2. Thêm chức năng kéo thả và nút đóng
     ChatGPTHelper.makeDraggable(this.el, ".ts-title");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
-
-    // 3. Gắn sự kiện sau khi render
     this.attachEvents();
   }
 
-  // Hàm destroy để tự dọn dẹp
   destroy() {
     console.log("❌ [GoogleAIStudioPanel] destroy");
     this.el?.remove();
-    this.onClose?.(); // Gọi callback để báo cho ChatGPTHelper biết là đã đóng
+    this.onClose?.();
   }
 
   attachEvents() {
@@ -96,80 +88,100 @@ window.GoogleAIStudioPanel = class {
     });
   }
 
-  loadSettings() {
-    console.log("start loadSettings..");
+  // Hàm này chỉ để điền giá trị vào các ô input của panel
+  loadAndFillPanel() {
     chrome.storage.local.get([this.storageKey], (result) => {
       const settings = result[this.storageKey] || {};
-
-      if (this.el) { // Kiểm tra panel có tồn tại không
+      if (this.el) {
         this.el.querySelector('#input-value1').value = settings.InputValue1 || '';
         this.el.querySelector('#input-value2').value = settings.InputValue2 || '';
         this.el.querySelector('#voice1').value = settings.Voice1 || '';
         this.el.querySelector('#voice2').value = settings.Voice2 || '';
         this.el.querySelector('#auto-set-value').checked = settings.autoSetValue || false;
       }
+    });
+  }
 
-      console.log("done loadSettings.. settings: ", settings);
+  // =================================================================
+  // STATIC HELPERS - CÓ THỂ GỌI TỪ BÊN NGOÀI
+  // =================================================================
+
+  /**
+   * Tải cài đặt và tự động điền vào trang nếu cần.
+   * Có thể được gọi từ bất cứ đâu.
+   */
+  static triggerAutoSet() {
+    console.log("🚀 [Static] Triggering Auto Set for Speech Page...");
+    const storageKey = 'google_ai_studio_settings';
+    chrome.storage.local.get([storageKey], (result) => {
+      const settings = result[storageKey] || {};
       if (settings.autoSetValue) {
-        this.setValueScript(settings);
+        console.log("✅ Auto Set is enabled. Running script...");
+        GoogleAIStudioPanel.setValueScript(settings);
+      } else {
+        console.log("ℹ️ Auto Set is disabled.");
       }
     });
   }
 
-  // --- Các hàm logic bên dưới giữ nguyên, không cần sửa ---
-
-  setValueScript(settings) {
-    console.log("start setValueScript: ", settings)
-    this.selectVoice(2, settings.Voice1);
-    this.selectVoice(3, settings.Voice2);
-    this.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
-    this.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
+  static setValueScript(settings) {
+    console.log("[Static] start setValueScript: ", settings);
+    GoogleAIStudioPanel.selectVoice(2, settings.Voice1);
+    GoogleAIStudioPanel.selectVoice(3, settings.Voice2);
+    GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
+    GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
   }
 
-  selectVoice(matSelectId, voiceName) {
+  static selectVoice(matSelectId, voiceName) {
     if (!voiceName) return;
-    const trigger = document.querySelector(`#mat-select-${matSelectId}`);
-    if (!trigger) {
-      console.warn(`Could not find voice trigger for mat-select-${matSelectId}`);
-      return;
-    }
-
-    trigger.click();
-
-    const checkPanel = setInterval(() => {
-      const panel = document.getElementById(`mat-select-${matSelectId}-panel`);
-      if (panel) {
-        clearInterval(checkPanel);
-        const options = panel.querySelectorAll('.mdc-list-item');
-        for (let option of options) {
-          const nameElement = option.querySelector('.description .name');
-          if (nameElement && nameElement.textContent.trim().toLowerCase() === voiceName.toLowerCase()) {
-            option.click();
-            console.log(`✅ Đã chọn giọng: ${voiceName} cho Speaker có mat-select-id là ${matSelectId}`);
-            break;
-          }
+    // Đợi một chút để UI sẵn sàng
+    setTimeout(() => {
+        const trigger = document.querySelector(`#mat-select-${matSelectId}`);
+        if (!trigger) {
+          console.warn(`Could not find voice trigger for mat-select-${matSelectId}`);
+          return;
         }
-      }
-    }, 200);
+        trigger.click();
+
+        const checkPanel = setInterval(() => {
+          const panel = document.getElementById(`mat-select-${matSelectId}-panel`);
+          if (panel) {
+            clearInterval(checkPanel);
+            const options = panel.querySelectorAll('.mdc-list-item');
+            for (let option of options) {
+              const nameElement = option.querySelector('.description .name');
+              if (nameElement && nameElement.textContent.trim().toLowerCase() === voiceName.toLowerCase()) {
+                option.click();
+                console.log(`✅ [Static] Đã chọn giọng: ${voiceName} cho Speaker có mat-select-id là ${matSelectId}`);
+                break;
+              }
+            }
+          }
+        }, 200);
+    }, 500); // Thêm độ trễ 500ms
   }
 
-  setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
-    const selector = `input[aria-label="${labelText}"]`;
-    const allMatchingElements = document.querySelectorAll(selector);
+  static setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
+     if (!valueToSet) return;
+     // Đợi một chút để UI sẵn sàng
+     setTimeout(() => {
+        const selector = `input[aria-label="${labelText}"]`;
+        const allMatchingElements = document.querySelectorAll(selector);
 
-    if (allMatchingElements.length === 0) {
-      console.error(`Không tìm thấy phần tử input nào có aria-label là "${labelText}".`);
-      return;
-    }
-    if (index >= allMatchingElements.length) {
-      console.error(`Bạn muốn chọn phần tử thứ ${index + 1} (index=${index}), nhưng chỉ tìm thấy ${allMatchingElements.length} phần tử có aria-label là "${labelText}".`);
-      return;
-    }
+        if (allMatchingElements.length === 0) {
+          console.error(`[Static] Không tìm thấy phần tử input nào có aria-label là "${labelText}".`);
+          return;
+        }
+        if (index >= allMatchingElements.length) {
+          console.error(`[Static] Bạn muốn chọn phần tử thứ ${index + 1} (index=${index}), nhưng chỉ tìm thấy ${allMatchingElements.length} phần tử có aria-label là "${labelText}".`);
+          return;
+        }
 
-    const inputElement = allMatchingElements[index];
-    inputElement.value = valueToSet;
-    inputElement.dispatchEvent(new Event('input', {bubbles: true}));
-    inputElement.dispatchEvent(new Event('change', {bubbles: true}));
-    console.log(`Đã điền thành công giá trị "${valueToSet}" vào phần tử THỨ ${index + 1} có aria-label là "${labelText}".`);
+        const inputElement = allMatchingElements[index];
+        inputElement.value = valueToSet;
+        inputElement.dispatchEvent(new Event('input', {bubbles: true}));
+        inputElement.dispatchEvent(new Event('change', {bubbles: true}));
+        console.log(`✅ [Static] Đã điền thành công giá trị "${valueToSet}" vào phần tử THỨ ${index + 1} có aria-label là "${labelText}".`);
+    }, 500); // Thêm độ trễ 500ms
   }
 }
