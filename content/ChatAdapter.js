@@ -45,6 +45,12 @@
       className: "scenario-btn btn-tool",
       onClick: () => window.__helperInjected?._toggleAudioDownloader(),
     },
+    AI_STUDIO_SETTINGS: {
+      id: "chatgpt-aistudio-settings-button",
+      text: "⚙️ AI Studio Settings",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
+    },
   };
 /* ---------------------------  Base (Abstract)  --------------------------- */
 class BaseChatAdapter {
@@ -435,6 +441,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.AI_STUDIO_SETTINGS,
     ];
   }
 }

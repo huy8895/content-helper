@@ -26,6 +26,9 @@ class ChatGPTHelper {
     /** @type {AudioDownloader|null} */
     this.audioDownloader = null;   // 🎵 new panel
 
+    /** @type {GoogleAIStudioPanel|null} */
+    this.aiStudioSettings = null; // 👈 Thêm thuộc tính mới
+
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => {
           if (window.ChatAdapter) {
@@ -112,13 +115,24 @@ class ChatGPTHelper {
   }
 
   _toggleContentCopyPanel() {
-  if (this.contentCopyPanel) {
-    this.contentCopyPanel.destroy();
-    this.contentCopyPanel = null;
-    return;
+    if (this.contentCopyPanel) {
+      this.contentCopyPanel.destroy();
+      this.contentCopyPanel = null;
+      return;
+    }
+    this.contentCopyPanel = new ContentCopyPanel(
+        () => (this.contentCopyPanel = null));
   }
-  this.contentCopyPanel = new ContentCopyPanel(() => (this.contentCopyPanel = null));
-}
+
+// 👇 Thêm hàm toggle mới này vào class ChatGPTHelper
+  _toggleAIStudioSettings() {
+    if (this.aiStudioSettings) {
+      this.aiStudioSettings.destroy();
+      this.aiStudioSettings = null;
+      return;
+    }
+    this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
+  }
 
 
   /* ---------- helper kéo-thả dùng chung ---------- */
