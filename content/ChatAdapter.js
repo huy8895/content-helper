@@ -405,26 +405,85 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   // LOGIC RIÊNG CHO TRANG SPEECH (/generate-speech)
   // =================================================================
 
+  // Thay thế hàm này trong class GoogleAIStudioAdapter
+
+// Thay thế hàm này trong class GoogleAIStudioAdapter
+
   insertSpeechPageButton() {
+    // Tránh chèn lại nếu nút đã tồn lại
     if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) return;
+
+    // 1. Tạo container
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
-    Object.assign(container.style, {
-      position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647',
-    });
+
+    // 2. Tạo nút Settings
     const btn = this._createButton({
-      id: 'chatgpt-helper-aistudio-speech-settings', text: "⚙️ Settings",
+      id: 'chatgpt-helper-aistudio-speech-settings',
+      text: "⚙️ Settings", // Text ban đầu để tính toán kích thước
       className: 'scenario-btn btn-tool',
       onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
     });
-    Object.assign(btn.style, {
-      padding: '12px 20px', borderRadius: '24px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+
+    // === START: PHẦN THAY ĐỔI QUAN TRỌNG ===
+
+    // 3. Style cho container: Vị trí cố định và hiệu ứng
+    Object.assign(container.style, {
+      position: 'fixed',
+      bottom: '20px',
+      left: '20px', // Đặt ở vị trí mở rộng mặc định
+      zIndex: '2147483647',
     });
+
+    // 4. Style ban đầu cho nút, tập trung vào hiệu ứng chuyển động
+    Object.assign(btn.style, {
+      borderRadius: '24px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden', // Quan trọng: Ẩn text khi co lại
+      transition: 'width 0.3s ease, padding 0.3s ease', // Hiệu ứng cho width và padding
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    });
+
+    const expandedText = "⚙️ Settings";
+    const collapsedText = "⚙️";
+
+    // 5. Hàm cập nhật trạng thái
+    const updateButtonState = (isHovering) => {
+      if (isHovering) {
+        // Mở rộng
+        btn.innerHTML = expandedText;
+        btn.style.width = '130px'; // Đặt một chiều rộng cố định khi mở rộng
+        btn.style.padding = '12px 20px';
+      } else {
+        // Thu nhỏ
+        btn.innerHTML = collapsedText;
+        btn.style.width = '48px'; // Chiều rộng vừa đủ cho icon (hình tròn/vuông)
+        btn.style.padding = '12px';
+      }
+    };
+
+    // 6. Gắn sự kiện hover cho CHÍNH CÁI NÚT
+    btn.addEventListener('mouseenter', () => updateButtonState(true));
+    btn.addEventListener('mouseleave', () => updateButtonState(false));
+
+    // === END: PHẦN THAY ĐỔI QUAN TRỌNG ===
+
+    // 7. Gắn nút vào container và container vào body
     container.appendChild(btn);
     document.body.appendChild(container);
-  }
 
+    // 8. Đặt trạng thái ban đầu là thu nhỏ
+    //    Dùng setTimeout để đảm bảo các style đã được áp dụng
+    setTimeout(() => {
+        // Cần đặt text ban đầu để trình duyệt tính toán đúng, sau đó mới thu nhỏ
+        btn.innerHTML = expandedText;
+        // Gọi hàm để thu nhỏ lại
+        updateButtonState(false);
+    }, 100);
+  }
   // =================================================================
   // LOGIC RIÊNG CHO CÁC TRANG CHAT KHÁC
   // =================================================================
