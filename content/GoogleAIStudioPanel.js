@@ -184,4 +184,96 @@ window.GoogleAIStudioPanel = class {
         console.log(`✅ [Static] Đã điền thành công giá trị "${valueToSet}" vào phần tử THỨ ${index + 1} có aria-label là "${labelText}".`);
     }, 500); // Thêm độ trễ 500ms
   }
+
+
+  // =================================================================
+  // STATIC UI FACTORY - Hàm tạo nút Trigger
+  // =================================================================
+  static insertSpeechPageButton() {
+    // Tránh chèn lại nếu nút đã tồn tại
+    if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) return;
+
+    const container = document.createElement("div");
+    container.id = "chatgpt-helper-button-container";
+
+    // --- BẮT ĐẦU: Tái tạo logic của _createButton ---
+    const btn = document.createElement('button');
+    btn.id = 'chatgpt-helper-aistudio-speech-settings';
+    btn.textContent = '⚙️ Settings';
+    btn.className = 'scenario-btn btn-tool';
+    btn.addEventListener('click', (e) => {
+        // Chỉ mở panel nếu không phải là hành động kéo
+        if (container.dataset.isDragging !== 'true') {
+            window.__helperInjected?._toggleAIStudioSettings();
+        }
+    });
+    // --- KẾT THÚC: Tái tạo logic của _createButton ---
+
+    // --- Style & Animation Logic (Giữ nguyên từ code bạn cung cấp) ---
+    Object.assign(container.style, {
+      position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647',
+    });
+    Object.assign(btn.style, {
+      borderRadius: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+      whiteSpace: 'nowrap', overflow: 'hidden',
+      transition: 'width 0.3s ease, padding 0.3s ease', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', cursor: 'move',
+    });
+
+    const expandedText = "⚙️ Settings";
+    const collapsedText = "⚙️";
+
+    const updateButtonState = (isHovering) => {
+      if (container.dataset.isDragging === 'true') return;
+      if (isHovering) {
+        btn.innerHTML = expandedText;
+        btn.style.width = '130px';
+        btn.style.padding = '12px 20px';
+      } else {
+        btn.innerHTML = collapsedText;
+        btn.style.width = '48px';
+        btn.style.padding = '12px';
+      }
+    };
+    btn.addEventListener('mouseenter', () => updateButtonState(true));
+    btn.addEventListener('mouseleave', () => updateButtonState(false));
+
+    // --- Logic kéo thả (Giữ nguyên) ---
+    let shiftX = 0, shiftY = 0;
+    btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        container.dataset.isDragging = 'false';
+        const rect = container.getBoundingClientRect();
+        shiftX = e.clientX - rect.left;
+        shiftY = e.clientY - rect.top;
+        const onMouseMove = (moveEvent) => {
+            container.dataset.isDragging = 'true';
+            container.style.left = `${moveEvent.clientX - shiftX}px`;
+            container.style.top = `${moveEvent.clientY - shiftY}px`;
+            container.style.bottom = 'auto';
+            container.style.right = 'auto';
+        };
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            setTimeout(() => {
+                container.dataset.isDragging = 'false';
+                if (btn.matches(':hover')) {
+                    updateButtonState(true);
+                }
+            }, 1000);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    container.appendChild(btn);
+    document.body.appendChild(container);
+
+    setTimeout(() => {
+        btn.innerHTML = expandedText;
+        updateButtonState(false);
+    }, 1000);
+  }
+
 }
