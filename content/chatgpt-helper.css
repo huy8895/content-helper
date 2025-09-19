@@ -670,3 +670,70 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     color: #ff6b6b;
   }
 }
+
+/* === Styles for Scenario Runner's new search box (FLOATING VERSION) === */
+
+/* 1. Container cha phải có position: relative để làm mốc */
+#sr-scenario-browser {
+  position: relative;
+  z-index: 10; /* Đảm bảo nó cao hơn các input bên dưới */
+}
+
+#sr-scenario-search {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* 2. Dropdown sẽ "nổi" lên trên */
+#sr-scenario-dropdown {
+  position: absolute; /* Rất quan trọng: Tách khỏi luồng layout */
+  top: 100%; /* Nằm ngay bên dưới ô search */
+  left: 0;
+  width: 100%;
+  z-index: 20; /* Phải cao hơn ô search */
+
+  max-height: 220px;
+  overflow-y: auto;
+
+  background: #f7f7f8; /* Nền giống panel */
+  border: 1px solid rgba(16, 23, 42, 0.08); /* Viền giống panel */
+  border-top: none;
+  border-radius: 0 0 8px 8px; /* Bo góc dưới */
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12); /* Đổ bóng để nổi bật */
+  box-sizing: border-box;
+}
+
+/* 3. Style cho class ẩn/hiện (giữ nguyên) */
+#sr-scenario-dropdown.hidden-dropdown {
+  height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* Scrollbar đẹp */
+#sr-scenario-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+#sr-scenario-dropdown::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}
+
+/* Các item trong danh sách */
+#sr-scenario-dropdown .scenario-dropdown-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+#sr-scenario-dropdown .scenario-dropdown-item:last-child {
+  border-bottom: none;
+}
+#sr-scenario-dropdown .scenario-dropdown-item:hover {
+  background: #e0e7ff;
+}
