@@ -395,15 +395,100 @@ _setupScenarioSearch() {
     this.onClose();
     this.sequencer?.stop();
   }
+// Thay thế hàm này trong file ScenarioRunner.js
+
+// Thay thế toàn bộ hàm _refreshQueueUI() bằng phiên bản này
+
   _refreshQueueUI() {
     this._updateQueueIndicator();
     const listEl = this.el.querySelector("#sr-queue-list");
     listEl.innerHTML = this.queue.map((job, i) => {
-      const vars = Object.entries(job.values)
-        .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('|') : v}`)
-        .join(', ');
-      return `<li>#${i + 1} <em>${job.name}</em> (từ câu ${job.startAt + 1}) – <b>${vars}</b></li>`;
+      // 1. Tạo chuỗi biến đầy đủ như cũ
+      const fullVars = Object.entries(job.values)
+          .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('|') : v}`)
+          .join(', ');
+
+      // 2. Sử dụng hàm helper để rút gọn chuỗi đó
+      const shortenedVars = this._shortenText(fullVars); // Mặc định là 60 ký tự
+
+      // 3. Sử dụng cả 2 phiên bản trong HTML
+      return `
+        <li>
+          <span>
+            #${i + 1} <em>${job.name}</em> (từ câu ${job.startAt + 1}) – 
+            <b title="${fullVars}">${shortenedVars}</b>
+          </span>
+          <button class="sr-queue-copy" data-idx="${i}" title="Copy prompts to clipboard">📋</button>
+        </li>
+      `;
     }).join("");
+
+    // Gắn lại sự kiện cho các nút copy
+    listEl.querySelectorAll('.sr-queue-copy').forEach(btn => {
+      btn.onclick = (e) => {
+        // Dùng currentTarget để đảm bảo lấy đúng button
+        const index = parseInt(e.currentTarget.dataset.idx, 10);
+        this._copyQueueItem(index);
+      };
+    });
   }
+// Thêm hàm mới này vào class ScenarioRunner
+
+  /**
+   * Biên dịch và sao chép một mục trong hàng đợi vào clipboard
+   * @param {number} index - Vị trí của mục trong this.queue
+   */
+  _copyQueueItem(index) {
+    const job = this.queue[index];
+    if (!job) {
+      console.error("Không tìm thấy mục để copy tại index:", index);
+      return;
+    }
+
+    // Lấy template, hỗ trợ cả 2 định dạng
+    const raw = this.templates[job.name];
+    if (!raw) {
+      console.warn("⚠️ Template not found:", job.name);
+      return;
+    }
+    const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
+
+    // "Biên dịch" các prompt
+    const slice = tplArr.slice(job.startAt);
+    const prompts = this._expandScenario(slice, job.values);
+
+    if (prompts.length === 0) {
+      alert("Không có prompt nào được tạo ra từ mục này.");
+      return;
+    }
+
+    // Nối tất cả các prompt lại, cách nhau bằng hai dòng mới
+    const fullText = prompts.join('\n\n---\n\n');
+
+    // Sao chép vào clipboard
+    navigator.clipboard.writeText(fullText).then(() => {
+      alert(`✅ Đã sao chép ${prompts.length} prompt vào clipboard!`);
+    }).catch(err => {
+      console.error('Lỗi khi sao chép:', err);
+      alert('❌ Đã xảy ra lỗi khi sao chép.');
+    });
+  }
+
+  // Thêm hàm mới này vào class ScenarioRunner, ví dụ: trước hàm destroy()
+
+  /**
+   * Rút gọn văn bản nếu nó dài hơn giới hạn cho phép.
+   * @param {string} text - Văn bản cần rút gọn.
+   * @param {number} maxLength - Chiều dài tối đa.
+   * @returns {string} - Văn bản đã được rút gọn.
+   */
+  _shortenText(text, maxLength = 60) {
+    if (typeof text !== 'string' || text.length <= maxLength) {
+      return text;
+    }
+    return text.slice(0, maxLength) + '...';
+  }
+
+// ... hàm destroy() và các hàm khác ở đây
 };
 // --- END OF FILE ScenarioRunner.js (UPDATED) ---

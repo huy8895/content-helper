@@ -812,3 +812,26 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     background: #555;
   }
 }
+
+
+/* === Styles for buttons inside Scenario Runner queue === */
+
+#sr-queue-list li {
+  display: flex;
+  justify-content: space-between; /* Đẩy nút copy về cuối */
+  align-items: center;
+  gap: 8px;
+}
+
+.sr-queue-copy {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.sr-queue-copy:hover {
+  background-color: #ddd;
+}
