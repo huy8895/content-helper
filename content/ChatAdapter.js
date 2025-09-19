@@ -358,74 +358,84 @@ class GrokAdapter extends BaseChatAdapter {
 }
 
 /* -----------------------------  Google AI Studio  ----------------------------- */
+/* -----------------------------  Google AI Studio (Updated with new selectors) ----------------------------- */
 class GoogleAIStudioAdapter extends BaseChatAdapter {
   static matches(host) {
-    return /aistudio\.google\.com$/i.test(host);
+    return /aistudio.google.com$/i.test(host);
   }
 
   constructor() {
     super();
-    console.log("✅ GoogleAIStudioAdapter được khởi tạo");
+    console.log("✅ GoogleAIStudioAdapter đã được khởi tạo với selector mới.");
   }
 
-  insertHelperButtons() {
-    if (document.querySelector('#chatgpt-helper-button-container')) {
-      return; // Đã chèn rồi, không làm gì cả
-    }
-    const container = document.createElement("div");
-    container.id = "chatgpt-helper-button-container";
+  /**
+   * 1. Nơi để chèn các nút.
+   *    Chúng ta sẽ chọn div cha `prompt-input-wrapper-container` vì nó chứa cả ô nhập liệu và các nút.
+   *    Các nút helper sẽ được chèn ngay sau div này.
+   */
+  getForm() {
+    // Selector này trỏ đến div bao quanh cả textarea và nút "Run"
+    return this._q('div.prompt-input-wrapper-container');
+  }
 
-    // === START: THÊM STYLE CHO CONTAINER (VỊ TRÍ DÍNH CỐ ĐỊNH) ===
-    Object.assign(container.style, {
-      position: 'fixed',
-      bottom: '20px',
-      left: '20px',
-      zIndex: '10000', // Đảm bảo nổi lên trên các phần tử khác
-      transition: 'transform 0.2s ease-in-out'
-    });
-    // === END: THÊM STYLE CHO CONTAINER ===
+  /**
+   * 2. Ô nhập liệu.
+   *    Dựa vào HTML, đó là một <textarea> có aria-label.
+   */
+  getTextarea() {
+    // Selector rất cụ thể để tránh nhầm lẫn
+    return this._q('textarea[aria-label="Start typing a prompt"]');
+  }
 
-    const config = BUTTONS.MANAGE_SCENARIO;
-    const googleAIStudioPanel = new window.GoogleAIStudioPanel(this);
-    const btn = this._createButton({
-      ...config,
-      text: "⚙️ Settings",
-      className: '', // Bỏ class cũ để style thủ công
-      onClick: () => {
-        googleAIStudioPanel.toggleClosePanel();
-      }
-    });
+  /**
+   * 3. Nút Gửi.
+   *    Là nút <button> có aria-label="Run".
+   */
+  getSendBtn() {
+    // Nút này có thể bị disabled, nhưng selector vẫn đúng
+    return this._q('button[aria-label="Run"]');
+  }
 
-    // === START: THÊM STYLE CHO BUTTON (DẠNG "BONG BÓNG") ===
-    Object.assign(btn.style, {
-      backgroundColor: '#f0f4f9',
-      color: '#041e49',
-      border: 'none',
-      borderRadius: '24px', // Bo tròn
-      padding: '12px 20px',
-      fontSize: '14px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.2)', // Đổ bóng
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      lineHeight: '1'
-    });
+  /**
+   * 4. Nút Dừng.
+   *    Google AI Studio có thể có nút "Stop" hoặc "Cancel". Bạn cần chạy một prompt dài để xem nó xuất hiện.
+   *    Selector này là dự đoán, bạn cần xác nhận lại.
+   */
+  getStopBtn() {
+    // Thử tìm nút có aria-label "Stop" hoặc "Cancel" khi đang sinh câu trả lời
+    return this._q('button[aria-label="Stop"]') || this._q('button[aria-label="Cancel"]');
+  }
 
-    // Thêm hiệu ứng khi hover
-    btn.onmouseover = () => {
-        btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
-        btn.style.transform = 'translateY(-2px)';
-    };
-    btn.onmouseout = () => {
-        btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
-        btn.style.transform = 'translateY(0px)';
-    };
-    // === END: THÊM STYLE CHO BUTTON ===
+  /**
+   * 5. Điều kiện hoàn thành.
+   *    Khi đang chạy, nút "Run" sẽ bị disabled. Khi chạy xong, nó sẽ enable trở lại (nếu có text) hoặc
+   *    vẫn disabled (nếu không có text). Một dấu hiệu tốt hơn là sự *vắng mặt* của nút Stop.
+   */
+  isDone() {
+    // Đã xong khi không còn tìm thấy nút Stop
+    return !this.getStopBtn();
+  }
 
-    container.appendChild(btn);
-    document.body.appendChild(container);
+  /**
+   * 6. Các khối nội dung trả lời.
+   *    Bạn cần inspect một câu trả lời hoàn chỉnh để tìm class CSS ổn định cho nó.
+   *    'div.gemini-response-content' hoặc tương tự là một phỏng đoán hợp lý.
+   */
+  getContentElements() {
+    // Selector này cần được kiểm tra lại trên một cuộc hội thoại thực tế
+    return Array.from(document.querySelectorAll('div.output-chunk')); // Đây là một selector có khả năng cao
+  }
+
+  /**
+   * 7. Định nghĩa các nút sẽ hiển thị.
+   *    Giữ nguyên như cũ, chỉ cần những nút cơ bản.
+   */
+  getButtonConfigs() {
+    return [
+      BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.RUN_SCENARIO,
+    ];
   }
 }
 
