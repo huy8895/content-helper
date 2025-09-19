@@ -18,16 +18,13 @@
   display: flex;
   flex-direction: column;
   height: auto;
-  max-height: 600px;
+  max-height: 100%;
   width: 520px;
   max-width: 100%;
-  min-height: 480px;
   overflow: hidden;
   gap: 5px;
 }
-#scenario-editor{
-  margin-top: auto;
-}
+
 #scenario-browser {
   display: flex;
   flex-direction: column;
@@ -736,4 +733,82 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 #sr-scenario-dropdown .scenario-dropdown-item:hover {
   background: #e0e7ff;
+}
+
+/* === Styles for Scenario Builder's new FLOATING search box === */
+
+/* 1. Container cha (#scenario-browser) phải có position: relative để làm mốc */
+#scenario-browser {
+  position: relative;
+  z-index: 10; /* Đảm bảo nó cao hơn phần editor bên dưới */
+}
+
+/* 2. Style lại ô search cho nhất quán */
+#scenario-search {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* 3. Dropdown (#scenario-dropdown) sẽ "nổi" lên trên */
+#scenario-dropdown {
+  position: absolute; /* Rất quan trọng: Tách khỏi luồng layout */
+  top: 100%; /* Nằm ngay bên dưới ô search */
+  left: 0;
+  width: 100%;
+  z-index: 20; /* Phải cao hơn ô search */
+
+  height: 220px; /* Giữ nguyên chiều cao cố định */
+  overflow-y: auto;
+
+  background: #f7f7f8; /* Nền giống panel */
+  border: 1px solid rgba(16, 23, 42, 0.08); /* Viền giống panel */
+  border-top: none;
+  border-radius: 0 0 8px 8px; /* Bo góc dưới */
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12); /* Đổ bóng để nổi bật */
+  box-sizing: border-box;
+
+  /* Bỏ flex đi vì nó không còn là một phần của flex container nữa */
+  flex: none;
+}
+
+/* 4. Style cho class ẩn/hiện (giữ nguyên, chỉ đảm bảo nó có) */
+#scenario-dropdown.hidden-dropdown {
+  height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* 5. Style cho item (giữ nguyên) */
+#scenario-dropdown .scenario-dropdown-item {
+  padding: 8px 10px; /* Đồng bộ padding */
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+#scenario-dropdown .scenario-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+#scenario-dropdown .scenario-dropdown-item:hover {
+  background: #e0e7ff;
+}
+
+/* 6. Thêm style cho Dark Mode */
+@media (prefers-color-scheme: dark) {
+  #scenario-dropdown {
+    background: #2c2c2c;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  #scenario-dropdown .scenario-dropdown-item {
+     border-bottom-color: #444;
+  }
+  #scenario-dropdown .scenario-dropdown-item:hover {
+    background: #555;
+  }
 }

@@ -221,12 +221,15 @@ window.ScenarioBuilder = class {
   });
 }
 
+// Thay thế toàn bộ hàm _loadScenarioList() trong file ScenarioBuilder.js
+
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const templates = items.scenarioTemplates || {};
       this.allScenarios = templates;
 
       const dropdown = this.el.querySelector("#scenario-dropdown");
+      const browserWrapper = this.el.querySelector("#scenario-browser"); // Thêm wrapper để xử lý click ngoài
       dropdown.innerHTML = "";
 
       Object.keys(templates).forEach((name) => {
@@ -234,40 +237,49 @@ window.ScenarioBuilder = class {
         const group = Array.isArray(raw) ? "" : (raw.group || "");
         const qs = Array.isArray(raw) ? raw : raw.questions || [];
 
-        /* hiển thị kèm group cho dễ nhìn */
         const item = document.createElement("div");
         item.textContent = group ? `[${group}] ${name}` : name;
         item.className = "scenario-dropdown-item";
         item.dataset.group = group.toLowerCase();
 
-        item.addEventListener("click", () => {
+        item.addEventListener("mousedown", (e) => { // Dùng mousedown để ổn định hơn
+          e.preventDefault();
           this.el.querySelector("#scenario-name").value = name;
           this.el.querySelector("#scenario-group").value = group;
           const container = this.el.querySelector("#questions-container");
           container.innerHTML = "";
           qs.forEach((q) => this._addQuestion(q));
-          this.el.querySelector("#scenario-dropdown").classList.add(
-              "hidden-dropdown");
-          this.el.querySelector("#scenario-editor").style.display = "block";
+
+          dropdown.classList.add("hidden-dropdown");
+          this.el.querySelector("#scenario-editor").style.display = "block"; // Đảm bảo editor hiện ra
         });
 
         dropdown.appendChild(item);
       });
 
-      /* 🔎 filter theo tên **hoặc** group */
       const searchBox = this.el.querySelector("#scenario-search");
+
+      // Lọc kết quả khi người dùng gõ
       searchBox.addEventListener("input", () => {
         const k = searchBox.value.trim().toLowerCase();
-        dropdown.querySelectorAll("div").forEach(div => {
+        dropdown.querySelectorAll(".scenario-dropdown-item").forEach(div => {
           const hit = div.textContent.toLowerCase().includes(k) ||
                       div.dataset.group.includes(k);
           div.style.display = hit ? "block" : "none";
         });
       });
 
+      // Hiện dropdown khi focus
       searchBox.addEventListener("focus", () => {
         dropdown.classList.remove("hidden-dropdown");
-        this.el.querySelector("#scenario-editor").style.display = "none";
+        // KHÔNG CÒN ẨN EDITOR NỮA
+      });
+
+      // Ẩn dropdown khi click ra ngoài
+      document.addEventListener('click', (event) => {
+        if (!browserWrapper.contains(event.target)) {
+          dropdown.classList.add('hidden-dropdown');
+        }
       });
     });
   }
