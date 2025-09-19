@@ -422,8 +422,9 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   getButtonConfigs() {
     if (this.isSpeechPage) return [];
     return [
-      BUTTONS.AI_STUDIO_SETTINGS, BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.AI_STUDIO_SETTINGS,
     ];
   }
 }
