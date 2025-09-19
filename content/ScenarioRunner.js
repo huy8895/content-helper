@@ -203,6 +203,8 @@ _setupScenarioSearch() {
   /**
    * Gắn sự kiện cho các nút Start, Pause, Resume, Add to Queue
    */
+// Thay thế hàm này trong file ScenarioRunner.js
+
   _attachControlEvents() {
     const btnStart = this.el.querySelector('#sr-start');
     const btnPause = this.el.querySelector('#sr-pause');
@@ -224,7 +226,7 @@ _setupScenarioSearch() {
       // Lấy tên kịch bản từ ô search thay vì select
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
-      
+
       if (!selectedDiv) {
         return alert("Vui lòng chọn một kịch bản hợp lệ từ danh sách!");
       }
@@ -236,9 +238,11 @@ _setupScenarioSearch() {
 
       this._refreshQueueUI();
       alert(`✅ Đã thêm bộ biến vào hàng đợi (#${this.queue.length}). Bạn có thể nhập bộ tiếp theo.`);
+
+      // === GỌI HÀM MỚI TẠI ĐÂY ===
+      this._clearVariableInputs();
     };
   }
-
   // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN ---
   // (Bao gồm: _readVariableValues, _updateQueueIndicator, _getLoopKey, _saveVariableValues,
   // _start, _resetControls, _expandScenario, _sendPrompt, _waitForResponse,
@@ -489,6 +493,19 @@ _setupScenarioSearch() {
     return text.slice(0, maxLength) + '...';
   }
 
-// ... hàm destroy() và các hàm khác ở đây
-};
+  /**
+   * Xóa nội dung của tất cả các ô nhập liệu biến trên giao diện.
+   */
+  _clearVariableInputs() {
+    this.el.querySelectorAll('#scenario-inputs [data-key]').forEach(inputEl => {
+      inputEl.value = '';
+    });
+    console.log("📝 Đã xóa trắng các ô nhập liệu biến.");
+
+    // Tùy chọn: Focus vào ô nhập liệu đầu tiên để người dùng có thể gõ ngay
+    const firstInput = this.el.querySelector('#scenario-inputs [data-key]');
+    if (firstInput) {
+      firstInput.focus();
+    }
+  }};
 // --- END OF FILE ScenarioRunner.js (UPDATED) ---
