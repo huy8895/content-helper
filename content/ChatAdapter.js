@@ -404,83 +404,118 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   // =================================================================
   // LOGIC RIÊNG CHO TRANG SPEECH (/generate-speech)
   // =================================================================
-
-  // Thay thế hàm này trong class GoogleAIStudioAdapter
-
-// Thay thế hàm này trong class GoogleAIStudioAdapter
-
   insertSpeechPageButton() {
-    // Tránh chèn lại nếu nút đã tồn lại
+    // Tránh chèn lại nếu nút đã tồn tại
     if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) return;
 
-    // 1. Tạo container
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
 
-    // 2. Tạo nút Settings
     const btn = this._createButton({
       id: 'chatgpt-helper-aistudio-speech-settings',
-      text: "⚙️ Settings", // Text ban đầu để tính toán kích thước
+      text: "⚙️ Settings",
       className: 'scenario-btn btn-tool',
-      onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
+      onClick: (e) => {
+        // Chỉ mở panel nếu không phải là hành động kéo
+        if (container.dataset.isDragging !== 'true') {
+            window.__helperInjected?._toggleAIStudioSettings();
+        }
+      },
     });
 
-    // === START: PHẦN THAY ĐỔI QUAN TRỌNG ===
-
-    // 3. Style cho container: Vị trí cố định và hiệu ứng
+    // --- Style & Animation Logic (Giữ nguyên) ---
     Object.assign(container.style, {
       position: 'fixed',
       bottom: '20px',
-      left: '20px', // Đặt ở vị trí mở rộng mặc định
+      left: '20px',
       zIndex: '2147483647',
     });
 
-    // 4. Style ban đầu cho nút, tập trung vào hiệu ứng chuyển động
     Object.assign(btn.style, {
       borderRadius: '24px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
       whiteSpace: 'nowrap',
-      overflow: 'hidden', // Quan trọng: Ẩn text khi co lại
-      transition: 'width 0.3s ease, padding 0.3s ease', // Hiệu ứng cho width và padding
+      overflow: 'hidden',
+      transition: 'width 0.3s ease, padding 0.3s ease',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      cursor: 'move', // Thay đổi con trỏ chuột thành 'move'
     });
 
     const expandedText = "⚙️ Settings";
     const collapsedText = "⚙️";
 
-    // 5. Hàm cập nhật trạng thái
     const updateButtonState = (isHovering) => {
+      // Không thu nhỏ lại nếu đang trong quá trình kéo
+      if (container.dataset.isDragging === 'true') return;
+
       if (isHovering) {
-        // Mở rộng
         btn.innerHTML = expandedText;
-        btn.style.width = '130px'; // Đặt một chiều rộng cố định khi mở rộng
+        btn.style.width = '130px';
         btn.style.padding = '12px 20px';
       } else {
-        // Thu nhỏ
         btn.innerHTML = collapsedText;
-        btn.style.width = '48px'; // Chiều rộng vừa đủ cho icon (hình tròn/vuông)
+        btn.style.width = '48px';
         btn.style.padding = '12px';
       }
     };
 
-    // 6. Gắn sự kiện hover cho CHÍNH CÁI NÚT
     btn.addEventListener('mouseenter', () => updateButtonState(true));
     btn.addEventListener('mouseleave', () => updateButtonState(false));
 
-    // === END: PHẦN THAY ĐỔI QUAN TRỌNG ===
+    // === START: PHẦN KÉO THẢ MỚI ===
 
-    // 7. Gắn nút vào container và container vào body
+    let shiftX = 0, shiftY = 0;
+
+    btn.addEventListener('mousedown', (e) => {
+        // Ngăn chặn các hành vi mặc định như chọn text
+        e.preventDefault();
+
+        // Đặt cờ isDragging để tránh xung đột với hover và click
+        container.dataset.isDragging = 'false';
+
+        const rect = container.getBoundingClientRect();
+        shiftX = e.clientX - rect.left;
+        shiftY = e.clientY - rect.top;
+
+        const onMouseMove = (moveEvent) => {
+            // Sau khi di chuyển một chút, mới coi là đang kéo
+            container.dataset.isDragging = 'true';
+
+            // Cập nhật vị trí của container
+            container.style.left = `${moveEvent.clientX - shiftX}px`;
+            container.style.top = `${moveEvent.clientY - shiftY}px`;
+            // Bỏ 'bottom' và 'right' để tránh xung đột
+            container.style.bottom = 'auto';
+            container.style.right = 'auto';
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // Reset cờ isDragging sau một khoảng trễ nhỏ để sự kiện click không bị kích hoạt
+            setTimeout(() => {
+                container.dataset.isDragging = 'false';
+                // Nếu chuột vẫn còn trên nút, kích hoạt lại hiệu ứng hover
+                if (btn.matches(':hover')) {
+                    updateButtonState(true);
+                }
+            }, 50);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    // === END: PHẦN KÉO THẢ MỚI ===
+
     container.appendChild(btn);
     document.body.appendChild(container);
 
-    // 8. Đặt trạng thái ban đầu là thu nhỏ
-    //    Dùng setTimeout để đảm bảo các style đã được áp dụng
     setTimeout(() => {
-        // Cần đặt text ban đầu để trình duyệt tính toán đúng, sau đó mới thu nhỏ
         btn.innerHTML = expandedText;
-        // Gọi hàm để thu nhỏ lại
         updateButtonState(false);
     }, 100);
   }
