@@ -45,6 +45,12 @@
       className: "scenario-btn btn-tool",
       onClick: () => window.__helperInjected?._toggleAudioDownloader(),
     },
+    AI_STUDIO_SETTINGS: {
+      id: "chatgpt-aistudio-settings-button",
+      text: "⚙️ AI Studio Settings",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
+    },
   };
 /* ---------------------------  Base (Abstract)  --------------------------- */
 class BaseChatAdapter {
@@ -357,78 +363,70 @@ class GrokAdapter extends BaseChatAdapter {
   }
 }
 
-/* -----------------------------  Google AI Studio  ----------------------------- */
+
+/* -----------------------------  Google AI Studio (Hybrid Version with Auto-Set) ----------------------------- */
 class GoogleAIStudioAdapter extends BaseChatAdapter {
   static matches(host) {
-    return /aistudio\.google\.com$/i.test(host);
+    return /aistudio.google.com$/i.test(host);
   }
 
   constructor() {
     super();
-    console.log("✅ GoogleAIStudioAdapter được khởi tạo");
+    this.isSpeechPage = window.location.pathname.includes('/generate-speech');
+    console.log(`✅ GoogleAIStudioAdapter khởi tạo. Đang ở trang Speech: ${this.isSpeechPage}`);
+
+    // === ĐIỂM THAY ĐỔI QUAN TRỌNG ===
+    // Nếu đang ở trang Speech, gọi hàm triggerAutoSet ngay lập tức
+    if (this.isSpeechPage) {
+      // Đợi một chút để đảm bảo trang đã tải xong hoàn toàn
+      setTimeout(() => {
+        window.GoogleAIStudioPanel.triggerAutoSet();
+      }, 1500); // Đợi 1.5 giây
+    }
   }
+
+  // Các hàm còn lại (insertHelperButtons, getForm, getButtonConfigs, etc.)
+  // GIỮ NGUYÊN NHƯ PHIÊN BẢN TRƯỚC.
+  // Bạn có thể copy-paste lại toàn bộ phần bên dưới từ câu trả lời trước của tôi.
+
+  // =================================================================
+  // LOGIC CHUNG CHO CẢ HAI TRANG
+  // =================================================================
 
   insertHelperButtons() {
-    if (document.querySelector('#chatgpt-helper-button-container')) {
-      return; // Đã chèn rồi, không làm gì cả
+    if (this.isSpeechPage) {
+      window.GoogleAIStudioPanel.insertSpeechPageButton();
+    } else {
+      super.insertHelperButtons();
     }
-    const container = document.createElement("div");
-    container.id = "chatgpt-helper-button-container";
+  }
 
-    // === START: THÊM STYLE CHO CONTAINER (VỊ TRÍ DÍNH CỐ ĐỊNH) ===
-    Object.assign(container.style, {
-      position: 'fixed',
-      bottom: '20px',
-      left: '20px',
-      zIndex: '10000', // Đảm bảo nổi lên trên các phần tử khác
-      transition: 'transform 0.2s ease-in-out'
-    });
-    // === END: THÊM STYLE CHO CONTAINER ===
-
-    const config = BUTTONS.MANAGE_SCENARIO;
-    const googleAIStudioPanel = new window.GoogleAIStudioPanel(this);
-    const btn = this._createButton({
-      ...config,
-      text: "⚙️ Settings",
-      className: '', // Bỏ class cũ để style thủ công
-      onClick: () => {
-        googleAIStudioPanel.toggleClosePanel();
-      }
-    });
-
-    // === START: THÊM STYLE CHO BUTTON (DẠNG "BONG BÓNG") ===
-    Object.assign(btn.style, {
-      backgroundColor: '#f0f4f9',
-      color: '#041e49',
-      border: 'none',
-      borderRadius: '24px', // Bo tròn
-      padding: '12px 20px',
-      fontSize: '14px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.2)', // Đổ bóng
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      lineHeight: '1'
-    });
-
-    // Thêm hiệu ứng khi hover
-    btn.onmouseover = () => {
-        btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
-        btn.style.transform = 'translateY(-2px)';
-    };
-    btn.onmouseout = () => {
-        btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
-        btn.style.transform = 'translateY(0px)';
-    };
-    // === END: THÊM STYLE CHO BUTTON ===
-
-    container.appendChild(btn);
-    document.body.appendChild(container);
+  getForm() {
+    return this.isSpeechPage ? null : this._q('div.prompt-input-wrapper-container');
+  }
+  getTextarea() {
+    return this.isSpeechPage ? null : this._q('textarea[aria-label="Start typing a prompt"]');
+  }
+  getSendBtn() {
+    return this.isSpeechPage ? null : this._q('button[aria-label="Run"]');
+  }
+  getStopBtn() {
+    return this.isSpeechPage ? null : (this._q('button[aria-label="Stop"]') || this._q('button[aria-label="Cancel"]'));
+  }
+  isDone() {
+    return this.isSpeechPage ? true : !this.getStopBtn();
+  }
+  getContentElements() {
+    return this.isSpeechPage ? [] : Array.from(document.querySelectorAll('div.output-chunk'));
+  }
+  getButtonConfigs() {
+    if (this.isSpeechPage) return [];
+    return [
+      BUTTONS.AI_STUDIO_SETTINGS, BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.RUN_SCENARIO,
+    ];
   }
 }
-
 // ... (code của các class adapter khác) ...
 
 /* ------------------------- YouTube Studio Adapter (Original Logic + Dynamic Config) ------------------------- */
