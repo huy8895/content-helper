@@ -2,6 +2,7 @@
 // CONSTANTS FOR HTML
 // =================================================================
 
+
 const PANEL_HTML = `
   <h3 class="ts-title">📌 Google AI Studio Settings</h3>
   
@@ -25,17 +26,17 @@ const PANEL_HTML = `
     <input id="voice2" type="text" class="form-control">
   </div>
 
-  <!-- === THÊM Ô MỚI VÀO ĐÂY === -->
+  <!-- BỐ CỤC MỚI CHO STYLE INSTRUCTIONS -->
   <div class="form-group">
     <label for="style-instructions">Style instructions:</label>
     <textarea id="style-instructions" class="form-control" rows="3" 
               placeholder="e.g., Read this in a clear, friendly voice..."></textarea>
   </div>
-  <!-- === KẾT THÚC PHẦN THÊM MỚI === -->
-
+  
+  <!-- BỐ CỤC MỚI CHO AUTO SET VALUE -->
   <div class="form-group form-check">
-    <label style="display: flex; align-items: center; cursor: pointer;">
-      <input type="checkbox" id="auto-set-value" style="margin-right: 8px;">
+    <label class="auto-set-label">
+      <input type="checkbox" id="auto-set-value">
       Auto Set Value
     </label>
   </div>

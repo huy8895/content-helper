@@ -835,3 +835,96 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 .sr-queue-copy:hover {
   background-color: #ddd;
 }
+
+/* === Styles for Google AI Studio Settings Panel (Improved Layout) === */
+
+/* 1. Định hình và kích thước cho panel */
+#google-ai-studio-panel {
+  width: 320px; /* Đặt chiều rộng cố định */
+  box-sizing: border-box;
+}
+
+/* 2. Căn lề chung cho các nhóm input */
+#google-ai-studio-panel .form-group {
+  margin-bottom: 6px;
+}
+
+/* 3. Style cho các label */
+#google-ai-studio-panel .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+  font-size: 13px; /* Giảm kích thước chữ một chút */
+}
+
+/* 4. Style cho các ô input và textarea */
+#google-ai-studio-panel .form-control {
+  width: 100%;
+  padding: 8px 12px; /* Tăng padding ngang một chút */
+  border-radius: 8px; /* Bo tròn nhiều hơn */
+  border: 1px solid #dcdcdc;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#google-ai-studio-panel .form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); /* Hiệu ứng focus nhẹ nhàng hơn */
+}
+
+/* 5. Căn chỉnh cho nhóm checkbox "Auto Set Value" */
+#google-ai-studio-panel .form-group.form-check {
+  margin-top: 10px;
+}
+
+#google-ai-studio-panel .auto-set-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 14px; /* Kích thước chữ cho label checkbox */
+}
+
+#google-ai-studio-panel .auto-set-label input[type="checkbox"] {
+  margin: 0 8px 0 0;
+  width: 16px;
+  height: 16px;
+  accent-color: #007bff; /* Thay đổi màu tick của checkbox */
+}
+
+/* 6. Style cho nút Lưu */
+#google-ai-studio-panel #save-settings-btn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #dcdcdc;
+  font-weight: 500;
+}
+#google-ai-studio-panel #save-settings-btn:hover {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+
+/* 7. Style cho Dark Mode */
+@media (prefers-color-scheme: dark) {
+  #google-ai-studio-panel .form-group label {
+    color: #bbb;
+  }
+  #google-ai-studio-panel .form-control {
+    background-color: #3a3a3a;
+    border-color: #555;
+    color: #f0f0f0;
+  }
+  #google-ai-studio-panel #save-settings-btn {
+    background: #444;
+    color: #f0f0f0;
+    border-color: #666;
+  }
+  #google-ai-studio-panel #save-settings-btn:hover {
+    background: #555;
+  }
+}
