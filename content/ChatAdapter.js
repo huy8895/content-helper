@@ -365,7 +365,6 @@ class GrokAdapter extends BaseChatAdapter {
 
 
 /* -----------------------------  Google AI Studio (Hybrid Version with Auto-Set) ----------------------------- */
-// Thay thế toàn bộ class này trong file ChatAdapter.js
 
 class GoogleAIStudioAdapter extends BaseChatAdapter {
   static matches(host) {
@@ -374,10 +373,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   constructor() {
     super();
-    // Logic nhận diện trang speech và trang chat mới
     this.isSpeechPage = window.location.pathname.includes('/generate-speech');
-    this.isNewChatPage = window.location.pathname.includes('/new_chat');
-
     console.log(`✅ GoogleAIStudioAdapter khởi tạo. Trang Speech: ${this.isSpeechPage}, Trang Chat: ${!this.isSpeechPage}`);
 
     if (this.isSpeechPage) {
@@ -391,23 +387,17 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     if (this.isSpeechPage) {
       window.GoogleAIStudioPanel.insertSpeechPageButton();
     } else {
-      // Chỉ chèn nút chat nếu không phải trang speech
       super.insertHelperButtons();
     }
   }
 
   getForm() {
     if (this.isSpeechPage) return null;
-    // Selector này vẫn đúng cho cả hai trạng thái chat
     return this._q('div.prompt-input-wrapper-container');
   }
 
   getTextarea() {
     if (this.isSpeechPage) return null;
-
-    // === ĐÂY LÀ THAY ĐỔI QUAN TRỌNG NHẤT ===
-    // Sử dụng selector CSS mạnh hơn: thử tìm một trong hai aria-label
-    // Dấu phẩy (,) trong selector có nghĩa là "HOẶC"
     return this._q(
         'textarea[aria-label="Start typing a prompt"], textarea[aria-label="Type something or tab to choose an example prompt"]'
     );
@@ -415,39 +405,36 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   getSendBtn() {
     if (this.isSpeechPage) return null;
-    return this._q('button[aria-label="Run"]');
+    // Nút gửi là nút Run nhưng *không* có class stoppable
+    return this._q('ms-run-button button:not(.stoppable)');
   }
 
   getStopBtn() {
     if (this.isSpeechPage) return null;
-    return this._q('button[aria-label="Stop"]') || this._q('button[aria-label="Cancel"]');
+    // === ĐÂY LÀ THAY ĐỔI QUAN TRỌNG ===
+    // Nút Stop là nút Run *có* class 'stoppable'.
+    return this._q('ms-run-button button.stoppable');
   }
 
   isDone() {
-    // Luôn trả về true trên trang speech
-    // Trên trang chat, xong khi không còn nút Stop
     return this.isSpeechPage ? true : !this.getStopBtn();
   }
 
   getContentElements() {
     if (this.isSpeechPage) return [];
-    // Selector này có vẻ ổn định
     return Array.from(document.querySelectorAll('div.output-chunk'));
   }
 
   getButtonConfigs() {
     if (this.isSpeechPage) return [];
-    // Trả về danh sách nút cho trang chat
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
-      BUTTONS.AI_STUDIO_SETTINGS, // Giữ lại nút này nếu bạn muốn truy cập panel từ trang chat
+      BUTTONS.AI_STUDIO_SETTINGS,
     ];
   }
-}// ... (code của các class adapter khác) ...
-
-/* ------------------------- YouTube Studio Adapter (Original Logic + Dynamic Config) ------------------------- */
-/* ------------------------- YouTube Studio Adapter (Final, Safe Integration) ------------------------- */
+}
+/* ------------------------- YouTube Studio Adapter ------------------------- */
 class YoutubeStudioAdapter extends BaseChatAdapter {
   static matches(host) {
     return /studio\.youtube\.com$/i.test(host);
