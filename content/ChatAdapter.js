@@ -365,6 +365,8 @@ class GrokAdapter extends BaseChatAdapter {
 
 
 /* -----------------------------  Google AI Studio (Hybrid Version with Auto-Set) ----------------------------- */
+// Thay thế toàn bộ class này trong file ChatAdapter.js
+
 class GoogleAIStudioAdapter extends BaseChatAdapter {
   static matches(host) {
     return /aistudio.google.com$/i.test(host);
@@ -372,63 +374,77 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   constructor() {
     super();
+    // Logic nhận diện trang speech và trang chat mới
     this.isSpeechPage = window.location.pathname.includes('/generate-speech');
-    console.log(`✅ GoogleAIStudioAdapter khởi tạo. Đang ở trang Speech: ${this.isSpeechPage}`);
+    this.isNewChatPage = window.location.pathname.includes('/new_chat');
 
-    // === ĐIỂM THAY ĐỔI QUAN TRỌNG ===
-    // Nếu đang ở trang Speech, gọi hàm triggerAutoSet ngay lập tức
+    console.log(`✅ GoogleAIStudioAdapter khởi tạo. Trang Speech: ${this.isSpeechPage}, Trang Chat: ${!this.isSpeechPage}`);
+
     if (this.isSpeechPage) {
-      // Đợi một chút để đảm bảo trang đã tải xong hoàn toàn
       setTimeout(() => {
         window.GoogleAIStudioPanel.triggerAutoSet();
-      }, 1500); // Đợi 1.5 giây
+      }, 1500);
     }
   }
-
-  // Các hàm còn lại (insertHelperButtons, getForm, getButtonConfigs, etc.)
-  // GIỮ NGUYÊN NHƯ PHIÊN BẢN TRƯỚC.
-  // Bạn có thể copy-paste lại toàn bộ phần bên dưới từ câu trả lời trước của tôi.
-
-  // =================================================================
-  // LOGIC CHUNG CHO CẢ HAI TRANG
-  // =================================================================
 
   insertHelperButtons() {
     if (this.isSpeechPage) {
       window.GoogleAIStudioPanel.insertSpeechPageButton();
     } else {
+      // Chỉ chèn nút chat nếu không phải trang speech
       super.insertHelperButtons();
     }
   }
 
   getForm() {
-    return this.isSpeechPage ? null : this._q('div.prompt-input-wrapper-container');
+    if (this.isSpeechPage) return null;
+    // Selector này vẫn đúng cho cả hai trạng thái chat
+    return this._q('div.prompt-input-wrapper-container');
   }
+
   getTextarea() {
-    return this.isSpeechPage ? null : this._q('textarea[aria-label="Start typing a prompt"]');
+    if (this.isSpeechPage) return null;
+
+    // === ĐÂY LÀ THAY ĐỔI QUAN TRỌNG NHẤT ===
+    // Sử dụng selector CSS mạnh hơn: thử tìm một trong hai aria-label
+    // Dấu phẩy (,) trong selector có nghĩa là "HOẶC"
+    return this._q(
+        'textarea[aria-label="Start typing a prompt"], textarea[aria-label="Type something or tab to choose an example prompt"]'
+    );
   }
+
   getSendBtn() {
-    return this.isSpeechPage ? null : this._q('button[aria-label="Run"]');
+    if (this.isSpeechPage) return null;
+    return this._q('button[aria-label="Run"]');
   }
+
   getStopBtn() {
-    return this.isSpeechPage ? null : (this._q('button[aria-label="Stop"]') || this._q('button[aria-label="Cancel"]'));
+    if (this.isSpeechPage) return null;
+    return this._q('button[aria-label="Stop"]') || this._q('button[aria-label="Cancel"]');
   }
+
   isDone() {
+    // Luôn trả về true trên trang speech
+    // Trên trang chat, xong khi không còn nút Stop
     return this.isSpeechPage ? true : !this.getStopBtn();
   }
+
   getContentElements() {
-    return this.isSpeechPage ? [] : Array.from(document.querySelectorAll('div.output-chunk'));
+    if (this.isSpeechPage) return [];
+    // Selector này có vẻ ổn định
+    return Array.from(document.querySelectorAll('div.output-chunk'));
   }
+
   getButtonConfigs() {
     if (this.isSpeechPage) return [];
+    // Trả về danh sách nút cho trang chat
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
-      BUTTONS.AI_STUDIO_SETTINGS,
+      BUTTONS.AI_STUDIO_SETTINGS, // Giữ lại nút này nếu bạn muốn truy cập panel từ trang chat
     ];
   }
-}
-// ... (code của các class adapter khác) ...
+}// ... (code của các class adapter khác) ...
 
 /* ------------------------- YouTube Studio Adapter (Original Logic + Dynamic Config) ------------------------- */
 /* ------------------------- YouTube Studio Adapter (Final, Safe Integration) ------------------------- */
