@@ -85,15 +85,38 @@ window.GoogleAIStudioPanel = class {
 
   // Tải tất cả profile từ storage
   loadProfiles() {
-    chrome.storage.local.get([this.storageKey], (result) => {
-      const data = result[this.storageKey] || {};
-      this.profiles = data.profiles || { 'default': {} };
-      this.activeProfileName = data.activeProfileName || 'default';
+    chrome.storage.local.get([this.storageKey, "google_user_email"], async (items) => {
+      const userId = items.google_user_email;
+      let localData = items[this.storageKey] || {};
+
+      // Nếu người dùng đã đăng nhập, thử tải từ Firestore
+      if (userId) {
+        console.log("☁️ Attempting to load profiles from Firestore...");
+        const helper = new FirestoreHelper(firebaseConfig);
+        helper.collection = 'speech_profiles';
+        try {
+          const firestoreData = await helper.loadUserConfig(userId);
+          // Nếu có dữ liệu trên Firestore, nó sẽ được ưu tiên
+          if (firestoreData && firestoreData.profiles) {
+            console.log("☁️ Loaded profiles from Firestore.");
+            localData = firestoreData;
+            // Cập nhật lại local storage với dữ liệu từ Firestore
+            chrome.storage.local.set({ [this.storageKey]: firestoreData });
+          } else {
+             console.log("☁️ No profiles found on Firestore for this user.");
+          }
+        } catch (err) {
+          console.error("❌ Error loading profiles from Firestore:", err);
+        }
+      }
+
+      // Tiếp tục xử lý với dữ liệu đã có (từ Firestore hoặc local)
+      this.profiles = localData.profiles || { 'default': {} };
+      this.activeProfileName = localData.activeProfileName || 'default';
       this.updateProfileDropdown();
       this.fillFormWithProfile(this.activeProfileName);
     });
   }
-
   // Cập nhật dropdown chọn profile
   updateProfileDropdown() {
     const select = this.el.querySelector('#profile-select');
@@ -147,24 +170,26 @@ window.GoogleAIStudioPanel = class {
   }
 
   // Cập nhật profile hiện tại
+// Thay thế hàm saveCurrentProfile()
   saveCurrentProfile() {
     const currentData = this.collectDataFromForm();
     this.profiles[this.activeProfileName] = currentData;
     this.saveAllDataToStorage(() => {
       alert(`Profile "${this.activeProfileName}" đã được cập nhật!`);
+      this._syncToFirestore(); // <-- GỌI HÀM SYNC Ở ĐÂY
     });
   }
 
   // Lưu thành một profile mới
+// Thay thế hàm saveAsNewProfile()
+
   saveAsNewProfile() {
     const newName = this.el.querySelector('#new-profile-name').value.trim();
     if (!newName) {
-      alert("Vui lòng nhập tên cho profile mới.");
-      return;
+      return alert("Vui lòng nhập tên cho profile mới.");
     }
     if (this.profiles[newName]) {
-      alert("Tên profile này đã tồn tại.");
-      return;
+      return alert("Tên profile này đã tồn tại.");
     }
     const currentData = this.collectDataFromForm();
     this.profiles[newName] = currentData;
@@ -173,27 +198,28 @@ window.GoogleAIStudioPanel = class {
       alert(`Đã lưu profile mới: "${newName}"`);
       this.el.querySelector('#new-profile-name').value = '';
       this.updateProfileDropdown();
+      this._syncToFirestore(); // <-- GỌI HÀM SYNC Ở ĐÂY
     });
   }
-
   // Xóa profile đang được chọn
+// Thay thế hàm deleteSelectedProfile()
+
   deleteSelectedProfile() {
     const profileToDelete = this.el.querySelector('#profile-select').value;
     if (Object.keys(this.profiles).length <= 1) {
-      alert("Không thể xóa profile cuối cùng.");
-      return;
+      return alert("Không thể xóa profile cuối cùng.");
     }
     if (confirm(`Bạn có chắc muốn xóa profile "${profileToDelete}"?`)) {
       delete this.profiles[profileToDelete];
-      this.activeProfileName = Object.keys(this.profiles)[0]; // Chuyển về profile đầu tiên
+      this.activeProfileName = Object.keys(this.profiles)[0];
       this.saveAllDataToStorage(() => {
         alert(`Đã xóa profile: "${profileToDelete}"`);
         this.updateProfileDropdown();
         this.fillFormWithProfile(this.activeProfileName);
+        this._syncToFirestore(); // <-- GỌI HÀM SYNC Ở ĐÂY
       });
     }
   }
-
   destroy() {
     this.el?.remove();
     this.onClose?.();
@@ -326,4 +352,38 @@ window.GoogleAIStudioPanel = class {
      document.body.appendChild(container);
      setTimeout(() => { btn.innerHTML = expandedText; updateButtonState(false); }, 100);
    }
+
+   // Thêm hàm mới này vào class GoogleAIStudioPanel
+
+  _syncToFirestore() {
+    console.log("☁️ [GoogleAIStudioPanel] Syncing profiles to Firestore...");
+    chrome.storage.local.get(["google_user_email"], async (items) => {
+      const userId = items.google_user_email;
+
+      if (!userId) {
+        // Không hiện alert để tránh làm phiền, chỉ log ra console
+        console.warn("⚠️ User not logged in with Google, cannot sync to Firestore.");
+        return;
+      }
+
+      // Tạo một helper mới dành riêng cho việc lưu profile
+      const helper = new FirestoreHelper(firebaseConfig);
+      // Sử dụng một collection mới để tránh ghi đè dữ liệu kịch bản
+      helper.collection = 'speech_profiles';
+
+      try {
+        // Lấy toàn bộ cấu trúc profile hiện tại để lưu
+        const dataToSync = {
+          profiles: this.profiles,
+          activeProfileName: this.activeProfileName,
+        };
+        await helper.saveUserConfig(userId, dataToSync);
+        console.log("☁️ Profiles synced to Firestore successfully.");
+      } catch (err) {
+        console.error("❌ Error syncing profiles to Firestore:", err);
+        alert("Lỗi khi đồng bộ profile lên Firestore.");
+      }
+    });
+  }
 }
+
