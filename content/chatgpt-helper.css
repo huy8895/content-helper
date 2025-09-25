@@ -835,34 +835,87 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 .sr-queue-copy:hover {
   background-color: #ddd;
 }
+/* === Styles for Google AI Studio Settings Panel (Height Limit & Scroll) === */
 
-/* === Styles for Google AI Studio Settings Panel (Improved Layout) === */
-
-/* 1. Định hình và kích thước cho panel */
+/* 1. Kích thước và layout tổng thể của panel */
 #google-ai-studio-panel {
-  width: 320px; /* Đặt chiều rộng cố định */
+  width: 320px;
+  max-height: 85vh; /* Giới hạn chiều cao tối đa là 85% chiều cao màn hình */
   box-sizing: border-box;
+  display: flex; /* Sử dụng flexbox để quản lý layout bên trong */
+  flex-direction: column; /* Sắp xếp các mục theo chiều dọc */
 }
 
-/* 2. Căn lề chung cho các nhóm input */
+/* 2. Phần nội dung chính (form) sẽ có thể cuộn */
+#google-ai-studio-panel #profile-settings-form {
+  flex-grow: 1; /* Cho phép phần này giãn ra để lấp đầy không gian */
+  overflow-y: auto; /* Thêm thanh cuộn dọc KHI CẦN THIẾT */
+
+  /* Thêm một chút padding để thanh cuộn không dính sát vào nội dung */
+  padding-right: 10px;
+  margin-right: -10px; /* Bù lại padding để giữ nguyên căn lề */
+}
+
+
+/* --- CÁC STYLE CŨ GIỮ NGUYÊN BÊN DƯỚI --- */
+
+/* 3. Style cho phần quản lý Profile (không đổi) */
+#google-ai-studio-panel .profile-manager {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-shrink: 0; /* Không cho co lại */
+}
+#google-ai-studio-panel .profile-manager #profile-select {
+  flex-grow: 1;
+}
+#google-ai-studio-panel .profile-manager #delete-profile-btn {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#google-ai-studio-panel .profile-manager #delete-profile-btn:hover {
+  background-color: #fecaca;
+}
+#google-ai-studio-panel .profile-new {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0; /* Không cho co lại */
+}
+#google-ai-studio-panel .profile-new #new-profile-name {
+  flex-grow: 1;
+}
+#google-ai-studio-panel .profile-new #save-as-new-btn {
+  flex-shrink: 0;
+}
+#google-ai-studio-panel .divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 16px 0;
+  flex-shrink: 0; /* Không cho co lại */
+}
+
+/* 4. Style cho các nhóm input (không đổi) */
 #google-ai-studio-panel .form-group {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
-
-/* 3. Style cho các label */
 #google-ai-studio-panel .form-group label {
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
   color: #555;
-  font-size: 13px; /* Giảm kích thước chữ một chút */
+  font-size: 13px;
 }
-
-/* 4. Style cho các ô input và textarea */
 #google-ai-studio-panel .form-control {
   width: 100%;
-  padding: 8px 12px; /* Tăng padding ngang một chút */
-  border-radius: 8px; /* Bo tròn nhiều hơn */
+  padding: 8px 12px;
+  border-radius: 8px;
   border: 1px solid #dcdcdc;
   background-color: #ffffff;
   box-sizing: border-box;
@@ -873,44 +926,51 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #google-ai-studio-panel .form-control:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); /* Hiệu ứng focus nhẹ nhàng hơn */
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
-
-/* 5. Căn chỉnh cho nhóm checkbox "Auto Set Value" */
 #google-ai-studio-panel .form-group.form-check {
-  margin-top: 10px;
+  margin-top: 15px;
 }
-
 #google-ai-studio-panel .auto-set-label {
   display: flex;
   align-items: center;
   cursor: pointer;
   font-weight: normal;
-  font-size: 14px; /* Kích thước chữ cho label checkbox */
+  font-size: 14px;
 }
-
 #google-ai-studio-panel .auto-set-label input[type="checkbox"] {
   margin: 0 8px 0 0;
   width: 16px;
   height: 16px;
-  accent-color: #007bff; /* Thay đổi màu tick của checkbox */
+  accent-color: #007bff;
 }
 
-/* 6. Style cho nút Lưu */
+/* 5. Style cho nút Lưu (không đổi) */
 #google-ai-studio-panel #save-settings-btn {
-  background-color: #f0f0f0;
-  color: #333;
-  border: 1px solid #dcdcdc;
-  font-weight: 500;
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #dcdcdc;
+    font-weight: 500;
+    flex-shrink: 0; /* Không cho co lại */
 }
 #google-ai-studio-panel #save-settings-btn:hover {
-  background-color: #e0e0e0;
-  border-color: #ccc;
+    background-color: #e0e0e0;
+    border-color: #ccc;
 }
 
-
-/* 7. Style cho Dark Mode */
+/* 6. Dark Mode (cập nhật) */
 @media (prefers-color-scheme: dark) {
+  #google-ai-studio-panel .profile-manager #delete-profile-btn {
+    background-color: #581c1c;
+    color: #fecaca;
+    border-color: #991b1b;
+  }
+  #google-ai-studio-panel .profile-manager #delete-profile-btn:hover {
+    background-color: #991b1b;
+  }
+  #google-ai-studio-panel .divider {
+    border-top-color: #444;
+  }
   #google-ai-studio-panel .form-group label {
     color: #bbb;
   }
