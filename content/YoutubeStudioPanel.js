@@ -1,4 +1,4 @@
-// content/YoutubeStudioPanel.js (Profile Version)
+// content/YoutubeStudioPanel.js (Refactored to use ChatGPTHelper system)
 
 const AVAILABLE_LANGUAGES = [
   'Abkhazian', 'Afar', 'Afrikaans', 'Akan', 'Akkadian', 'Albanian',
@@ -51,133 +51,89 @@ const AVAILABLE_LANGUAGES = [
 // UPDATED HTML
 // =================================================================
 const YTB_PANEL_HTML = `
-  <div class="panel-header">
-    <h4>⚙️ Configure Languages</h4>
-    <button id="yt-close-panel-btn" class="btn-close" title="Close">×</button>
-  </div>
+  <h3 class="ts-title">⚙️ Configure Languages</h3>
   
   <!-- PROFILE MANAGEMENT UI -->
-  <div class="yt-profile-manager">
-    <select id="yt-profile-select" class="yt-form-control"></select>
-    <button id="yt-delete-profile-btn" title="Delete selected profile">🗑️</button>
+  <div class="profile-manager">
+    <select id="yt-profile-select" class="form-control"></select>
+    <button id="yt-delete-profile-btn" class="ts-btn ts-btn-danger" title="Delete selected profile">🗑️</button>
   </div>
-  <div class="yt-profile-new">
-    <input type="text" id="yt-new-profile-name" class="yt-form-control" placeholder="Tên profile mới...">
-    <button id="yt-save-as-new-btn" class="yt-btn-secondary">➕ Lưu mới</button>
+  <div class="profile-new">
+    <input type="text" id="yt-new-profile-name" class="form-control" placeholder="Tên profile mới...">
+    <button id="yt-save-as-new-btn" class="ts-btn">➕ Lưu mới</button>
   </div>
-  <hr class="yt-divider">
+  <hr class="divider">
   <!-- END PROFILE UI -->
 
-  <p>Select languages for the current profile.</p>
-  <input type="text" id="yt-language-search" class="yt-form-control" placeholder="🔍 Tìm ngôn ngữ...">
+  <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
+  <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
   
   <div id="yt-language-checkbox-container"></div>
-  <button id="yt-save-languages-btn" class="btn-save">💾 Cập nhật Profile</button>
+  <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
 `;
-
-// =================================================================
-// UPDATED CSS
-// =================================================================
-const YTB_PANEL_CSS = `
-  #youtube-studio-helper-panel {
-    position: fixed; top: 70px; right: 20px; width: 320px;
-    max-height: calc(100vh - 90px); background: #282828; border: 1px solid #3f3f3f;
-    border-radius: 12px; padding: 20px; z-index: 10001; box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-    font-family: 'Roboto', Arial, sans-serif; color: #fff; font-size: 14px;
-    display: flex; flex-direction: column;
-  }
-  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-  h4 { margin: 0; font-size: 16px; font-weight: 500; color: #f1f1f1; }
-  .btn-close { background: none; border: none; color: #aaa; font-size: 24px; cursor: pointer; }
-  .btn-close:hover { color: #fff; }
-  p { font-size: 13px; color: #aaa; margin: 0 0 10px; }
-
-  /* Profile & Search Styles */
-  .yt-form-control { width: 100%; padding: 8px 12px; background: #3f3f3f; border: 1px solid #555; border-radius: 6px; color: #fff; box-sizing: border-box; margin-bottom: 10px; }
-  .yt-profile-manager, .yt-profile-new { display: flex; gap: 8px; align-items: center; }
-  #yt-profile-select { flex-grow: 1; }
-  .yt-btn-secondary, #yt-delete-profile-btn { padding: 8px; background: #555; border: 1px solid #666; color: #fff; border-radius: 6px; cursor: pointer; }
-  #yt-delete-profile-btn { background-color: #581c1c; border-color: #991b1b; }
-  .yt-divider { border: none; border-top: 1px solid #3f3f3f; margin: 15px 0; }
-
-  #yt-language-checkbox-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; overflow-y: auto; flex-grow: 1; }
-  .yt-language-label { display: flex; align-items: center; cursor: pointer; padding: 5px; border-radius: 4px; transition: background-color 0.2s; }
-  .yt-language-label:hover { background-color: #3f3f3f; }
-  .yt-language-label input[type="checkbox"] { margin-right: 12px; width: 16px; height: 16px; }
-  
-  .btn-save { width: 100%; padding: 10px; background: #3ea6ff; color: #0d0d0d; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 500; margin-top: auto; }
-  .btn-save:hover { background: #65baff; }
-`;
-
 
 // =================================================================
 // REWRITTEN PANEL CLASS
 // =================================================================
 
 window.YoutubeStudioPanel = class {
-  constructor() {
-    this.panelId = 'youtube-studio-helper-panel';
-    this.styleId = `${this.panelId}-styles`;
-    this.storageKey = 'youtube_language_profiles'; // New storage key for profiles
+  constructor(onClose) { // Nhận onClose từ ChatGPTHelper
+    this.onClose = onClose;
+    this.storageKey = 'youtube_language_profiles';
     this.profiles = {};
     this.activeProfileName = 'default';
+
+    this._render();
+    this.loadProfiles();
   }
 
-  init() {
-    if (document.getElementById(this.panelId)) return;
-    this.injectStyles();
-    this.createPanel();
-    this.attachEvents();
-    this.loadProfiles(); // Load profiles instead of single setting
-  }
+  _render() {
+    this.el = document.createElement('div');
+    this.el.id = 'youtube-studio-helper-panel';
+    // SỬ DỤNG CLASS CHUNG
+    this.el.className = 'panel-box ts-panel';
+    this.el.innerHTML = YTB_PANEL_HTML;
 
-  togglePanel() {
-    const panel = document.getElementById(this.panelId);
-    if (panel) panel.remove();
-    else this.init();
-  }
+    // TÍCH HỢP VÀO HỆ THỐNG PANEL CHUNG
+    ChatGPTHelper.mountPanel(this.el);
+    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
+    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
-  injectStyles() {
-    if (document.getElementById(this.styleId)) return;
-    const styleElement = document.createElement('style');
-    styleElement.id = this.styleId;
-    styleElement.textContent = YTB_PANEL_CSS;
-    document.head.appendChild(styleElement);
-  }
-
-  createPanel() {
-    const panel = document.createElement('div');
-    panel.id = this.panelId;
-    panel.innerHTML = YTB_PANEL_HTML;
-    document.body.appendChild(panel);
-
-    const container = panel.querySelector('#yt-language-checkbox-container');
+    // Tạo danh sách ngôn ngữ một lần
+    const container = this.el.querySelector('#yt-language-checkbox-container');
     AVAILABLE_LANGUAGES.forEach(lang => {
       const label = document.createElement('label');
-      label.className = 'yt-language-label';
+      label.className = 'yt-language-label'; // Giữ lại class này để style checkbox
       label.innerHTML = `<input type="checkbox" value="${lang}"> ${lang}`;
       container.appendChild(label);
     });
+
+    this.attachEvents();
+  }
+
+  // Hàm destroy để dọn dẹp
+  destroy() {
+    this.el?.remove();
+    this.onClose?.(); // Báo cho helper biết là đã đóng
   }
 
   attachEvents() {
-    document.getElementById('yt-close-panel-btn').addEventListener('click', () => this.togglePanel());
-    document.getElementById('yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
-    document.getElementById('yt-save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
-    document.getElementById('yt-delete-profile-btn').addEventListener('click', () => this.deleteSelectedProfile());
-    document.getElementById('yt-profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
+    this.el.querySelector('#yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
+    this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
+    this.el.querySelector('#yt-delete-profile-btn').addEventListener('click', () => this.deleteSelectedProfile());
+    this.el.querySelector('#yt-profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
 
     // Search event
-    document.getElementById('yt-language-search').addEventListener('input', (e) => {
+    this.el.querySelector('#yt-language-search').addEventListener('input', (e) => {
         const keyword = e.target.value.trim().toLowerCase();
-        document.querySelectorAll('.yt-language-label').forEach(label => {
+        this.el.querySelectorAll('.yt-language-label').forEach(label => {
             const langName = label.textContent.trim().toLowerCase();
             label.style.display = langName.includes(keyword) ? 'flex' : 'none';
         });
     });
   }
 
-  // --- PROFILE MANAGEMENT LOGIC ---
+  // --- PROFILE MANAGEMENT LOGIC (Tái sử dụng từ GoogleAIStudioPanel) ---
 
   async loadProfiles() {
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
@@ -197,14 +153,14 @@ window.YoutubeStudioPanel = class {
       } catch (err) { console.error("❌ YT Panel: Error loading from Firestore:", err); }
     }
 
-    this.profiles = localData.profiles || { 'default': [] }; // Default profile is an empty array
+    this.profiles = localData.profiles || { 'default': [] };
     this.activeProfileName = localData.activeProfileName || 'default';
     this.updateProfileDropdown();
     this.fillFormWithProfile(this.activeProfileName);
   }
 
   updateProfileDropdown() {
-    const select = document.getElementById('yt-profile-select');
+    const select = this.el.querySelector('#yt-profile-select');
     if (!select) return;
     select.innerHTML = '';
     Object.keys(this.profiles).forEach(name => {
@@ -217,7 +173,7 @@ window.YoutubeStudioPanel = class {
 
   fillFormWithProfile(profileName) {
     const savedLangs = this.profiles[profileName] || [];
-    document.querySelectorAll('.yt-language-label input[type="checkbox"]').forEach(cb => {
+    this.el.querySelectorAll('.yt-language-label input[type="checkbox"]').forEach(cb => {
       cb.checked = savedLangs.includes(cb.value);
     });
   }
@@ -229,7 +185,7 @@ window.YoutubeStudioPanel = class {
   }
 
   collectDataFromForm() {
-    return Array.from(document.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value);
+    return Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value);
   }
 
   saveAllDataToStorage(callback) {
@@ -238,7 +194,7 @@ window.YoutubeStudioPanel = class {
       activeProfileName: this.activeProfileName,
     };
     chrome.storage.local.set({ [this.storageKey]: dataToSave }, callback);
-    this._syncToFirestore(); // Sync on every change
+    this._syncToFirestore();
   }
 
   saveCurrentProfile() {
@@ -247,7 +203,7 @@ window.YoutubeStudioPanel = class {
   }
 
   saveAsNewProfile() {
-    const newName = document.getElementById('yt-new-profile-name').value.trim();
+    const newName = this.el.querySelector('#yt-new-profile-name').value.trim();
     if (!newName || this.profiles[newName]) {
       return alert(newName ? "Profile name already exists." : "Please enter a new profile name.");
     }
@@ -255,13 +211,13 @@ window.YoutubeStudioPanel = class {
     this.activeProfileName = newName;
     this.saveAllDataToStorage(() => {
       alert(`Saved new profile: "${newName}"`);
-      document.getElementById('yt-new-profile-name').value = '';
+      this.el.querySelector('#yt-new-profile-name').value = '';
       this.updateProfileDropdown();
     });
   }
 
   deleteSelectedProfile() {
-    const profileToDelete = document.getElementById('yt-profile-select').value;
+    const profileToDelete = this.el.querySelector('#yt-profile-select').value;
     if (Object.keys(this.profiles).length <= 1) {
       return alert("Cannot delete the last profile.");
     }
@@ -277,7 +233,6 @@ window.YoutubeStudioPanel = class {
   }
 
   async _syncToFirestore() {
-    console.log("☁️ YT Panel: Syncing profiles to Firestore...");
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
     if (!userId) return;
 
@@ -289,7 +244,6 @@ window.YoutubeStudioPanel = class {
         activeProfileName: this.activeProfileName,
       };
       await helper.saveUserConfig(userId, dataToSync);
-      console.log("☁️ YT Panel: Profiles synced successfully.");
     } catch (err) {
       console.error("❌ YT Panel: Error syncing to Firestore:", err);
     }

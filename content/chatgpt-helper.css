@@ -988,3 +988,71 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     background: #555;
   }
 }
+
+/* === Styles for YouTube Studio Panel === */
+
+#youtube-studio-helper-panel {
+  width: 420px; /* Rộng hơn một chút để chứa tên ngôn ngữ */
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#youtube-studio-helper-panel .form-control {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+#youtube-studio-helper-panel #yt-language-checkbox-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+#youtube-studio-helper-panel .yt-language-label {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+#youtube-studio-helper-panel .yt-language-label input {
+  margin-right: 8px;
+}
+
+/* Các style chung cho profile manager (tái sử dụng) */
+#youtube-studio-helper-panel .profile-manager,
+#youtube-studio-helper-panel .profile-new {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#youtube-studio-helper-panel .profile-manager select {
+  flex-grow: 1;
+}
+#youtube-studio-helper-panel .profile-new input {
+  flex-grow: 1;
+}
+#youtube-studio-helper-panel .divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 16px 0;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  #youtube-studio-helper-panel #yt-language-checkbox-container {
+    border-color: #555;
+  }
+   #youtube-studio-helper-panel .divider {
+    border-top-color: #444;
+  }
+}
