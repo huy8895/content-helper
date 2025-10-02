@@ -507,28 +507,30 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   /**
    * Logic chính để tự động thêm các ngôn ngữ.
    */
+// Thay thế hàm này trong class YoutubeStudioAdapter
+
   async addMyLanguages() {
     const addLanguageBtn = this._q('#add-translations-button');
     if (!addLanguageBtn) {
-      alert("Không thể tìm thấy nút 'Add language'!");
-      return;
+      return alert("Cannot find the 'Add language' button!");
     }
 
-    // Key để đọc từ storage
-    const storageKey = 'youtube_subtitle_languages';
+    // Key để đọc toàn bộ cấu trúc profile
+    const storageKey = 'youtube_language_profiles';
 
     chrome.storage.local.get([storageKey], async (result) => {
-        const LANGUAGES_TO_ADD = result[storageKey] || [];
+        const data = result[storageKey] || {};
+        const activeProfileName = data.activeProfileName || 'default';
+        const LANGUAGES_TO_ADD = (data.profiles || {})[activeProfileName] || [];
 
         if (LANGUAGES_TO_ADD.length === 0) {
-            alert('No languages configured. Click "⚙️ Configure" to select languages.');
-            return;
+            return alert(`No languages configured for the active profile "${activeProfileName}".\nClick "⚙️ Configure" to select languages.`);
         }
 
-        console.log(`Bắt đầu thêm ${LANGUAGES_TO_ADD.length} ngôn ngữ...`);
+        console.log(`Starting to add ${LANGUAGES_TO_ADD.length} languages for profile "${activeProfileName}"...`);
 
-      const AWAIT_MS = 100;
-      for (const langName of LANGUAGES_TO_ADD) {
+        const AWAIT_MS = 100;
+        for (const langName of LANGUAGES_TO_ADD) {
           addLanguageBtn.click();
           await this.sleep(AWAIT_MS);
 
@@ -542,8 +544,9 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
                 foundItem = clickableParent;
                 break;
               } else {
-                foundItem = 'DISABLED';
-                document.body.click();
+                foundItem = 'DISABLED'; // Đã tồn tại, không thể thêm
+                document.body.click(); // Đóng menu
+                await this.sleep(AWAIT_MS / 2);
                 break;
               }
             }
@@ -551,16 +554,17 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
 
           if (foundItem && foundItem !== 'DISABLED') {
             foundItem.click();
+            console.log(`✅ Added: ${langName}`);
             await this.sleep(AWAIT_MS);
           } else if (!foundItem) {
-            document.body.click();
-            await this.sleep(AWAIT_MS);
+            console.log(`⚠️ Not found or already exists: ${langName}`);
+            document.body.click(); // Đóng menu nếu không tìm thấy
+            await this.sleep(AWAIT_MS / 2);
           }
         }
-        alert("Đã thêm xong các ngôn ngữ đã cấu hình!");
+        alert("Finished adding configured languages!");
     });
-  }
-}
+  }}
 
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [

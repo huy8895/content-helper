@@ -290,13 +290,14 @@ chrome.runtime.onMessage.addListener((req) => {
 
 // Thay thế hàm này trong file chatgpt-helper.js
 
+// Thay thế hàm này trong file chatgpt-helper.js
+
 async function _downloadFromFirestore() {
     console.log("☁️ [Firestore Sync] Starting download for all configs...");
 
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
 
     if (!userId) {
-        // Không hiện alert để tránh làm phiền khi người dùng không đăng nhập
         console.warn("⚠️ User not logged in, cannot download from Firestore.");
         return;
     }
@@ -305,36 +306,34 @@ async function _downloadFromFirestore() {
 
     // --- 1. Tải Scenario Templates ---
     try {
-        helper.collection = 'configs'; // Đặt đúng collection cho kịch bản
+        helper.collection = 'configs';
         const scenarioData = await helper.loadUserConfig(userId);
         if (scenarioData) {
             await chrome.storage.local.set({ scenarioTemplates: scenarioData });
-            console.log("✅ Scenario templates successfully downloaded from Firestore.");
-        } else {
-            console.log("ℹ️ No scenario templates found on Firestore for this user.");
+            console.log("✅ Scenario templates downloaded from Firestore.");
         }
-    } catch (err) {
-        console.error("❌ Error downloading scenario templates from Firestore:", err);
-        // Có thể hiện alert ở đây nếu muốn thông báo lỗi rõ ràng
-        // alert("Lỗi khi tải dữ liệu kịch bản từ Firestore.");
-    }
+    } catch (err) { console.error("❌ Error downloading scenario templates:", err); }
 
     // --- 2. Tải Speech Profiles ---
     try {
-        helper.collection = 'speech_profiles'; // Đổi sang collection cho profile giọng nói
+        helper.collection = 'speech_profiles';
         const speechProfileData = await helper.loadUserConfig(userId);
         if (speechProfileData) {
             await chrome.storage.local.set({ google_ai_studio_profiles: speechProfileData });
-            console.log("✅ Speech profiles successfully downloaded from Firestore.");
-        } else {
-            console.log("ℹ️ No speech profiles found on Firestore for this user.");
+            console.log("✅ Speech profiles downloaded from Firestore.");
         }
-    } catch (err) {
-        console.error("❌ Error downloading speech profiles from Firestore:", err);
-        // alert("Lỗi khi tải profile giọng nói từ Firestore.");
-    }
-}
+    } catch (err) { console.error("❌ Error downloading speech profiles:", err); }
 
+    // --- 3. Tải YouTube Language Profiles (MỚI) ---
+    try {
+        helper.collection = 'youtube_language_profiles';
+        const ytProfileData = await helper.loadUserConfig(userId);
+        if (ytProfileData) {
+            await chrome.storage.local.set({ youtube_language_profiles: ytProfileData });
+            console.log("✅ YouTube language profiles downloaded from Firestore.");
+        }
+    } catch (err) { console.error("❌ Error downloading YouTube profiles:", err); }
+}
 // ❶  auto‑check ngay khi trang / script được load
 chrome.storage.local.get('gg_access_token', data => {
   if (data.gg_access_token) {
