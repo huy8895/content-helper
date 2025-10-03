@@ -1056,3 +1056,17 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     border-top-color: #444;
   }
 }
+
+
+/* === Styles for YouTube Panel JSON Upload === */
+#youtube-studio-helper-panel #yt-json-upload {
+  /* Ẩn input file gốc */
+  display: none;
+}
+#youtube-studio-helper-panel label[for="yt-json-upload"] {
+  /* Style cho cái label giả làm nút */
+  display: block;
+  text-align: center;
+  margin-bottom: 5px;
+  cursor: pointer;
+}

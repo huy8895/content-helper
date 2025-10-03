@@ -526,7 +526,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
       console.log(
           `Starting to add ${LANGUAGES_TO_ADD.length} languages for profile "${activeProfileName}"...`);
 
-      const AWAIT_MS = 100;
+      const AWAIT_MS = 10;
       for (const langName of LANGUAGES_TO_ADD) {
         addLanguageBtn.click();
         await this.sleep(AWAIT_MS);

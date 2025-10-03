@@ -1,4 +1,4 @@
-// content/YoutubeStudioPanel.js (Refactored to use ChatGPTHelper system)
+// content/YoutubeStudioPanel.js (Profile & Auto-fill Version)
 
 const AVAILABLE_LANGUAGES = [
   'Abkhazian', 'Afar', 'Afrikaans', 'Akan', 'Akkadian', 'Albanian',
@@ -51,7 +51,7 @@ const AVAILABLE_LANGUAGES = [
 // UPDATED HTML
 // =================================================================
 const YTB_PANEL_HTML = `
-  <h3 class="ts-title">⚙️ Configure Languages</h3>
+  <h3 class="ts-title">⚙️ Configure Languages & Translations</h3>
   
   <!-- PROFILE MANAGEMENT UI -->
   <div class="profile-manager">
@@ -69,6 +69,17 @@ const YTB_PANEL_HTML = `
   <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
   
   <div id="yt-language-checkbox-container"></div>
+  
+  <!-- === NEW: TRANSLATION JSON UPLOAD === -->
+  <hr class="divider">
+  <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
+    📂 Tải lên file JSON Dịch thuật
+  </label>
+  <input type="file" id="yt-json-upload" accept=".json" style="display: none;">
+  <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
+  <hr class="divider">
+  <!-- === END NEW === -->
+  
   <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
 `;
 
@@ -77,33 +88,34 @@ const YTB_PANEL_HTML = `
 // =================================================================
 
 window.YoutubeStudioPanel = class {
-  constructor(onClose) { // Nhận onClose từ ChatGPTHelper
+  constructor(onClose) {
+    console.log("✔ YoutubeStudioPanel constructor")
     this.onClose = onClose;
-    this.storageKey = 'youtube_language_profiles';
+    this.storageKeyProfiles = 'youtube_language_profiles';
+    this.storageKeyTranslations = 'youtube_translation_data'; // Key mới cho dữ liệu JSON
     this.profiles = {};
     this.activeProfileName = 'default';
+    this.translationObserver = null; // Biến để giữ MutationObserver
 
     this._render();
     this.loadProfiles();
+    this.startTranslationObserver(); // Bắt đầu theo dõi popup
   }
 
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
-    // SỬ DỤNG CLASS CHUNG
     this.el.className = 'panel-box ts-panel';
     this.el.innerHTML = YTB_PANEL_HTML;
 
-    // TÍCH HỢP VÀO HỆ THỐNG PANEL CHUNG
     ChatGPTHelper.mountPanel(this.el);
     ChatGPTHelper.makeDraggable(this.el, ".ts-title");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
-    // Tạo danh sách ngôn ngữ một lần
     const container = this.el.querySelector('#yt-language-checkbox-container');
     AVAILABLE_LANGUAGES.forEach(lang => {
       const label = document.createElement('label');
-      label.className = 'yt-language-label'; // Giữ lại class này để style checkbox
+      label.className = 'yt-language-label';
       label.innerHTML = `<input type="checkbox" value="${lang}"> ${lang}`;
       container.appendChild(label);
     });
@@ -111,10 +123,9 @@ window.YoutubeStudioPanel = class {
     this.attachEvents();
   }
 
-  // Hàm destroy để dọn dẹp
   destroy() {
     this.el?.remove();
-    this.onClose?.(); // Báo cho helper biết là đã đóng
+    this.onClose?.();
   }
 
   attachEvents() {
@@ -131,6 +142,9 @@ window.YoutubeStudioPanel = class {
             label.style.display = langName.includes(keyword) ? 'flex' : 'none';
         });
     });
+
+    // === NEW: JSON Upload Event ===
+    this.el.querySelector('#yt-json-upload').addEventListener('change', (e) => this.handleJsonUpload(e));
   }
 
   // --- PROFILE MANAGEMENT LOGIC (Tái sử dụng từ GoogleAIStudioPanel) ---
@@ -248,4 +262,143 @@ window.YoutubeStudioPanel = class {
       console.error("❌ YT Panel: Error syncing to Firestore:", err);
     }
   }
-}
+
+    // === NEW: JSON UPLOAD LOGIC ===
+  handleJsonUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = JSON.parse(e.target.result);
+        chrome.storage.local.set({ [this.storageKeyTranslations]: jsonData }, () => {
+          this.el.querySelector('#yt-json-filename').textContent = `✅ Đã tải lên: ${file.name}`;
+          alert('Đã lưu dữ liệu dịch thuật thành công!');
+        });
+      } catch (err) {
+        this.el.querySelector('#yt-json-filename').textContent = `❌ Lỗi đọc file`;
+        alert('Lỗi: File JSON không hợp lệ.');
+        console.error("JSON Parse Error:", err);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // === NEW: TRANSLATION OBSERVER LOGIC ===
+
+  startTranslationObserver() {
+    if (this.translationObserver) return;
+
+    console.log("▶️ YT Panel: Translation observer v6 (Original Logic) started.");
+
+    // Hàm xử lý chung, tránh lặp code
+    const handleDialog = (dialog) => {
+      // Dùng setTimeout để đảm bảo nội dung bên trong dialog đã sẵn sàng
+      setTimeout(() => this.injectAutoFillButton(dialog), 500);
+    };
+
+    this.translationObserver = new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+
+        // Kịch bản 1: Thuộc tính 'opened' được thêm vào một dialog đã có sẵn trong DOM.
+        // Đây là trường hợp phổ biến cho các lần mở popup thứ 2 trở đi.
+        if (mutation.type === 'attributes' && mutation.attributeName === 'opened') {
+          const dialog = mutation.target;
+          if (dialog.id === 'metadata-editor' && dialog.hasAttribute('opened')) {
+            console.log("Observer detected 'opened' attribute change.");
+            handleDialog(dialog);
+          }
+        }
+
+        // Kịch bản 2: Dialog được thêm mới vào DOM (thường là lần đầu tiên).
+        // Chúng ta cần kiểm tra các node mới được thêm vào.
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+           for (const node of mutation.addedNodes) {
+             // Chỉ quan tâm đến Element node, bỏ qua text node, etc.
+             if (node.nodeType === 1) {
+                // Tìm dialog bên trong node vừa được thêm vào (hoặc chính là node đó)
+                const dialog = node.matches('#metadata-editor[opened]') ? node : node.querySelector('#metadata-editor[opened]');
+                if (dialog) {
+                    console.log("Observer detected new dialog added to DOM.");
+                    handleDialog(dialog);
+                    // Đã tìm thấy, không cần lặp qua các node khác trong mutation này
+                    break;
+                }
+             }
+           }
+        }
+      }
+    });
+
+    this.translationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['opened']
+    });
+  }
+
+  // Bỏ hàm attachContentObserver() đi vì nó không còn cần thiết nữa.
+  stopTranslationObserver() {
+    if (this.translationObserver) {
+      this.translationObserver.disconnect();
+      this.translationObserver = null;
+      console.log("⏹️ YT Panel: Translation observer stopped.");
+    }
+  }
+
+  injectAutoFillButton(dialog) {
+    const popupContent = dialog.querySelector('#metadata-editor-wrapper');
+    if (!popupContent || popupContent.querySelector('#auto-fill-button-from-json')) {
+      return;
+    }
+
+    const button = document.createElement('button');
+    button.id = 'auto-fill-button-from-json';
+    button.textContent = '🚀 Chèn từ JSON';
+    // Áp dụng class chung cho đẹp
+    button.className = 'ts-btn ts-btn-accent';
+    button.style.marginLeft = '10px';
+
+    const targetHeader = popupContent.querySelector('.metadata-editor-translated .language-header');
+    if (!targetHeader) return;
+    targetHeader.parentElement.appendChild(button);
+
+    button.addEventListener('click', async () => {
+      const uiLanguageName = targetHeader.textContent.trim();
+      const jsonKey = uiLanguageName.toLowerCase();
+
+      const data = await chrome.storage.local.get(this.storageKeyTranslations);
+      const translations = data[this.storageKeyTranslations];
+
+      if (!translations) {
+        return alert("Chưa có dữ liệu JSON nào được tải lên. Vui lòng tải file từ panel cấu hình.");
+      }
+
+      const translationData = translations[jsonKey];
+      if (translationData) {
+        const { title, description } = translationData;
+        const titleTextarea = popupContent.querySelector('#translated-title textarea');
+        const descTextarea = popupContent.querySelector('#translated-description textarea');
+
+        this._fillAndFireEvents(titleTextarea, title);
+        this._fillAndFireEvents(descTextarea, description);
+
+        button.textContent = '✅ Đã chèn!';
+        setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 2000);
+      } else {
+        alert(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key: '${jsonKey}') trong file JSON.`);
+      }
+    });
+  }
+
+  _fillAndFireEvents(element, value) {
+    if (!element) return;
+    element.focus();
+    element.value = value;
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    element.blur();
+  }
+};
