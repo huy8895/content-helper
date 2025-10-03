@@ -398,7 +398,7 @@ window.YoutubeStudioPanel = class {
     button.id = 'auto-fill-button-from-json';
     button.textContent = '🚀 Chèn từ JSON';
     // Áp dụng class chung cho đẹp
-    button.className = 'ts-btn ts-btn-accent';
+    button.className = 'scenario-btn btn-tool'; // Sử dụng class chung
     button.style.marginLeft = '10px';
 
     const targetHeader = popupContent.querySelector('.metadata-editor-translated .language-header');
