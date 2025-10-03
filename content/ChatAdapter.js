@@ -505,7 +505,64 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
 
   // Hàm addMyLanguages giữ nguyên không đổi
   async addMyLanguages() {
-    // ... (Toàn bộ code của hàm này vẫn giữ nguyên như cũ)
+    const addLanguageBtn = this._q('#add-translations-button');
+    if (!addLanguageBtn) {
+      return alert("Cannot find the 'Add language' button!");
+    }
+
+    // Key để đọc toàn bộ cấu trúc profile
+    const storageKey = 'youtube_language_profiles';
+
+    chrome.storage.local.get([storageKey], async (result) => {
+      const data = result[storageKey] || {};
+      const activeProfileName = data.activeProfileName || 'default';
+      const LANGUAGES_TO_ADD = (data.profiles || {})[activeProfileName] || [];
+
+      if (LANGUAGES_TO_ADD.length === 0) {
+        return alert(
+            `No languages configured for the active profile "${activeProfileName}".\nClick "⚙️ Configure" to select languages.`);
+      }
+
+      console.log(
+          `Starting to add ${LANGUAGES_TO_ADD.length} languages for profile "${activeProfileName}"...`);
+
+      const AWAIT_MS = 100;
+      for (const langName of LANGUAGES_TO_ADD) {
+        addLanguageBtn.click();
+        await this.sleep(AWAIT_MS);
+
+        const allItems = document.querySelectorAll(
+            'tp-yt-paper-item .item-text');
+        let foundItem = null;
+
+        for (const item of allItems) {
+          if (item.textContent.trim().toLowerCase()
+              === langName.toLowerCase()) {
+            const clickableParent = item.closest('tp-yt-paper-item');
+            if (clickableParent && !clickableParent.hasAttribute('disabled')) {
+              foundItem = clickableParent;
+              break;
+            } else {
+              foundItem = 'DISABLED'; // Đã tồn tại, không thể thêm
+              document.body.click(); // Đóng menu
+              await this.sleep(AWAIT_MS / 2);
+              break;
+            }
+          }
+        }
+
+        if (foundItem && foundItem !== 'DISABLED') {
+          foundItem.click();
+          console.log(`✅ Added: ${langName}`);
+          await this.sleep(AWAIT_MS);
+        } else if (!foundItem) {
+          console.log(`⚠️ Not found or already exists: ${langName}`);
+          document.body.click(); // Đóng menu nếu không tìm thấy
+          await this.sleep(AWAIT_MS / 2);
+        }
+      }
+      alert("Finished adding configured languages!");
+    });
   }
 }
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
