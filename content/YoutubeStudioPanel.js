@@ -50,10 +50,12 @@ const AVAILABLE_LANGUAGES = [
 // =================================================================
 // UPDATED HTML
 // =================================================================
+// Thay thế hằng số YTB_PANEL_HTML
+
 const YTB_PANEL_HTML = `
   <h3 class="ts-title">⚙️ Configure Languages & Translations</h3>
   
-  <!-- PROFILE MANAGEMENT UI -->
+  <!-- PROFILE MANAGEMENT UI (Không đổi) -->
   <div class="profile-manager">
     <select id="yt-profile-select" class="form-control"></select>
     <button id="yt-delete-profile-btn" class="ts-btn ts-btn-danger" title="Delete selected profile">🗑️</button>
@@ -68,21 +70,30 @@ const YTB_PANEL_HTML = `
   <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
   <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
   
+  <!-- === NEW: LANGUAGE LIST TOOLBAR === -->
+  <div class="yt-language-controls">
+    <label class="yt-filter-label">
+      <input type="checkbox" id="yt-filter-selected">
+      Show selected only
+    </label>
+    <button id="yt-copy-selected-btn" class="ts-btn">📋 Copy Selected</button>
+  </div>
+  <!-- === END NEW === -->
+  
   <div id="yt-language-checkbox-container"></div>
   
-  <!-- === NEW: TRANSLATION JSON UPLOAD === -->
+  <!-- JSON UPLOAD UI (Không đổi) -->
   <hr class="divider">
   <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
     📂 Tải lên file JSON Dịch thuật
   </label>
-  <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
+  <input type="file" id="yt-json-upload" accept=".json" style="display: none;">
   <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
   <hr class="divider">
-  <!-- === END NEW === -->
+  <!-- END JSON UI -->
   
   <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
 `;
-
 // =================================================================
 // REWRITTEN PANEL CLASS
 // =================================================================
@@ -102,6 +113,8 @@ window.YoutubeStudioPanel = class {
     this.startTranslationObserver(); // Bắt đầu theo dõi popup
   }
 
+// Thay thế hàm _render()
+
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
@@ -117,36 +130,63 @@ window.YoutubeStudioPanel = class {
       const label = document.createElement('label');
       label.className = 'yt-language-label';
       label.innerHTML = `<input type="checkbox" value="${lang}"> ${lang}`;
+
+      // === THÊM EVENT CHO TỪNG CHECKBOX ===
+      // Khi tick/untick một ngôn ngữ, gọi lại hàm cập nhật hiển thị
+      label.querySelector('input').addEventListener('change', () => {
+          this._updateLanguageVisibility();
+      });
+
       container.appendChild(label);
     });
 
     this.attachEvents();
   }
-
   destroy() {
     this.el?.remove();
     this.onClose?.();
   }
 
+// Thay thế hàm attachEvents()
+
   attachEvents() {
+    // Events cũ
     this.el.querySelector('#yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
     this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
     this.el.querySelector('#yt-delete-profile-btn').addEventListener('click', () => this.deleteSelectedProfile());
     this.el.querySelector('#yt-profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
+    this.el.querySelector('#yt-json-upload').addEventListener('change', (e) => this.handleJsonUpload(e));
 
-    // Search event
-    this.el.querySelector('#yt-language-search').addEventListener('input', (e) => {
-        const keyword = e.target.value.trim().toLowerCase();
-        this.el.querySelectorAll('.yt-language-label').forEach(label => {
-            const langName = label.textContent.trim().toLowerCase();
-            label.style.display = langName.includes(keyword) ? 'flex' : 'none';
-        });
+    // Sửa lại event search để gọi hàm mới
+    this.el.querySelector('#yt-language-search').addEventListener('input', () => {
+        this._updateLanguageVisibility();
     });
 
-    // === NEW: JSON Upload Event ===
-    this.el.querySelector('#yt-json-upload').addEventListener('change', (e) => this.handleJsonUpload(e));
-  }
+    // === NEW EVENTS ===
+    // Event cho checkbox "Show selected only"
+    this.el.querySelector('#yt-filter-selected').addEventListener('change', () => {
+        this._updateLanguageVisibility();
+    });
 
+    // Event cho nút "Copy Selected"
+    this.el.querySelector('#yt-copy-selected-btn').addEventListener('click', () => {
+        const selectedLangs = Array.from(this.el.querySelectorAll('.yt-language-label input:checked'))
+                                     .map(cb => cb.value);
+
+        if (selectedLangs.length === 0) {
+            alert("Chưa có ngôn ngữ nào được chọn.");
+            return;
+        }
+
+        const copyText = selectedLangs.join(', ');
+        navigator.clipboard.writeText(copyText).then(() => {
+            alert(`Đã sao chép ${selectedLangs.length} ngôn ngữ:\n\n${copyText}`);
+        }).catch(err => {
+            console.error('Copy failed:', err);
+            alert('Lỗi khi sao chép.');
+        });
+    });
+  }
   // --- PROFILE MANAGEMENT LOGIC (Tái sử dụng từ GoogleAIStudioPanel) ---
 
   async loadProfiles() {
@@ -400,5 +440,28 @@ window.YoutubeStudioPanel = class {
     element.dispatchEvent(new Event('input', { bubbles: true }));
     element.dispatchEvent(new Event('change', { bubbles: true }));
     element.blur();
+  }
+
+  // Thêm hàm mới này vào class YoutubeStudioPanel
+  _updateLanguageVisibility() {
+    const keyword = this.el.querySelector(
+        '#yt-language-search').value.trim().toLowerCase();
+    const showSelectedOnly = this.el.querySelector(
+        '#yt-filter-selected').checked;
+
+    this.el.querySelectorAll('.yt-language-label').forEach(label => {
+      const langName = label.textContent.trim().toLowerCase();
+      const isChecked = label.querySelector('input').checked;
+
+      const searchMatch = langName.includes(keyword);
+      const filterMatch = !showSelectedOnly || (showSelectedOnly && isChecked);
+
+      // Một ngôn ngữ được hiển thị KHI VÀ CHỈ KHI nó khớp với tìm kiếm VÀ khớp với bộ lọc
+      if (searchMatch && filterMatch) {
+        label.style.display = 'flex';
+      } else {
+        label.style.display = 'none';
+      }
+    });
   }
 };

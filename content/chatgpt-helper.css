@@ -1070,3 +1070,42 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   margin-bottom: 5px;
   cursor: pointer;
 }
+
+/* === Styles for YouTube Panel Language Toolbar === */
+
+#youtube-studio-helper-panel .yt-language-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0 10px 0;
+  padding: 8px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+}
+
+#youtube-studio-helper-panel .yt-filter-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+}
+
+#youtube-studio-helper-panel .yt-filter-label input {
+  margin-right: 6px;
+}
+
+#youtube-studio-helper-panel #yt-copy-selected-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  #youtube-studio-helper-panel .yt-language-controls {
+    background-color: #3a3a3a;
+  }
+  #youtube-studio-helper-panel .yt-filter-label {
+    color: #ddd;
+  }
+}
