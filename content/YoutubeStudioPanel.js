@@ -75,7 +75,7 @@ const YTB_PANEL_HTML = `
   <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
     📂 Tải lên file JSON Dịch thuật
   </label>
-  <input type="file" id="yt-json-upload" accept=".json" style="display: none;">
+  <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
   <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
   <hr class="divider">
   <!-- === END NEW === -->
