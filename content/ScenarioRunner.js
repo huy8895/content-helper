@@ -243,44 +243,48 @@ _setupScenarioSearch() {
       this._clearVariableInputs();
     };
   }
-  // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN ---
-  // (Bao gồm: _readVariableValues, _updateQueueIndicator, _getLoopKey, _saveVariableValues,
-  // _start, _resetControls, _expandScenario, _sendPrompt, _waitForResponse,
-  // _waitForElement, _waitForAdapterBtn, destroy, _refreshQueueUI)
+// Thay thế hàm này trong file ScenarioRunner.js
 
   _readVariableValues() {
     const data = {};
     this.el.querySelectorAll("[data-key]").forEach(el => {
       const k = el.dataset.key;
+      // Áp dụng logic mới: luôn lấy giá trị và trim()
       data[k] = el.value.trim();
     });
     return data;
   }
+
   _updateQueueIndicator() {
     this.el.querySelector("#sr-queue-count").textContent = String(this.queue.length);
   }
   _getLoopKey(q) {
     return q.loopKey || (q.text.match(/\$\{(\w+)\}/) || [])[1];
   }
+// Thay thế hàm này trong file ScenarioRunner.js
+
   _saveVariableValues(templateName) {
     const inputPanel = this.el.querySelector("#scenario-inputs");
     const data = {};
     inputPanel.querySelectorAll("[data-key]").forEach(el => {
       const key = el.dataset.key;
+
+      // === THAY ĐỔI LOGIC XỬ LÝ TEXTAREA ===
       if (el.tagName === "TEXTAREA") {
-        const lines = el.value.split("\n").map(v => v.trim()).filter(Boolean);
-        data[key] = lines.length === 1 ? lines[0] : lines;
+        // Giữ nguyên toàn bộ nội dung, chỉ xóa khoảng trắng thừa ở đầu/cuối cả đoạn
+        data[key] = el.value.trim();
       } else {
+        // Các input khác (như 'number' cho vòng lặp) vẫn xử lý như cũ
         data[key] = el.value.trim();
       }
     });
+
     chrome.storage.local.get("scenarioInputValues", (items) => {
       const all = items.scenarioInputValues || {};
       all[templateName] = data;
       chrome.storage.local.set({ scenarioInputValues: all });
     });
-  }
-  async _start() {
+  }  async _start() {
     if (this.queue.length === 0) {
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
