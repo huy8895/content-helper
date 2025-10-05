@@ -136,12 +136,12 @@ _setupScenarioSearch() {
    * Hàm được gọi khi một kịch bản được chọn từ danh sách
    * @param {string} name Tên của kịch bản
    */
+
   _onScenarioSelected(name) {
     const raw = this.templates[name] || {};
     const list = Array.isArray(raw) ? raw : (raw.questions || []);
     console.log("📋 Đã chọn kịch bản:", name);
 
-    // Cập nhật dropdown "Bắt đầu từ câu số"
     const stepSelect = this.el.querySelector("#step-select");
     stepSelect.innerHTML = list.map((q, idx) => {
       const preview = q.text?.slice(0, 40) || "";
@@ -149,7 +149,6 @@ _setupScenarioSearch() {
     }).join("");
     stepSelect.disabled = list.length === 0;
 
-    // Tạo các ô nhập liệu cho biến
     const inputPanel = this.el.querySelector("#scenario-inputs");
     inputPanel.innerHTML = "";
     const shown = new Set();
@@ -169,15 +168,24 @@ _setupScenarioSearch() {
         label.textContent = `🧩 ${varName}:`;
 
         let inputEl;
+        // === CẬP NHẬT LOGIC TẠO INPUT ===
         if (q.type === "loop" && varName === loopKey) {
+          // 'loop' vẫn là input number
           inputEl = document.createElement("input");
           inputEl.type = "number";
           inputEl.placeholder = "Số lần lặp (vd: 3)";
+        } else if (q.type === "list" && varName === loopKey) {
+          // 'list' sẽ là textarea
+          inputEl = document.createElement("textarea");
+          inputEl.rows = 2;
+          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: value1, value2)";
         } else {
+          // Các biến còn lại mặc định là textarea
           inputEl = document.createElement("textarea");
           inputEl.rows = 2;
           inputEl.placeholder = "Nhập nội dung...";
         }
+        // === KẾT THÚC CẬP NHẬT ===
 
         inputEl.dataset.key = varName;
         inputEl.addEventListener("input", () => this._saveVariableValues(name));
@@ -187,19 +195,17 @@ _setupScenarioSearch() {
       });
     });
 
-    // Tải các giá trị biến đã lưu
     chrome.storage.local.get("scenarioInputValues", (result) => {
       const saved = result.scenarioInputValues?.[name] || {};
       inputPanel.querySelectorAll("[data-key]").forEach(el => {
         const key = el.dataset.key;
         const val = saved[key];
         if (val !== undefined) {
-          el.value = Array.isArray(val) ? val.join("\n") : val;
+          el.value = val; // Logic tải lại giá trị đã lưu không cần thay đổi
         }
       });
     });
   }
-
   /**
    * Gắn sự kiện cho các nút Start, Pause, Resume, Add to Queue
    */
@@ -331,6 +337,8 @@ _setupScenarioSearch() {
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
   }
+// Thay thế hàm này trong file ScenarioRunner.js
+
   _expandScenario(questions, values) {
     const result = [];
     for (const q of questions) {
@@ -350,10 +358,31 @@ _setupScenarioSearch() {
           result.push(prompt);
         }
       }
+      // === THÊM LOGIC MỚI CHO 'list' ===
+      else if (q.type === "list") {
+        const loopKey = this._getLoopKey(q);
+        // Lấy chuỗi giá trị và tách nó ra thành mảng bằng dấu phẩy
+        const listValues = (values[loopKey] || "")
+            .split(',')
+            .map(v => v.trim()) // Xóa khoảng trắng thừa
+            .filter(Boolean);     // Loại bỏ các mục rỗng
+
+        // Lặp qua từng giá trị trong mảng
+        for (const itemValue of listValues) {
+          // Thay thế biến loopKey bằng giá trị hiện tại, và các biến khác nếu có
+          const prompt = q.text.replace(/\$\{(\w+)\}/g, (_, k) => {
+            if (k === loopKey) {
+              return itemValue; // Thay thế bằng giá trị từ danh sách
+            }
+            return values[k] || ""; // Thay thế các biến thường khác
+          });
+          result.push(prompt);
+        }
+      }
+      // === KẾT THÚC LOGIC MỚI ===
     }
     return result;
-  }
-  async _sendPrompt(text) {
+  }  async _sendPrompt(text) {
     console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
     const chat = window.ChatAdapter;
     const textarea = chat.getTextarea();

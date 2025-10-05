@@ -57,6 +57,8 @@ window.ScenarioBuilder = class {
     });
   }
 
+// Thay thế hàm này trong file ScenarioBuilder.js
+
   _addQuestion(q = {text: "", type: "text"}) {
     const container = document.createElement("div");
     container.className = "question-item";
@@ -72,7 +74,8 @@ window.ScenarioBuilder = class {
 
     const select = document.createElement("select");
     select.className = "question-type";
-    ["text", "variable", "loop"].forEach(t => {
+    // === THÊM 'list' VÀO MẢNG NÀY ===
+    ["text", "variable", "loop", "list"].forEach(t => {
       const opt = document.createElement("option");
       opt.value = t;
       opt.textContent = t;
@@ -90,20 +93,19 @@ window.ScenarioBuilder = class {
       this._saveToStorageImmediately();
     };
 
-    /* === THÊM NGAY SAU const select = ... === */
     const loopKeyInput = document.createElement("input");
     loopKeyInput.className   = "question-loopkey";
     loopKeyInput.placeholder = "loopKey";
-    loopKeyInput.style.display = q.type === "loop" ? "inline-block" : "none";
+    // === CẬP NHẬT ĐIỀU KIỆN HIỂN THỊ ===
+    loopKeyInput.style.display = (q.type === "loop" || q.type === "list") ? "inline-block" : "none";
     loopKeyInput.value = q.loopKey || "";
 
     /* Toggle ẩn/hiện khi đổi type */
     select.addEventListener("change", () => {
-      loopKeyInput.style.display = select.value === "loop" ? "inline-block" : "none";
+      // === CẬP NHẬT ĐIỀU KIỆN HIỂN THỊ ===
+      loopKeyInput.style.display = (select.value === "loop" || select.value === "list") ? "inline-block" : "none";
       this._saveToStorageImmediately();
     });
-    /* === HẾT KHỐI THÊM MỚI === */
-
 
     // gắn vào DOM
     actionWrap.appendChild(select);
@@ -118,9 +120,8 @@ window.ScenarioBuilder = class {
     select.addEventListener("change", () => this._saveToStorageImmediately());
 
     this.el.querySelector("#questions-container").appendChild(container);
-    textarea.focus(); // 👈 Focus vào textarea mới thêm
+    textarea.focus();
   }
-
   _collectDataFromDOM() {
     const name = this.el.querySelector("#scenario-name").value.trim();
     const group = this.el.querySelector("#scenario-group").value.trim();
