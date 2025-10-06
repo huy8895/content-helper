@@ -51,6 +51,17 @@
       className: "scenario-btn btn-tool",
       onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
     },
+    COLLAPSE_CODE: {
+      id: "chatgpt-collapse-code-button",
+      text: "Collapse Code",
+      className: "scenario-btn btn-tool",
+      onClick: () => {
+        // Gọi đến một hàm của adapter hiện tại
+        if (window.ChatAdapter && typeof window.ChatAdapter.collapseAllCodeBlocks === 'function') {
+          window.ChatAdapter.collapseAllCodeBlocks();
+        }
+      },
+    },
   };
 /* ---------------------------  Base (Abstract)  --------------------------- */
 class BaseChatAdapter {
@@ -431,7 +442,35 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
       BUTTONS.AI_STUDIO_SETTINGS,
+      BUTTONS.COLLAPSE_CODE
     ];
+  }
+
+  // === HÀM LOGIC CHO VIỆC THU GỌN CODE ===
+  collapseAllCodeBlocks() {
+    // 1. Tìm tất cả các icon có class 'material-symbols-outlined'
+    const collapseIcons = document.querySelectorAll('span.material-symbols-outlined');
+    let clickCount = 0;
+
+    // 2. Lặp qua từng icon
+    collapseIcons.forEach(icon => {
+      // 3. Chỉ xử lý những icon đang ở trạng thái "mở" ('expand_less')
+      if (icon.textContent.trim() === 'expand_less') {
+        // 4. Tìm đến button cha gần nhất và click
+        const button = icon.closest('button');
+        if (button) {
+          button.click();
+          clickCount++;
+        }
+      }
+    });
+
+    // 5. Thông báo kết quả
+    console.log(`Hoàn tất! Đã click vào ${clickCount} nút 'collapse'.`);
+    // Có thể thêm alert nếu muốn
+    if (clickCount > 0) {
+      alert(`Đã thu gọn ${clickCount} khối code.`);
+    }
   }
 }
 /* ------------------------- YouTube Studio Adapter ------------------------- */
