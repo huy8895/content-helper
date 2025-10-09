@@ -304,6 +304,8 @@ window.YoutubeStudioPanel = class {
   }
 
     // === NEW: JSON UPLOAD LOGIC ===
+  // Thay thế hàm này trong file YoutubeStudioPanel.js
+
   handleJsonUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -311,15 +313,36 @@ window.YoutubeStudioPanel = class {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const jsonData = JSON.parse(e.target.result);
-        chrome.storage.local.set({ [this.storageKeyTranslations]: jsonData }, () => {
+        const jsonDataArray = JSON.parse(e.target.result);
+
+        // === THAY ĐỔI QUAN TRỌNG: CHUYỂN ĐỔI MẢNG THÀNH OBJECT ===
+        // Kiểm tra xem có phải là mảng không
+        if (!Array.isArray(jsonDataArray)) {
+          throw new Error("JSON data is not an array.");
+        }
+
+        const translationsObject = {};
+        for (const item of jsonDataArray) {
+          // Kiểm tra xem mỗi item có key 'language' không
+          if (item && item.language) {
+            const langKey = item.language.toLowerCase();
+            translationsObject[langKey] = {
+              title: item.title || '',
+              description: item.description || ''
+            };
+          }
+        }
+        // === KẾT THÚC THAY ĐỔI ===
+
+        // Lưu lại object đã được chuyển đổi
+        chrome.storage.local.set({ [this.storageKeyTranslations]: translationsObject }, () => {
           this.el.querySelector('#yt-json-filename').textContent = `✅ Đã tải lên: ${file.name}`;
           alert('Đã lưu dữ liệu dịch thuật thành công!');
         });
       } catch (err) {
         this.el.querySelector('#yt-json-filename').textContent = `❌ Lỗi đọc file`;
-        alert('Lỗi: File JSON không hợp lệ.');
-        console.error("JSON Parse Error:", err);
+        alert('Lỗi: File JSON không hợp lệ hoặc không đúng định dạng mảng.');
+        console.error("JSON Process Error:", err);
       }
     };
     reader.readAsText(file);
