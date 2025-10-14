@@ -306,6 +306,7 @@ window.YoutubeStudioPanel = class {
     // === NEW: JSON UPLOAD LOGIC ===
   // Thay thế hàm này trong file YoutubeStudioPanel.js
 
+
   handleJsonUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -314,27 +315,22 @@ window.YoutubeStudioPanel = class {
     reader.onload = (e) => {
       try {
         const jsonDataArray = JSON.parse(e.target.result);
-
-        // === THAY ĐỔI QUAN TRỌNG: CHUYỂN ĐỔI MẢNG THÀNH OBJECT ===
-        // Kiểm tra xem có phải là mảng không
         if (!Array.isArray(jsonDataArray)) {
           throw new Error("JSON data is not an array.");
         }
 
         const translationsObject = {};
         for (const item of jsonDataArray) {
-          // Kiểm tra xem mỗi item có key 'language' không
           if (item && item.language) {
-            const langKey = item.language.toLowerCase();
+            // === SỬ DỤNG HÀM CHUẨN HÓA ===
+            const langKey = this._normalizeLangKey(item.language);
             translationsObject[langKey] = {
               title: item.title || '',
               description: item.description || ''
             };
           }
         }
-        // === KẾT THÚC THAY ĐỔI ===
 
-        // Lưu lại object đã được chuyển đổi
         chrome.storage.local.set({ [this.storageKeyTranslations]: translationsObject }, () => {
           this.el.querySelector('#yt-json-filename').textContent = `✅ Đã tải lên: ${file.name}`;
           alert('Đã lưu dữ liệu dịch thuật thành công!');
@@ -411,6 +407,8 @@ window.YoutubeStudioPanel = class {
     }
   }
 
+// Thay thế hàm này trong file YoutubeStudioPanel.js
+
   injectAutoFillButton(dialog) {
     const popupContent = dialog.querySelector('#metadata-editor-wrapper');
     if (!popupContent || popupContent.querySelector('#auto-fill-button-from-json')) {
@@ -420,8 +418,7 @@ window.YoutubeStudioPanel = class {
     const button = document.createElement('button');
     button.id = 'auto-fill-button-from-json';
     button.textContent = '🚀 Chèn từ JSON';
-    // Áp dụng class chung cho đẹp
-    button.className = 'scenario-btn btn-tool'; // Sử dụng class chung
+    button.className = 'scenario-btn btn-tool';
     button.style.marginLeft = '10px';
 
     const targetHeader = popupContent.querySelector('.metadata-editor-translated .language-header');
@@ -430,13 +427,14 @@ window.YoutubeStudioPanel = class {
 
     button.addEventListener('click', async () => {
       const uiLanguageName = targetHeader.textContent.trim();
-      const jsonKey = uiLanguageName.toLowerCase();
+      // === SỬ DỤNG HÀM CHUẨN HÓA ===
+      const jsonKey = this._normalizeLangKey(uiLanguageName);
 
       const data = await chrome.storage.local.get(this.storageKeyTranslations);
       const translations = data[this.storageKeyTranslations];
 
       if (!translations) {
-        return alert("Chưa có dữ liệu JSON nào được tải lên. Vui lòng tải file từ panel cấu hình.");
+        return alert("Chưa có dữ liệu JSON nào được tải lên.");
       }
 
       const translationData = translations[jsonKey];
@@ -444,14 +442,13 @@ window.YoutubeStudioPanel = class {
         const { title, description } = translationData;
         const titleTextarea = popupContent.querySelector('#translated-title textarea');
         const descTextarea = popupContent.querySelector('#translated-description textarea');
-
         this._fillAndFireEvents(titleTextarea, title);
         this._fillAndFireEvents(descTextarea, description);
-
         button.textContent = '✅ Đã chèn!';
         setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 2000);
+
       } else {
-        alert(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key: '${jsonKey}') trong file JSON.`);
+        alert(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key đã chuẩn hóa: '${jsonKey}').`);
       }
     });
   }
@@ -486,5 +483,18 @@ window.YoutubeStudioPanel = class {
         label.style.display = 'none';
       }
     });
+  }
+
+
+  /**
+   * Chuẩn hóa tên ngôn ngữ để làm key an toàn.
+   * Chuyển thành chữ thường, xóa khoảng trắng và các ký tự đặc biệt.
+   * Ví dụ: "Bangla (India)" => "banglaindia"
+   * @param {string} langName
+   * @returns {string}
+   */
+  _normalizeLangKey(langName) {
+    if (typeof langName !== 'string') return '';
+    return langName.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 };
