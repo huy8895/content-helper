@@ -245,36 +245,99 @@ window.GoogleAIStudioPanel = class {
     });
   }
 
-  // Các hàm static còn lại không cần thay đổi, chỉ cần đảm bảo chúng được gọi đúng
-  static setValueScript(settings) {
-    GoogleAIStudioPanel.selectVoice(2, settings.Voice1);
-    GoogleAIStudioPanel.selectVoice(3, settings.Voice2);
-    GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
-    GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
-    GoogleAIStudioPanel.setTextareaValueByAriaLabel('Style instructions', settings.styleInstructions);
-  }
-  static selectVoice(matSelectId, voiceName) {
-      if (!voiceName) return;
-      setTimeout(() => {
-          const trigger = document.querySelector(`#mat-select-${matSelectId}`);
-          if (!trigger) return;
-          trigger.click();
-          const checkPanel = setInterval(() => {
-              const panel = document.getElementById(`mat-select-${matSelectId}-panel`);
-              if (panel) {
-                  clearInterval(checkPanel);
-                  const options = panel.querySelectorAll('.mdc-list-item .name');
-                  for (let option of options) {
-                      if (option.textContent.trim().toLowerCase() === voiceName.toLowerCase()) {
-                          option.closest('.mdc-list-item').click();
-                          break;
-                      }
-                  }
-              }
-          }, 200);
-      }, 500);
-  }
-  static setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
+
+    static async setValueScript(settings) {
+        console.log("[Static] start setValueScript: ", settings);
+
+        try {
+            // Đợi cho việc chọn Voice 1 hoàn thành
+            await GoogleAIStudioPanel.selectVoice(1, settings.Voice1);
+
+            // Sau khi Voice 1 xong, mới bắt đầu chọn Voice 2
+            await GoogleAIStudioPanel.selectVoice(2, settings.Voice2);
+
+            // Các hành động khác có thể chạy song song vì chúng không xung đột
+            GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
+            GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
+            GoogleAIStudioPanel.setTextareaValueByAriaLabel('Style instructions', settings.styleInstructions);
+
+            console.log("✅ All auto-set actions completed.");
+
+        } catch (error) {
+            console.error("❌ An error occurred during auto-set script:", error);
+        }
+    }
+// Thay thế hàm này trong file GoogleAIStudioPanel.js
+    /**
+     * Chọn một giọng nói cho một Speaker cụ thể dựa trên giao diện mới.
+     * @param {number} speakerIndex - Chỉ số của speaker (1 hoặc 2).
+     * @param {string} voiceName - Tên của giọng nói cần chọn.
+     */
+    static selectVoice(speakerIndex, voiceName) {
+        // Trả về một Promise để đảm bảo tính tuần tự
+        return new Promise((resolve, reject) => {
+            if (!voiceName) {
+                return resolve();
+            }
+
+            console.log(`[Static] Bắt đầu chọn giọng "${voiceName}" cho Speaker ${speakerIndex}...`);
+
+            setTimeout(() => {
+                const allSpeakerPanels = document.querySelectorAll('mat-expansion-panel.speaker-settings-container');
+                const targetPanel = allSpeakerPanels[speakerIndex - 1];
+                if (!targetPanel) {
+                    console.error(`Không tìm thấy khối cài đặt cho Speaker ${speakerIndex}`);
+                    return reject(new Error(`Không tìm thấy Speaker ${speakerIndex}`));
+                }
+
+                const trigger = targetPanel.querySelector('mat-select');
+                if (!trigger) {
+                    console.error(`Không tìm thấy nút chọn giọng nói bên trong Speaker ${speakerIndex}`);
+                    return reject(new Error(`Không tìm thấy dropdown cho Speaker ${speakerIndex}`));
+                }
+
+                // Mở dropdown
+                trigger.click();
+
+                // Đợi popup options xuất hiện
+                const checkOptionsPanel = setInterval(() => {
+                    const optionsPanel = document.querySelector('div.cdk-overlay-container div[role="listbox"]');
+                    if (optionsPanel) {
+                        clearInterval(checkOptionsPanel);
+
+                        const options = optionsPanel.querySelectorAll('mat-option');
+                        let foundAndClicked = false;
+
+                        for (let option of options) {
+                            // === THAY ĐỔI QUAN TRỌNG NHẤT LÀ Ở ĐÂY ===
+                            // 1. Tìm chính xác div.name bên trong mỗi option
+                            const nameElement = option.querySelector('div.name');
+
+                            if (nameElement && nameElement.textContent.trim().toLowerCase() === voiceName.toLowerCase()) {
+                                console.log(`✅ [Static] Tìm thấy div.name cho "${voiceName}". Đang click...`);
+
+                                // 2. Click trực tiếp vào div.name đó
+                                nameElement.click();
+
+                                foundAndClicked = true;
+                                break;
+                            }
+                        }
+
+                        if (foundAndClicked) {
+                            resolve(); // Báo hiệu đã xong
+                        } else {
+                            console.error(`❌ [Static] Không tìm thấy giọng nói "${voiceName}" trong danh sách.`);
+                            // Thử đóng dropdown lại nếu không tìm thấy
+                            document.body.click();
+                            reject(new Error(`Không tìm thấy giọng "${voiceName}"`));
+                        }
+                    }
+                }, 100);
+            }, 400);
+        });
+    }
+    static setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
      if (!valueToSet) return;
      setTimeout(() => {
         const selector = `input[aria-label="${labelText}"]`;
