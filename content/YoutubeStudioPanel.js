@@ -403,13 +403,15 @@ window.YoutubeStudioPanel = class {
 // thay thế các phiên bản cũ của chúng.
 
 // === HÀM NÀY CHỈ CÓ MỘT NHIỆM VỤ: CHÈN NÚT VÀ GẮN SỰ KIỆN CLICK THỦ CÔNG ===
-  injectAutoFillButton(dialog, isAloudPopup = false) {
+  async injectAutoFillButton(dialog, isAloudPopup = false) {
     const buttonId = 'auto-fill-button-from-json';
     if (dialog.querySelector(`#${buttonId}`)) return;
 
+    // Xác định selectors
     const headerSelector = isAloudPopup ? 'h1.ytgn-language-dialog-title' : '.metadata-editor-translated .language-header';
     const titleSelector = isAloudPopup ? '#metadata-title #textbox' : '#translated-title textarea';
     const descSelector = isAloudPopup ? '#metadata-description #textbox' : '#translated-description textarea';
+    const publishBtnSelector = isAloudPopup ? '.ytgn-language-dialog-update' : '#publish-button';
 
     const targetHeader = dialog.querySelector(headerSelector);
     if (!targetHeader) return;
@@ -419,10 +421,16 @@ window.YoutubeStudioPanel = class {
     button.textContent = '🚀 Chèn từ JSON';
     button.className = 'scenario-btn btn-tool';
     button.style.marginLeft = '10px';
-
     const buttonContainer = dialog.querySelector('section[slot="secondary-header"]') || targetHeader.parentElement;
     buttonContainer.appendChild(button);
 
+    // Lấy thông tin profile hiện tại để kiểm tra cài đặt auto-fill
+    const { [this.storageKeyProfiles]: profileData } = await chrome.storage.local.get(this.storageKeyProfiles);
+    const activeProfileName = profileData?.activeProfileName || 'default';
+    const activeProfile = profileData?.profiles?.[activeProfileName] || {};
+    const isAutofillEnabledForProfile = activeProfile.isAutofillEnabled || false;
+
+    // Sự kiện click của nút
     button.addEventListener('click', async () => {
       const uiLanguageName = targetHeader.textContent.trim();
       const jsonKey = YoutubeStudioPanel._normalizeLangKey(uiLanguageName);
@@ -434,14 +442,36 @@ window.YoutubeStudioPanel = class {
         const descInput = dialog.querySelector(descSelector);
         YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
         YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
+
         button.textContent = '✅ Đã chèn!';
-        setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 2000);
+        setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 200);
+
+        // === LOGIC TỰ ĐỘNG LƯU MỚI ===
+        // Áp dụng cho MỌI TRƯỜNG HỢP nếu isAutofillEnabledForProfile là true
+        if (isAutofillEnabledForProfile) {
+          console.log('[Auto-publish] Auto-fill enabled. Waiting to click Publish...');
+
+          // Đợi 1 giây để YouTube nhận diện thay đổi
+          await new Promise(r => setTimeout(r, 100));
+
+          const publishBtn = dialog.querySelector(`${publishBtnSelector}:not([disabled])`);
+          if (publishBtn) {
+            console.log('[Auto-publish] Found enabled Publish/Update button. Clicking...');
+            publishBtn.click();
+          } else {
+            console.warn('[Auto-publish] Could not find enabled Publish/Update button after waiting.');
+          }
+        }
+        // === KẾT THÚC LOGIC MỚI ===
+
       } else {
         alert(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key: '${jsonKey}').`);
       }
     });
-  }
-  // Chuyển thành hàm static
+
+    // Bỏ logic auto-click cũ. Hàm addMyLanguages sẽ xử lý việc đó cho kênh Aloud.
+    // Logic auto-publish giờ đã nằm trong event listener của nút.
+  }  // Chuyển thành hàm static
   static _fillAndFireEvents(element, value) {
     if (!element) return;
     const formattedValue = String(value || '').replace(/\\n/g, '\n');
