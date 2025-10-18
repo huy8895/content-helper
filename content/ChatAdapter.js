@@ -636,7 +636,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
       YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
       YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
 
-      await this.sleep(1000); // Đợi nút publish được enable
+      await this.sleep(100); // Đợi nút publish được enable
 
       const publishBtn = dialog.querySelector('.ytgn-language-dialog-update:not([disabled])');
       if (publishBtn) {
