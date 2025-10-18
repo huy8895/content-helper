@@ -474,6 +474,10 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   }
 }
 /* ------------------------- YouTube Studio Adapter ------------------------- */
+// Thay thế toàn bộ class này trong file ChatAdapter.js
+
+// Thay thế toàn bộ class này trong file ChatAdapter.js
+
 class YoutubeStudioAdapter extends BaseChatAdapter {
   static matches(host) {
     return /studio\.youtube\.com$/i.test(host);
@@ -481,137 +485,184 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
 
   constructor() {
     super();
-    // Tạo một thuộc tính để quản lý panel, giống như ChatGPTHelper
     this.ytPanel = null;
-    setTimeout(() => this.insertHelperButtons(), 2000);
+    const observer = new MutationObserver(() => {
+      if (this._q('#add-translations-button') || this._q('#add-button button')) {
+        this.insertHelperButtons();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  // Các phương thức không cần thiết
   getTextarea() { return null; }
   getSendBtn()  { return null; }
   isDone()      { return true; }
 
-  // Hàm toggle panel
   _toggleYoutubePanel() {
     if (this.ytPanel) {
       this.ytPanel.destroy();
-      this.ytPanel = null;
-      return;
+      this.ytPanel = null; // Quan trọng: reset lại sau khi destroy
+    } else {
+      this.ytPanel = new YoutubeStudioPanel(() => (this.ytPanel = null));
     }
-    // Truyền callback để reset thuộc tính khi panel bị đóng
-    this.ytPanel = new YoutubeStudioPanel(() => (this.ytPanel = null));
   }
 
   insertHelperButtons() {
     if (document.getElementById('helper-config-languages')) return;
-
-    const addLanguageButton = this._q('#add-translations-button');
-    if (!addLanguageButton) {
-      setTimeout(() => this.insertHelperButtons(), 1000);
-      return;
-    }
-
-    const container = addLanguageButton.parentElement;
+    const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
+    if (!addLanguageBtn) return;
+    const container = addLanguageBtn.closest('div, .style-scope.ytcp-primary-action-bar');
     if (!container) return;
 
-    // Nút Cấu hình (giờ sẽ gọi hàm toggle)
     const configButton = this._createButton({
       id: 'helper-config-languages',
       text: '⚙️ Configure',
       className: 'style-scope ytcp-button',
       onClick: () => this._toggleYoutubePanel()
     });
-    configButton.style.marginLeft = '10px';
-
-    // Nút Chạy (giữ nguyên)
     const runButton = this._createButton({
-      id: 'helper-add-my-languages',
-      text: '🌐 Add Languages',
-      className: 'style-scope ytcp-button',
-      onClick: () => this.addMyLanguages()
+      id: 'helper-add-my-languages', text: '🌐 Add Languages',
+      className: 'scenario-btn btn-run', onClick: () => this.addMyLanguages()
     });
+    configButton.style.marginLeft = '10px';
     runButton.style.marginLeft = '10px';
-    runButton.style.backgroundColor = '#c00';
-    runButton.style.color = 'white';
 
-    container.appendChild(configButton);
-    container.appendChild(runButton);
+    addLanguageBtn.after(runButton);
+    addLanguageBtn.after(configButton);
   }
 
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // Hàm addMyLanguages giữ nguyên không đổi
-// Thay thế hàm này trong class YoutubeStudioAdapter
+  waitForElement(selector, context = document, timeout = 1000) {
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        const el = context.querySelector(selector);
+        if (el) {
+          clearInterval(interval);
+          resolve(el);
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(null);
+      }, timeout);
+    });
+  }
 
   async addMyLanguages() {
-    const addLanguageBtn = this._q('#add-translations-button');
-    if (!addLanguageBtn) {
-      return alert("Cannot find the 'Add language' button!");
-    }
-
     const storageKey = 'youtube_language_profiles';
+    const result = await chrome.storage.local.get([storageKey, 'youtube_translation_data']);
 
-    chrome.storage.local.get([storageKey], async (result) => {
-      const data = result[storageKey] || {};
-      const activeProfileName = data.activeProfileName || 'default';
-      const activeProfile = (data.profiles || {})[activeProfileName] || {};
+    const profileData = result[storageKey] || {};
+    const translations = result.youtube_translation_data;
 
-      const LANGUAGES_TO_ADD = activeProfile.languages || [];
-      const isAloudChannel = activeProfile.isAloudChannel || false;
+    const activeProfileName = profileData.activeProfileName || 'default';
+    const activeProfile = (profileData.profiles || {})[activeProfileName] || {};
 
-      if (LANGUAGES_TO_ADD.length === 0) {
-        return alert(`No languages configured for the active profile "${activeProfileName}".`);
-      }
+    const LANGUAGES_TO_ADD = activeProfile.languages || [];
+    const isAloudChannel = activeProfile.isAloudChannel || false;
+    const isAutofillEnabled = activeProfile.isAutofillEnabled || false;
 
-      console.log(`Starting to add ${LANGUAGES_TO_ADD.length} languages for profile "${activeProfileName}". Aloud mode: ${isAloudChannel}`);
+    if (LANGUAGES_TO_ADD.length === 0) return alert(`No languages configured for profile "${activeProfileName}".`);
 
-      // === LOGIC CHỌN SELECTOR ĐỘNG ===
-      const itemSelector = isAloudChannel
-          ? 'yt-formatted-string.item-text' // Selector cho kênh CÓ lồng tiếng
-          : 'tp-yt-paper-item .item-text';  // Selector cho kênh KHÔNG có lồng tiếng
+    const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
+    if (!addLanguageBtn) return alert("Cannot find 'Add language' button!");
 
-      console.log('Using selector:', itemSelector);
-      // === KẾT THÚC LOGIC CHỌN SELECTOR ===
+    const itemSelector = isAloudChannel ? 'yt-formatted-string.item-text' : 'tp-yt-paper-item .item-text';
 
-      const AWAIT_MS = 150; // Tăng độ trễ một chút cho ổn định
-      for (const langName of LANGUAGES_TO_ADD) {
-        addLanguageBtn.click();
-        await this.sleep(AWAIT_MS);
+    for (const langName of LANGUAGES_TO_ADD) {
+      addLanguageBtn.click();
+      await this.sleep(250);
 
-        // Sử dụng selector đã được chọn
-        const allItems = document.querySelectorAll(itemSelector);
-        let foundItem = null;
+      const allItems = document.querySelectorAll(itemSelector);
+      let foundItem = null;
 
-        for (const item of allItems) {
-          if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
-            const clickableParent = item.closest('tp-yt-paper-item');
-            if (clickableParent && !clickableParent.hasAttribute('disabled')) {
-              foundItem = clickableParent;
-              break;
-            } else {
-              foundItem = 'DISABLED';
-              document.body.click();
-              await this.sleep(AWAIT_MS / 2);
-              break;
-            }
+      for (const item of allItems) {
+        if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
+          const clickableParent = item.closest('tp-yt-paper-item');
+          if (clickableParent && !clickableParent.hasAttribute('disabled')) {
+            foundItem = clickableParent;
+            break;
           }
         }
-
-        if (foundItem && foundItem !== 'DISABLED') {
-          foundItem.click();
-          console.log(`✅ Added: ${langName}`);
-          await this.sleep(AWAIT_MS);
-        } else {
-          console.log(`⚠️ Not found or already exists: ${langName}`);
-          document.body.click();
-          await this.sleep(AWAIT_MS / 2);
-        }
       }
-      alert("Finished adding configured languages!");
+
+      if (foundItem) {
+        foundItem.click();
+        console.log(`✅ Added language: ${langName}`);
+
+        if (isAloudChannel && isAutofillEnabled) {
+          console.log(`[Auto-fill] Waiting for dialog for ${langName}...`);
+
+          const dialog = await this.waitForElement('#dialog.ytcp-dialog[aria-label*="details"]');
+          if (!dialog) {
+            console.error(`[Auto-fill] Dialog for ${langName} did not appear. Skipping.`);
+            document.body.click(); // Cố gắng đóng menu ngôn ngữ nếu còn mở
+            await this.sleep(200);
+            continue;
+          }
+
+          console.log('[Auto-fill] Dialog found. Filling data...');
+
+          const jsonKey = YoutubeStudioPanel._normalizeLangKey(langName);
+          const translationData = translations ? translations[jsonKey] : null;
+
+          if (translationData) {
+            const titleInput = dialog.querySelector('#metadata-title #textbox');
+            const descInput = dialog.querySelector('#metadata-description #textbox');
+
+            YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
+            YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
+
+            // Đợi 1 giây để YouTube nhận diện thay đổi và enable nút "Publish"
+            await this.sleep(1000);
+
+            const publishBtn = dialog.querySelector('.ytgn-language-dialog-update:not([disabled])');
+            if (publishBtn) {
+              publishBtn.click();
+              console.log(`[Auto-fill] Published for ${langName}`);
+              // Đợi dialog đóng lại
+              await this.waitForElementToDisappear(`#dialog.ytcp-dialog[aria-label*="${langName}"]`);
+            } else {
+              console.warn(`[Auto-fill] Publish button not enabled for ${langName}. Closing.`);
+              dialog.querySelector('.ytgn-language-dialog-cancel')?.click();
+              await this.sleep(500);
+            }
+          } else {
+            console.warn(`[Auto-fill] No data for ${langName}. Closing dialog.`);
+            dialog.querySelector('.ytgn-language-dialog-cancel')?.click();
+            await this.sleep(500);
+          }
+        }
+      } else {
+        console.log(`⚠️ Not found or already exists: ${langName}`);
+        document.body.click();
+        await this.sleep(100);
+      }
+    }
+    alert("Finished adding all configured languages!");
+  }
+
+  // Thêm hàm helper mới
+  waitForElementToDisappear(selector, timeout = 500) {
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        if (!document.querySelector(selector)) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(); // Vẫn resolve dù hết giờ
+      }, timeout);
     });
-  }}
+  }
+}
+
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [
   ChatGPTAdapter,
