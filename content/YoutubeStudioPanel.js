@@ -239,16 +239,11 @@ window.YoutubeStudioPanel = class {
 
   fillFormWithProfile(profileName) {
     const profileData = this.profiles[profileName] || { languages: [], isAloudChannel: false, isAutofillEnabled: false };
-    const savedLangs = profileData.languages || [];
-    const isAloud = profileData.isAloudChannel || false;
-    const isAutofill = profileData.isAutofillEnabled || false; // Tải giá trị mới
-
     this.el.querySelectorAll('.yt-language-label input[type="checkbox"]').forEach(cb => {
-      cb.checked = savedLangs.includes(cb.value);
+      cb.checked = (profileData.languages || []).includes(cb.value);
     });
-    this.el.querySelector('#yt-aloud-enabled').checked = isAloud;
-    this.el.querySelector('#yt-autofill-enabled').checked = isAutofill; // Điền giá trị mới
-
+    this.el.querySelector('#yt-aloud-enabled').checked = profileData.isAloudChannel || false;
+    this.el.querySelector('#yt-autofill-enabled').checked = profileData.isAutofillEnabled || false;
     this._updateLanguageVisibility();
   }
 
@@ -262,7 +257,7 @@ window.YoutubeStudioPanel = class {
     return {
       languages: Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value),
       isAloudChannel: this.el.querySelector('#yt-aloud-enabled').checked,
-      isAutofillEnabled: this.el.querySelector('#yt-autofill-enabled').checked, // Lưu giá trị mới
+      isAutofillEnabled: this.el.querySelector('#yt-autofill-enabled').checked,
     };
   }
   saveAllDataToStorage(callback) {
@@ -371,70 +366,43 @@ window.YoutubeStudioPanel = class {
 
   startTranslationObserver() {
     if (this.translationObserver) return;
-
-    console.log("▶️ YT Panel: Translation observer v6 (Original Logic) started.");
-
-    // Hàm xử lý chung, tránh lặp code
     const handleDialog = (dialog) => {
-      // Dùng setTimeout để đảm bảo nội dung bên trong dialog đã sẵn sàng
-      setTimeout(() => this.injectAutoFillButton(dialog), 500);
+      const isAloud = dialog.matches('#dialog.ytcp-dialog');
+      setTimeout(() => this.injectAutoFillButton(dialog, isAloud), 500);
     };
-
     this.translationObserver = new MutationObserver((mutationsList) => {
       for (const mutation of mutationsList) {
-
-        // Kịch bản 1: Thuộc tính 'opened' được thêm vào một dialog đã có sẵn trong DOM.
-        // Đây là trường hợp phổ biến cho các lần mở popup thứ 2 trở đi.
         if (mutation.type === 'attributes' && mutation.attributeName === 'opened') {
           const dialog = mutation.target;
-          if (dialog.id === 'metadata-editor' && dialog.hasAttribute('opened')) {
-            console.log("Observer detected 'opened' attribute change.");
-            handleDialog(dialog);
-          }
+          if (dialog.id === 'metadata-editor' && dialog.hasAttribute('opened')) handleDialog(dialog);
         }
-
-        // Kịch bản 2: Dialog được thêm mới vào DOM (thường là lần đầu tiên).
-        // Chúng ta cần kiểm tra các node mới được thêm vào.
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-           for (const node of mutation.addedNodes) {
-             // Chỉ quan tâm đến Element node, bỏ qua text node, etc.
-             if (node.nodeType === 1) {
-                // Tìm dialog bên trong node vừa được thêm vào (hoặc chính là node đó)
-                const dialog = node.matches('#metadata-editor[opened]') ? node : node.querySelector('#metadata-editor[opened]');
-                if (dialog) {
-                    console.log("Observer detected new dialog added to DOM.");
-                    handleDialog(dialog);
-                    // Đã tìm thấy, không cần lặp qua các node khác trong mutation này
-                    break;
-                }
-             }
-           }
+        if (mutation.type === 'childList') {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === 1) {
+              const dialog = node.matches('#metadata-editor[opened], #dialog.ytcp-dialog') ? node : node.querySelector('#metadata-editor[opened], #dialog.ytcp-dialog');
+              if (dialog && (dialog.querySelector('.metadata-editor-translated') || dialog.querySelector('.ytgn-language-dialog-content'))) {
+                handleDialog(dialog);
+              }
+            }
+          }
         }
       }
     });
-
-    this.translationObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['opened']
-    });
+    this.translationObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['opened'] });
   }
 
-  // Bỏ hàm attachContentObserver() đi vì nó không còn cần thiết nữa.
   stopTranslationObserver() {
     if (this.translationObserver) {
       this.translationObserver.disconnect();
       this.translationObserver = null;
-      console.log("⏹️ YT Panel: Translation observer stopped.");
     }
   }
-
 // Thay thế hàm này trong file YoutubeStudioPanel.js
 
   // Dán toàn bộ các hàm này vào class YoutubeStudioPanel,
 // thay thế các phiên bản cũ của chúng.
 
+// === HÀM NÀY CHỈ CÓ MỘT NHIỆM VỤ: CHÈN NÚT VÀ GẮN SỰ KIỆN CLICK THỦ CÔNG ===
   injectAutoFillButton(dialog, isAloudPopup = false) {
     const buttonId = 'auto-fill-button-from-json';
     if (dialog.querySelector(`#${buttonId}`)) return;
@@ -457,25 +425,15 @@ window.YoutubeStudioPanel = class {
 
     button.addEventListener('click', async () => {
       const uiLanguageName = targetHeader.textContent.trim();
-      // Gọi hàm static
       const jsonKey = YoutubeStudioPanel._normalizeLangKey(uiLanguageName);
+      const { [this.storageKeyTranslations]: translations } = await chrome.storage.local.get(this.storageKeyTranslations);
+      const translationData = translations ? translations[jsonKey] : null;
 
-      const data = await chrome.storage.local.get(this.storageKeyTranslations);
-      const translations = data[this.storageKeyTranslations];
-
-      if (!translations) {
-        return alert("Chưa có dữ liệu JSON nào được tải lên.");
-      }
-
-      const translationData = translations[jsonKey];
       if (translationData) {
         const titleInput = dialog.querySelector(titleSelector);
         const descInput = dialog.querySelector(descSelector);
-
-        // Gọi hàm static
         YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
         YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
-
         button.textContent = '✅ Đã chèn!';
         setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 2000);
       } else {
@@ -483,7 +441,6 @@ window.YoutubeStudioPanel = class {
       }
     });
   }
-
   // Chuyển thành hàm static
   static _fillAndFireEvents(element, value) {
     if (!element) return;
