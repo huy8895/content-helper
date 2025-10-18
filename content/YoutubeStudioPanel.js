@@ -52,10 +52,12 @@ const AVAILABLE_LANGUAGES = [
 // =================================================================
 // Thay thế hằng số YTB_PANEL_HTML
 
+// Thay thế hằng số YTB_PANEL_HTML
+
 const YTB_PANEL_HTML = `
   <h3 class="ts-title">⚙️ Configure Languages & Translations</h3>
   
-  <!-- PROFILE MANAGEMENT UI (Không đổi) -->
+  <!-- PROFILE MANAGEMENT UI -->
   <div class="profile-manager">
     <select id="yt-profile-select" class="form-control"></select>
     <button id="yt-delete-profile-btn" class="ts-btn ts-btn-danger" title="Delete selected profile">🗑️</button>
@@ -64,13 +66,21 @@ const YTB_PANEL_HTML = `
     <input type="text" id="yt-new-profile-name" class="form-control" placeholder="Tên profile mới...">
     <button id="yt-save-as-new-btn" class="ts-btn">➕ Lưu mới</button>
   </div>
+  
+  <!-- === NEW: Aloud Channel Checkbox === -->
+  <div class="form-group form-check" style="margin-top: 10px;">
+    <label class="auto-set-label">
+      <input type="checkbox" id="yt-aloud-enabled">
+      Kênh có lồng tiếng tự động (Aloud)
+    </label>
+  </div>
+  <!-- === END NEW === -->
+  
   <hr class="divider">
-  <!-- END PROFILE UI -->
-
+  
   <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
   <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
   
-  <!-- === NEW: LANGUAGE LIST TOOLBAR === -->
   <div class="yt-language-controls">
     <label class="yt-filter-label">
       <input type="checkbox" id="yt-filter-selected">
@@ -78,11 +88,9 @@ const YTB_PANEL_HTML = `
     </label>
     <button id="yt-copy-selected-btn" class="ts-btn">📋 Copy Selected</button>
   </div>
-  <!-- === END NEW === -->
   
   <div id="yt-language-checkbox-container"></div>
   
-  <!-- JSON UPLOAD UI (Không đổi) -->
   <hr class="divider">
   <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
     📂 Tải lên file JSON Dịch thuật
@@ -90,7 +98,6 @@ const YTB_PANEL_HTML = `
   <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
   <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
   <hr class="divider">
-  <!-- END JSON UI -->
   
   <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
 `;
@@ -207,7 +214,7 @@ window.YoutubeStudioPanel = class {
       } catch (err) { console.error("❌ YT Panel: Error loading from Firestore:", err); }
     }
 
-    this.profiles = localData.profiles || { 'default': [] };
+    this.profiles = localData.profiles || { 'default': { languages: [], isAloudChannel: false } };
     this.activeProfileName = localData.activeProfileName || 'default';
     this.updateProfileDropdown();
     this.fillFormWithProfile(this.activeProfileName);
@@ -226,10 +233,17 @@ window.YoutubeStudioPanel = class {
   }
 
   fillFormWithProfile(profileName) {
-    const savedLangs = this.profiles[profileName] || [];
+    const profileData = this.profiles[profileName] || { languages: [], isAloudChannel: false };
+    const savedLangs = profileData.languages || [];
+    const isAloud = profileData.isAloudChannel || false;
+
     this.el.querySelectorAll('.yt-language-label input[type="checkbox"]').forEach(cb => {
       cb.checked = savedLangs.includes(cb.value);
     });
+    this.el.querySelector('#yt-aloud-enabled').checked = isAloud;
+
+    // Sau khi điền form, cập nhật lại hiển thị
+    this._updateLanguageVisibility();
   }
 
   switchProfile(profileName) {
@@ -239,7 +253,14 @@ window.YoutubeStudioPanel = class {
   }
 
   collectDataFromForm() {
-    return Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value);
+    const selectedLanguages = Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value);
+    const isAloudChannel = this.el.querySelector('#yt-aloud-enabled').checked;
+
+    // Trả về một object thay vì chỉ là mảng
+    return {
+      languages: selectedLanguages,
+      isAloudChannel: isAloudChannel,
+    };
   }
 
   saveAllDataToStorage(callback) {

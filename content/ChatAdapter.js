@@ -543,47 +543,56 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   }
 
   // Hàm addMyLanguages giữ nguyên không đổi
+// Thay thế hàm này trong class YoutubeStudioAdapter
+
   async addMyLanguages() {
     const addLanguageBtn = this._q('#add-translations-button');
     if (!addLanguageBtn) {
       return alert("Cannot find the 'Add language' button!");
     }
 
-    // Key để đọc toàn bộ cấu trúc profile
     const storageKey = 'youtube_language_profiles';
 
     chrome.storage.local.get([storageKey], async (result) => {
       const data = result[storageKey] || {};
       const activeProfileName = data.activeProfileName || 'default';
-      const LANGUAGES_TO_ADD = (data.profiles || {})[activeProfileName] || [];
+      const activeProfile = (data.profiles || {})[activeProfileName] || {};
+
+      const LANGUAGES_TO_ADD = activeProfile.languages || [];
+      const isAloudChannel = activeProfile.isAloudChannel || false;
 
       if (LANGUAGES_TO_ADD.length === 0) {
-        return alert(
-            `No languages configured for the active profile "${activeProfileName}".\nClick "⚙️ Configure" to select languages.`);
+        return alert(`No languages configured for the active profile "${activeProfileName}".`);
       }
 
-      console.log(
-          `Starting to add ${LANGUAGES_TO_ADD.length} languages for profile "${activeProfileName}"...`);
+      console.log(`Starting to add ${LANGUAGES_TO_ADD.length} languages for profile "${activeProfileName}". Aloud mode: ${isAloudChannel}`);
 
-      const AWAIT_MS = 10;
+      // === LOGIC CHỌN SELECTOR ĐỘNG ===
+      const itemSelector = isAloudChannel
+          ? 'yt-formatted-string.item-text' // Selector cho kênh CÓ lồng tiếng
+          : 'tp-yt-paper-item .item-text';  // Selector cho kênh KHÔNG có lồng tiếng
+
+      console.log('Using selector:', itemSelector);
+      // === KẾT THÚC LOGIC CHỌN SELECTOR ===
+
+      const AWAIT_MS = 150; // Tăng độ trễ một chút cho ổn định
       for (const langName of LANGUAGES_TO_ADD) {
         addLanguageBtn.click();
         await this.sleep(AWAIT_MS);
 
-        const allItems = document.querySelectorAll(
-            'tp-yt-paper-item .item-text');
+        // Sử dụng selector đã được chọn
+        const allItems = document.querySelectorAll(itemSelector);
         let foundItem = null;
 
         for (const item of allItems) {
-          if (item.textContent.trim().toLowerCase()
-              === langName.toLowerCase()) {
+          if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
             const clickableParent = item.closest('tp-yt-paper-item');
             if (clickableParent && !clickableParent.hasAttribute('disabled')) {
               foundItem = clickableParent;
               break;
             } else {
-              foundItem = 'DISABLED'; // Đã tồn tại, không thể thêm
-              document.body.click(); // Đóng menu
+              foundItem = 'DISABLED';
+              document.body.click();
               await this.sleep(AWAIT_MS / 2);
               break;
             }
@@ -594,16 +603,15 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
           foundItem.click();
           console.log(`✅ Added: ${langName}`);
           await this.sleep(AWAIT_MS);
-        } else if (!foundItem) {
+        } else {
           console.log(`⚠️ Not found or already exists: ${langName}`);
-          document.body.click(); // Đóng menu nếu không tìm thấy
+          document.body.click();
           await this.sleep(AWAIT_MS / 2);
         }
       }
       alert("Finished adding configured languages!");
     });
-  }
-}
+  }}
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [
   ChatGPTAdapter,
