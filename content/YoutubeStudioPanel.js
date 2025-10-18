@@ -52,10 +52,11 @@ const AVAILABLE_LANGUAGES = [
 // =================================================================
 // Thay thế hằng số YTB_PANEL_HTML
 
+
 const YTB_PANEL_HTML = `
   <h3 class="ts-title">⚙️ Configure Languages & Translations</h3>
   
-  <!-- PROFILE MANAGEMENT UI (Không đổi) -->
+  <!-- Profile Management -->
   <div class="profile-manager">
     <select id="yt-profile-select" class="form-control"></select>
     <button id="yt-delete-profile-btn" class="ts-btn ts-btn-danger" title="Delete selected profile">🗑️</button>
@@ -64,13 +65,27 @@ const YTB_PANEL_HTML = `
     <input type="text" id="yt-new-profile-name" class="form-control" placeholder="Tên profile mới...">
     <button id="yt-save-as-new-btn" class="ts-btn">➕ Lưu mới</button>
   </div>
+  
+  <!-- Channel Type Options -->
+  <div class="form-group form-check" style="margin-top: 10px;">
+    <label class="auto-set-label">
+      <input type="checkbox" id="yt-aloud-enabled">
+      Kênh có lồng tiếng tự động (Aloud)
+    </label>
+  </div>
+  <!-- === NEW: Auto-fill Checkbox === -->
+  <div class="form-group form-check" style="margin-bottom: 10px;">
+    <label class="auto-set-label">
+      <input type="checkbox" id="yt-autofill-enabled">
+      Tự động điền & Lưu (cho kênh Aloud)
+    </label>
+  </div>
+  
   <hr class="divider">
-  <!-- END PROFILE UI -->
-
+  
+  <!-- Language Selection -->
   <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
   <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
-  
-  <!-- === NEW: LANGUAGE LIST TOOLBAR === -->
   <div class="yt-language-controls">
     <label class="yt-filter-label">
       <input type="checkbox" id="yt-filter-selected">
@@ -78,11 +93,9 @@ const YTB_PANEL_HTML = `
     </label>
     <button id="yt-copy-selected-btn" class="ts-btn">📋 Copy Selected</button>
   </div>
-  <!-- === END NEW === -->
-  
   <div id="yt-language-checkbox-container"></div>
   
-  <!-- JSON UPLOAD UI (Không đổi) -->
+  <!-- JSON Upload -->
   <hr class="divider">
   <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
     📂 Tải lên file JSON Dịch thuật
@@ -90,7 +103,6 @@ const YTB_PANEL_HTML = `
   <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
   <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
   <hr class="divider">
-  <!-- END JSON UI -->
   
   <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
 `;
@@ -189,9 +201,13 @@ window.YoutubeStudioPanel = class {
   }
   // --- PROFILE MANAGEMENT LOGIC (Tái sử dụng từ GoogleAIStudioPanel) ---
 
+// Thay thế hàm này trong YoutubeStudioPanel.js
   async loadProfiles() {
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
-    let localData = (await chrome.storage.local.get(this.storageKey))[this.storageKey] || {};
+    const localData = (await chrome.storage.local.get(this.storageKey))[this.storageKey] || {};
+    const localActiveProfile = localData.activeProfileName || 'default'; // Lưu lại active profile của máy này
+
+    let dataToProcess = localData;
 
     if (userId) {
       console.log("☁️ YT Panel: Attempting to load profiles from Firestore...");
@@ -201,14 +217,20 @@ window.YoutubeStudioPanel = class {
         const firestoreData = await helper.loadUserConfig(userId);
         if (firestoreData && firestoreData.profiles) {
           console.log("☁️ YT Panel: Loaded profiles from Firestore.");
-          localData = firestoreData;
-          await chrome.storage.local.set({ [this.storageKey]: firestoreData });
+          // Ghi đè profiles từ firestore, nhưng giữ lại active name của local
+          dataToProcess = {
+            profiles: firestoreData.profiles,
+            activeProfileName: localActiveProfile
+          };
+          this.profiles = dataToProcess.profiles;
+          this.activeProfileName = dataToProcess.activeProfileName;
+          this.saveAllDataToStorage();
         }
       } catch (err) { console.error("❌ YT Panel: Error loading from Firestore:", err); }
     }
 
-    this.profiles = localData.profiles || { 'default': [] };
-    this.activeProfileName = localData.activeProfileName || 'default';
+    this.profiles = dataToProcess.profiles || { 'default': { languages: [], isAloudChannel: false, isAutofillEnabled: false } };
+    this.activeProfileName = dataToProcess.activeProfileName || 'default';
     this.updateProfileDropdown();
     this.fillFormWithProfile(this.activeProfileName);
   }
@@ -226,28 +248,34 @@ window.YoutubeStudioPanel = class {
   }
 
   fillFormWithProfile(profileName) {
-    const savedLangs = this.profiles[profileName] || [];
+    const profileData = this.profiles[profileName] || { languages: [], isAloudChannel: false, isAutofillEnabled: false };
     this.el.querySelectorAll('.yt-language-label input[type="checkbox"]').forEach(cb => {
-      cb.checked = savedLangs.includes(cb.value);
+      cb.checked = (profileData.languages || []).includes(cb.value);
     });
+    this.el.querySelector('#yt-aloud-enabled').checked = profileData.isAloudChannel || false;
+    this.el.querySelector('#yt-autofill-enabled').checked = profileData.isAutofillEnabled || false;
+    this._updateLanguageVisibility();
   }
 
   switchProfile(profileName) {
     this.activeProfileName = profileName;
     this.fillFormWithProfile(profileName);
-    this.saveAllDataToStorage();
+    this.saveAllDataToStorage(); // Chỉ lưu vào local
   }
-
   collectDataFromForm() {
-    return Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value);
+    return {
+      languages: Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value),
+      isAloudChannel: this.el.querySelector('#yt-aloud-enabled').checked,
+      isAutofillEnabled: this.el.querySelector('#yt-autofill-enabled').checked,
+    };
   }
-
   saveAllDataToStorage(callback) {
     const dataToSave = {
       profiles: this.profiles,
       activeProfileName: this.activeProfileName,
     };
     chrome.storage.local.set({ [this.storageKey]: dataToSave }, callback);
+    // Tách việc sync ra
     this._syncToFirestore();
   }
 
@@ -286,18 +314,18 @@ window.YoutubeStudioPanel = class {
     }
   }
 
+  // Thay thế hàm này trong YoutubeStudioPanel.js
   async _syncToFirestore() {
+    console.log("☁️ YT Panel: Syncing PROFILES ONLY to Firestore...");
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
     if (!userId) return;
 
     const helper = new FirestoreHelper(firebaseConfig);
     helper.collection = 'youtube_language_profiles';
     try {
-      const dataToSync = {
-        profiles: this.profiles,
-        activeProfileName: this.activeProfileName,
-      };
-      await helper.saveUserConfig(userId, dataToSync);
+      // Chỉ đồng bộ object profiles
+      await helper.saveUserConfig(userId, { profiles: this.profiles });
+      console.log("☁️ YT Panel: Profiles synced successfully.");
     } catch (err) {
       console.error("❌ YT Panel: Error syncing to Firestore:", err);
     }
@@ -348,118 +376,130 @@ window.YoutubeStudioPanel = class {
 
   startTranslationObserver() {
     if (this.translationObserver) return;
-
-    console.log("▶️ YT Panel: Translation observer v6 (Original Logic) started.");
-
-    // Hàm xử lý chung, tránh lặp code
     const handleDialog = (dialog) => {
-      // Dùng setTimeout để đảm bảo nội dung bên trong dialog đã sẵn sàng
-      setTimeout(() => this.injectAutoFillButton(dialog), 500);
+      const isAloud = dialog.matches('#dialog.ytcp-dialog');
+      setTimeout(() => this.injectAutoFillButton(dialog, isAloud), 500);
     };
-
     this.translationObserver = new MutationObserver((mutationsList) => {
       for (const mutation of mutationsList) {
-
-        // Kịch bản 1: Thuộc tính 'opened' được thêm vào một dialog đã có sẵn trong DOM.
-        // Đây là trường hợp phổ biến cho các lần mở popup thứ 2 trở đi.
         if (mutation.type === 'attributes' && mutation.attributeName === 'opened') {
           const dialog = mutation.target;
-          if (dialog.id === 'metadata-editor' && dialog.hasAttribute('opened')) {
-            console.log("Observer detected 'opened' attribute change.");
-            handleDialog(dialog);
-          }
+          if (dialog.id === 'metadata-editor' && dialog.hasAttribute('opened')) handleDialog(dialog);
         }
-
-        // Kịch bản 2: Dialog được thêm mới vào DOM (thường là lần đầu tiên).
-        // Chúng ta cần kiểm tra các node mới được thêm vào.
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-           for (const node of mutation.addedNodes) {
-             // Chỉ quan tâm đến Element node, bỏ qua text node, etc.
-             if (node.nodeType === 1) {
-                // Tìm dialog bên trong node vừa được thêm vào (hoặc chính là node đó)
-                const dialog = node.matches('#metadata-editor[opened]') ? node : node.querySelector('#metadata-editor[opened]');
-                if (dialog) {
-                    console.log("Observer detected new dialog added to DOM.");
-                    handleDialog(dialog);
-                    // Đã tìm thấy, không cần lặp qua các node khác trong mutation này
-                    break;
-                }
-             }
-           }
+        if (mutation.type === 'childList') {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === 1) {
+              const dialog = node.matches('#metadata-editor[opened], #dialog.ytcp-dialog') ? node : node.querySelector('#metadata-editor[opened], #dialog.ytcp-dialog');
+              if (dialog && (dialog.querySelector('.metadata-editor-translated') || dialog.querySelector('.ytgn-language-dialog-content'))) {
+                handleDialog(dialog);
+              }
+            }
+          }
         }
       }
     });
-
-    this.translationObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['opened']
-    });
+    this.translationObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['opened'] });
   }
 
-  // Bỏ hàm attachContentObserver() đi vì nó không còn cần thiết nữa.
   stopTranslationObserver() {
     if (this.translationObserver) {
       this.translationObserver.disconnect();
       this.translationObserver = null;
-      console.log("⏹️ YT Panel: Translation observer stopped.");
     }
   }
-
 // Thay thế hàm này trong file YoutubeStudioPanel.js
 
-  injectAutoFillButton(dialog) {
-    const popupContent = dialog.querySelector('#metadata-editor-wrapper');
-    if (!popupContent || popupContent.querySelector('#auto-fill-button-from-json')) {
-      return;
-    }
+  // Dán toàn bộ các hàm này vào class YoutubeStudioPanel,
+// thay thế các phiên bản cũ của chúng.
+
+// === HÀM NÀY CHỈ CÓ MỘT NHIỆM VỤ: CHÈN NÚT VÀ GẮN SỰ KIỆN CLICK THỦ CÔNG ===
+  async injectAutoFillButton(dialog, isAloudPopup = false) {
+    const buttonId = 'auto-fill-button-from-json';
+    if (dialog.querySelector(`#${buttonId}`)) return;
+
+    // Xác định selectors
+    const headerSelector = isAloudPopup ? 'h1.ytgn-language-dialog-title' : '.metadata-editor-translated .language-header';
+    const titleSelector = isAloudPopup ? '#metadata-title #textbox' : '#translated-title textarea';
+    const descSelector = isAloudPopup ? '#metadata-description #textbox' : '#translated-description textarea';
+    const publishBtnSelector = isAloudPopup ? '.ytgn-language-dialog-update' : '#publish-button';
+
+    const targetHeader = dialog.querySelector(headerSelector);
+    if (!targetHeader) return;
 
     const button = document.createElement('button');
-    button.id = 'auto-fill-button-from-json';
+    button.id = buttonId;
     button.textContent = '🚀 Chèn từ JSON';
     button.className = 'scenario-btn btn-tool';
     button.style.marginLeft = '10px';
+    const buttonContainer = dialog.querySelector('section[slot="secondary-header"]') || targetHeader.parentElement;
+    buttonContainer.appendChild(button);
 
-    const targetHeader = popupContent.querySelector('.metadata-editor-translated .language-header');
-    if (!targetHeader) return;
-    targetHeader.parentElement.appendChild(button);
+    // Lấy thông tin profile hiện tại để kiểm tra cài đặt auto-fill
+    const { [this.storageKeyProfiles]: profileData } = await chrome.storage.local.get(this.storageKeyProfiles);
+    const activeProfileName = profileData?.activeProfileName || 'default';
+    const activeProfile = profileData?.profiles?.[activeProfileName] || {};
+    const isAutofillEnabledForProfile = activeProfile.isAutofillEnabled || false;
 
+    // Sự kiện click của nút
     button.addEventListener('click', async () => {
       const uiLanguageName = targetHeader.textContent.trim();
-      // === SỬ DỤNG HÀM CHUẨN HÓA ===
-      const jsonKey = this._normalizeLangKey(uiLanguageName);
+      const jsonKey = YoutubeStudioPanel._normalizeLangKey(uiLanguageName);
+      const { [this.storageKeyTranslations]: translations } = await chrome.storage.local.get(this.storageKeyTranslations);
+      const translationData = translations ? translations[jsonKey] : null;
 
-      const data = await chrome.storage.local.get(this.storageKeyTranslations);
-      const translations = data[this.storageKeyTranslations];
-
-      if (!translations) {
-        return alert("Chưa có dữ liệu JSON nào được tải lên.");
-      }
-
-      const translationData = translations[jsonKey];
       if (translationData) {
-        const { title, description } = translationData;
-        const titleTextarea = popupContent.querySelector('#translated-title textarea');
-        const descTextarea = popupContent.querySelector('#translated-description textarea');
-        this._fillAndFireEvents(titleTextarea, title);
-        this._fillAndFireEvents(descTextarea, description);
+        const titleInput = dialog.querySelector(titleSelector);
+        const descInput = dialog.querySelector(descSelector);
+        YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
+        YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
+
         button.textContent = '✅ Đã chèn!';
-        setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 2000);
+        setTimeout(() => button.textContent = '🚀 Chèn từ JSON', 200);
+
+        // === LOGIC TỰ ĐỘNG LƯU MỚI ===
+        // Áp dụng cho MỌI TRƯỜNG HỢP nếu isAutofillEnabledForProfile là true
+        if (isAutofillEnabledForProfile) {
+          console.log('[Auto-publish] Auto-fill enabled. Waiting to click Publish...');
+
+          // Đợi 1 giây để YouTube nhận diện thay đổi
+          await new Promise(r => setTimeout(r, 100));
+
+          const publishBtn = dialog.querySelector(`${publishBtnSelector}:not([disabled])`);
+          if (publishBtn) {
+            console.log('[Auto-publish] Found enabled Publish/Update button. Clicking...');
+            publishBtn.click();
+          } else {
+            console.warn('[Auto-publish] Could not find enabled Publish/Update button after waiting.');
+          }
+        }
+        // === KẾT THÚC LOGIC MỚI ===
 
       } else {
-        alert(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key đã chuẩn hóa: '${jsonKey}').`);
+        alert(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key: '${jsonKey}').`);
       }
     });
-  }
 
-  _fillAndFireEvents(element, value) {
+    // Bỏ logic auto-click cũ. Hàm addMyLanguages sẽ xử lý việc đó cho kênh Aloud.
+    // Logic auto-publish giờ đã nằm trong event listener của nút.
+  }  // Chuyển thành hàm static
+  static _fillAndFireEvents(element, value) {
     if (!element) return;
+    const formattedValue = String(value || '').replace(/\\n/g, '\n');
     element.focus();
-    element.value = value;
+    if (element.tagName === 'TEXTAREA') {
+      element.value = formattedValue;
+    } else {
+      element.textContent = formattedValue;
+    }
     element.dispatchEvent(new Event('input', { bubbles: true }));
     element.dispatchEvent(new Event('change', { bubbles: true }));
     element.blur();
+  }
+
+  // Chuyển thành hàm static
+  static _normalizeLangKey(langName) {
+    if (typeof langName !== 'string') return '';
+    return langName.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   // Thêm hàm mới này vào class YoutubeStudioPanel
