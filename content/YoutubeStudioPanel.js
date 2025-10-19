@@ -201,13 +201,9 @@ window.YoutubeStudioPanel = class {
   }
   // --- PROFILE MANAGEMENT LOGIC (Tái sử dụng từ GoogleAIStudioPanel) ---
 
-// Thay thế hàm này trong YoutubeStudioPanel.js
   async loadProfiles() {
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
-    const localData = (await chrome.storage.local.get(this.storageKey))[this.storageKey] || {};
-    const localActiveProfile = localData.activeProfileName || 'default'; // Lưu lại active profile của máy này
-
-    let dataToProcess = localData;
+    let localData = (await chrome.storage.local.get(this.storageKey))[this.storageKey] || {};
 
     if (userId) {
       console.log("☁️ YT Panel: Attempting to load profiles from Firestore...");
@@ -217,20 +213,14 @@ window.YoutubeStudioPanel = class {
         const firestoreData = await helper.loadUserConfig(userId);
         if (firestoreData && firestoreData.profiles) {
           console.log("☁️ YT Panel: Loaded profiles from Firestore.");
-          // Ghi đè profiles từ firestore, nhưng giữ lại active name của local
-          dataToProcess = {
-            profiles: firestoreData.profiles,
-            activeProfileName: localActiveProfile
-          };
-          this.profiles = dataToProcess.profiles;
-          this.activeProfileName = dataToProcess.activeProfileName;
-          this.saveAllDataToStorage();
+          localData = firestoreData;
+          await chrome.storage.local.set({ [this.storageKey]: firestoreData });
         }
       } catch (err) { console.error("❌ YT Panel: Error loading from Firestore:", err); }
     }
 
-    this.profiles = dataToProcess.profiles || { 'default': { languages: [], isAloudChannel: false, isAutofillEnabled: false } };
-    this.activeProfileName = dataToProcess.activeProfileName || 'default';
+    this.profiles = localData.profiles || { 'default': { languages: [], isAloudChannel: false, isAutofillEnabled: false } };
+    this.activeProfileName = localData.activeProfileName || 'default';
     this.updateProfileDropdown();
     this.fillFormWithProfile(this.activeProfileName);
   }
@@ -260,8 +250,9 @@ window.YoutubeStudioPanel = class {
   switchProfile(profileName) {
     this.activeProfileName = profileName;
     this.fillFormWithProfile(profileName);
-    this.saveAllDataToStorage(); // Chỉ lưu vào local
+    this.saveAllDataToStorage();
   }
+
   collectDataFromForm() {
     return {
       languages: Array.from(this.el.querySelectorAll('.yt-language-label input:checked')).map(cb => cb.value),
@@ -275,7 +266,6 @@ window.YoutubeStudioPanel = class {
       activeProfileName: this.activeProfileName,
     };
     chrome.storage.local.set({ [this.storageKey]: dataToSave }, callback);
-    // Tách việc sync ra
     this._syncToFirestore();
   }
 
@@ -314,18 +304,18 @@ window.YoutubeStudioPanel = class {
     }
   }
 
-  // Thay thế hàm này trong YoutubeStudioPanel.js
   async _syncToFirestore() {
-    console.log("☁️ YT Panel: Syncing PROFILES ONLY to Firestore...");
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
     if (!userId) return;
 
     const helper = new FirestoreHelper(firebaseConfig);
     helper.collection = 'youtube_language_profiles';
     try {
-      // Chỉ đồng bộ object profiles
-      await helper.saveUserConfig(userId, { profiles: this.profiles });
-      console.log("☁️ YT Panel: Profiles synced successfully.");
+      const dataToSync = {
+        profiles: this.profiles,
+        activeProfileName: this.activeProfileName,
+      };
+      await helper.saveUserConfig(userId, dataToSync);
     } catch (err) {
       console.error("❌ YT Panel: Error syncing to Firestore:", err);
     }
