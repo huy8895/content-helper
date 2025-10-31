@@ -57,10 +57,17 @@
       className: "scenario-btn btn-tool",
       onClick: () => {
         // Gọi đến một hàm của adapter hiện tại
-        if (window.ChatAdapter && typeof window.ChatAdapter.collapseAllCodeBlocks === 'function') {
+        if (window.ChatAdapter
+            && typeof window.ChatAdapter.collapseAllCodeBlocks === 'function') {
           window.ChatAdapter.collapseAllCodeBlocks();
         }
       },
+    },
+    YT_STUDIO_SETTINGS: {
+      id: "chatgpt-ytstudio-settings-button",
+      text: "🎬 YT Studio",
+      className: "scenario-btn btn-tool",
+      onClick: () => window.__helperInjected?._toggleYoutubePanel(),
     },
   };
 /* ---------------------------  Base (Abstract)  --------------------------- */
@@ -442,7 +449,8 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
       BUTTONS.AI_STUDIO_SETTINGS,
-      BUTTONS.COLLAPSE_CODE
+      BUTTONS.COLLAPSE_CODE,
+      BUTTONS.YT_STUDIO_SETTINGS,
     ];
   }
 

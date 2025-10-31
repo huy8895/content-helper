@@ -29,6 +29,9 @@ class ChatGPTHelper {
     /** @type {GoogleAIStudioPanel|null} */
     this.aiStudioSettings = null; // 👈 Thêm thuộc tính mới
 
+    /** @type {YoutubeStudioPanel|null} */
+    this.youtubePanel = null; // <-- Thêm dòng này
+
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => {
           if (window.ChatAdapter) {
@@ -124,7 +127,6 @@ class ChatGPTHelper {
         () => (this.contentCopyPanel = null));
   }
 
-// 👇 Thêm hàm toggle mới này vào class ChatGPTHelper
   _toggleAIStudioSettings() {
     if (this.aiStudioSettings) {
       this.aiStudioSettings.destroy();
@@ -132,6 +134,20 @@ class ChatGPTHelper {
       return;
     }
     this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
+  }
+
+  _toggleYoutubePanel() {
+    if (this.youtubePanel) {
+      this.youtubePanel.destroy();
+      this.youtubePanel = null;
+      return;
+    }
+    if (window.YoutubeStudioPanel) {
+      this.youtubePanel = new YoutubeStudioPanel(
+          () => (this.youtubePanel = null));
+    } else {
+      alert("Lỗi: Không tìm thấy YoutubeStudioPanel.");
+    }
   }
 
 

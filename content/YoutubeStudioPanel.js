@@ -122,7 +122,10 @@ window.YoutubeStudioPanel = class {
 
     this._render();
     this.loadProfiles();
-    this.startTranslationObserver(); // Bắt đầu theo dõi popup
+
+    if (window.location.hostname.includes('studio.youtube.com')) {
+      this.startTranslationObserver();
+    }
   }
 
 // Thay thế hàm _render()
@@ -155,6 +158,7 @@ window.YoutubeStudioPanel = class {
     this.attachEvents();
   }
   destroy() {
+    this.stopTranslationObserver();
     this.el?.remove();
     this.onClose?.();
   }
