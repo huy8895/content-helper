@@ -13,63 +13,63 @@
 //   chat.getSendBtn()?.click();
 // ----------------------------------------------------------------------------
 
-  // Các button chung (dùng cho mọi adapter)
-  BUTTONS = {
-    MANAGE_SCENARIO: {
-      id: "chatgpt-helper-button",
-      text: "🛠 Quản lý kịch bản",
-      className: "scenario-btn btn-setup",
-      onClick: () => window.__helperInjected?._toggleBuilder(),
+// Các button chung (dùng cho mọi adapter)
+BUTTONS = {
+  MANAGE_SCENARIO: {
+    id: "chatgpt-helper-button",
+    text: "🛠 Quản lý kịch bản",
+    className: "scenario-btn btn-setup",
+    onClick: () => window.__helperInjected?._toggleBuilder(),
+  },
+  RUN_SCENARIO: {
+    id: "chatgpt-run-button",
+    text: "📤 Chạy kịch bản",
+    className: "scenario-btn btn-run",
+    onClick: () => window.__helperInjected?._toggleRunner(),
+  },
+  COPY_CONTENT: {
+    id: "chatgpt-copy-content-button",
+    text: "📋 Copy Content",
+    className: "scenario-btn btn-tool",
+    onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
+  },
+  SPLITTER: {
+    id: "chatgpt-splitter-button",
+    text: "✂️ Text Split",
+    className: "scenario-btn btn-tool",
+    onClick: () => window.__helperInjected?._toggleSplitter(),
+  },
+  AUDIO: {
+    id: "chatgpt-audio-button",
+    text: "🎵 Audio",
+    className: "scenario-btn btn-tool",
+    onClick: () => window.__helperInjected?._toggleAudioDownloader(),
+  },
+  AI_STUDIO_SETTINGS: {
+    id: "chatgpt-aistudio-settings-button",
+    text: "⚙️ AI Studio Settings",
+    className: "scenario-btn btn-tool",
+    onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
+  },
+  COLLAPSE_CODE: {
+    id: "chatgpt-collapse-code-button",
+    text: "Collapse Code",
+    className: "scenario-btn btn-tool",
+    onClick: () => {
+      // Gọi đến một hàm của adapter hiện tại
+      if (window.ChatAdapter
+        && typeof window.ChatAdapter.collapseAllCodeBlocks === 'function') {
+        window.ChatAdapter.collapseAllCodeBlocks();
+      }
     },
-    RUN_SCENARIO: {
-      id: "chatgpt-run-button",
-      text: "📤 Chạy kịch bản",
-      className: "scenario-btn btn-run",
-      onClick: () => window.__helperInjected?._toggleRunner(),
-    },
-    COPY_CONTENT: {
-      id: "chatgpt-copy-content-button",
-      text: "📋 Copy Content",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
-    },
-    SPLITTER: {
-      id: "chatgpt-splitter-button",
-      text: "✂️ Text Split",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleSplitter(),
-    },
-    AUDIO: {
-      id: "chatgpt-audio-button",
-      text: "🎵 Audio",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleAudioDownloader(),
-    },
-    AI_STUDIO_SETTINGS: {
-      id: "chatgpt-aistudio-settings-button",
-      text: "⚙️ AI Studio Settings",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
-    },
-    COLLAPSE_CODE: {
-      id: "chatgpt-collapse-code-button",
-      text: "Collapse Code",
-      className: "scenario-btn btn-tool",
-      onClick: () => {
-        // Gọi đến một hàm của adapter hiện tại
-        if (window.ChatAdapter
-            && typeof window.ChatAdapter.collapseAllCodeBlocks === 'function') {
-          window.ChatAdapter.collapseAllCodeBlocks();
-        }
-      },
-    },
-    YT_STUDIO_SETTINGS: {
-      id: "chatgpt-ytstudio-settings-button",
-      text: "🎬 YT Studio",
-      className: "scenario-btn btn-tool",
-      onClick: () => window.__helperInjected?._toggleYoutubePanel(),
-    },
-  };
+  },
+  YT_STUDIO_SETTINGS: {
+    id: "chatgpt-ytstudio-settings-button",
+    text: "🎬 YT Studio",
+    className: "scenario-btn btn-tool",
+    onClick: () => window.__helperInjected?._toggleYoutubePanel(),
+  },
+};
 /* ---------------------------  Base (Abstract)  --------------------------- */
 class BaseChatAdapter {
   constructor() {
@@ -86,13 +86,13 @@ class BaseChatAdapter {
 
   /* ---- Mandatory interface (override in subclass) ---- */
   getTextarea() { return null; }
-  getContentElements(){ return null; }
-  getSendBtn()  { return null; }
-  isDone()  { return null; }
+  getContentElements() { return null; }
+  getSendBtn() { return null; }
+  isDone() { return null; }
 
   /* ---- Optional interface (override if the site supports it) ---- */
-  getForm()     { return this.getTextarea() }
-  getStopBtn()  { return null; }
+  getForm() { return this.getTextarea() }
+  getStopBtn() { return null; }
   getVoiceBtn() { return null; }
 
   /* ---- Convenience helpers (shared across all adapters) ---- */
@@ -168,8 +168,8 @@ class ChatGPTAdapter extends BaseChatAdapter {
   getTextarea() {
     return this._q("#prompt-textarea")
   }
-  getSendBtn()  { return this._q('button[aria-label="Send prompt"]'); }
-  getStopBtn()  { return this._q('button[aria-label="Stop generating"]'); }
+  getSendBtn() { return this._q('button[aria-label="Send prompt"]'); }
+  getStopBtn() { return this._q('button[aria-label="Stop generating"]'); }
   getVoiceBtn() { return this._q('button[aria-label="Start voice mode"]'); }
 
   isDone() {
@@ -177,16 +177,16 @@ class ChatGPTAdapter extends BaseChatAdapter {
     const sendBtn = this.getSendBtn();
     const voiceBtn = this.getVoiceBtn();
     const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn
-        && voiceBtn);
+      && voiceBtn);
     return done;
   }
   getForm() {
     return this.getTextarea()?.closest("form") ?? null;
   }
 
-  getContentElements(){
+  getContentElements() {
     return Array.from(document.getElementsByClassName(
-        'markdown prose dark:prose-invert w-full break-words'));
+      'markdown prose dark:prose-invert w-full break-words'));
   }
 
 
@@ -211,18 +211,18 @@ class DeepSeekAdapter extends BaseChatAdapter {
     const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
     this.countDivContent = elementHTMLCollectionOf.length;
   }
-  getTextarea () {
+  getTextarea() {
     // phần tử nhập chat duy nhất của DeepSeek
     return this._q('textarea#chat-input');
   }
-  getSendBtn () {
+  getSendBtn() {
     const root = this.getForm();
     if (!root) return null;
 
     /* trong root có nhiều [role="button"]; send-btn luôn là PHẦN TỬ CUỐI
        có thuộc tính aria-disabled (true/false).  Chọn nút đó để click. */
     const btns = [...root.querySelectorAll('[role="button"][aria-disabled]')];
-    const btn  = btns.at(-1) || null;     // nút cuối là Send
+    const btn = btns.at(-1) || null;     // nút cuối là Send
 
     // Bọc thuộc tính disabled để ScenarioRunner đọc được
     if (btn && btn.disabled === undefined) {
@@ -257,13 +257,13 @@ class DeepSeekAdapter extends BaseChatAdapter {
   }  // DeepSeek places everything inside a <form>; inherit default getForm()
 
   isDone() {
-      console.log('check isDone times: ', this.timesCheckDone);
-      const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
-      if(this.countDivContent + 1 === elementHTMLCollectionOf.length) {
-        this.countDivContent ++;
-        console.log('isDone return true', this.countDivContent);
-        return true;
-      }
+    console.log('check isDone times: ', this.timesCheckDone);
+    const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
+    if (this.countDivContent + 1 === elementHTMLCollectionOf.length) {
+      this.countDivContent++;
+      console.log('isDone return true', this.countDivContent);
+      return true;
+    }
     console.log('isDone return false')
     return false;
   }
@@ -282,20 +282,20 @@ class DeepSeekAdapter extends BaseChatAdapter {
 /* ----------------------------  qwen.ai  ----------------------------- */
 class QwenAdapter extends BaseChatAdapter {
   /** Khớp domain Qwen */
-  static matches (host) { return /(?:qwen\.ai)$/i.test(host); }
+  static matches(host) { return /(?:qwen\.ai)$/i.test(host); }
 
   /** Ô nhập prompt */
-  getTextarea () {
+  getTextarea() {
     return this._q('#chat-input');
   }
 
   /** Nút GỬI – luôn có id cố định */
-  getSendBtn () {
+  getSendBtn() {
     return this._q('#send-message-button');
   }
 
   /** Nút STOP khi đang sinh lời đáp */
-  getStopBtn () {
+  getStopBtn() {
     // Qwen không đặt id, nhưng icon bên trong có class "icon-StopIcon"
     const icon = this._q('button i.icon-StopIcon');
     return icon ? icon.closest('button') : null;
@@ -306,19 +306,19 @@ class QwenAdapter extends BaseChatAdapter {
    *   – KHÔNG còn nút stop, và
    *   – Nút send tồn tại & đang disabled
    */
-  isDone () {
+  isDone() {
     const stopBtn = this.getStopBtn();
     const sendBtn = this.getSendBtn();
     return !stopBtn && sendBtn && sendBtn.disabled;
   }
 
   /** Form bao quanh textarea (dùng để submit) */
-  getForm () {
+  getForm() {
     return this._q('.chat-message-input-container-inner');
   }
 
   /** Phần HTML chứa nội dung phản hồi của bot (markdown) */
-  getContentElements () {
+  getContentElements() {
     /* 1️⃣ Mỗi message của Qwen bọc trong .response-message-body  */
     /* 2️⃣ Phần markdown luôn nằm trong .markdown-content-container / .markdown-prose */
     /* 3️⃣ Mỗi khối còn có id #response-content-container (lặp lại)                  */
@@ -333,7 +333,7 @@ class QwenAdapter extends BaseChatAdapter {
 /* -----------------------------  Grok (x.ai)  ----------------------------- */
 class GrokAdapter extends BaseChatAdapter {
   /** Khớp các domain Grok thường gặp trên web-app */
-  static matches (host) {
+  static matches(host) {
     /*  grok.com  |  grok.x.ai  |  x.com (grok sub-page)  */
     return /(?:^|\.)grok\.com$|(?:^|\.)grok\.x\.ai$|^x\.com$/i.test(host);
   }
@@ -341,29 +341,29 @@ class GrokAdapter extends BaseChatAdapter {
   /* ── Các selector chính ──────────────────────────────────────────────── */
 
   /** Ô nhập prompt – duy nhất có aria-label như sau */
-  getTextarea () {
+  getTextarea() {
     return this._q('textarea[aria-label="Ask Grok anything"]');
   }
 
   /** Nút SEND (submit) nằm trong form, có aria-label="Submit" */
-  getSendBtn () {
+  getSendBtn() {
     const btn = this._q('form button[type="submit"][aria-label="Submit"]');
     return btn;
   }
 
   /** Nút STOP hiển thị khi Grok đang sinh đáp án (nếu có) */
-  getStopBtn () {
+  getStopBtn() {
     /* Grok hiện dùng cùng văn phạm với ChatGPT: aria-label="Stop generating" */
     return this._q('button[aria-label="Stop generating"]');
   }
 
   /** Form bao quanh textarea */
-  getForm () {
+  getForm() {
     return this.getTextarea()?.closest('form') ?? null;
   }
 
   /** Xác định đã sinh xong trả lời hay chưa */
-  isDone () {
+  isDone() {
     const stopBtn = this.getStopBtn();
     const sendBtn = this.getSendBtn();
 
@@ -373,10 +373,10 @@ class GrokAdapter extends BaseChatAdapter {
   }
 
   /** Trả về các khối markdown chứa phản hồi của bot */
-  getContentElements () {
+  getContentElements() {
     /* Grok render markdown trong .markdown-content-container / .markdown-prose */
     return Array.from(document.querySelectorAll(
-        '.markdown-content-container, .markdown-prose'
+      '.markdown-content-container, .markdown-prose'
     ));
   }
 }
@@ -411,13 +411,13 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   getForm() {
     if (this.isSpeechPage) return null;
-    return this._q('div.prompt-input-wrapper-container');
+    return this._q('div.buttons-row');
   }
 
   getTextarea() {
     if (this.isSpeechPage) return null;
     return this._q(
-        'textarea[aria-label="Start typing a prompt"], textarea[aria-label="Type something or tab to choose an example prompt"]'
+      'textarea[aria-label="Start typing a prompt"], textarea[aria-label="Type something or tab to choose an example prompt"], textarea[aria-label="Enter a prompt"]'
     );
   }
 
@@ -504,8 +504,8 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   }
 
   getTextarea() { return null; }
-  getSendBtn()  { return null; }
-  isDone()      { return true; }
+  getSendBtn() { return null; }
+  isDone() { return true; }
 
   _toggleYoutubePanel() {
     if (this.ytPanel) {
@@ -714,7 +714,7 @@ function initializeAdapter() {
 // Đảm bảo chạy sau khi tất cả các script đã được tải và DOM sẵn sàng.
 // Dùng setTimeout(0) để đẩy việc thực thi xuống cuối hàng đợi sự kiện.
 if (document.readyState === 'complete') {
-    setTimeout(initializeAdapter, 0);
+  setTimeout(initializeAdapter, 0);
 } else {
-    window.addEventListener('load', () => setTimeout(initializeAdapter, 0));
+  window.addEventListener('load', () => setTimeout(initializeAdapter, 0));
 }
