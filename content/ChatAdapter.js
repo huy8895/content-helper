@@ -429,9 +429,12 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   getStopBtn() {
     if (this.isSpeechPage) return null;
-    // === ĐÂY LÀ THAY ĐỔI QUAN TRỌNG ===
-    // Nút Stop là nút Run *có* class 'stoppable'.
-    return this._q('ms-run-button button.stoppable');
+    // Nút Stop là nút Run có chứa text 'Stop'
+    const btn = this._q('ms-run-button button');
+    if (btn && btn.textContent.includes('Stop')) {
+      return btn;
+    }
+    return null;
   }
 
   isDone() {
