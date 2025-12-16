@@ -103,7 +103,7 @@ window.GoogleAIStudioPanel = class {
             // Cập nhật lại local storage với dữ liệu từ Firestore
             chrome.storage.local.set({ [this.storageKey]: firestoreData });
           } else {
-             console.log("☁️ No profiles found on Firestore for this user.");
+            console.log("☁️ No profiles found on Firestore for this user.");
           }
         } catch (err) {
           console.error("❌ Error loading profiles from Firestore:", err);
@@ -170,7 +170,7 @@ window.GoogleAIStudioPanel = class {
   }
 
   // Cập nhật profile hiện tại
-// Thay thế hàm saveCurrentProfile()
+  // Thay thế hàm saveCurrentProfile()
   saveCurrentProfile() {
     const currentData = this.collectDataFromForm();
     this.profiles[this.activeProfileName] = currentData;
@@ -181,7 +181,7 @@ window.GoogleAIStudioPanel = class {
   }
 
   // Lưu thành một profile mới
-// Thay thế hàm saveAsNewProfile()
+  // Thay thế hàm saveAsNewProfile()
 
   saveAsNewProfile() {
     const newName = this.el.querySelector('#new-profile-name').value.trim();
@@ -202,7 +202,7 @@ window.GoogleAIStudioPanel = class {
     });
   }
   // Xóa profile đang được chọn
-// Thay thế hàm deleteSelectedProfile()
+  // Thay thế hàm deleteSelectedProfile()
 
   deleteSelectedProfile() {
     const profileToDelete = this.el.querySelector('#profile-select').value;
@@ -246,177 +246,207 @@ window.GoogleAIStudioPanel = class {
   }
 
 
-    static async setValueScript(settings) {
-        console.log("[Static] start setValueScript: ", settings);
+  static async setValueScript(settings) {
+    console.log("[Static] start setValueScript: ", settings);
 
-        try {
-            // Đợi cho việc chọn Voice 1 hoàn thành
-            await GoogleAIStudioPanel.selectVoice(1, settings.Voice1);
+    try {
+      // Đợi cho việc chọn Voice 1 hoàn thành
+      await GoogleAIStudioPanel.selectVoice(1, settings.Voice1);
 
-            // Sau khi Voice 1 xong, mới bắt đầu chọn Voice 2
-            await GoogleAIStudioPanel.selectVoice(2, settings.Voice2);
+      // Sau khi Voice 1 xong, mới bắt đầu chọn Voice 2
+      await GoogleAIStudioPanel.selectVoice(2, settings.Voice2);
 
-            // Các hành động khác có thể chạy song song vì chúng không xung đột
-            GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
-            GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
-            GoogleAIStudioPanel.setTextareaValueByAriaLabel('Style instructions', settings.styleInstructions);
+      // Các hành động khác có thể chạy song song vì chúng không xung đột
+      GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue1, 0);
+      GoogleAIStudioPanel.setInputValueByAriaLabelAndIndex('Speaker name', settings.InputValue2, 1);
+      GoogleAIStudioPanel.setTextareaValueByAriaLabel('Style instructions', settings.styleInstructions);
 
-            console.log("✅ All auto-set actions completed.");
+      console.log("✅ All auto-set actions completed.");
 
-        } catch (error) {
-            console.error("❌ An error occurred during auto-set script:", error);
-        }
+    } catch (error) {
+      console.error("❌ An error occurred during auto-set script:", error);
     }
-// Thay thế hàm này trong file GoogleAIStudioPanel.js
-    /**
-     * Chọn một giọng nói cho một Speaker cụ thể dựa trên giao diện mới.
-     * @param {number} speakerIndex - Chỉ số của speaker (1 hoặc 2).
-     * @param {string} voiceName - Tên của giọng nói cần chọn.
-     */
-    static selectVoice(speakerIndex, voiceName) {
-        // Trả về một Promise để đảm bảo tính tuần tự
-        return new Promise((resolve, reject) => {
-            if (!voiceName) {
-                return resolve();
+  }
+  // Thay thế hàm này trong file GoogleAIStudioPanel.js
+  /**
+   * Chọn một giọng nói cho một Speaker cụ thể dựa trên giao diện mới.
+   * @param {number} speakerIndex - Chỉ số của speaker (1 hoặc 2).
+   * @param {string} voiceName - Tên của giọng nói cần chọn.
+   */
+  static selectVoice(speakerIndex, voiceName) {
+    // Trả về một Promise để đảm bảo tính tuần tự
+    return new Promise((resolve, reject) => {
+      if (!voiceName) {
+        return resolve();
+      }
+
+      console.log(`[Static] Bắt đầu chọn giọng "${voiceName}" cho Speaker ${speakerIndex}...`);
+
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds
+
+      const pollInterval = setInterval(() => {
+        attempts++;
+
+        // UPDATE: Tìm trực tiếp ms-voice-selector, đây là component chứa dropdown chọn giọng
+        const allVoiceSelectors = document.querySelectorAll('ms-voice-selector');
+        const targetSelector = allVoiceSelectors[speakerIndex - 1];
+
+        if (targetSelector) {
+          clearInterval(pollInterval);
+          console.log(`✅ [Static] Đã tìm thấy ms-voice-selector cho Speaker ${speakerIndex}`);
+
+          // Tìm mat-select bên trong
+          const trigger = targetSelector.querySelector('mat-select');
+          if (!trigger) {
+            console.error(`Không tìm thấy mat-select bên trong ms-voice-selector của Speaker ${speakerIndex}`);
+            return reject(new Error(`Không tìm thấy dropdown cho Speaker ${speakerIndex}`));
+          }
+
+          // Mở dropdown
+          console.log("Dispatching mousedown and click...");
+          trigger.dispatchEvent(new MouseEvent('mousedown'));
+          trigger.click();
+
+          // Đợi popup options xuất hiện
+          let optionAttempts = 0;
+          const checkOptionsPanel = setInterval(() => {
+            optionAttempts++;
+            // UPDATE: Tìm panel options dựa trên class cụ thể từ HTML user cung cấp
+            // Class: mat-mdc-select-panel mdc-menu-surface--open
+            const optionsPanel = document.querySelector('.mat-mdc-select-panel.mdc-menu-surface--open');
+
+            if (optionsPanel) {
+              clearInterval(checkOptionsPanel);
+              console.log("✅ [Static] Đã tìm thấy options panel");
+
+              const options = optionsPanel.querySelectorAll('mat-option');
+              let foundAndClicked = false;
+
+              for (let option of options) {
+                // Tìm div.name hoặc class="name"
+                const nameElement = option.querySelector('.name');
+
+                // Fallback: Check text content
+                const textToCheck = nameElement ? nameElement.textContent : option.textContent;
+                // Clean text: remove newlines, extra spaces
+                const cleanText = textToCheck.replace(/\s+/g, ' ').trim();
+
+                if (cleanText.toLowerCase().includes(voiceName.toLowerCase())) {
+                  console.log(`✅ [Static] Tìm thấy giọng "${voiceName}". Đang click...`);
+                  option.click();
+                  foundAndClicked = true;
+                  break;
+                }
+              }
+
+              if (foundAndClicked) {
+                resolve();
+              } else {
+                console.error(`❌ [Static] Không tìm thấy giọng nói "${voiceName}" trong danh sách.`);
+                // Đóng dropdown bằng cách click ra ngoài (body)
+                document.body.click();
+                reject(new Error(`Không tìm thấy giọng "${voiceName}"`));
+              }
+            } else if (optionAttempts > 30) {
+              clearInterval(checkOptionsPanel);
+              console.error("Timeout waiting for options panel");
+              reject(new Error("Timeout waiting for options panel"));
             }
+          }, 100);
 
-            console.log(`[Static] Bắt đầu chọn giọng "${voiceName}" cho Speaker ${speakerIndex}...`);
-
-            setTimeout(() => {
-                const allSpeakerPanels = document.querySelectorAll('mat-expansion-panel.speaker-settings-container');
-                const targetPanel = allSpeakerPanels[speakerIndex - 1];
-                if (!targetPanel) {
-                    console.error(`Không tìm thấy khối cài đặt cho Speaker ${speakerIndex}`);
-                    return reject(new Error(`Không tìm thấy Speaker ${speakerIndex}`));
-                }
-
-                const trigger = targetPanel.querySelector('mat-select');
-                if (!trigger) {
-                    console.error(`Không tìm thấy nút chọn giọng nói bên trong Speaker ${speakerIndex}`);
-                    return reject(new Error(`Không tìm thấy dropdown cho Speaker ${speakerIndex}`));
-                }
-
-                // Mở dropdown
-                trigger.click();
-
-                // Đợi popup options xuất hiện
-                const checkOptionsPanel = setInterval(() => {
-                    const optionsPanel = document.querySelector('div.cdk-overlay-container div[role="listbox"]');
-                    if (optionsPanel) {
-                        clearInterval(checkOptionsPanel);
-
-                        const options = optionsPanel.querySelectorAll('mat-option');
-                        let foundAndClicked = false;
-
-                        for (let option of options) {
-                            // === THAY ĐỔI QUAN TRỌNG NHẤT LÀ Ở ĐÂY ===
-                            // 1. Tìm chính xác div.name bên trong mỗi option
-                            const nameElement = option.querySelector('div.name');
-
-                            if (nameElement && nameElement.textContent.trim().toLowerCase() === voiceName.toLowerCase()) {
-                                console.log(`✅ [Static] Tìm thấy div.name cho "${voiceName}". Đang click...`);
-
-                                // 2. Click trực tiếp vào div.name đó
-                                nameElement.click();
-
-                                foundAndClicked = true;
-                                break;
-                            }
-                        }
-
-                        if (foundAndClicked) {
-                            resolve(); // Báo hiệu đã xong
-                        } else {
-                            console.error(`❌ [Static] Không tìm thấy giọng nói "${voiceName}" trong danh sách.`);
-                            // Thử đóng dropdown lại nếu không tìm thấy
-                            document.body.click();
-                            reject(new Error(`Không tìm thấy giọng "${voiceName}"`));
-                        }
-                    }
-                }, 100);
-            }, 400);
-        });
-    }
-    static setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
-     if (!valueToSet) return;
-     setTimeout(() => {
-        const selector = `input[aria-label="${labelText}"]`;
-        const elements = document.querySelectorAll(selector);
-        if (index < elements.length) {
-            elements[index].value = valueToSet;
-            elements[index].dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          console.error(`❌ [Static] Timeout: Không tìm thấy ms-voice-selector cho Speaker ${speakerIndex} sau 5s`);
+          console.log("Found selectors:", document.querySelectorAll('ms-voice-selector').length);
+          reject(new Error(`Timeout finding Speaker ${speakerIndex}`));
         }
+      }, 100);
+    });
+  }
+  static setInputValueByAriaLabelAndIndex(labelText, valueToSet, index) {
+    if (!valueToSet) return;
+    setTimeout(() => {
+      const selector = `input[aria-label="${labelText}"]`;
+      const elements = document.querySelectorAll(selector);
+      if (index < elements.length) {
+        const el = elements[index];
+        el.value = valueToSet;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }, 500);
   }
   static setTextareaValueByAriaLabel(labelText, valueToSet) {
     if (!valueToSet) return;
     setTimeout(() => {
-        const selector = `textarea[aria-label="${labelText}"]`;
-        const element = document.querySelector(selector);
-        if (element) {
-            element.value = valueToSet;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+      const selector = `textarea[aria-label="${labelText}"]`;
+      const element = document.querySelector(selector);
+      if (element) {
+        element.value = valueToSet;
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }, 500);
   }
   static insertSpeechPageButton() {
-     // Giữ nguyên hàm này không đổi
-     if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) return;
-     const container = document.createElement("div");
-     container.id = "chatgpt-helper-button-container";
-     const btn = document.createElement('button');
-     btn.id = 'chatgpt-helper-aistudio-speech-settings';
-     btn.textContent = '⚙️ Settings';
-     btn.className = 'scenario-btn btn-tool';
-     btn.addEventListener('click', (e) => {
-         if (container.dataset.isDragging !== 'true') {
-             window.__helperInjected?._toggleAIStudioSettings();
-         }
-     });
-     Object.assign(container.style, { position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647' });
-     Object.assign(btn.style, { borderRadius: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', whiteSpace: 'nowrap', overflow: 'hidden', transition: 'width 0.3s ease, padding 0.3s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move' });
-     const expandedText = "⚙️ Settings", collapsedText = "⚙️";
-     const updateButtonState = (isHovering) => {
-         if (container.dataset.isDragging === 'true') return;
-         if (isHovering) {
-             btn.innerHTML = expandedText; btn.style.width = '130px'; btn.style.padding = '12px 20px';
-         } else {
-             btn.innerHTML = collapsedText; btn.style.width = '48px'; btn.style.padding = '12px';
-         }
-     };
-     btn.addEventListener('mouseenter', () => updateButtonState(true));
-     btn.addEventListener('mouseleave', () => updateButtonState(false));
-     let shiftX = 0, shiftY = 0;
-     btn.addEventListener('mousedown', (e) => {
-         e.preventDefault();
-         container.dataset.isDragging = 'false';
-         const rect = container.getBoundingClientRect();
-         shiftX = e.clientX - rect.left;
-         shiftY = e.clientY - rect.top;
-         const onMouseMove = (moveEvent) => {
-             container.dataset.isDragging = 'true';
-             container.style.left = `${moveEvent.clientX - shiftX}px`;
-             container.style.top = `${moveEvent.clientY - shiftY}px`;
-             container.style.bottom = 'auto';
-             container.style.right = 'auto';
-         };
-         const onMouseUp = () => {
-             document.removeEventListener('mousemove', onMouseMove);
-             document.removeEventListener('mouseup', onMouseUp);
-             setTimeout(() => {
-                 container.dataset.isDragging = 'false';
-                 if (btn.matches(':hover')) { updateButtonState(true); }
-             }, 50);
-         };
-         document.addEventListener('mousemove', onMouseMove);
-         document.addEventListener('mouseup', onMouseUp);
-     });
-     container.appendChild(btn);
-     document.body.appendChild(container);
-     setTimeout(() => { btn.innerHTML = expandedText; updateButtonState(false); }, 100);
-   }
+    // Giữ nguyên hàm này không đổi
+    if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) return;
+    const container = document.createElement("div");
+    container.id = "chatgpt-helper-button-container";
+    const btn = document.createElement('button');
+    btn.id = 'chatgpt-helper-aistudio-speech-settings';
+    btn.textContent = '⚙️ Settings';
+    btn.className = 'scenario-btn btn-tool';
+    btn.addEventListener('click', (e) => {
+      if (container.dataset.isDragging !== 'true') {
+        window.__helperInjected?._toggleAIStudioSettings();
+      }
+    });
+    Object.assign(container.style, { position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647' });
+    Object.assign(btn.style, { borderRadius: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', whiteSpace: 'nowrap', overflow: 'hidden', transition: 'width 0.3s ease, padding 0.3s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move' });
+    const expandedText = "⚙️ Settings", collapsedText = "⚙️";
+    const updateButtonState = (isHovering) => {
+      if (container.dataset.isDragging === 'true') return;
+      if (isHovering) {
+        btn.innerHTML = expandedText; btn.style.width = '130px'; btn.style.padding = '12px 20px';
+      } else {
+        btn.innerHTML = collapsedText; btn.style.width = '48px'; btn.style.padding = '12px';
+      }
+    };
+    btn.addEventListener('mouseenter', () => updateButtonState(true));
+    btn.addEventListener('mouseleave', () => updateButtonState(false));
+    let shiftX = 0, shiftY = 0;
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      container.dataset.isDragging = 'false';
+      const rect = container.getBoundingClientRect();
+      shiftX = e.clientX - rect.left;
+      shiftY = e.clientY - rect.top;
+      const onMouseMove = (moveEvent) => {
+        container.dataset.isDragging = 'true';
+        container.style.left = `${moveEvent.clientX - shiftX}px`;
+        container.style.top = `${moveEvent.clientY - shiftY}px`;
+        container.style.bottom = 'auto';
+        container.style.right = 'auto';
+      };
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        setTimeout(() => {
+          container.dataset.isDragging = 'false';
+          if (btn.matches(':hover')) { updateButtonState(true); }
+        }, 50);
+      };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+    container.appendChild(btn);
+    document.body.appendChild(container);
+    setTimeout(() => { btn.innerHTML = expandedText; updateButtonState(false); }, 100);
+  }
 
-   // Thêm hàm mới này vào class GoogleAIStudioPanel
+  // Thêm hàm mới này vào class GoogleAIStudioPanel
 
   _syncToFirestore() {
     console.log("☁️ [GoogleAIStudioPanel] Syncing profiles to Firestore...");
