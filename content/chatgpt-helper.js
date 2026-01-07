@@ -34,15 +34,15 @@ class ChatGPTHelper {
 
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => {
-          if (window.ChatAdapter) {
-            window.ChatAdapter.insertHelperButtons();
-          }
-        }
+      if (window.ChatAdapter) {
+        window.ChatAdapter.insertHelperButtons();
+      }
+    }
     )
-    ;
+      ;
     this._observer.observe(document.body, { childList: true, subtree: true });
 
-    if(!document.getElementById('chatgpt-helper-panel-bar')){
+    if (!document.getElementById('chatgpt-helper-panel-bar')) {
       const bar = document.createElement('div');
       bar.id = 'chatgpt-helper-panel-bar';
       bar.style.zIndex = '2147483647';  // 👈 thêm dòng này
@@ -124,7 +124,7 @@ class ChatGPTHelper {
       return;
     }
     this.contentCopyPanel = new ContentCopyPanel(
-        () => (this.contentCopyPanel = null));
+      () => (this.contentCopyPanel = null));
   }
 
   _toggleAIStudioSettings() {
@@ -144,7 +144,7 @@ class ChatGPTHelper {
     }
     if (window.YoutubeStudioPanel) {
       this.youtubePanel = new YoutubeStudioPanel(
-          () => (this.youtubePanel = null));
+        () => (this.youtubePanel = null));
     } else {
       alert("Lỗi: Không tìm thấy YoutubeStudioPanel.");
     }
@@ -154,8 +154,8 @@ class ChatGPTHelper {
   /* ---------- helper kéo-thả dùng chung ---------- */
   static makeDraggable(el, handleSelector = null) {
     const handle = typeof handleSelector === "string"
-        ? el.querySelector(handleSelector)
-        : handleSelector || el;
+      ? el.querySelector(handleSelector)
+      : handleSelector || el;
     if (!handle) return;
 
     handle.style.cursor = "move";
@@ -179,8 +179,8 @@ class ChatGPTHelper {
         el.style.animation = "none";
 
         el.style.position = "fixed";
-        el.style.left  = rect.left  + "px";
-        el.style.top   = rect.top   + "px";
+        el.style.left = rect.left + "px";
+        el.style.top = rect.top + "px";
         el.style.width = rect.width + "px";
         document.body.appendChild(el);
       }
@@ -188,12 +188,12 @@ class ChatGPTHelper {
 
       const onMouseMove = (ev) => {
         el.style.left = ev.clientX - shiftX + "px";
-        el.style.top  = ev.clientY - shiftY + "px";
+        el.style.top = ev.clientY - shiftY + "px";
       };
 
       const onMouseUp = () => {
         document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup",   onMouseUp);
+        document.removeEventListener("mouseup", onMouseUp);
       };
 
       document.addEventListener("mousemove", onMouseMove);
@@ -217,7 +217,7 @@ class ChatGPTHelper {
 
     // 1️⃣ Chặn mousedown/mouseup – không cho panel nhận bringToFront
     btn.addEventListener("mousedown", stopAll, true); // capture phase
-    btn.addEventListener("mouseup",   stopAll, true);
+    btn.addEventListener("mouseup", stopAll, true);
 
     // 2️⃣ Khi click → đóng panel
     btn.addEventListener("click", (ev) => {
@@ -233,7 +233,7 @@ class ChatGPTHelper {
    * @param {T} el
    */
   /* ---------- mountPanel: đưa panel vào thanh bar ---------- */
-  static mountPanel(el){
+  static mountPanel(el) {
     el.classList.add('helper-panel');
 
     let bar = document.getElementById('chatgpt-helper-panel-bar');
@@ -246,7 +246,7 @@ class ChatGPTHelper {
     bar.appendChild(el);
 
     const handle = el.querySelector('.sb-title, .sr-header, .ts-title');
-    if(handle){
+    if (handle) {
       handle.style.userSelect = 'none';
       handle.addEventListener('mousedown', () => ChatGPTHelper.bringToFront(el));
     }
@@ -254,14 +254,14 @@ class ChatGPTHelper {
 
 
   /* ---------- bringToFront: luôn đưa panel lên trên cùng ---------- */
-  static bringToFront(el){
-    if (el.dataset.free){                        // panel đã “floating”
+  static bringToFront(el) {
+    if (el.dataset.free) {                        // panel đã “floating”
       el.style.zIndex = ++ChatGPTHelper.zTop;    // chỉ đổi z-index
-    }else{                                       // panel còn trong thanh bar
+    } else {                                       // panel còn trong thanh bar
       const bar = document.getElementById('chatgpt-helper-panel-bar');
 
       // Nếu đã là phần tử cuối rồi thì thôi – tránh re-append gây nháy
-      if (bar.lastElementChild !== el){
+      if (bar.lastElementChild !== el) {
         el.style.animation = 'none';             // tắt hiệu ứng fadeIn
         bar.appendChild(el);                     // đưa về cuối thanh
       }
@@ -270,10 +270,10 @@ class ChatGPTHelper {
 
   /** Đóng panel trên cùng (nếu có) */
   static closeTopPanel() {
-    const barPanels  = Array.from(document.querySelectorAll(
-        '#chatgpt-helper-panel-bar .helper-panel'));
-    const floating   = Array.from(document.querySelectorAll(
-        'body > .helper-panel:not(#chatgpt-helper-panel-bar *)'));
+    const barPanels = Array.from(document.querySelectorAll(
+      '#chatgpt-helper-panel-bar .helper-panel'));
+    const floating = Array.from(document.querySelectorAll(
+      'body > .helper-panel:not(#chatgpt-helper-panel-bar *)'));
 
     // panel mở sau cùng = phần tử cuối của mảng floating, nếu không có thì lấy ở bar
     const last = floating.at(-1) || barPanels.at(-1);
@@ -282,13 +282,56 @@ class ChatGPTHelper {
     last.querySelector('.panel-close')?.click();
   }
 
-    /* 👇  thêm vào cuối class */
+  /* 👇  thêm vào cuối class */
   destroy() {
     console.log("❌ [ChatGPTHelper] destroy");
     // ngắt quan sát
     this._observer?.disconnect();
     // gỡ khung nút nếu còn
     document.getElementById('chatgpt-helper-button-container')?.remove();
+  }
+
+  /**
+   * Tìm kiếm mờ (fuzzy search) có tính điểm số
+   * @param {string} query Chuỗi tìm kiếm
+   * @param {string} text Chuỗi đích
+   * @returns {number} Điểm số (0 nếu không khớp, >0 nếu khớp)
+   */
+  static fuzzySearch(query, text) {
+    if (!query) return 1;
+    const q = query.toLowerCase().replace(/\s+/g, ''); // Xóa khoảng trắng để search linh hoạt
+    const t = text.toLowerCase();
+
+    let score = 0;
+    let textIdx = -1;
+    let lastMatchIdx = -1;
+
+    for (let i = 0; i < q.length; i++) {
+      const char = q[i];
+      textIdx = t.indexOf(char, textIdx + 1);
+      if (textIdx === -1) return 0; // Không tìm thấy ký tự → không khớp
+
+      // --- TÍNH ĐIỂM ---
+      // 1. Điểm cơ bản cho mỗi ký tự khớp
+      score += 10;
+
+      // 2. Bonus nếu ký tự khớp ở đầu chuỗi
+      if (textIdx === 0 && i === 0) score += 50;
+
+      // 3. Bonus nếu các ký tự khớp nằm sát nhau (không bị skip nhiều)
+      if (lastMatchIdx !== -1 && textIdx === lastMatchIdx + 1) {
+        score += 20;
+      }
+
+      // 4. Bonus nếu ký tự khớp là bắt đầu của một từ (sau dấu cách, [, ], -, _)
+      if (textIdx > 0 && /[\s\[\]\-_]/.test(t[textIdx - 1])) {
+        score += 30;
+      }
+
+      lastMatchIdx = textIdx;
+    }
+
+    return score;
   }
 }
 
@@ -309,46 +352,46 @@ chrome.runtime.onMessage.addListener((req) => {
 // Thay thế hàm này trong file chatgpt-helper.js
 
 async function _downloadFromFirestore() {
-    console.log("☁️ [Firestore Sync] Starting download for all configs...");
+  console.log("☁️ [Firestore Sync] Starting download for all configs...");
 
-    const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
+  const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
 
-    if (!userId) {
-        console.warn("⚠️ User not logged in, cannot download from Firestore.");
-        return;
+  if (!userId) {
+    console.warn("⚠️ User not logged in, cannot download from Firestore.");
+    return;
+  }
+
+  const helper = new FirestoreHelper(firebaseConfig);
+
+  // --- 1. Tải Scenario Templates ---
+  try {
+    helper.collection = 'configs';
+    const scenarioData = await helper.loadUserConfig(userId);
+    if (scenarioData) {
+      await chrome.storage.local.set({ scenarioTemplates: scenarioData });
+      console.log("✅ Scenario templates downloaded from Firestore.");
     }
+  } catch (err) { console.error("❌ Error downloading scenario templates:", err); }
 
-    const helper = new FirestoreHelper(firebaseConfig);
+  // --- 2. Tải Speech Profiles ---
+  try {
+    helper.collection = 'speech_profiles';
+    const speechProfileData = await helper.loadUserConfig(userId);
+    if (speechProfileData) {
+      await chrome.storage.local.set({ google_ai_studio_profiles: speechProfileData });
+      console.log("✅ Speech profiles downloaded from Firestore.");
+    }
+  } catch (err) { console.error("❌ Error downloading speech profiles:", err); }
 
-    // --- 1. Tải Scenario Templates ---
-    try {
-        helper.collection = 'configs';
-        const scenarioData = await helper.loadUserConfig(userId);
-        if (scenarioData) {
-            await chrome.storage.local.set({ scenarioTemplates: scenarioData });
-            console.log("✅ Scenario templates downloaded from Firestore.");
-        }
-    } catch (err) { console.error("❌ Error downloading scenario templates:", err); }
-
-    // --- 2. Tải Speech Profiles ---
-    try {
-        helper.collection = 'speech_profiles';
-        const speechProfileData = await helper.loadUserConfig(userId);
-        if (speechProfileData) {
-            await chrome.storage.local.set({ google_ai_studio_profiles: speechProfileData });
-            console.log("✅ Speech profiles downloaded from Firestore.");
-        }
-    } catch (err) { console.error("❌ Error downloading speech profiles:", err); }
-
-    // --- 3. Tải YouTube Language Profiles (MỚI) ---
-    try {
-        helper.collection = 'youtube_language_profiles';
-        const ytProfileData = await helper.loadUserConfig(userId);
-        if (ytProfileData) {
-            await chrome.storage.local.set({ youtube_language_profiles: ytProfileData });
-            console.log("✅ YouTube language profiles downloaded from Firestore.");
-        }
-    } catch (err) { console.error("❌ Error downloading YouTube profiles:", err); }
+  // --- 3. Tải YouTube Language Profiles (MỚI) ---
+  try {
+    helper.collection = 'youtube_language_profiles';
+    const ytProfileData = await helper.loadUserConfig(userId);
+    if (ytProfileData) {
+      await chrome.storage.local.set({ youtube_language_profiles: ytProfileData });
+      console.log("✅ YouTube language profiles downloaded from Firestore.");
+    }
+  } catch (err) { console.error("❌ Error downloading YouTube profiles:", err); }
 }
 // ❶  auto‑check ngay khi trang / script được load
 chrome.storage.local.get('gg_access_token', data => {
@@ -368,9 +411,9 @@ function hideButtons() {
 
   // hủy panel con (nếu còn mở)
   const h = window.__helperInjected;
-  h.builder        ?.destroy?.();
-  h.runner         ?.destroy?.();
-  h.splitter       ?.destroy?.();
+  h.builder?.destroy?.();
+  h.runner?.destroy?.();
+  h.splitter?.destroy?.();
   h.audioDownloader?.destroy?.();
 
   // ngắt observer & xóa khung nút

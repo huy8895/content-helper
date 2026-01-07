@@ -44,11 +44,11 @@ window.ScenarioBuilder = class {
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
     this.el.querySelector("#add-question").addEventListener("click",
-        () => this._addQuestion());
+      () => this._addQuestion());
     this.el.querySelector("#save-to-storage").addEventListener("click",
-        () => this._save());
+      () => this._save());
     this.el.querySelector("#delete-scenario").addEventListener("click",
-        () => this._deleteScenario());
+      () => this._deleteScenario());
     this.el.querySelector("#new-scenario-btn").addEventListener("click", () => {
       this.el.querySelector("#scenario-editor").style.display = "block";
       this.el.querySelector("#scenario-name").value = "";
@@ -57,9 +57,9 @@ window.ScenarioBuilder = class {
     });
   }
 
-// Thay thế hàm này trong file ScenarioBuilder.js
+  // Thay thế hàm này trong file ScenarioBuilder.js
 
-  _addQuestion(q = {text: "", type: "text"}) {
+  _addQuestion(q = { text: "", type: "text" }) {
     const container = document.createElement("div");
     container.className = "question-item";
 
@@ -94,7 +94,7 @@ window.ScenarioBuilder = class {
     };
 
     const loopKeyInput = document.createElement("input");
-    loopKeyInput.className   = "question-loopkey";
+    loopKeyInput.className = "question-loopkey";
     loopKeyInput.placeholder = "loopKey";
     // === CẬP NHẬT ĐIỀU KIỆN HIỂN THỊ ===
     loopKeyInput.style.display = (q.type === "loop" || q.type === "list") ? "inline-block" : "none";
@@ -140,7 +140,7 @@ window.ScenarioBuilder = class {
 
     /* 🔑  cấu trúc mới – vẫn tương thích ngược */
     return {
-      [name]: {group, questions}
+      [name]: { group, questions }
     };
   }
 
@@ -158,8 +158,8 @@ window.ScenarioBuilder = class {
       return;
     }
     chrome.storage.local.get("scenarioTemplates", (items) => {
-      const merged = {...(items.scenarioTemplates || {}), ...json};
-      chrome.storage.local.set({scenarioTemplates: merged}, () => {
+      const merged = { ...(items.scenarioTemplates || {}), ...json };
+      chrome.storage.local.set({ scenarioTemplates: merged }, () => {
         alert("✅ Đã lưu kịch bản.");
         this._loadScenarioList();
         this._syncToFirestore(); // ✅ Gọi lại ở đây
@@ -171,24 +171,24 @@ window.ScenarioBuilder = class {
   _syncToFirestore() {
     console.log("☁️ [ScenarioBuilder] sync to Firestore");
     chrome.storage.local.get(["scenarioTemplates", "google_user_email"],
-        async (items) => {
-          const allScenarios = items.scenarioTemplates || {};
-          const userId = items.google_user_email;
+      async (items) => {
+        const allScenarios = items.scenarioTemplates || {};
+        const userId = items.google_user_email;
 
-          if (!userId) {
-            alert("⚠️ Bạn chưa đăng nhập Google, không thể sync Firestore.");
-            return;
-          }
+        if (!userId) {
+          alert("⚠️ Bạn chưa đăng nhập Google, không thể sync Firestore.");
+          return;
+        }
 
-          const helper = new FirestoreHelper(firebaseConfig);
-          try {
-            await helper.saveUserConfig(userId, allScenarios);
-            console.log("☁️ Đã đồng bộ lên Firestore:");
-          } catch (err) {
-            console.error(err);
-            alert("❌ Lỗi khi đồng bộ lên Firestore.");
-          }
-        });
+        const helper = new FirestoreHelper(firebaseConfig);
+        try {
+          await helper.saveUserConfig(userId, allScenarios);
+          console.log("☁️ Đã đồng bộ lên Firestore:");
+        } catch (err) {
+          console.error(err);
+          alert("❌ Lỗi khi đồng bộ lên Firestore.");
+        }
+      });
   }
 
   _saveToStorageImmediately() {
@@ -197,32 +197,32 @@ window.ScenarioBuilder = class {
       return;
     }
     chrome.storage.local.get("scenarioTemplates", (items) => {
-      const merged = {...(items.scenarioTemplates || {}), ...json};
-      chrome.storage.local.set({scenarioTemplates: merged});
+      const merged = { ...(items.scenarioTemplates || {}), ...json };
+      chrome.storage.local.set({ scenarioTemplates: merged });
     });
   }
 
   _deleteScenario() {
-  const name = this.el.querySelector("#scenario-name").value.trim();
-  if (!name) return alert("Vui lòng nhập tên kịch bản để xoá.");
-  if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
+    const name = this.el.querySelector("#scenario-name").value.trim();
+    if (!name) return alert("Vui lòng nhập tên kịch bản để xoá.");
+    if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
 
-  chrome.storage.local.get("scenarioTemplates", (items) => {
-    const templates = items.scenarioTemplates || {};
-    if (!templates[name]) return alert("Không tìm thấy kịch bản.");
-    delete templates[name];
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      const templates = items.scenarioTemplates || {};
+      if (!templates[name]) return alert("Không tìm thấy kịch bản.");
+      delete templates[name];
 
-    chrome.storage.local.set({ scenarioTemplates: templates }, () => {
-      console.log("🗑️ Đã xoá kịch bản:", name);
-      this.el.querySelector("#scenario-name").value = "";
-      this.el.querySelector("#questions-container").innerHTML = "";
-      this._loadScenarioList();
-      this._syncToFirestore(); // ✅ Bắt buộc phải có dòng này
+      chrome.storage.local.set({ scenarioTemplates: templates }, () => {
+        console.log("🗑️ Đã xoá kịch bản:", name);
+        this.el.querySelector("#scenario-name").value = "";
+        this.el.querySelector("#questions-container").innerHTML = "";
+        this._loadScenarioList();
+        this._syncToFirestore(); // ✅ Bắt buộc phải có dòng này
+      });
     });
-  });
-}
+  }
 
-// Thay thế toàn bộ hàm _loadScenarioList() trong file ScenarioBuilder.js
+  // Thay thế toàn bộ hàm _loadScenarioList() trong file ScenarioBuilder.js
 
   _loadScenarioList() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
@@ -262,13 +262,27 @@ window.ScenarioBuilder = class {
 
       // Lọc kết quả khi người dùng gõ
       searchBox.addEventListener("input", () => {
-        const k = searchBox.value.trim().toLowerCase();
-        dropdown.querySelectorAll(".scenario-dropdown-item").forEach(div => {
-          const hit = div.textContent.toLowerCase().includes(k) ||
-                      div.dataset.group.includes(k);
-          div.style.display = hit ? "block" : "none";
+        const k = searchBox.value.trim();
+        const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
+
+        const scoredItems = items.map(div => {
+          const score = ChatGPTHelper.fuzzySearch(k, div.textContent);
+          return { div, score };
+        });
+
+        scoredItems.forEach(item => {
+          if (item.score > 0) {
+            item.div.style.display = "block";
+            item.div.style.order = -item.score;
+          } else {
+            item.div.style.display = "none";
+          }
         });
       });
+
+      // Đảm bảo dropdown là flex để order hoạt động
+      dropdown.style.display = "flex";
+      dropdown.style.flexDirection = "column";
 
       // Hiện dropdown khi focus
       searchBox.addEventListener("focus", () => {

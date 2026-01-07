@@ -66,72 +66,87 @@ window.ScenarioRunner = class {
     ChatGPTHelper.makeDraggable(this.el, ".sr-header");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
-  
+
   /**
    * Tải danh sách kịch bản và thiết lập ô tìm kiếm động
    */
 
-_setupScenarioSearch() {
-  chrome.storage.local.get("scenarioTemplates", (items) => {
-    this.templates = items.scenarioTemplates || {};
-    const searchBox = this.el.querySelector("#sr-scenario-search");
-    const dropdown = this.el.querySelector("#sr-scenario-dropdown");
-    const browserWrapper = this.el.querySelector("#sr-scenario-browser");
+  _setupScenarioSearch() {
+    chrome.storage.local.get("scenarioTemplates", (items) => {
+      this.templates = items.scenarioTemplates || {};
+      const searchBox = this.el.querySelector("#sr-scenario-search");
+      const dropdown = this.el.querySelector("#sr-scenario-dropdown");
+      const browserWrapper = this.el.querySelector("#sr-scenario-browser");
 
-    // Tạo các item trong danh sách thả xuống
-    Object.keys(this.templates).forEach((name) => {
-      const raw = this.templates[name];
-      const group = Array.isArray(raw) ? "" : (raw.group || "");
+      // Tạo các item trong danh sách thả xuống
+      Object.keys(this.templates).forEach((name) => {
+        const raw = this.templates[name];
+        const group = Array.isArray(raw) ? "" : (raw.group || "");
 
-      const item = document.createElement("div");
-      item.textContent = group ? `[${group}] ${name}` : name;
-      item.className = "scenario-dropdown-item";
-      item.dataset.name = name;
-      item.dataset.group = group.toLowerCase();
+        const item = document.createElement("div");
+        item.textContent = group ? `[${group}] ${name}` : name;
+        item.className = "scenario-dropdown-item";
+        item.dataset.name = name;
+        item.dataset.group = group.toLowerCase();
 
-      // Sử dụng 'mousedown' để đảm bảo sự kiện được xử lý trước 'blur'
-      item.addEventListener("mousedown", (e) => {
-        e.preventDefault(); // Ngăn input mất focus ngay lập tức
+        // Sử dụng 'mousedown' để đảm bảo sự kiện được xử lý trước 'blur'
+        item.addEventListener("mousedown", (e) => {
+          e.preventDefault(); // Ngăn input mất focus ngay lập tức
 
-        searchBox.value = item.textContent;
-        dropdown.classList.add("hidden-dropdown"); // Ẩn ngay
-        this._onScenarioSelected(name);
+          searchBox.value = item.textContent;
+          dropdown.classList.add("hidden-dropdown"); // Ẩn ngay
+          this._onScenarioSelected(name);
 
-        // Chủ động làm input mất focus
-        searchBox.blur();
+          // Chủ động làm input mất focus
+          searchBox.blur();
+        });
+
+        dropdown.appendChild(item);
       });
 
-      dropdown.appendChild(item);
-    });
-
-    // --- PHẦN BỊ THIẾU ĐÃ ĐƯỢC KHÔI PHỤC ---
-    // Gắn sự kiện cho ô tìm kiếm
-    searchBox.addEventListener("input", () => {
-      dropdown.classList.remove("hidden-dropdown");
-      const keyword = searchBox.value.trim().toLowerCase();
-
-      // Lọc danh sách item dựa trên keyword
-      dropdown.querySelectorAll(".scenario-dropdown-item").forEach(div => {
-        const nameMatch = div.textContent.toLowerCase().includes(keyword);
-        const groupMatch = div.dataset.group.includes(keyword);
-        div.style.display = (nameMatch || groupMatch) ? "block" : "none";
-      });
-    });
-    // --- KẾT THÚC PHẦN KHÔI PHỤC ---
-
-    // Hiện dropdown khi người dùng focus
-    searchBox.addEventListener("focus", () => {
+      // --- PHẦN BỊ THIẾU ĐÃ ĐƯỢC KHÔI PHỤC ---
+      // Gắn sự kiện cho ô tìm kiếm
+      searchBox.addEventListener("input", () => {
         dropdown.classList.remove("hidden-dropdown");
-    });
+        const keyword = searchBox.value.trim();
 
-    // Ẩn dropdown khi click ra ngoài
-    document.addEventListener('click', (event) => {
-      if (!browserWrapper.contains(event.target)) {
-        dropdown.classList.add('hidden-dropdown');
-      }
+        const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
+        const scoredItems = items.map(div => {
+          const score = ChatGPTHelper.fuzzySearch(keyword, div.textContent);
+          return { div, score };
+        });
+
+        // Sắp xếp và hiển thị
+        scoredItems.forEach(item => {
+          if (item.score > 0) {
+            item.div.style.display = "block";
+            // Sử dụng style.order để sắp xếp mà không cần re-append (Flexbox)
+            // Mặc định dropdown là flex column
+            item.div.style.order = -item.score;
+          } else {
+            item.div.style.display = "none";
+          }
+        });
+      });
+
+      // Cần đảm bảo dropdown là flex column để 'order' hoạt động
+      dropdown.style.display = "flex";
+      dropdown.style.flexDirection = "column";
+      // --- KẾT THÚC PHẦN KHÔI PHỤC ---
+
+      // Hiện dropdown khi người dùng focus
+      searchBox.addEventListener("focus", () => {
+        dropdown.classList.remove("hidden-dropdown");
+      });
+
+      // Ẩn dropdown khi click ra ngoài
+      document.addEventListener('click', (event) => {
+        if (!browserWrapper.contains(event.target)) {
+          dropdown.classList.add('hidden-dropdown');
+        }
+      });
     });
-  });
-}
+  }
   /**
    * Hàm được gọi khi một kịch bản được chọn từ danh sách
    * @param {string} name Tên của kịch bản
@@ -209,7 +224,7 @@ _setupScenarioSearch() {
   /**
    * Gắn sự kiện cho các nút Start, Pause, Resume, Add to Queue
    */
-// Thay thế hàm này trong file ScenarioRunner.js
+  // Thay thế hàm này trong file ScenarioRunner.js
 
   _attachControlEvents() {
     const btnStart = this.el.querySelector('#sr-start');
@@ -249,7 +264,7 @@ _setupScenarioSearch() {
       this._clearVariableInputs();
     };
   }
-// Thay thế hàm này trong file ScenarioRunner.js
+  // Thay thế hàm này trong file ScenarioRunner.js
 
   _readVariableValues() {
     const data = {};
@@ -267,7 +282,7 @@ _setupScenarioSearch() {
   _getLoopKey(q) {
     return q.loopKey || (q.text.match(/\$\{(\w+)\}/) || [])[1];
   }
-// Thay thế hàm này trong file ScenarioRunner.js
+  // Thay thế hàm này trong file ScenarioRunner.js
 
   _saveVariableValues(templateName) {
     const inputPanel = this.el.querySelector("#scenario-inputs");
@@ -290,12 +305,12 @@ _setupScenarioSearch() {
       all[templateName] = data;
       chrome.storage.local.set({ scenarioInputValues: all });
     });
-  }  async _start() {
+  } async _start() {
     if (this.queue.length === 0) {
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
       if (!selectedDiv) return alert("Vui lòng chọn một kịch bản hợp lệ từ danh sách.");
-      
+
       const name = selectedDiv.dataset.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
@@ -337,7 +352,7 @@ _setupScenarioSearch() {
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
   }
-// Thay thế hàm này trong file ScenarioRunner.js
+  // Thay thế hàm này trong file ScenarioRunner.js
 
   _expandScenario(questions, values) {
     const result = [];
@@ -363,9 +378,9 @@ _setupScenarioSearch() {
         const loopKey = this._getLoopKey(q);
         // Lấy chuỗi giá trị và tách nó ra thành mảng bằng dấu phẩy
         const listValues = (values[loopKey] || "")
-            .split(',')
-            .map(v => v.trim()) // Xóa khoảng trắng thừa
-            .filter(Boolean);     // Loại bỏ các mục rỗng
+          .split(',')
+          .map(v => v.trim()) // Xóa khoảng trắng thừa
+          .filter(Boolean);     // Loại bỏ các mục rỗng
 
         // Lặp qua từng giá trị trong mảng
         for (const itemValue of listValues) {
@@ -382,7 +397,7 @@ _setupScenarioSearch() {
       // === KẾT THÚC LOGIC MỚI ===
     }
     return result;
-  }  async _sendPrompt(text) {
+  } async _sendPrompt(text) {
     console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
     const chat = window.ChatAdapter;
     const textarea = chat.getTextarea();
@@ -432,9 +447,9 @@ _setupScenarioSearch() {
     this.onClose();
     this.sequencer?.stop();
   }
-// Thay thế hàm này trong file ScenarioRunner.js
+  // Thay thế hàm này trong file ScenarioRunner.js
 
-// Thay thế toàn bộ hàm _refreshQueueUI() bằng phiên bản này
+  // Thay thế toàn bộ hàm _refreshQueueUI() bằng phiên bản này
 
   _refreshQueueUI() {
     this._updateQueueIndicator();
@@ -442,8 +457,8 @@ _setupScenarioSearch() {
     listEl.innerHTML = this.queue.map((job, i) => {
       // 1. Tạo chuỗi biến đầy đủ như cũ
       const fullVars = Object.entries(job.values)
-          .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('|') : v}`)
-          .join(', ');
+        .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('|') : v}`)
+        .join(', ');
 
       // 2. Sử dụng hàm helper để rút gọn chuỗi đó
       const shortenedVars = this._shortenText(fullVars); // Mặc định là 60 ký tự
@@ -469,7 +484,7 @@ _setupScenarioSearch() {
       };
     });
   }
-// Thêm hàm mới này vào class ScenarioRunner
+  // Thêm hàm mới này vào class ScenarioRunner
 
   /**
    * Biên dịch và sao chép một mục trong hàng đợi vào clipboard
@@ -540,5 +555,6 @@ _setupScenarioSearch() {
     if (firstInput) {
       firstInput.focus();
     }
-  }};
+  }
+};
 // --- END OF FILE ScenarioRunner.js (UPDATED) ---
