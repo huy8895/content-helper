@@ -81,8 +81,6 @@ const YTB_PANEL_HTML = `
     </label>
   </div>
   
-  <hr class="divider">
-  
   <!-- Language Selection -->
   <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
   <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
@@ -96,13 +94,12 @@ const YTB_PANEL_HTML = `
   <div id="yt-language-checkbox-container"></div>
   
   <!-- JSON Upload -->
-  <hr class="divider">
+
   <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
     📂 Tải lên file JSON Dịch thuật
   </label>
   <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
   <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
-  <hr class="divider">
   
   <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
 `;
@@ -128,7 +125,7 @@ window.YoutubeStudioPanel = class {
     }
   }
 
-// Thay thế hàm _render()
+  // Thay thế hàm _render()
 
   _render() {
     this.el = document.createElement('div');
@@ -149,7 +146,7 @@ window.YoutubeStudioPanel = class {
       // === THÊM EVENT CHO TỪNG CHECKBOX ===
       // Khi tick/untick một ngôn ngữ, gọi lại hàm cập nhật hiển thị
       label.querySelector('input').addEventListener('change', () => {
-          this._updateLanguageVisibility();
+        this._updateLanguageVisibility();
       });
 
       container.appendChild(label);
@@ -163,7 +160,7 @@ window.YoutubeStudioPanel = class {
     this.onClose?.();
   }
 
-// Thay thế hàm attachEvents()
+  // Thay thế hàm attachEvents()
 
   attachEvents() {
     // Events cũ
@@ -175,32 +172,32 @@ window.YoutubeStudioPanel = class {
 
     // Sửa lại event search để gọi hàm mới
     this.el.querySelector('#yt-language-search').addEventListener('input', () => {
-        this._updateLanguageVisibility();
+      this._updateLanguageVisibility();
     });
 
     // === NEW EVENTS ===
     // Event cho checkbox "Show selected only"
     this.el.querySelector('#yt-filter-selected').addEventListener('change', () => {
-        this._updateLanguageVisibility();
+      this._updateLanguageVisibility();
     });
 
     // Event cho nút "Copy Selected"
     this.el.querySelector('#yt-copy-selected-btn').addEventListener('click', () => {
-        const selectedLangs = Array.from(this.el.querySelectorAll('.yt-language-label input:checked'))
-                                     .map(cb => cb.value);
+      const selectedLangs = Array.from(this.el.querySelectorAll('.yt-language-label input:checked'))
+        .map(cb => cb.value);
 
-        if (selectedLangs.length === 0) {
-            alert("Chưa có ngôn ngữ nào được chọn.");
-            return;
-        }
+      if (selectedLangs.length === 0) {
+        alert("Chưa có ngôn ngữ nào được chọn.");
+        return;
+      }
 
-        const copyText = selectedLangs.join(', ');
-        navigator.clipboard.writeText(copyText).then(() => {
-            alert(`Đã sao chép ${selectedLangs.length} ngôn ngữ:\n\n${copyText}`);
-        }).catch(err => {
-            console.error('Copy failed:', err);
-            alert('Lỗi khi sao chép.');
-        });
+      const copyText = selectedLangs.join(', ');
+      navigator.clipboard.writeText(copyText).then(() => {
+        alert(`Đã sao chép ${selectedLangs.length} ngôn ngữ:\n\n${copyText}`);
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        alert('Lỗi khi sao chép.');
+      });
     });
   }
   // --- PROFILE MANAGEMENT LOGIC (Tái sử dụng từ GoogleAIStudioPanel) ---
@@ -325,7 +322,7 @@ window.YoutubeStudioPanel = class {
     }
   }
 
-    // === NEW: JSON UPLOAD LOGIC ===
+  // === NEW: JSON UPLOAD LOGIC ===
   // Thay thế hàm này trong file YoutubeStudioPanel.js
 
 
@@ -401,12 +398,12 @@ window.YoutubeStudioPanel = class {
       this.translationObserver = null;
     }
   }
-// Thay thế hàm này trong file YoutubeStudioPanel.js
+  // Thay thế hàm này trong file YoutubeStudioPanel.js
 
   // Dán toàn bộ các hàm này vào class YoutubeStudioPanel,
-// thay thế các phiên bản cũ của chúng.
+  // thay thế các phiên bản cũ của chúng.
 
-// === HÀM NÀY CHỈ CÓ MỘT NHIỆM VỤ: CHÈN NÚT VÀ GẮN SỰ KIỆN CLICK THỦ CÔNG ===
+  // === HÀM NÀY CHỈ CÓ MỘT NHIỆM VỤ: CHÈN NÚT VÀ GẮN SỰ KIỆN CLICK THỦ CÔNG ===
   async injectAutoFillButton(dialog, isAloudPopup = false) {
     const buttonId = 'auto-fill-button-from-json';
     if (dialog.querySelector(`#${buttonId}`)) return;
@@ -499,9 +496,9 @@ window.YoutubeStudioPanel = class {
   // Thêm hàm mới này vào class YoutubeStudioPanel
   _updateLanguageVisibility() {
     const keyword = this.el.querySelector(
-        '#yt-language-search').value.trim().toLowerCase();
+      '#yt-language-search').value.trim().toLowerCase();
     const showSelectedOnly = this.el.querySelector(
-        '#yt-filter-selected').checked;
+      '#yt-filter-selected').checked;
 
     this.el.querySelectorAll('.yt-language-label').forEach(label => {
       const langName = label.textContent.trim().toLowerCase();
