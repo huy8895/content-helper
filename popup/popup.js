@@ -6,27 +6,65 @@ const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.profile'
 ];
 
-const $login  = document.getElementById('google-login-btn');
-const $logout = document.getElementById('google-logout-btn');
+const $loginSection = document.getElementById('login-section');
+const $userSection = document.getElementById('user-section');
+const $loading = document.getElementById('loading');
+const $status = document.getElementById('status');
+const $loginBtn = document.getElementById('google-login-btn');
+const $logoutBtn = document.getElementById('google-logout-btn');
 
-/* ------- khởi tạo UI tuỳ theo đã có token hay chưa ------- */
+const $userName = document.getElementById('user-name');
+const $userEmail = document.getElementById('user-email');
+const $userAvatar = document.getElementById('user-avatar');
+
+/* ------- khởi tạo UI ------- */
 document.addEventListener('DOMContentLoaded', () => {
-  chrome.storage.local.get('gg_access_token', data => {
-    toggleUI(!!data.gg_access_token);
+  setLoading(true);
+  chrome.storage.local.get(['gg_access_token', 'google_user_name', 'google_user_email', 'google_user_avatar'], data => {
+    if (data.gg_access_token) {
+      updateUserUI(data);
+      toggleUI(true);
+    } else {
+      toggleUI(false);
+    }
+    setLoading(false);
   });
 
-  $login .addEventListener('click', startOAuth);
-  $logout.addEventListener('click', doLogout);
+  $loginBtn.addEventListener('click', startOAuth);
+  $logoutBtn.addEventListener('click', doLogout);
 });
 
+function setLoading(isLoading) {
+  $loading.style.display = isLoading ? 'block' : 'none';
+  if (isLoading) {
+    $loginSection.style.display = 'none';
+    $userSection.style.display = 'none';
+  }
+}
+
 function toggleUI(loggedIn) {
-  $login .style.display = loggedIn ? 'none' : 'inline-block';
-  $logout.style.display = loggedIn ? 'inline-block' : 'none';
+  $loginSection.style.display = loggedIn ? 'none' : 'block';
+  $userSection.style.display = loggedIn ? 'flex' : 'none';
+}
+
+function updateUserUI(data) {
+  $userName.textContent = data.google_user_name || 'User';
+  $userEmail.textContent = data.google_user_email || '';
+  $userAvatar.src = data.google_user_avatar || 'https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png';
+}
+
+function setStatus(msg, isError = false) {
+  $status.textContent = msg;
+  $status.style.color = isError ? '#d93025' : '#5f6368';
+  setTimeout(() => { $status.textContent = ''; }, 3000);
 }
 
 /* -------------- Đăng nhập -------------- */
 function startOAuth() {
-  const redirect = chrome.identity.getRedirectURL();   // gốc /
+  setLoading(true);
+  setStatus('Đang kết nối với Google...');
+
+  const redirect = chrome.identity.getRedirectURL();
   const url =
     'https://accounts.google.com/o/oauth2/v2/auth' +
     '?response_type=token' +
@@ -34,59 +72,75 @@ function startOAuth() {
     `&redirect_uri=${encodeURIComponent(redirect)}` +
     `&scope=${encodeURIComponent(SCOPES.join(' '))}`;
 
-  chrome.identity.launchWebAuthFlow({ url, interactive:true }, returned => {
+  chrome.identity.launchWebAuthFlow({ url, interactive: true }, returned => {
     if (chrome.runtime.lastError || !returned) {
       console.error('OAuth error:', chrome.runtime.lastError);
+      setStatus('Lỗi đăng nhập. Vui lòng thử lại.', true);
+      setLoading(false);
+      toggleUI(false);
       return;
     }
+
     const params = new URLSearchParams(new URL(returned).hash.substring(1));
-    const token  = params.get('access_token');
-    if (!token) return console.error('No access_token');
+    const token = params.get('access_token');
+
+    if (!token) {
+      setStatus('Không lấy được token.', true);
+      setLoading(false);
+      toggleUI(false);
+      return;
+    }
 
     getGoogleUserInfo(token).then(userInfo => {
-      chrome.storage.local.set({
+      const userData = {
         google_user_id: userInfo.sub,
         google_user_email: userInfo.email,
+        google_user_name: userInfo.name,
+        google_user_avatar: userInfo.picture,
         gg_access_token: token
-      }, () => {
-        console.log('✅ Saved Google user ID + email');
-        console.log('✅ Token saved');
+      };
+
+      chrome.storage.local.set(userData, () => {
+        updateUserUI(userData);
         toggleUI(true);
+        setLoading(false);
+        setStatus('Đăng nhập thành công!');
         sendToActiveTab({ action: 'show_buttons' });
       });
+    }).catch(err => {
+      setStatus('Lỗi khi lấy thông tin người dùng.', true);
+      setLoading(false);
+      toggleUI(false);
     });
-
-
   });
 }
 
 /* -------------- Đăng xuất -------------- */
 function doLogout() {
-  chrome.storage.local.clear(() => {
-    console.log('🔓 All local storage cleared');
-    toggleUI(false);
-    sendToActiveTab({ action: 'hide_buttons' });
-  });
+  if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+    chrome.storage.local.clear(() => {
+      toggleUI(false);
+      setStatus('Đã đăng xuất.');
+      sendToActiveTab({ action: 'hide_buttons' });
+    });
+  }
 }
 
-/* -------------- Helper gửi message tới tab ChatGPT -------------- */
+/* -------------- Helper gửi message -------------- */
 function sendToActiveTab(msg) {
-  chrome.tabs.query({ active:true, currentWindow:true }, tabs => {
-    if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, msg);
+  chrome.tabs.query({}, tabs => {
+    tabs.forEach(tab => {
+      if (tab.url && (tab.url.includes('chatgpt.com') || tab.url.includes('aistudio.google.com') || tab.url.includes('youtube.com'))) {
+        chrome.tabs.sendMessage(tab.id, msg).catch(() => { });
+      }
+    });
   });
 }
 
 async function getGoogleUserInfo(accessToken) {
-  try {
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (!res.ok) throw new Error('Failed to fetch user info');
-    const userInfo = await res.json();
-    console.log('✅ Google User Info:', userInfo);
-    return userInfo;
-  } catch (err) {
-    console.error('❌ Failed to get Google user info:', err);
-    throw err;
-  }
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (!res.ok) throw new Error('Failed to fetch user info');
+  return await res.json();
 }

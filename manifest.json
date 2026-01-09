@@ -1,10 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Content Helper",
-  "version": "1.0",
+  "name": "Content Helper - AI Workflow Assistant",
+  "version": "1.0.1",
+  "description": "Simplify your AI workflow on ChatGPT, Google AI Studio, and DeepSeek. Automate scenarios, split text, and download audio easily.",
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": "assets/icon.png"
+  },
+  "icons": {
+    "16": "assets/icon.png",
+    "48": "assets/icon.png",
+    "128": "assets/icon.png"
   },
   "background": {
     "service_worker": "background/background.js"
@@ -16,11 +22,15 @@
     "scripting",
     "webRequest",
     "downloads",
-    "windows",
     "notifications"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://chatgpt.com/*",
+    "https://aistudio.google.com/*",
+    "https://studio.youtube.com/*",
+    "https://chat.deepseek.com/*",
+    "https://chat.qwen.ai/*",
+    "https://grok.com/*"
   ],
   "content_scripts": [
     {
@@ -61,7 +71,9 @@
     "client_id": "517231603315-unill9qgp7iq7f9evp7l9h2mk676kc4u.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/drive.file",
-      "https://www.googleapis.com/auth/drive.readonly"
+      "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
     ]
   },
   "content_security_policy": {

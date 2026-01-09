@@ -2,18 +2,43 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Google Login</title>
-  <style>
-    button {
-      padding: 6px 14px;
-      font-size: 14px;
-    }
-  </style>
+  <title>Content Helper - Login</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-<button id="google-login-btn">Login with Google</button>
-<button id="google-logout-btn" style="display:none">Logout</button>
+  <div class="header">
+    <h1>📤 Content Helper</h1>
+  </div>
 
-<script src="popup.js"></script>
+  <div class="content">
+    <div id="loading" class="loading-spinner"></div>
+    
+    <div id="login-section">
+      <p style="text-align: center; color: var(--text-secondary); margin-bottom: 24px;">
+        Đăng nhập với Google để bắt đầu sử dụng các tính năng nâng cao.
+      </p>
+      <button id="google-login-btn" class="btn">
+        <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="G">
+        Tiếp tục với Google
+      </button>
+    </div>
+
+    <div id="user-section" class="user-profile">
+      <img id="user-avatar" class="avatar" src="" alt="Avatar">
+      <div id="user-name" class="user-name">User Name</div>
+      <div id="user-email" class="user-email">user@example.com</div>
+      <button id="google-logout-btn" class="btn">
+        Đăng xuất
+      </button>
+    </div>
+
+    <div id="status" class="status-text"></div>
+  </div>
+
+  <div class="footer">
+    Version 1.0.0 &bull; Build with ❤️
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>
