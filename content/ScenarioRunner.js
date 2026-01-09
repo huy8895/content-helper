@@ -169,11 +169,13 @@ window.ScenarioRunner = class {
     const shown = new Set();
 
     list.forEach(q => {
-      const matches = [...q.text.matchAll(/\$\{(\w+)\}/g)];
+      const matches = [...q.text.matchAll(/\$\{([^}|]+)(?:\|([^}]+))?\}/g)];
       const loopKey = this._getLoopKey(q);
 
       matches.forEach(match => {
         const varName = match[1];
+        const optionsStr = match[2];
+
         if (shown.has(varName)) return;
         shown.add(varName);
 
@@ -184,7 +186,17 @@ window.ScenarioRunner = class {
 
         let inputEl;
         // === CẬP NHẬT LOGIC TẠO INPUT ===
-        if (q.type === "loop" && varName === loopKey) {
+        if (optionsStr) {
+          // Nếu có danh sách lựa chọn, tạo dropdown
+          inputEl = document.createElement("select");
+          const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
+          options.forEach(opt => {
+            const option = document.createElement("option");
+            option.value = opt;
+            option.textContent = opt;
+            inputEl.appendChild(option);
+          });
+        } else if (q.type === "loop" && varName === loopKey) {
           // 'loop' vẫn là input number
           inputEl = document.createElement("input");
           inputEl.type = "number";
@@ -360,13 +372,13 @@ window.ScenarioRunner = class {
       if (q.type === "text") {
         result.push(q.text);
       } else if (q.type === "variable") {
-        const filled = q.text.replace(/\$\{(\w+)\}/g, (_, k) => values[k] || "");
+        const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
         result.push(filled);
       } else if (q.type === "loop") {
         const loopKey = this._getLoopKey(q);
         const count = parseInt(values[loopKey] || "0", 10);
         for (let i = 1; i <= count; i++) {
-          const prompt = q.text.replace(/\$\{(\w+)\}/g, (_, k) => {
+          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
             if (k === loopKey) return String(i);
             return values[k] || "";
           });
@@ -385,7 +397,7 @@ window.ScenarioRunner = class {
         // Lặp qua từng giá trị trong mảng
         for (const itemValue of listValues) {
           // Thay thế biến loopKey bằng giá trị hiện tại, và các biến khác nếu có
-          const prompt = q.text.replace(/\$\{(\w+)\}/g, (_, k) => {
+          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
             if (k === loopKey) {
               return itemValue; // Thay thế bằng giá trị từ danh sách
             }

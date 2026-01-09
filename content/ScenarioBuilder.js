@@ -64,7 +64,7 @@ window.ScenarioBuilder = class {
     container.className = "question-item";
 
     const textarea = document.createElement("textarea");
-    textarea.placeholder = "Câu hỏi...";
+    textarea.placeholder = "Câu hỏi... (VD: ${topic|AI,Tech} hoặc ${name})";
     textarea.className = "question-input";
     textarea.value = q.text || "";
     textarea.rows = 2;

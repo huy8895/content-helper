@@ -557,9 +557,10 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   margin-bottom: 4px;
 }
 
-.sr-input-group input[type="text"],
-.sr-input-group input[type="number"],
-.sr-input-group textarea {
+ .sr-input-group input[type="text"],
+ .sr-input-group input[type="number"],
+ .sr-input-group select,
+ .sr-input-group textarea {
   padding: 6px 8px;
   font-size: 13px;
   border: 1px solid #ccc;
