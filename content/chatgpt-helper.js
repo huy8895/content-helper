@@ -99,6 +99,11 @@ class ChatGPTHelper {
 
   _toggleRunner() {
     if (this.runner) {
+      if (this.runner._isBusy && this.runner._isBusy()) {
+        if (!confirm("Kịch bản đang chạy. Bạn có chắc chắn muốn đóng và dừng kịch bản không?")) {
+          return;
+        }
+      }
       console.log("❌ [ChatGPTHelper] Closing ScenarioRunner");
       this.runner.destroy();
       this.runner = null;
@@ -222,6 +227,28 @@ class ChatGPTHelper {
     // 2️⃣ Khi click → đóng panel
     btn.addEventListener("click", (ev) => {
       stopAll(ev);        // chặn thêm một lần
+
+      // KIỂM TRA TRẠNG THÁI BẬN (chỉ áp dụng cho các panel có _isBusy)
+      // Lấy đối tượng instance tương ứng (builder, runner, splitter...)
+      const h = window.__helperInjected;
+      if (h) {
+        // Tìm xem panel nào đang được đóng
+        let instance = null;
+        if (h.builder && h.builder.el === panelEl) instance = h.builder;
+        else if (h.runner && h.runner.el === panelEl) instance = h.runner;
+        else if (h.splitter && h.splitter.el === panelEl) instance = h.splitter;
+        else if (h.audioDownloader && h.audioDownloader.el === panelEl) instance = h.audioDownloader;
+        else if (h.contentCopyPanel && h.contentCopyPanel.el === panelEl) instance = h.contentCopyPanel;
+        else if (h.aiStudioSettings && h.aiStudioSettings.el === panelEl) instance = h.aiStudioSettings;
+        else if (h.youtubePanel && h.youtubePanel.el === panelEl) instance = h.youtubePanel;
+
+        if (instance && instance._isBusy && instance._isBusy()) {
+          if (!confirm("Bảng điều khiển đang hoạt động. Bạn có chắc chắn muốn đóng không?")) {
+            return;
+          }
+        }
+      }
+
       onClose();          // gọi hàm hủy
     });
 
@@ -268,7 +295,6 @@ class ChatGPTHelper {
     }
   }
 
-  /** Đóng panel trên cùng (nếu có) */
   static closeTopPanel() {
     const barPanels = Array.from(document.querySelectorAll(
       '#chatgpt-helper-panel-bar .helper-panel'));
@@ -276,10 +302,13 @@ class ChatGPTHelper {
       'body > .helper-panel:not(#chatgpt-helper-panel-bar *)'));
 
     // panel mở sau cùng = phần tử cuối của mảng floating, nếu không có thì lấy ở bar
-    const last = floating.at(-1) || barPanels.at(-1);
-    if (!last) return;
+    const lastEl = floating.at(-1) || barPanels.at(-1);
+    if (!lastEl) return;
 
-    last.querySelector('.panel-close')?.click();
+    // Thay vì gọi click() thẳng, ta sẽ kích hoạt logic trong close button
+    // Cách an toàn nhất là sử dụng logic xác nhận trực tiếp ở đây hoặc kích hoạt click
+    // Để tái sử dụng logic trong addCloseButton, ta sẽ giả lập click
+    lastEl.querySelector('.panel-close')?.click();
   }
 
   /* 👇  thêm vào cuối class */

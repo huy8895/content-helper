@@ -568,5 +568,13 @@ window.ScenarioRunner = class {
       firstInput.focus();
     }
   }
+
+  /**
+   * Kiểm tra xem kịch bản có đang chạy hay không.
+   * @returns {boolean} true nếu đang chạy.
+   */
+  _isBusy() {
+    return this.sequencer && !this.sequencer.stopped && this.sequencer.idx < this.sequencer.prompts.length;
+  }
 };
 // --- END OF FILE ScenarioRunner.js (UPDATED) ---
