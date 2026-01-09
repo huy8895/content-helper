@@ -20,6 +20,17 @@ const ScenarioRunnerInnerHTML = `
 
   <div id="scenario-inputs" style="margin-top: 10px;"></div>
 
+  <!-- Thanh tiến trình -->
+  <div class="sr-progress-container" id="sr-progress-box">
+    <div class="sr-progress-info">
+      <span>Đang chạy: <span id="sr-progress-step">0</span>/<span id="sr-progress-total">0</span></span>
+      <span id="sr-progress-percent">0%</span>
+    </div>
+    <div class="sr-progress-bar-bg">
+      <div id="sr-progress-bar" class="sr-progress-bar-fill"></div>
+    </div>
+  </div>
+
   <div class="sr-controls">
     <button id="sr-addqueue">➕ Thêm vào hàng đợi <span id="sr-queue-count">0</span></button>
     <button id="sr-start">▶️ Bắt đầu</button>
@@ -354,8 +365,14 @@ window.ScenarioRunner = class {
     }
     this.sequencer = new PromptSequencer(
       bigList, this._sendPrompt.bind(this), this._waitForResponse.bind(this),
-      (idx, total) => console.log(`📤 ${idx}/${total} done`), "ScenarioRunner"
+      (idx, total) => {
+        console.log(`📤 ${idx}/${total} done`);
+        this._updateProgress(idx, total);
+      }, "ScenarioRunner"
     );
+
+    this._showProgress(true);
+    this._updateProgress(0, bigList.length);
     this.sequencer.start(() => this._resetControls());
   }
   _resetControls() {
@@ -363,6 +380,33 @@ window.ScenarioRunner = class {
     this.el.querySelector("#sr-addqueue").disabled = false;
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
+
+    // Tự động ẩn thanh tiến trình sau một khoảng thời gian ngắn nếu đã xong 100%
+    const bar = this.el.querySelector("#sr-progress-bar");
+    if (bar && bar.style.width === "100%") {
+      setTimeout(() => this._showProgress(false), 3000);
+    }
+  }
+
+  _showProgress(show) {
+    const box = this.el.querySelector("#sr-progress-box");
+    if (box) box.style.display = show ? "block" : "none";
+  }
+
+  _updateProgress(idx, total) {
+    const bar = this.el.querySelector("#sr-progress-bar");
+    const textStep = this.el.querySelector("#sr-progress-step");
+    const textTotal = this.el.querySelector("#sr-progress-total");
+    const textPercent = this.el.querySelector("#sr-progress-percent");
+
+    if (!bar || !textStep || !textTotal || !textPercent) return;
+
+    textStep.textContent = idx;
+    textTotal.textContent = total;
+
+    const percent = total > 0 ? Math.round((idx / total) * 100) : 0;
+    textPercent.textContent = `${percent}%`;
+    bar.style.width = `${percent}%`;
   }
   // Thay thế hàm này trong file ScenarioRunner.js
 

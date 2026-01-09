@@ -1,13 +1,18 @@
 /* ==== base style cho mọi panel ==== */
-.panel-box, .ts-panel, #scenario-builder, #scenario-runner {
+.panel-box,
+.ts-panel,
+#scenario-builder,
+#scenario-runner {
   background: #f7f7f8;
-  border: 1px solid rgba(16, 23, 42, 0.08); /* viền nhẹ xanh xám */
+  border: 1px solid rgba(16, 23, 42, 0.08);
+  /* viền nhẹ xanh xám */
   border-radius: 10px;
-  padding: 16px 18px 14px 18px; /* top right bottom left */
+  padding: 16px 18px 14px 18px;
+  /* top right bottom left */
   box-shadow:
-          0 8px 10px rgba(0, 0, 0, 0.12),
-          0 20px 25px rgba(0, 0, 0, 0.1),
-          0 30px 45px rgba(0, 0, 0, 0.08);
+    0 8px 10px rgba(0, 0, 0, 0.12),
+    0 20px 25px rgba(0, 0, 0, 0.1),
+    0 30px 45px rgba(0, 0, 0, 0.08);
   font-family: "Inter", "Segoe UI", sans-serif;
   flex: 0 0 auto;
   position: relative;
@@ -28,7 +33,8 @@
 #scenario-browser {
   display: flex;
   flex-direction: column;
-  flex: 0 0 auto;       /* ✅ chỉ chiếm đúng nội dung thật */
+  flex: 0 0 auto;
+  /* ✅ chỉ chiếm đúng nội dung thật */
   overflow: visible;
   margin-bottom: 0px;
 }
@@ -45,7 +51,9 @@
 
 
 /* Tiêu đề các panel */
-.sb-title, .ts-title, .sr-title {
+.sb-title,
+.ts-title,
+.sr-title {
   margin: 0 0 10px;
   font-size: 16px;
   font-weight: 600;
@@ -55,10 +63,13 @@
 }
 
 /* Input & Textarea style */
-input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
+input[type="text"],
+.ts-textarea,
+.ts-limit,
+#scenario-runner select {
   width: 100%;
   padding: 4px;
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 6px;
   font-size: 14px;
   background: #fff;
@@ -81,10 +92,13 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 /* Nút bên trong panel */
-.panel-box button:not(.panel-close), .ts-btn, .sr-controls button, .ts-file-wrapper {
+.panel-box button:not(.panel-close),
+.ts-btn,
+.sr-controls button,
+.ts-file-wrapper {
   padding: 8px 12px;
   font-size: 13px;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   background: #fff;
   color: #333;
@@ -92,15 +106,19 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   transition: background 0.2s, box-shadow 0.2s;
 }
 
-.panel-box button:not(.panel-close):hover, .ts-btn:hover, .sr-controls button:hover, .ts-file-wrapper:hover {
+.panel-box button:not(.panel-close):hover,
+.ts-btn:hover,
+.sr-controls button:hover,
+.ts-file-wrapper:hover {
   background: #efefef;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .ts-btn-accent {
   background: #e0e7ff;
   color: #1e40af;
 }
+
 .ts-btn-accent:hover {
   background: #c7d2fe;
   color: #1e3a8a;
@@ -110,6 +128,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   background: #fee2e2;
   color: #b91c1c;
 }
+
 .ts-btn-danger:hover {
   background: #fecaca;
   color: #991b1b;
@@ -121,6 +140,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   overflow-y: auto;
   font-size: 12px;
 }
+
 .ts-results button {
   margin: 3px 0;
   padding: 4px 8px;
@@ -132,9 +152,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   color: #1e40af;
   transition: background .2s;
 }
+
 .ts-results button:hover {
   background: #c7d2fe;
 }
+
 .ts-results button[disabled] {
   background: #d1d5db;
   color: #6b7280;
@@ -152,6 +174,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   pointer-events: none;
   justify-content: center;
 }
+
 .helper-panel {
   pointer-events: auto;
 }
@@ -178,14 +201,22 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   padding: 0;
   z-index: 99;
 }
+
 .panel-close:hover {
   background: #c0392b !important;
 }
 
 /* Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Nút chính ở dưới input */
@@ -197,7 +228,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   /* Sử dụng flex để tự động điều chỉnh kích thước */
   /*flex: 1 1 auto;  !* Cho phép nút giãn ra/giảm xuống dựa trên nội dung *!*/
   /* Loại bỏ flex: 1 1 auto */
-  flex-shrink: 0;  /* Đảm bảo nút không co khi không đủ chỗ */
+  flex-shrink: 0;
+  /* Đảm bảo nút không co khi không đủ chỗ */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,26 +237,40 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
   /* Các thuộc tính khác giữ nguyên */
   font-size: 14px;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   cursor: pointer;
   background: #f7f7f8;
   color: #333;
   transition: background 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   padding: 5px 6px;
   font-weight: 300;
   line-height: normal;
   letter-spacing: 0px;
-  white-space: nowrap;  /* Tránh văn bản bị xuống dòng */
+  white-space: nowrap;
+  /* Tránh văn bản bị xuống dòng */
 }
+
 .scenario-btn:hover {
   background: #efefef;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.btn-setup::before { margin-right: 6px; color: #10a37f; }
-.btn-run::before   { margin-right: 6px; color: #4285F4;}
-.btn-tool::before  { margin-right: 6px; color: #17a2b8;}
+
+.btn-setup::before {
+  margin-right: 6px;
+  color: #10a37f;
+}
+
+.btn-run::before {
+  margin-right: 6px;
+  color: #4285F4;
+}
+
+.btn-tool::before {
+  margin-right: 6px;
+  color: #17a2b8;
+}
 
 /* Container nút chính */
 #chatgpt-helper-button-container {
@@ -252,7 +298,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 .ts-file-wrapper input[type="file"] {
   position: absolute;
-  left: 0; top: 0;
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
   opacity: 0;
@@ -287,14 +334,17 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #questions-container {
   flex: 1 1 auto;
   overflow-y: auto;
-  max-height: 220px;  /* giống dropdown */
+  max-height: 220px;
+  /* giống dropdown */
   font-size: 13px;
   box-sizing: border-box;
 }
 
 #questions-container input.question-input {
-  white-space: normal;     /* 👈 Cho phép xuống dòng */
-  word-break: break-word;  /* 👈 Nếu quá dài */
+  white-space: normal;
+  /* 👈 Cho phép xuống dòng */
+  word-break: break-word;
+  /* 👈 Nếu quá dài */
 }
 
 
@@ -302,10 +352,12 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #questions-container textarea.question-input::-webkit-scrollbar {
   width: 6px;
 }
+
 #questions-container textarea.question-input::-webkit-scrollbar-thumb {
   background: #bbb;
   border-radius: 4px;
 }
+
 #questions-container textarea.question-input::-webkit-scrollbar-track {
   background: #f0f0f0;
   border-radius: 4px;
@@ -331,6 +383,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   background: #f0f0f0;
   border-radius: 4px;
 }
+
 #scenario-dropdown.hidden-dropdown {
   height: 0 !important;
   padding: 0 !important;
@@ -348,31 +401,49 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
-  .panel-box, .ts-panel, #scenario-builder, #scenario-runner {
-    background: #2c2c2c; /* màu nền tối */
-    color: #f0f0f0; /* màu chữ sáng */
-    padding: 16px 18px 14px 18px; /* top right bottom left */
+
+  .panel-box,
+  .ts-panel,
+  #scenario-builder,
+  #scenario-runner {
+    background: #2c2c2c;
+    /* màu nền tối */
+    color: #f0f0f0;
+    /* màu chữ sáng */
+    padding: 16px 18px 14px 18px;
+    /* top right bottom left */
     border-radius: 10px;
   }
 
-  .sb-title, .ts-title, .sr-title {
+  .sb-title,
+  .ts-title,
+  .sr-title {
     color: #f0f0f0;
   }
 
-  input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
+  input[type="text"],
+  .ts-textarea,
+  .ts-limit,
+  #scenario-runner select {
     background: #444;
     color: #f0f0f0;
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
-  .panel-box button:not(.panel-close), .ts-btn, .sr-controls button, .ts-file-wrapper {
+  .panel-box button:not(.panel-close),
+  .ts-btn,
+  .sr-controls button,
+  .ts-file-wrapper {
     background: #444;
     color: #f0f0f0;
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   /* Các nút hover */
-  .panel-box button:not(.panel-close):hover, .ts-btn:hover, .sr-controls button:hover, .ts-file-wrapper:hover {
+  .panel-box button:not(.panel-close):hover,
+  .ts-btn:hover,
+  .sr-controls button:hover,
+  .ts-file-wrapper:hover {
     background: #555;
   }
 
@@ -383,14 +454,20 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     max-height: 220px;
     background: #fff;
     font-size: 13px;
-    padding: 0; /* Xoá padding để không tạo khoảng cách bao */
-    border: none; /* ❌ Bỏ viền container nếu cần */
+    padding: 0;
+    /* Xoá padding để không tạo khoảng cách bao */
+    border: none;
+    /* ❌ Bỏ viền container nếu cần */
     box-sizing: border-box;
   }
 
 
   /* Input & Textarea & Select */
-  input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select, #scenario-builder select {
+  input[type="text"],
+  .ts-textarea,
+  .ts-limit,
+  #scenario-runner select,
+  #scenario-builder select {
     background: #444;
     color: #f0f0f0;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -408,6 +485,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   width: 480px;
   max-width: 100%;
 }
+
 /* === Scenario dropdown with search === */
 #scenario-search {
   width: 100%;
@@ -420,7 +498,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 #scenario-dropdown {
-  height: 220px;              /* khoảng ~10 dòng */
+  height: 220px;
+  /* khoảng ~10 dòng */
   overflow-y: auto;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -434,6 +513,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #scenario-dropdown::-webkit-scrollbar {
   width: 6px;
 }
+
 #scenario-dropdown::-webkit-scrollbar-thumb {
   background: #bbb;
   border-radius: 4px;
@@ -475,8 +555,10 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   box-sizing: border-box;
 
   margin: 0 0 6px 0;
-  border-bottom: 1px solid #eee; /* viền nhẹ dưới mỗi textarea */
-  min-height: 24px; /* ~1 dòng */
+  border-bottom: 1px solid #eee;
+  /* viền nhẹ dưới mỗi textarea */
+  min-height: 24px;
+  /* ~1 dòng */
   line-height: 1.2;
   overflow-y: auto;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -521,6 +603,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   color: #999;
   cursor: pointer;
 }
+
 .delete-question-btn:hover {
   color: #e74c3c;
 }
@@ -530,6 +613,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   cursor: pointer;
   border-bottom: 1px solid #eee;
 }
+
 .scenario-dropdown-item:hover {
   background: #e0e7ff;
 }
@@ -557,10 +641,10 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   margin-bottom: 4px;
 }
 
- .sr-input-group input[type="text"],
- .sr-input-group input[type="number"],
- .sr-input-group select,
- .sr-input-group textarea {
+.sr-input-group input[type="text"],
+.sr-input-group input[type="number"],
+.sr-input-group select,
+.sr-input-group textarea {
   padding: 6px 8px;
   font-size: 13px;
   border: 1px solid #ccc;
@@ -577,7 +661,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   line-height: 1.4;
 }
 
-.question-loopkey{
+.question-loopkey {
   width: 50px;
   padding: 2px 4px;
   font-size: 12px;
@@ -592,7 +676,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 }
 
 #sr-queue-list {
-  max-height: 100px;            /* ≈ 8–9 dòng */
+  max-height: 100px;
+  /* ≈ 8–9 dòng */
   overflow-y: auto;
   list-style: none;
   margin: 4px 0 0;
@@ -607,10 +692,12 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #sr-queue-list::-webkit-scrollbar {
   width: 6px;
 }
+
 #sr-queue-list::-webkit-scrollbar-thumb {
   background: #bbb;
   border-radius: 4px;
 }
+
 #sr-queue-list::-webkit-scrollbar-track {
   background: #f0f0f0;
   border-radius: 4px;
@@ -624,9 +711,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   border-bottom: 1px solid #eee;
   cursor: default;
 }
+
 #sr-queue-list li:last-child {
   border-bottom: none;
 }
+
 #sr-queue-list li:hover {
   background: #e0e7ff;
 }
@@ -645,6 +734,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   color: #999;
   cursor: pointer;
 }
+
 .sr-queue-remove:hover {
   color: #e74c3c;
 }
@@ -653,19 +743,64 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 @media (prefers-color-scheme: dark) {
   #sr-queue-list {
     background: #444;
-    border-color: rgba(255,255,255,0.2);
+    border-color: rgba(255, 255, 255, 0.2);
   }
+
   #sr-queue-list li {
     border-bottom: 1px solid #555;
   }
+
   #sr-queue-list li:hover {
     background: #555;
   }
+
   .sr-queue-remove {
     color: #bbb;
   }
+
   .sr-queue-remove:hover {
     color: #ff6b6b;
+  }
+}
+
+/* === Progress Bar for Scenario Runner === */
+.sr-progress-container {
+  margin: 12px 0;
+  display: none;
+}
+
+.sr-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 5px;
+  color: #666;
+  font-weight: 500;
+}
+
+.sr-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sr-progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: #10a37f;
+  transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+  box-shadow: 0 0 10px rgba(16, 163, 127, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .sr-progress-info {
+    color: #aaa;
+  }
+
+  .sr-progress-bar-bg {
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -674,7 +809,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 /* 1. Container cha phải có position: relative để làm mốc */
 #sr-scenario-browser {
   position: relative;
-  z-index: 10; /* Đảm bảo nó cao hơn các input bên dưới */
+  z-index: 10;
+  /* Đảm bảo nó cao hơn các input bên dưới */
 }
 
 #sr-scenario-search {
@@ -689,20 +825,27 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 /* 2. Dropdown sẽ "nổi" lên trên */
 #sr-scenario-dropdown {
-  position: absolute; /* Rất quan trọng: Tách khỏi luồng layout */
-  top: 100%; /* Nằm ngay bên dưới ô search */
+  position: absolute;
+  /* Rất quan trọng: Tách khỏi luồng layout */
+  top: 100%;
+  /* Nằm ngay bên dưới ô search */
   left: 0;
   width: 100%;
-  z-index: 20; /* Phải cao hơn ô search */
+  z-index: 20;
+  /* Phải cao hơn ô search */
 
   max-height: 220px;
   overflow-y: auto;
 
-  background: #f7f7f8; /* Nền giống panel */
-  border: 1px solid rgba(16, 23, 42, 0.08); /* Viền giống panel */
+  background: #f7f7f8;
+  /* Nền giống panel */
+  border: 1px solid rgba(16, 23, 42, 0.08);
+  /* Viền giống panel */
   border-top: none;
-  border-radius: 0 0 8px 8px; /* Bo góc dưới */
-  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12); /* Đổ bóng để nổi bật */
+  border-radius: 0 0 8px 8px;
+  /* Bo góc dưới */
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12);
+  /* Đổ bóng để nổi bật */
   box-sizing: border-box;
 }
 
@@ -718,6 +861,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 #sr-scenario-dropdown::-webkit-scrollbar {
   width: 6px;
 }
+
 #sr-scenario-dropdown::-webkit-scrollbar-thumb {
   background: #bbb;
   border-radius: 4px;
@@ -729,9 +873,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   cursor: pointer;
   border-bottom: 1px solid #eee;
 }
+
 #sr-scenario-dropdown .scenario-dropdown-item:last-child {
   border-bottom: none;
 }
+
 #sr-scenario-dropdown .scenario-dropdown-item:hover {
   background: #e0e7ff;
 }
@@ -741,7 +887,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 /* 1. Container cha (#scenario-browser) phải có position: relative để làm mốc */
 #scenario-browser {
   position: relative;
-  z-index: 10; /* Đảm bảo nó cao hơn phần editor bên dưới */
+  z-index: 10;
+  /* Đảm bảo nó cao hơn phần editor bên dưới */
 }
 
 /* 2. Style lại ô search cho nhất quán */
@@ -757,20 +904,28 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 /* 3. Dropdown (#scenario-dropdown) sẽ "nổi" lên trên */
 #scenario-dropdown {
-  position: absolute; /* Rất quan trọng: Tách khỏi luồng layout */
-  top: 100%; /* Nằm ngay bên dưới ô search */
+  position: absolute;
+  /* Rất quan trọng: Tách khỏi luồng layout */
+  top: 100%;
+  /* Nằm ngay bên dưới ô search */
   left: 0;
   width: 100%;
-  z-index: 20; /* Phải cao hơn ô search */
+  z-index: 20;
+  /* Phải cao hơn ô search */
 
-  height: 220px; /* Giữ nguyên chiều cao cố định */
+  height: 220px;
+  /* Giữ nguyên chiều cao cố định */
   overflow-y: auto;
 
-  background: #f7f7f8; /* Nền giống panel */
-  border: 1px solid rgba(16, 23, 42, 0.08); /* Viền giống panel */
+  background: #f7f7f8;
+  /* Nền giống panel */
+  border: 1px solid rgba(16, 23, 42, 0.08);
+  /* Viền giống panel */
   border-top: none;
-  border-radius: 0 0 8px 8px; /* Bo góc dưới */
-  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12); /* Đổ bóng để nổi bật */
+  border-radius: 0 0 8px 8px;
+  /* Bo góc dưới */
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12);
+  /* Đổ bóng để nổi bật */
   box-sizing: border-box;
 
   /* Bỏ flex đi vì nó không còn là một phần của flex container nữa */
@@ -787,7 +942,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 /* 5. Style cho item (giữ nguyên) */
 #scenario-dropdown .scenario-dropdown-item {
-  padding: 8px 10px; /* Đồng bộ padding */
+  padding: 8px 10px;
+  /* Đồng bộ padding */
   cursor: pointer;
   border-bottom: 1px solid #eee;
 }
@@ -806,9 +962,11 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     background: #2c2c2c;
     border-color: rgba(255, 255, 255, 0.2);
   }
+
   #scenario-dropdown .scenario-dropdown-item {
-     border-bottom-color: #444;
+    border-bottom-color: #444;
   }
+
   #scenario-dropdown .scenario-dropdown-item:hover {
     background: #555;
   }
@@ -819,7 +977,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 #sr-queue-list li {
   display: flex;
-  justify-content: space-between; /* Đẩy nút copy về cuối */
+  justify-content: space-between;
+  /* Đẩy nút copy về cuối */
   align-items: center;
   gap: 8px;
 }
@@ -833,28 +992,36 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   border-radius: 4px;
   line-height: 1;
 }
+
 .sr-queue-copy:hover {
   background-color: #ddd;
 }
+
 /* === Styles for Google AI Studio Settings Panel (Height Limit & Scroll) === */
 
 /* 1. Kích thước và layout tổng thể của panel */
 #google-ai-studio-panel {
   width: 320px;
-  max-height: 85vh; /* Giới hạn chiều cao tối đa là 85% chiều cao màn hình */
+  max-height: 85vh;
+  /* Giới hạn chiều cao tối đa là 85% chiều cao màn hình */
   box-sizing: border-box;
-  display: flex; /* Sử dụng flexbox để quản lý layout bên trong */
-  flex-direction: column; /* Sắp xếp các mục theo chiều dọc */
+  display: flex;
+  /* Sử dụng flexbox để quản lý layout bên trong */
+  flex-direction: column;
+  /* Sắp xếp các mục theo chiều dọc */
 }
 
 /* 2. Phần nội dung chính (form) sẽ có thể cuộn */
 #google-ai-studio-panel #profile-settings-form {
-  flex-grow: 1; /* Cho phép phần này giãn ra để lấp đầy không gian */
-  overflow-y: auto; /* Thêm thanh cuộn dọc KHI CẦN THIẾT */
+  flex-grow: 1;
+  /* Cho phép phần này giãn ra để lấp đầy không gian */
+  overflow-y: auto;
+  /* Thêm thanh cuộn dọc KHI CẦN THIẾT */
 
   /* Thêm một chút padding để thanh cuộn không dính sát vào nội dung */
   padding-right: 10px;
-  margin-right: -10px; /* Bù lại padding để giữ nguyên căn lề */
+  margin-right: -10px;
+  /* Bù lại padding để giữ nguyên căn lề */
 }
 
 
@@ -866,11 +1033,14 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
-  flex-shrink: 0; /* Không cho co lại */
+  flex-shrink: 0;
+  /* Không cho co lại */
 }
+
 #google-ai-studio-panel .profile-manager #profile-select {
   flex-grow: 1;
 }
+
 #google-ai-studio-panel .profile-manager #delete-profile-btn {
   flex-shrink: 0;
   padding: 6px 8px;
@@ -880,32 +1050,40 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   border-radius: 6px;
   cursor: pointer;
 }
+
 #google-ai-studio-panel .profile-manager #delete-profile-btn:hover {
   background-color: #fecaca;
 }
+
 #google-ai-studio-panel .profile-new {
   display: flex;
   gap: 8px;
   align-items: center;
-  flex-shrink: 0; /* Không cho co lại */
+  flex-shrink: 0;
+  /* Không cho co lại */
 }
+
 #google-ai-studio-panel .profile-new #new-profile-name {
   flex-grow: 1;
 }
+
 #google-ai-studio-panel .profile-new #save-as-new-btn {
   flex-shrink: 0;
 }
+
 #google-ai-studio-panel .divider {
   border: none;
   border-top: 1px solid #e5e7eb;
   margin: 16px 0;
-  flex-shrink: 0; /* Không cho co lại */
+  flex-shrink: 0;
+  /* Không cho co lại */
 }
 
 /* 4. Style cho các nhóm input (không đổi) */
 #google-ai-studio-panel .form-group {
   margin-bottom: 12px;
 }
+
 #google-ai-studio-panel .form-group label {
   display: block;
   margin-bottom: 6px;
@@ -913,6 +1091,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   color: #555;
   font-size: 13px;
 }
+
 #google-ai-studio-panel .form-control {
   width: 100%;
   padding: 8px 12px;
@@ -924,14 +1103,17 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   font-size: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+
 #google-ai-studio-panel .form-control:focus {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
+
 #google-ai-studio-panel .form-group.form-check {
   margin-top: 15px;
 }
+
 #google-ai-studio-panel .auto-set-label {
   display: flex;
   align-items: center;
@@ -939,6 +1121,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   font-weight: normal;
   font-size: 14px;
 }
+
 #google-ai-studio-panel .auto-set-label input[type="checkbox"] {
   margin: 0 8px 0 0;
   width: 16px;
@@ -948,15 +1131,17 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 
 /* 5. Style cho nút Lưu (không đổi) */
 #google-ai-studio-panel #save-settings-btn {
-    background-color: #f0f0f0;
-    color: #333;
-    border: 1px solid #dcdcdc;
-    font-weight: 500;
-    flex-shrink: 0; /* Không cho co lại */
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #dcdcdc;
+  font-weight: 500;
+  flex-shrink: 0;
+  /* Không cho co lại */
 }
+
 #google-ai-studio-panel #save-settings-btn:hover {
-    background-color: #e0e0e0;
-    border-color: #ccc;
+  background-color: #e0e0e0;
+  border-color: #ccc;
 }
 
 /* 6. Dark Mode (cập nhật) */
@@ -966,25 +1151,31 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
     color: #fecaca;
     border-color: #991b1b;
   }
+
   #google-ai-studio-panel .profile-manager #delete-profile-btn:hover {
     background-color: #991b1b;
   }
+
   #google-ai-studio-panel .divider {
     border-top-color: #444;
   }
+
   #google-ai-studio-panel .form-group label {
     color: #bbb;
   }
+
   #google-ai-studio-panel .form-control {
     background-color: #3a3a3a;
     border-color: #555;
     color: #f0f0f0;
   }
+
   #google-ai-studio-panel #save-settings-btn {
     background: #444;
     color: #f0f0f0;
     border-color: #666;
   }
+
   #google-ai-studio-panel #save-settings-btn:hover {
     background: #555;
   }
@@ -993,7 +1184,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
 /* === Styles for YouTube Studio Panel === */
 
 #youtube-studio-helper-panel {
-  width: 420px; /* Rộng hơn một chút để chứa tên ngôn ngữ */
+  width: 420px;
+  /* Rộng hơn một chút để chứa tên ngôn ngữ */
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -1025,6 +1217,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   align-items: center;
   padding: 4px;
 }
+
 #youtube-studio-helper-panel .yt-language-label input {
   margin-right: 8px;
 }
@@ -1036,12 +1229,15 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   gap: 8px;
   align-items: center;
 }
+
 #youtube-studio-helper-panel .profile-manager select {
   flex-grow: 1;
 }
+
 #youtube-studio-helper-panel .profile-new input {
   flex-grow: 1;
 }
+
 #youtube-studio-helper-panel .divider {
   border: none;
   border-top: 1px solid #e5e7eb;
@@ -1053,7 +1249,8 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   #youtube-studio-helper-panel #yt-language-checkbox-container {
     border-color: #555;
   }
-   #youtube-studio-helper-panel .divider {
+
+  #youtube-studio-helper-panel .divider {
     border-top-color: #444;
   }
 }
@@ -1064,6 +1261,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   /* Ẩn input file gốc */
   display: none;
 }
+
 #youtube-studio-helper-panel label[for="yt-json-upload"] {
   /* Style cho cái label giả làm nút */
   display: block;
@@ -1106,6 +1304,7 @@ input[type="text"], .ts-textarea, .ts-limit, #scenario-runner select {
   #youtube-studio-helper-panel .yt-language-controls {
     background-color: #3a3a3a;
   }
+
   #youtube-studio-helper-panel .yt-filter-label {
     color: #ddd;
   }
