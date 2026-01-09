@@ -794,7 +794,34 @@ input[type="text"],
   box-shadow: 0 0 10px rgba(16, 163, 127, 0.2);
 }
 
+.sr-done-items {
+  margin-top: 8px;
+  max-height: 60px;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 2px;
+}
+
+.sr-done-item-tag {
+  background: #e0f2f1;
+  color: #00796b;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(0, 121, 107, 0.1);
+  animation: fadeIn 0.3s ease;
+}
+
 @media (prefers-color-scheme: dark) {
+  .sr-done-item-tag {
+    background: #004d40;
+    color: #b2dfdb;
+    border: 1px solid rgba(178, 223, 219, 0.2);
+  }
+
   .sr-progress-info {
     color: #aaa;
   }

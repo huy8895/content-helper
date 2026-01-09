@@ -29,6 +29,7 @@ const ScenarioRunnerInnerHTML = `
     <div class="sr-progress-bar-bg">
       <div id="sr-progress-bar" class="sr-progress-bar-fill"></div>
     </div>
+    <div id="sr-done-list" class="sr-done-items"></div>
   </div>
 
   <div class="sr-controls">
@@ -373,19 +374,18 @@ window.ScenarioRunner = class {
 
     this._showProgress(true);
     this._updateProgress(0, bigList.length);
+    this._clearDoneList(); // Xóa danh sách cũ khi bắt đầu mới
     this.sequencer.start(() => this._resetControls());
   }
+
   _resetControls() {
     this.el.querySelector("#sr-start").disabled = false;
     this.el.querySelector("#sr-addqueue").disabled = false;
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
 
-    // Tự động ẩn thanh tiến trình sau một khoảng thời gian ngắn nếu đã xong 100%
-    const bar = this.el.querySelector("#sr-progress-bar");
-    if (bar && bar.style.width === "100%") {
-      setTimeout(() => this._showProgress(false), 3000);
-    }
+    // KHÔNG TỰ ĐỘNG ẨN THANH TIẾN TRÌNH THEO YÊU CẦU NGƯỜI DÙNG
+    console.log("🏁 Scenario completed. Progress bar remains visible.");
   }
 
   _showProgress(show) {
@@ -407,6 +407,35 @@ window.ScenarioRunner = class {
     const percent = total > 0 ? Math.round((idx / total) * 100) : 0;
     textPercent.textContent = `${percent}%`;
     bar.style.width = `${percent}%`;
+
+    // Cập nhật danh sách "Done" nếu có label cho bước vừa hoàn thành (idx-1)
+    if (idx > 0 && this.sequencer && this.sequencer.prompts) {
+      const lastPrompt = this.sequencer.prompts[idx - 1];
+      if (lastPrompt && lastPrompt.label) {
+        this._addDoneItem(lastPrompt.label);
+      }
+    }
+  }
+
+  _clearDoneList() {
+    const list = this.el.querySelector("#sr-done-list");
+    if (list) list.innerHTML = "";
+  }
+
+  _addDoneItem(label) {
+    const list = this.el.querySelector("#sr-done-list");
+    if (!list) return;
+
+    // Nếu đã tồn tại thì không thêm nữa (tránh trùng lặp nếu logic sequencer gọi nhiều lần)
+    if (Array.from(list.children).some(el => el.textContent === label)) return;
+
+    const span = document.createElement("span");
+    span.className = "sr-done-item-tag";
+    span.textContent = label;
+    list.appendChild(span);
+
+    // Tự động cuộn xuống cuối danh sách nếu quá dài
+    list.scrollTop = list.scrollHeight;
   }
   // Thay thế hàm này trong file ScenarioRunner.js
 
@@ -414,10 +443,10 @@ window.ScenarioRunner = class {
     const result = [];
     for (const q of questions) {
       if (q.type === "text") {
-        result.push(q.text);
+        result.push({ text: q.text, label: null });
       } else if (q.type === "variable") {
         const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
-        result.push(filled);
+        result.push({ text: filled, label: null });
       } else if (q.type === "loop") {
         const loopKey = this._getLoopKey(q);
         const count = parseInt(values[loopKey] || "0", 10);
@@ -426,34 +455,30 @@ window.ScenarioRunner = class {
             if (k === loopKey) return String(i);
             return values[k] || "";
           });
-          result.push(prompt);
+          result.push({ text: prompt, label: `Kỳ ${i}` });
         }
       }
-      // === THÊM LOGIC MỚI CHO 'list' ===
       else if (q.type === "list") {
         const loopKey = this._getLoopKey(q);
-        // Lấy chuỗi giá trị và tách nó ra thành mảng bằng dấu phẩy
         const listValues = (values[loopKey] || "")
           .split(',')
-          .map(v => v.trim()) // Xóa khoảng trắng thừa
-          .filter(Boolean);     // Loại bỏ các mục rỗng
+          .map(v => v.trim())
+          .filter(Boolean);
 
-        // Lặp qua từng giá trị trong mảng
         for (const itemValue of listValues) {
-          // Thay thế biến loopKey bằng giá trị hiện tại, và các biến khác nếu có
           const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
-            if (k === loopKey) {
-              return itemValue; // Thay thế bằng giá trị từ danh sách
-            }
-            return values[k] || ""; // Thay thế các biến thường khác
+            if (k === loopKey) return itemValue;
+            return values[k] || "";
           });
-          result.push(prompt);
+          result.push({ text: prompt, label: itemValue });
         }
       }
-      // === KẾT THÚC LOGIC MỚI ===
     }
     return result;
-  } async _sendPrompt(text) {
+  }
+
+  async _sendPrompt(prompt) {
+    const text = typeof prompt === 'string' ? prompt : prompt.text;
     console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
     const chat = window.ChatAdapter;
     const textarea = chat.getTextarea();
