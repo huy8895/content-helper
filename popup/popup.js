@@ -1,7 +1,5 @@
 const CLIENT_ID = '517231603315-unill9qgp7iq7f9evp7l9h2mk676kc4u.apps.googleusercontent.com';
 const SCOPES = [
-  'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile'
 ];
