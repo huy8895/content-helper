@@ -51,6 +51,12 @@ BUTTONS = {
     className: "scenario-btn btn-tool",
     onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
   },
+  SRT_AUTOMATION: {
+    id: "chatgpt-srt-automation-button",
+    text: "🤖 SRT Automation",
+    className: "scenario-btn btn-run",
+    onClick: () => window.__helperInjected?._toggleSRTAutomation(),
+  },
   COLLAPSE_CODE: {
     id: "chatgpt-collapse-code-button",
     text: "Collapse Code",
@@ -451,6 +457,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.SRT_AUTOMATION, // 👈 Thêm nút mới
       BUTTONS.AI_STUDIO_SETTINGS,
       BUTTONS.COLLAPSE_CODE,
       BUTTONS.YT_STUDIO_SETTINGS,

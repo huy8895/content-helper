@@ -24,9 +24,12 @@ window.PromptSequencer = class {
         await new Promise(r => (this._resume = r));
         continue;
       }
+      this.currentLabel = this.prompts[this.idx]?.label;
       await this.send(this.prompts[this.idx]);
       await this.wait();
+      this.lastLabel = this.currentLabel;
       this.idx++;
+      this.currentLabel = null;
       this.onStep(this.idx, this.prompts.length);
     }
 

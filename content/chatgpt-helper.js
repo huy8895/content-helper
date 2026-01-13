@@ -27,7 +27,10 @@ class ChatGPTHelper {
     this.audioDownloader = null;   // 🎵 new panel
 
     /** @type {GoogleAIStudioPanel|null} */
-    this.aiStudioSettings = null; // 👈 Thêm thuộc tính mới
+    this.aiStudioSettings = null;
+
+    /** @type {SRTAutomationPanel|null} */
+    this.srtAutomation = null; // 👈 Thêm thuộc tính mới
 
     /** @type {YoutubeStudioPanel|null} */
     this.youtubePanel = null; // <-- Thêm dòng này
@@ -141,6 +144,15 @@ class ChatGPTHelper {
     this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
   }
 
+  _toggleSRTAutomation() {
+    if (this.srtAutomation) {
+      this.srtAutomation.destroy();
+      this.srtAutomation = null;
+      return;
+    }
+    this.srtAutomation = new SRTAutomationPanel(() => (this.srtAutomation = null));
+  }
+
   _toggleYoutubePanel() {
     if (this.youtubePanel) {
       this.youtubePanel.destroy();
@@ -240,6 +252,7 @@ class ChatGPTHelper {
         else if (h.audioDownloader && h.audioDownloader.el === panelEl) instance = h.audioDownloader;
         else if (h.contentCopyPanel && h.contentCopyPanel.el === panelEl) instance = h.contentCopyPanel;
         else if (h.aiStudioSettings && h.aiStudioSettings.el === panelEl) instance = h.aiStudioSettings;
+        else if (h.srtAutomation && h.srtAutomation.el === panelEl) instance = h.srtAutomation;
         else if (h.youtubePanel && h.youtubePanel.el === panelEl) instance = h.youtubePanel;
 
         if (instance && instance._isBusy && instance._isBusy()) {
@@ -444,6 +457,8 @@ function hideButtons() {
   h.runner?.destroy?.();
   h.splitter?.destroy?.();
   h.audioDownloader?.destroy?.();
+  h.srtAutomation?.destroy?.();
+  h.aiStudioSettings?.destroy?.();
 
   // ngắt observer & xóa khung nút
   h.destroy();                               // ⬅️ gọi hàm mới

@@ -43,9 +43,11 @@
         "https://studio.youtube.com/video/*"
       ],
       "js": [
+        "libs/jszip.min.js",
         "libs/compromise.min.js",
         "libs/firebase-app-compat.js",
         "libs/firebase-firestore-compat.js",
+        "content/SRTAutomationPanel.js",
         "content/GoogleAIStudioPanel.js",
         "content/YoutubeStudioPanel.js",
         "content/chatgpt-helper.js",
