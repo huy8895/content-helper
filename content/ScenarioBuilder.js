@@ -65,7 +65,7 @@ window.ScenarioBuilder = class {
     console.log("🎨 [ScenarioBuilder] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-builder";
-    this.el.className = "panel-box ts-panel w-[520px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col";
+    this.el.className = "panel-box ts-panel w-[520px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
     this.el.style.maxHeight = "750px";
     this.el.innerHTML = ScenarioBuilderInnerHTML;
 
@@ -95,14 +95,14 @@ window.ScenarioBuilder = class {
 
     const textarea = document.createElement("textarea");
     textarea.placeholder = "Câu hỏi... (VD: \${topic|AI,Tech} hoặc \${name})";
-    textarea.className = "w-full min-h-[60px] p-3 text-sm bg-gray-50 border-none rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all resize-none mb-3 font-sans leading-relaxed";
+    textarea.className = "question-input w-full min-h-[60px] p-3 text-sm bg-gray-50 border-none rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all resize-none mb-3 font-sans leading-relaxed text-indigo-900 font-medium";
     textarea.value = q.text || "";
 
     const actionWrap = document.createElement("div");
     actionWrap.className = "flex items-center gap-2";
 
     const select = document.createElement("select");
-    select.className = "h-8 px-2 text-[11px] font-bold uppercase bg-gray-50 border border-gray-100 rounded-md outline-none focus:border-indigo-500 text-gray-600 cursor-pointer";
+    select.className = "question-type h-8 px-2 text-[11px] font-bold uppercase bg-gray-50 border border-gray-100 rounded-md outline-none focus:border-indigo-500 text-gray-600 cursor-pointer";
     // === THÊM 'list' VÀO MẢNG NÀY ===
     ["text", "variable", "loop", "list"].forEach(t => {
       const opt = document.createElement("option");
@@ -115,7 +115,7 @@ window.ScenarioBuilder = class {
     });
 
     const loopKeyInput = document.createElement("input");
-    loopKeyInput.className = "h-8 px-2 flex-1 text-xs border border-gray-100 rounded-md bg-white outline-none focus:border-indigo-500 font-mono text-indigo-600";
+    loopKeyInput.className = "question-loopkey h-8 px-2 flex-1 text-xs border border-gray-100 rounded-md bg-white outline-none focus:border-indigo-500 font-mono text-indigo-600";
     loopKeyInput.placeholder = "Loop key (e.g. users)";
     // === CẬP NHẬT ĐIỀU KIỆN HIỂN THỊ ===
     loopKeyInput.classList.toggle("hidden", !(q.type === "loop" || q.type === "list"));
@@ -158,8 +158,8 @@ window.ScenarioBuilder = class {
     const items = this.el.querySelectorAll(".question-item");
 
     const questions = Array.from(items).map(div => ({
-      text: div.querySelector(".question-input").value.trim(),
-      type: div.querySelector(".question-type").value,
+      text: div.querySelector(".question-input")?.value.trim() || "",
+      type: div.querySelector(".question-type")?.value || "text",
       loopKey: div.querySelector(".question-loopkey")?.value.trim() || undefined
     })).filter(q => q.text);
 
@@ -269,10 +269,10 @@ window.ScenarioBuilder = class {
         const qs = Array.isArray(raw) ? raw : raw.questions || [];
 
         const item = document.createElement("div");
-        item.className = "px-4 py-3 hover:bg-gray-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
+        item.className = "scenario-dropdown-item px-4 py-3 hover:bg-gray-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
 
         const titleSpan = document.createElement("span");
-        titleSpan.className = "text-sm text-gray-700 font-medium group-hover:text-indigo-600";
+        titleSpan.className = "scenario-title text-sm text-gray-700 font-medium group-hover:text-indigo-600";
         titleSpan.textContent = group ? `[${group}] ${name}` : name;
 
         item.appendChild(titleSpan);
@@ -298,19 +298,23 @@ window.ScenarioBuilder = class {
       // Lọc kết quả khi người dùng gõ
       searchBox.addEventListener("input", () => {
         const k = searchBox.value.trim();
+        dropdown.classList.remove("hidden-dropdown");
+        dropdown.style.setProperty('display', 'flex', 'important');
+
         const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
 
         const scoredItems = items.map(div => {
-          const score = ChatGPTHelper.fuzzySearch(k, div.textContent);
+          const text = div.querySelector('.scenario-title')?.textContent || div.textContent;
+          const score = ChatGPTHelper.fuzzySearch(k, text);
           return { div, score };
         });
 
         scoredItems.forEach(item => {
           if (item.score > 0) {
-            item.div.style.display = "block";
+            item.div.style.setProperty('display', 'flex', 'important');
             item.div.style.order = -item.score;
           } else {
-            item.div.style.display = "none";
+            item.div.style.setProperty('display', 'none', 'important');
           }
         });
       });

@@ -9,7 +9,7 @@ window.SRTAutomationPanel = class {
         this.el = document.createElement("div");
         this.el.id = "srt-automation-panel";
         // Tailwind classes for the main panel
-        this.el.className = "panel-box ts-panel w-[420px] p-5 rounded-2xl shadow-2xl bg-white border border-gray-100";
+        this.el.className = "panel-box ts-panel w-[400px] p-5 rounded-2xl shadow-2xl bg-white border border-gray-50 flex flex-col relative animate-in";
 
         const html = `
       <!-- Header / Draggable Area -->

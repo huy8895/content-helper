@@ -161,7 +161,7 @@ window.YoutubeStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
-    this.el.className = 'panel-box ts-panel w-[460px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col';
+    this.el.className = 'panel-box ts-panel w-[460px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in';
     this.el.style.maxHeight = "800px";
     this.el.innerHTML = YTB_PANEL_HTML;
 

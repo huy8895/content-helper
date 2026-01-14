@@ -84,7 +84,7 @@ window.ScenarioRunner = class {
     console.log("🎛 [ScenarioRunner] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
-    this.el.className = "panel-box ts-panel w-[500px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col";
+    this.el.className = "panel-box ts-panel w-[500px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
     this.el.style.maxHeight = "850px";
     this.el.innerHTML = ScenarioRunnerInnerHTML;
 
@@ -157,9 +157,7 @@ window.ScenarioRunner = class {
         // Sắp xếp và hiển thị
         scoredItems.forEach(item => {
           if (item.score > 0) {
-            item.div.style.display = "block";
-            // Sử dụng style.order để sắp xếp mà không cần re-append (Flexbox)
-            // Mặc định dropdown là flex column
+            item.div.style.display = "flex";
             item.div.style.order = -item.score;
           } else {
             item.div.style.display = "none";
