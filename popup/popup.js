@@ -33,16 +33,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setLoading(isLoading) {
-  $loading.style.display = isLoading ? 'block' : 'none';
+  if (isLoading) $loading.classList.remove('hidden');
+  else $loading.classList.add('hidden');
+
   if (isLoading) {
-    $loginSection.style.display = 'none';
-    $userSection.style.display = 'none';
+    $loginSection.classList.add('hidden');
+    $userSection.classList.add('hidden');
   }
 }
 
 function toggleUI(loggedIn) {
-  $loginSection.style.display = loggedIn ? 'none' : 'block';
-  $userSection.style.display = loggedIn ? 'flex' : 'none';
+  if (loggedIn) {
+    $loginSection.classList.add('hidden');
+    $userSection.classList.remove('hidden');
+    $userSection.classList.add('flex');
+  } else {
+    $loginSection.classList.remove('hidden');
+    $userSection.classList.add('hidden');
+    $userSection.classList.remove('flex');
+  }
 }
 
 function updateUserUI(data) {
@@ -53,8 +62,9 @@ function updateUserUI(data) {
 
 function setStatus(msg, isError = false) {
   $status.textContent = msg;
-  $status.style.color = isError ? '#d93025' : '#5f6368';
-  setTimeout(() => { $status.textContent = ''; }, 3000);
+  $status.className = `mt-4 text-[10px] font-bold uppercase tracking-widest transition-opacity duration-300 ${isError ? 'text-rose-500' : 'text-indigo-600'}`;
+  $status.style.opacity = '1';
+  setTimeout(() => { $status.style.opacity = '0'; }, 3000);
 }
 
 /* -------------- Đăng nhập -------------- */

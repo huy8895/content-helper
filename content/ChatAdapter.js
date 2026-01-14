@@ -18,43 +18,43 @@ BUTTONS = {
   MANAGE_SCENARIO: {
     id: "chatgpt-helper-button",
     text: "🛠 Quản lý kịch bản",
-    className: "scenario-btn btn-setup",
+    className: "ts-btn-tailwind bg-gray-800 text-white hover:bg-gray-900",
     onClick: () => window.__helperInjected?._toggleBuilder(),
   },
   RUN_SCENARIO: {
     id: "chatgpt-run-button",
     text: "📤 Chạy kịch bản",
-    className: "scenario-btn btn-run",
+    className: "ts-btn-tailwind bg-indigo-600 text-white hover:bg-indigo-700",
     onClick: () => window.__helperInjected?._toggleRunner(),
   },
   COPY_CONTENT: {
     id: "chatgpt-copy-content-button",
     text: "📋 Copy Content",
-    className: "scenario-btn btn-tool",
+    className: "ts-btn-tailwind bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
   },
   SPLITTER: {
     id: "chatgpt-splitter-button",
     text: "✂️ Text Split",
-    className: "scenario-btn btn-tool",
+    className: "ts-btn-tailwind bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleSplitter(),
   },
   AUDIO: {
     id: "chatgpt-audio-button",
     text: "🎵 Audio",
-    className: "scenario-btn btn-tool",
+    className: "ts-btn-tailwind bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleAudioDownloader(),
   },
   AI_STUDIO_SETTINGS: {
     id: "chatgpt-aistudio-settings-button",
     text: "⚙️ AI Studio Settings",
-    className: "scenario-btn btn-tool",
+    className: "ts-btn-tailwind bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
   },
   SRT_AUTOMATION: {
     id: "chatgpt-srt-automation-button",
     text: "🤖 SRT Automation",
-    className: "scenario-btn btn-run",
+    className: "ts-btn-tailwind bg-indigo-600 text-white hover:bg-indigo-700",
     onClick: () => window.__helperInjected?._toggleSRTAutomation(),
   },
   COLLAPSE_CODE: {
@@ -72,7 +72,7 @@ BUTTONS = {
   YT_STUDIO_SETTINGS: {
     id: "chatgpt-ytstudio-settings-button",
     text: "🎬 YT Studio",
-    className: "scenario-btn btn-tool",
+    className: "ts-btn-tailwind bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleYoutubePanel(),
   },
 };
@@ -137,6 +137,7 @@ class BaseChatAdapter {
 
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
+    container.className = "flex flex-row gap-2 mt-2 justify-center py-2";
 
     // Lấy danh sách button từ lớp con
     const buttons = this.getButtonConfigs();
@@ -155,7 +156,8 @@ class BaseChatAdapter {
     const btn = document.createElement("button");
     btn.id = id;
     btn.textContent = text;
-    btn.className = className;
+    // Base Tailwind styles for all buttons + specific classes from config
+    btn.className = `px-3 py-2 text-[13px] font-medium rounded-lg transition-all active:scale-95 shadow-sm border-none cursor-pointer flex items-center gap-1.5 ${className}`;
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();

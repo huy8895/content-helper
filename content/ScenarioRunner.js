@@ -1,47 +1,67 @@
 // --- START OF FILE ScenarioRunner.js (UPDATED) ---
 
 const ScenarioRunnerInnerHTML = `
-  <div class="sr-header">
-    <span class="sr-title">📤 Scenario Runner</span>
+  <div class="ts-title flex items-center mb-6 cursor-move select-none">
+    <span class="text-2xl mr-3">📤</span>
+    <div>
+      <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">Scenario Runner</h3>
+      <div class="text-xs text-gray-500 mt-0.5 font-medium">Execute automation sequences</div>
+    </div>
   </div>
 
-  <!-- THAY THẾ DROPDOWN BẰNG Ô TÌM KIẾM -->
-  <div id="sr-scenario-browser">
-    <label class="sr-label" for="sr-scenario-search">Chọn kịch bản:</label>
-    <input type="text" id="sr-scenario-search" placeholder="🔍 Tìm kịch bản theo tên hoặc nhóm...">
-    <div id="sr-scenario-dropdown" class="hidden-dropdown"></div>
+  <div id="sr-scenario-browser" class="mb-5 relative">
+    <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block tracking-wider" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
+    <div class="relative">
+      <input type="text" id="sr-scenario-search" 
+        class="w-full h-11 pl-10 pr-4 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" 
+        placeholder="🔍 Tìm kịch bản theo tên hoặc nhóm...">
+      <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+    </div>
+    <div id="sr-scenario-dropdown" class="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-[100] max-h-60 overflow-y-auto hidden-dropdown custom-scrollbar p-1"></div>
   </div>
-  <!-- KẾT THÚC THAY THẾ -->
 
-  <label class="sr-label" for="step-select">Bắt đầu từ câu số:</label>
-  <select id="step-select" disabled>
-    <option value="0">(Chọn kịch bản để hiện danh sách)</option>
-  </select>
+  <div class="flex items-center gap-3 mb-5">
+    <div class="flex-1">
+      <label class="text-[11px] font-bold text-gray-500 uppercase mb-1 block" for="step-select">BẮT ĐẦU TỪ CÂU</label>
+      <select id="step-select" class="w-full h-10 px-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:opacity-50" disabled>
+        <option value="0">(Chọn kịch bản)</option>
+      </select>
+    </div>
+  </div>
 
-  <div id="scenario-inputs" style="margin-top: 10px;"></div>
+  <div id="scenario-inputs" class="space-y-4 mb-6 bg-gray-50/50 p-4 rounded-2xl border border-gray-100"></div>
 
   <!-- Thanh tiến trình -->
-  <div class="sr-progress-container" id="sr-progress-box">
-    <div class="sr-progress-info">
-      <span>Đang chạy: <span id="sr-progress-step">0</span>/<span id="sr-progress-total">0</span></span>
-      <span id="sr-progress-percent">0%</span>
+  <div id="sr-progress-box" class="mb-6 hidden">
+    <div class="flex justify-between items-end mb-2">
+      <div class="text-xs font-bold text-gray-700">
+        Đang chạy: <span id="sr-progress-step" class="text-indigo-600">0</span>/<span id="sr-progress-total">0</span>
+      </div>
+      <div id="sr-progress-percent" class="text-lg font-black text-indigo-600 leading-none">0%</div>
     </div>
-    <div class="sr-progress-bar-bg">
-      <div id="sr-progress-bar" class="sr-progress-bar-fill"></div>
+    <div class="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
+      <div id="sr-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(79,70,229,0.4)]"></div>
     </div>
-    <div id="sr-done-list" class="sr-done-items"></div>
+    <div id="sr-done-list" class="flex flex-wrap gap-1.5 mt-3 max-h-24 overflow-y-auto custom-scrollbar"></div>
   </div>
 
-  <div class="sr-controls">
-    <button id="sr-addqueue">➕ Thêm vào hàng đợi <span id="sr-queue-count">0</span></button>
-    <button id="sr-start">▶️ Bắt đầu</button>
-    <button id="sr-pause" disabled>⏸ Dừng</button>
-    <button id="sr-resume" disabled>▶️ Tiếp</button>
+  <div class="grid grid-cols-2 gap-3 mb-6">
+    <button id="sr-addqueue" class="h-11 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl text-xs hover:bg-gray-50 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2">
+      ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full text-[10px]">0</span>
+    </button>
+    <button id="sr-start" class="h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all active:scale-95 shadow-md shadow-indigo-100">
+      ▶️ Bắt đầu ngay
+    </button>
+  </div>
+
+  <div class="flex gap-2 mb-6">
+    <button id="sr-pause" class="flex-1 h-10 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-xs hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
+    <button id="sr-resume" class="flex-1 h-10 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs hover:bg-indigo-100 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
   </div>
   
-  <div class="sr-queue-box">
-    <strong>Hàng đợi:</strong>
-    <ul id="sr-queue-list"></ul>
+  <div class="sr-queue-box flex-1 overflow-hidden flex flex-col">
+    <label class="text-[11px] font-bold text-gray-400 uppercase mb-2 tracking-widest block">DỰ KIẾN HÀNG ĐỢI</label>
+    <ul id="sr-queue-list" class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar"></ul>
   </div>
 `;
 
@@ -64,7 +84,8 @@ window.ScenarioRunner = class {
     console.log("🎛 [ScenarioRunner] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
-    this.el.classList.add("panel-box");
+    this.el.className = "panel-box ts-panel w-[500px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col";
+    this.el.style.maxHeight = "850px";
     this.el.innerHTML = ScenarioRunnerInnerHTML;
 
     ChatGPTHelper.mountPanel(this.el);
@@ -96,8 +117,13 @@ window.ScenarioRunner = class {
         const group = Array.isArray(raw) ? "" : (raw.group || "");
 
         const item = document.createElement("div");
-        item.textContent = group ? `[${group}] ${name}` : name;
-        item.className = "scenario-dropdown-item";
+        item.className = "px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
+
+        const titleSpan = document.createElement("span");
+        titleSpan.className = "text-sm text-gray-700 font-medium group-hover:text-indigo-600";
+        titleSpan.textContent = group ? `[${group}] ${name}` : name;
+
+        item.appendChild(titleSpan);
         item.dataset.name = name;
         item.dataset.group = group.toLowerCase();
 
@@ -192,15 +218,19 @@ window.ScenarioRunner = class {
         shown.add(varName);
 
         const wrapper = document.createElement("div");
-        wrapper.className = "sr-input-group";
+        wrapper.className = "sr-input-group flex flex-col gap-1.5";
         const label = document.createElement("label");
-        label.textContent = `🧩 ${varName}:`;
+        label.className = "text-[11px] font-bold text-gray-500 uppercase tracking-widest pl-1";
+        label.textContent = varName;
 
         let inputEl;
         // === CẬP NHẬT LOGIC TẠO INPUT ===
+        const baseClasses = "w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none";
+
         if (optionsStr) {
           // Nếu có danh sách lựa chọn, tạo dropdown
           inputEl = document.createElement("select");
+          inputEl.className = `${baseClasses} h-10 font-bold text-indigo-600 cursor-pointer`;
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -212,17 +242,18 @@ window.ScenarioRunner = class {
           // 'loop' vẫn là input number
           inputEl = document.createElement("input");
           inputEl.type = "number";
+          inputEl.className = `${baseClasses} h-10 font-bold text-indigo-600`;
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
           // 'list' sẽ là textarea
           inputEl = document.createElement("textarea");
-          inputEl.rows = 2;
+          inputEl.className = `${baseClasses} min-h-[60px] font-mono text-xs text-indigo-600`;
           inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: value1, value2)";
         } else {
           // Các biến còn lại mặc định là textarea
           inputEl = document.createElement("textarea");
-          inputEl.rows = 2;
-          inputEl.placeholder = "Nhập nội dung...";
+          inputEl.className = `${baseClasses} min-h-[80px]`;
+          inputEl.placeholder = "Nhập nội dung cho " + varName;
         }
         // === KẾT THÚC CẬP NHẬT ===
 
@@ -390,7 +421,10 @@ window.ScenarioRunner = class {
 
   _showProgress(show) {
     const box = this.el.querySelector("#sr-progress-box");
-    if (box) box.style.display = show ? "block" : "none";
+    if (box) {
+      if (show) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    }
   }
 
   _updateProgress(idx, total) {
@@ -546,12 +580,18 @@ window.ScenarioRunner = class {
 
       // 3. Sử dụng cả 2 phiên bản trong HTML
       return `
-        <li>
-          <span>
-            #${i + 1} <em>${job.name}</em> (từ câu ${job.startAt + 1}) – 
-            <b title="${fullVars}">${shortenedVars}</b>
-          </span>
-          <button class="sr-queue-copy" data-idx="${i}" title="Copy prompts to clipboard">📋</button>
+        <li class="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
+          <div class="flex-1 min-w-0 pr-3">
+             <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-black text-gray-400">#${i + 1}</span>
+                <span class="text-xs font-bold text-gray-900 truncate">${job.name}</span>
+                <span class="text-[10px] font-medium text-gray-500 bg-white px-1.5 py-0.5 rounded border border-gray-100">Step ${job.startAt + 1}+</span>
+             </div>
+             <div class="text-[10px] text-gray-500 italic truncate" title="${fullVars}">${shortenedVars}</div>
+          </div>
+          <button class="sr-queue-copy w-7 h-7 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-[10px] hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all active:scale-90" data-idx="${i}" title="Copy prompts to clipboard">
+             📋
+          </button>
         </li>
       `;
     }).join("");

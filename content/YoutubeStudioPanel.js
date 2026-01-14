@@ -54,54 +54,85 @@ const AVAILABLE_LANGUAGES = [
 
 
 const YTB_PANEL_HTML = `
-  <h3 class="ts-title">⚙️ Configure Languages & Translations</h3>
-  
-  <!-- Profile Management -->
-  <div class="profile-manager">
-    <select id="yt-profile-select" class="form-control"></select>
-    <button id="yt-delete-profile-btn" class="ts-btn ts-btn-danger" title="Delete selected profile">🗑️</button>
-  </div>
-  <div class="profile-new">
-    <input type="text" id="yt-new-profile-name" class="form-control" placeholder="Tên profile mới...">
-    <button id="yt-save-as-new-btn" class="ts-btn">➕ Lưu mới</button>
+  <div class="ts-title flex items-center mb-6 cursor-move select-none">
+    <span class="text-2xl mr-3">⚙️</span>
+    <div>
+      <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">Video Subtitles & Info</h3>
+      <div class="text-xs text-gray-500 mt-0.5 font-medium">Languages & Metadata Automation</div>
+    </div>
   </div>
   
-  <!-- Channel Type Options -->
-  <div class="form-group form-check" style="margin-top: 10px;">
-    <label class="auto-set-label">
-      <input type="checkbox" id="yt-aloud-enabled">
-      Kênh có lồng tiếng tự động (Aloud)
-    </label>
+  <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6">
+    <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block tracking-wider">Chọn Profile Ngôn ngữ</label>
+    <div class="flex gap-2 mb-4">
+      <select id="yt-profile-select" class="flex-1 h-11 px-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-indigo-600 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all cursor-pointer"></select>
+      <button id="yt-delete-profile-btn" class="w-11 h-11 flex items-center justify-center bg-white border border-rose-100 text-rose-500 rounded-xl hover:bg-rose-50 transition-all active:scale-90 shadow-sm" title="Delete selected profile">🗑️</button>
+    </div>
+    
+    <div class="flex gap-2">
+      <input type="text" id="yt-new-profile-name" class="flex-1 h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
+      <button id="yt-save-as-new-btn" class="h-10 px-4 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs hover:bg-indigo-100 transition-all active:scale-95">➕ Lưu mới</button>
+    </div>
   </div>
-  <!-- === NEW: Auto-fill Checkbox === -->
-  <div class="form-group form-check" style="margin-bottom: 10px;">
-    <label class="auto-set-label">
-      <input type="checkbox" id="yt-autofill-enabled">
-      Tự động điền & Lưu (cho kênh Aloud)
-    </label>
-  </div>
-  
-  <!-- Language Selection -->
-  <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
-  <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
-  <div class="yt-language-controls">
-    <label class="yt-filter-label">
-      <input type="checkbox" id="yt-filter-selected">
-      Show selected only
-    </label>
-    <button id="yt-copy-selected-btn" class="ts-btn">📋 Copy Selected</button>
-  </div>
-  <div id="yt-language-checkbox-container"></div>
-  
-  <!-- JSON Upload -->
 
-  <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
-    📂 Tải lên file JSON Dịch thuật
-  </label>
-  <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
-  <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
+  <div class="space-y-3 mb-6">
+      <label class="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
+         <div class="flex flex-col">
+            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Kênh lồng tiếng tự động (Aloud)</span>
+            <span class="text-[10px] text-gray-400">Optimize for multi-language audio</span>
+         </div>
+         <input type="checkbox" id="yt-aloud-enabled" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+      </label>
+      
+      <label class="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
+         <div class="flex flex-col">
+            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Tự động điền & Lưu</span>
+            <span class="text-[10px] text-gray-400">Auto-fill metadata from JSON</span>
+         </div>
+         <input type="checkbox" id="yt-autofill-enabled" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+      </label>
+  </div>
   
-  <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
+  <div class="flex flex-col flex-1 overflow-hidden bg-gray-50 rounded-2xl border border-gray-100 p-4 mb-6">
+    <label class="text-[11px] font-bold text-gray-500 uppercase mb-3 block tracking-wider">🌍 Danh sách Ngôn ngữ</label>
+    
+    <div class="relative mb-3">
+      <input type="text" id="yt-language-search" 
+        class="w-full h-10 pl-9 pr-4 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" 
+        placeholder="Tìm ngôn ngữ...">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+    </div>
+
+    <div class="flex items-center justify-between mb-3 px-1">
+      <label class="flex items-center gap-2 cursor-pointer group">
+        <input type="checkbox" id="yt-filter-selected" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+        <span class="text-[11px] font-bold text-gray-500 group-hover:text-gray-700">Đã chọn</span>
+      </label>
+      <button id="yt-copy-selected-btn" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-all">
+         📋 Copy List
+      </button>
+    </div>
+
+    <div id="yt-language-checkbox-container" class="flex-1 overflow-y-auto pr-1 space-y-1 custom-scrollbar"></div>
+  </div>
+  
+  <div class="mb-6">
+    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 mb-2 shadow-sm">
+        <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-lg">📄</div>
+        <div class="flex-1 min-w-0">
+             <div class="text-[11px] font-bold text-gray-400 uppercase leading-none mb-1">Dữ liệu Dịch thuật</div>
+             <div id="yt-json-filename" class="text-xs text-gray-700 font-bold truncate">Chưa có file nào</div>
+        </div>
+        <label for="yt-json-upload" class="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] flex items-center justify-center cursor-pointer transition-all active:scale-90">
+          Tải lên
+        </label>
+        <input type="file" id="yt-json-upload" accept=".json,.txt" class="hidden">
+    </div>
+  </div>
+  
+  <button id="yt-save-languages-btn" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+    💾 Cập nhật Profile
+  </button>
 `;
 // =================================================================
 // REWRITTEN PANEL CLASS
@@ -130,7 +161,8 @@ window.YoutubeStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
-    this.el.className = 'panel-box ts-panel';
+    this.el.className = 'panel-box ts-panel w-[460px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col';
+    this.el.style.maxHeight = "800px";
     this.el.innerHTML = YTB_PANEL_HTML;
 
     ChatGPTHelper.mountPanel(this.el);
@@ -140,8 +172,11 @@ window.YoutubeStudioPanel = class {
     const container = this.el.querySelector('#yt-language-checkbox-container');
     AVAILABLE_LANGUAGES.forEach(lang => {
       const label = document.createElement('label');
-      label.className = 'yt-language-label';
-      label.innerHTML = `<input type="checkbox" value="${lang}"> ${lang}`;
+      label.className = 'flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white transition-all cursor-pointer group yt-language-label';
+      label.innerHTML = `
+        <input type="checkbox" value="${lang}" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"> 
+        <span class="text-xs text-gray-600 group-hover:text-indigo-600 font-medium transition-colors">${lang}</span>
+      `;
 
       // === THÊM EVENT CHO TỪNG CHECKBOX ===
       // Khi tick/untick một ngôn ngữ, gọi lại hàm cập nhật hiển thị

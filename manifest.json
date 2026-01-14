@@ -43,6 +43,7 @@
         "https://studio.youtube.com/video/*"
       ],
       "js": [
+        "libs/tailwind.min.js",
         "libs/jszip.min.js",
         "libs/compromise.min.js",
         "libs/firebase-app-compat.js",
