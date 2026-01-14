@@ -335,6 +335,49 @@ class ChatGPTHelper {
   }
 
   /**
+   * Tìm kiếm mờ (fuzzy search) có tính điểm số
+   * @param {string} query Chuỗi tìm kiếm
+   * @param {string} text Chuỗi đích
+   * @returns {number} Điểm số (0 nếu không khớp, >0 nếu khớp)
+   */
+  static fuzzySearch(query, text) {
+    if (!query) return 1;
+    const q = query.toLowerCase().replace(/\s+/g, ''); // Xóa khoảng trắng để search linh hoạt
+    const t = text.toLowerCase();
+
+    let score = 0;
+    let textIdx = -1;
+    let lastMatchIdx = -1;
+
+    for (let i = 0; i < q.length; i++) {
+      const char = q[i];
+      textIdx = t.indexOf(char, textIdx + 1);
+      if (textIdx === -1) return 0; // Không tìm thấy ký tự → không khớp
+
+      // --- TÍNH ĐIỂM ---
+      // 1. Điểm cơ bản cho mỗi ký tự khớp
+      score += 10;
+
+      // 2. Bonus nếu ký tự khớp ở đầu chuỗi
+      if (textIdx === 0 && i === 0) score += 50;
+
+      // 3. Bonus nếu các ký tự khớp nằm sát nhau (không bị skip nhiều)
+      if (lastMatchIdx !== -1 && textIdx === lastMatchIdx + 1) {
+        score += 20;
+      }
+
+      // 4. Bonus nếu ký tự khớp là bắt đầu của một từ (sau dấu cách, [, ], -, _)
+      if (textIdx > 0 && /[\s\[\]\-_]/.test(t[textIdx - 1])) {
+        score += 30;
+      }
+
+      lastMatchIdx = textIdx;
+    }
+
+    return score;
+  }
+
+  /**
    * Hiển thị thông báo Toast siêu cấp
    * @param {string} message 
    * @param {'success'|'error'|'warning'|'info'} type 

@@ -146,10 +146,10 @@ window.ScenarioRunner = class {
 
         scoredItems.forEach(item => {
           if (item.score > 0) {
-            item.div.style.display = "flex";
+            item.div.style.setProperty('display', 'flex', 'important');
             item.div.style.order = -item.score;
           } else {
-            item.div.style.display = "none";
+            item.div.style.setProperty('display', 'none', 'important');
           }
         });
       });
