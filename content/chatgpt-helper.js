@@ -49,7 +49,7 @@ class ChatGPTHelper {
       const bar = document.createElement('div');
       bar.id = 'chatgpt-helper-panel-bar';
       // Tailwind: fixed at bottom, centered, gap between panels, high z-index
-      bar.className = 'fixed bottom-[90px] left-5 right-5 flex gap-5 pointer-events-none justify-center z-[2147483647]';
+      bar.className = 'fixed bottom-[90px] left-5 right-5 flex items-end gap-5 pointer-events-none justify-center z-[2147483647]';
       document.body.appendChild(bar);
     }
 
