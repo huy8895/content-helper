@@ -264,7 +264,7 @@ window.TextSplitter = class {
 
     console.log("✂️ [TextSplitter] split text", limit, "chars");
     if (!raw) {
-      alert("Please paste some text first!");
+      ChatGPTHelper.showToast("Please paste some text first!", "warning");
       return;
     }
 
@@ -390,7 +390,10 @@ window.TextSplitter = class {
 
 
   _startSend() {
-    if (!this.chunks.length) return alert("No chunks – bấm Split trước đã!");
+    if (!this.chunks.length) {
+      ChatGPTHelper.showToast("No chunks – bấm Split trước đã!", "warning");
+      return;
+    }
 
     const btnStart = this.el.querySelector('#ts-start');
     const btnPause = this.el.querySelector('#ts-pause');

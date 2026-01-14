@@ -107,14 +107,14 @@ window.SRTAutomationPanel = class {
         // Parse labels
         const labelInput = this.el.querySelector('#srt-labels-input').value;
         if (!labelInput.trim()) {
-            alert('Please enter at least one label in the "Manual Labels" field.');
+            ChatGPTHelper.showToast('Please enter at least one label in the "Manual Labels" field.', "warning");
             return;
         }
 
         const manualLabels = labelInput.split(/[,;\n]/).map(l => l.trim()).filter(l => l);
 
         if (manualLabels.length === 0) {
-            alert('Please enter valid labels (e.g. Arabic, Chinese).');
+            ChatGPTHelper.showToast('Please enter valid labels (e.g. Arabic, Chinese).', "warning");
             return;
         }
 
@@ -153,7 +153,7 @@ window.SRTAutomationPanel = class {
 
         this._updateList();
         console.log(`✅ [SRTAutomation] Scan complete. Mapped ${mappedCount} SRTs.`);
-        alert(`Successfully scanned and mapped ${mappedCount} files.`);
+        ChatGPTHelper.showToast(`Successfully scanned and mapped ${mappedCount} files.`, "success");
     }
 
     _updateList() {
@@ -183,13 +183,13 @@ window.SRTAutomationPanel = class {
     async _downloadZip() {
         const count = Object.keys(this.collectedSRTs).length;
         if (count === 0) {
-            alert('No SRTs collected.');
+            ChatGPTHelper.showToast('No SRTs collected.', "warning");
             return;
         }
 
         const LibZip = window.JSZip || (typeof JSZip !== 'undefined' ? JSZip : null);
         if (!LibZip) {
-            alert('JSZip not found.');
+            ChatGPTHelper.showToast('JSZip not found.', "error");
             return;
         }
 
@@ -209,7 +209,7 @@ window.SRTAutomationPanel = class {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } catch (err) {
-            alert("ZIP error: " + err.message);
+            ChatGPTHelper.showToast("ZIP error: " + err.message, "error");
         }
     }
 

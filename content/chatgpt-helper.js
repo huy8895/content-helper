@@ -164,7 +164,7 @@ class ChatGPTHelper {
       this.youtubePanel = new YoutubeStudioPanel(
         () => (this.youtubePanel = null));
     } else {
-      alert("Lỗi: Không tìm thấy YoutubeStudioPanel.");
+      ChatGPTHelper.showToast("Lỗi: Không tìm thấy YoutubeStudioPanel.", "error");
     }
   }
 
@@ -335,46 +335,48 @@ class ChatGPTHelper {
   }
 
   /**
-   * Tìm kiếm mờ (fuzzy search) có tính điểm số
-   * @param {string} query Chuỗi tìm kiếm
-   * @param {string} text Chuỗi đích
-   * @returns {number} Điểm số (0 nếu không khớp, >0 nếu khớp)
+   * Hiển thị thông báo Toast siêu cấp
+   * @param {string} message 
+   * @param {'success'|'error'|'warning'|'info'} type 
+   * @param {number} duration 
    */
-  static fuzzySearch(query, text) {
-    if (!query) return 1;
-    const q = query.toLowerCase().replace(/\s+/g, ''); // Xóa khoảng trắng để search linh hoạt
-    const t = text.toLowerCase();
-
-    let score = 0;
-    let textIdx = -1;
-    let lastMatchIdx = -1;
-
-    for (let i = 0; i < q.length; i++) {
-      const char = q[i];
-      textIdx = t.indexOf(char, textIdx + 1);
-      if (textIdx === -1) return 0; // Không tìm thấy ký tự → không khớp
-
-      // --- TÍNH ĐIỂM ---
-      // 1. Điểm cơ bản cho mỗi ký tự khớp
-      score += 10;
-
-      // 2. Bonus nếu ký tự khớp ở đầu chuỗi
-      if (textIdx === 0 && i === 0) score += 50;
-
-      // 3. Bonus nếu các ký tự khớp nằm sát nhau (không bị skip nhiều)
-      if (lastMatchIdx !== -1 && textIdx === lastMatchIdx + 1) {
-        score += 20;
-      }
-
-      // 4. Bonus nếu ký tự khớp là bắt đầu của một từ (sau dấu cách, [, ], -, _)
-      if (textIdx > 0 && /[\s\[\]\-_]/.test(t[textIdx - 1])) {
-        score += 30;
-      }
-
-      lastMatchIdx = textIdx;
+  static showToast(message, type = 'info', duration = 3500) {
+    let container = document.getElementById('ts-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'ts-toast-container';
+      document.body.appendChild(container);
     }
 
-    return score;
+    const toast = document.createElement('div');
+    toast.className = `ts-toast ${type}`;
+
+    const icons = {
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: 'ℹ️'
+    };
+
+    toast.innerHTML = `
+      <span class="ts-toast-icon">${icons[type]}</span>
+      <span class="ts-toast-message">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Tự động đóng sau duration
+    const hideTimeout = setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+
+    // Click để đóng ngay lập tức
+    toast.onclick = () => {
+      clearTimeout(hideTimeout);
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    };
   }
 }
 

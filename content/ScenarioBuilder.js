@@ -160,13 +160,13 @@ window.ScenarioBuilder = class {
   _save() {
     const json = this._collectDataFromDOM();
     if (!json) {
-      alert("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.");
+      ChatGPTHelper.showToast("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.", "warning");
       return;
     }
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const merged = { ...(items.scenarioTemplates || {}), ...json };
       chrome.storage.local.set({ scenarioTemplates: merged }, () => {
-        alert("✅ Đã lưu kịch bản.");
+        ChatGPTHelper.showToast("✅ Đã lưu kịch bản.", "success");
         this._loadScenarioList();
         this._syncToFirestore();
       });
@@ -199,12 +199,18 @@ window.ScenarioBuilder = class {
 
   _deleteScenario() {
     const name = this.el.querySelector("#scenario-name").value.trim();
-    if (!name) return alert("Vui lòng nhập tên kịch bản để xoá.");
+    if (!name) {
+      ChatGPTHelper.showToast("Vui lòng nhập tên kịch bản để xoá.", "warning");
+      return;
+    }
     if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
 
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const templates = items.scenarioTemplates || {};
-      if (!templates[name]) return alert("Không tìm thấy kịch bản.");
+      if (!templates[name]) {
+        ChatGPTHelper.showToast("Không tìm thấy kịch bản.", "error");
+        return;
+      }
       delete templates[name];
 
       chrome.storage.local.set({ scenarioTemplates: templates }, () => {

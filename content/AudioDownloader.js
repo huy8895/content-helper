@@ -285,7 +285,7 @@ window.AudioDownloader = class {
       .map(r => r.dataset.mid);
 
     if (!ids.length) {
-      alert('Chọn ít nhất 1 mục để zip');
+      ChatGPTHelper.showToast('Chọn ít nhất 1 mục để zip', "warning");
       // Phục hồi UI nếu không có mục nào
       dlAllBtn.textContent = 'Download All';
       dlAllBtn.disabled = false;
@@ -311,7 +311,7 @@ window.AudioDownloader = class {
         this._syncState();
         // this._renderRows(this._lastMessages); // hoặc reload list
       } else {
-        alert('Zip thất bại: ' + res.error);
+        ChatGPTHelper.showToast('Zip thất bại: ' + res.error, "error");
       }
 
       // 6) Phục hồi UI cho nút Download All
