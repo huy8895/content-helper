@@ -12,6 +12,13 @@ const PANEL_HTML = `
   </div>
   
   <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+    <div class="flex items-center justify-between mb-2 pl-1">
+      <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Profile Cài đặt</label>
+      <div class="flex gap-2">
+         <button id="gaisp-new-profile" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors">➕ Mới</button>
+         <button id="gaisp-delete-profile" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 transition-colors">🗑️ Xóa</button>
+      </div>
+    </div>
     <div class="flex gap-2 mb-3">
       <div id="profile-dropdown-container" class="custom-dropdown-container flex-1">
         <button id="profile-dropdown-trigger" class="custom-dropdown-trigger">
@@ -24,22 +31,9 @@ const PANEL_HTML = `
       </div>
     </div>
     
-    <div class="grid grid-cols-2 gap-2 mb-4">
-      <button id="gaisp-save-profile" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-        💾 Save Profile
-      </button>
-      <button id="gaisp-new-profile" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
-        ➕ New Profile
-      </button>
-    </div>
-
-    <button id="gaisp-delete-profile" class="w-full h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 mb-4">
-      🗑️ Delete Active Profile
-    </button>
-    
-    <div class="flex gap-2">
+    <div id="gaisp-new-profile-group" class="hidden flex gap-2 animate-in">
       <input type="text" id="new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
-      <button id="save-as-new-btn" class="h-8 px-3 bg-indigo-0 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-50 transition-all active:scale-95">➕ Lưu mới</button>
+      <button id="save-as-new-btn" class="h-8 px-3 bg-indigo-50 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-100 transition-all active:scale-95">Lưu</button>
     </div>
   </div>
 
@@ -79,8 +73,8 @@ const PANEL_HTML = `
     </div>
   </div>
 
-  <button id="save-settings-btn" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all active:scale-95 shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5">
-    💾 Cập nhật Profile Hiện tại
+  <button id="save-settings-btn" class="w-full h-[42px] flex-shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl text-[13px] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center shadow-sm">
+    Cập nhật Profile
   </button>
 `;
 
@@ -113,12 +107,18 @@ window.GoogleAIStudioPanel = class {
 
   attachEvents() {
     this.el.querySelector('#save-settings-btn').addEventListener('click', () => this.saveCurrentProfile());
-    this.el.querySelector('#gaisp-save-profile').addEventListener('click', () => this.saveCurrentProfile());
-    this.el.querySelector('#save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
+    this.el.querySelector('#save-as-new-btn').addEventListener('click', () => {
+      this.saveAsNewProfile();
+      this.el.querySelector('#gaisp-new-profile-group').classList.add('hidden');
+    });
     this.el.querySelector('#gaisp-new-profile').addEventListener('click', () => {
-      const input = this.el.querySelector('#new-profile-name');
-      input.value = '';
-      input.focus();
+      const group = this.el.querySelector('#gaisp-new-profile-group');
+      group.classList.toggle('hidden');
+      if (!group.classList.contains('hidden')) {
+        const input = this.el.querySelector('#new-profile-name');
+        input.value = '';
+        input.focus();
+      }
     });
     this.el.querySelector('#gaisp-delete-profile').addEventListener('click', () => this.deleteSelectedProfile());
 

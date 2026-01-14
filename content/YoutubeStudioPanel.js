@@ -143,8 +143,8 @@ const YTB_PANEL_HTML = `
     </div>
   </div>
   
-  <button id="yt-save-languages-btn" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5">
-    💾 Cập nhật Profile
+  <button id="yt-save-languages-btn" class="w-full h-[42px] flex-shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl text-[13px] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center shadow-sm">
+    Cập nhật Profile
   </button>
 `;
 // =================================================================
