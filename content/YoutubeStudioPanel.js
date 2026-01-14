@@ -64,10 +64,18 @@ const YTB_PANEL_HTML = `
   
   <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Chọn Profile Ngôn ngữ</label>
-    <div class="flex gap-2 mb-3">
-      <select id="yt-profile-select" class="flex-1 h-9 px-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer"></select>
-      <button id="yt-delete-profile-btn" class="w-9 h-9 flex items-center justify-center bg-white border border-rose-100 text-rose-500 rounded-lg hover:bg-rose-50 transition-all active:scale-90 shadow-sm" title="Delete selected profile">🗑️</button>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <button id="ytsp-save-profile" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
+        💾 Save Config
+      </button>
+      <button id="ytsp-new-profile" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
+        ➕ New Profile
+      </button>
     </div>
+
+    <button id="ytsp-delete-profile" class="w-full h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 mb-4">
+      🗑️ Delete Profile
+    </button>
     
     <div class="flex gap-2">
       <input type="text" id="yt-new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">

@@ -46,17 +46,17 @@ const ScenarioRunnerInnerHTML = `
   </div>
 
   <div class="grid grid-cols-2 gap-2 mb-4">
-    <button id="sr-addqueue" class="h-9 bg-white border border-gray-200 text-gray-700 font-bold rounded-lg text-[10px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
+    <button id="sr-addqueue" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
       ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full text-[9px]">0</span>
     </button>
-    <button id="sr-start" class="h-9 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[11px] transition-all active:scale-95 shadow-md shadow-indigo-100">
+    <button id="sr-start" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
       ▶️ Bắt đầu ngay
     </button>
   </div>
 
   <div class="flex gap-2 mb-4">
-    <button id="sr-pause" class="flex-1 h-8 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
-    <button id="sr-resume" class="flex-1 h-8 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
+    <button id="sr-pause" class="flex-1 h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
+    <button id="sr-resume" class="flex-1 h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
   </div>
   
   <div class="sr-queue-box flex-1 overflow-hidden flex flex-col">

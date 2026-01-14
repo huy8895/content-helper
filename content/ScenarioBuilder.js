@@ -36,19 +36,19 @@ const ScenarioBuilderInnerHTML = `
 
     <div class="flex-1 overflow-y-auto mb-3 pr-1 custom-scrollbar" id="questions-container"></div>
     
-    <button id="add-question" class="w-full h-8 border border-dashed border-indigo-200 text-indigo-500 font-bold rounded-lg text-[11px] hover:bg-indigo-50 hover:border-indigo-300 transition-all active:scale-[0.98]">
+    <button id="add-question" class="w-full h-8 border border-dashed border-gray-200 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-indigo-500 hover:border-indigo-200 transition-all active:scale-[0.98]">
       + Thêm câu hỏi mới
     </button>
   </div>
 
   <div id="scenario-buttons" class="grid grid-cols-3 gap-2">
-    <button id="new-scenario-btn" class="h-8 bg-white border border-gray-200 text-gray-700 font-bold rounded-lg text-[10px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm">
+    <button id="new-scenario-btn" class="h-8 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
       ➕ Tạo mới
     </button>
-    <button id="save-to-storage" class="h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[11px] transition-all active:scale-95 shadow-md shadow-indigo-100">
+    <button id="save-to-storage" class="h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
       💾 Lưu lại
     </button>
-    <button id="delete-scenario" class="h-8 bg-white border border-rose-100 text-rose-500 font-bold rounded-lg text-[10px] hover:bg-rose-50 transition-all active:scale-95">
+    <button id="delete-scenario" class="h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
       🗑️ Xoá
     </button>
   </div>

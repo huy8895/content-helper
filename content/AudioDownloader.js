@@ -66,10 +66,10 @@ window.AudioDownloader = class {
         </div>
 
         <div class="flex gap-2">
-          <button id="ad-dlall" class="flex-[2] h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all active:scale-95 shadow-sm">
+          <button id="ad-dlall" class="flex-[2] h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
             Download All
           </button>
-          <button id="ad-reset" class="flex-1 h-8 bg-white border border-rose-100 text-rose-500 font-bold rounded-lg text-[10px] hover:bg-rose-50 transition-all active:scale-95">
+          <button id="ad-reset" class="flex-1 h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
             🔄 Reset
           </button>
         </div>

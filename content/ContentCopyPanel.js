@@ -23,17 +23,17 @@ window.ContentCopyPanel = class {
 
       <div class="flex flex-col gap-3 mb-4">
         <div class="flex items-center gap-2.5">
-          <button id="ccp-copy-all" class="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] transition-all active:scale-95 shadow-sm">
+          <button id="ccp-copy-all" class="h-8 px-3 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
             Copy All
           </button>
           <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-lg border border-gray-100">
             <input type="number" id="ccp-index" placeholder="Idx" min="1" 
               class="w-12 h-6 text-center text-[10px] border-none bg-transparent focus:ring-0 font-bold text-indigo-600" />
-            <button id="ccp-copy-from" class="h-6 px-2 bg-white text-gray-600 text-[9px] font-bold rounded-md border border-gray-200 hover:bg-gray-50 shadow-sm transition-all active:scale-95">
+            <button id="ccp-copy-from" class="h-6 px-2 bg-white text-gray-500 text-[9px] font-bold rounded-md border border-gray-200 hover:bg-gray-50 hover:text-gray-700 shadow-sm transition-all active:scale-95">
               Copy From
             </button>
           </div>
-          <button id="ccp-download" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition-all active:scale-95 shadow-sm ml-auto">
+          <button id="ccp-download" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] hover:bg-emerald-100 transition-all active:scale-95 shadow-sm ml-auto">
             <span>⬇️</span> Download
           </button>
         </div>

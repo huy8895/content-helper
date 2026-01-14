@@ -107,29 +107,29 @@ window.TextSplitter = class {
         class="ts-textarea w-full h-24 p-2 text-xs border border-gray-100 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none resize-none mb-4 hidden"
         placeholder="Paste or type your long text…"></textarea>
 
-      <div class="flex items-center justify-between mb-4 bg-indigo-50/30 p-2 rounded-xl border border-indigo-100/30">
+      <div class="flex items-center justify-between mb-4 bg-gray-50/50 p-2 rounded-xl border border-gray-100">
         <div class="flex items-center gap-1.5">
-          <span class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest pl-1">Limit:</span>
-          <input id="ts-limit" type="number" value="1000" class="w-16 h-7 px-2 text-center text-xs font-bold bg-white border border-indigo-100 rounded-lg text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-500/20">
-          <span class="text-[9px] font-bold text-indigo-300">chars</span>
+          <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest pl-1">Limit:</span>
+          <input id="ts-limit" type="number" value="1000" class="w-16 h-7 px-2 text-center text-xs font-bold bg-white border border-gray-200 rounded-lg text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-500/20">
+          <span class="text-[9px] font-bold text-gray-300">chars</span>
         </div>
-        <button id="ts-split" class="h-7 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] transition-all active:scale-95 shadow-sm">
+        <button id="ts-split" class="h-7 px-4 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
           ✂️ Split Text
         </button>
       </div>
 
       <!-- controls -->
       <div class="grid grid-cols-4 gap-1.5 mb-4">
-        <button id="ts-start" class="h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] transition-all active:scale-95 shadow-sm disabled:opacity-30 disabled:pointer-events-none" disabled>
+        <button id="ts-start" class="h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm disabled:opacity-30 disabled:pointer-events-none" disabled>
           ▶️ Send All
         </button>
-        <button id="ts-pause" class="h-8 bg-white border border-gray-100 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none" disabled>
+        <button id="ts-pause" class="h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none" disabled>
           ⏸ Pause
         </button>
-        <button id="ts-resume" class="h-8 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none" disabled>
+        <button id="ts-resume" class="h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none" disabled>
           ▶️ Resume
         </button>
-        <button id="ts-reset" class="h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 transition-all active:scale-95">
+        <button id="ts-reset" class="h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
           🔄 Reset
         </button>
       </div>

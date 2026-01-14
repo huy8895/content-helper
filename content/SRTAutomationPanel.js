@@ -33,7 +33,7 @@ window.SRTAutomationPanel = class {
 
       <!-- Action Button -->
       <div class="sr-controls mb-4">
-        <button id="srt-scan-existing" class="ts-btn ts-btn-accent w-full h-9 font-bold rounded-lg flex items-center justify-center gap-2 text-xs cursor-pointer transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-sm h-9">
+        <button id="srt-scan-existing" class="w-full h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-center gap-2 text-[11px] cursor-pointer transition-all active:scale-95 hover:bg-indigo-100 shadow-sm">
           <span class="text-sm">🔍</span> Scan Chat Content
         </button>
       </div>
@@ -51,10 +51,10 @@ window.SRTAutomationPanel = class {
 
       <!-- Bottom Controls -->
       <div class="sr-controls mt-4 flex gap-2.5">
-        <button id="srt-download-zip" class="ts-btn ts-btn-accent flex-[2] h-9 font-bold rounded-lg flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm transition-all active:scale-95 text-xs">
+        <button id="srt-download-zip" class="flex-[2] h-9 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-100 shadow-sm transition-all active:scale-95 text-[11px]">
           📥 Download ZIP
         </button>
-        <button id="srt-clear" class="ts-btn flex-1 h-9 font-bold rounded-lg bg-white border border-rose-100 text-rose-500 text-[10px] hover:bg-rose-50 transition-all active:scale-95">
+        <button id="srt-clear" class="flex-1 h-9 font-bold rounded-lg bg-white border border-rose-100 text-rose-400 text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
           Clear
         </button>
       </div>
