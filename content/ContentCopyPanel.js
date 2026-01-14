@@ -39,7 +39,7 @@ window.ContentCopyPanel = class {
         </div>
 
         <label class="flex items-center gap-2 cursor-pointer select-none group px-1">
-          <input type="checkbox" id="ccp-prefix-part" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+          <input type="checkbox" id="ccp-prefix-part" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all" />
           <span class="text-[11px] text-gray-400 font-bold group-hover:text-gray-600 tracking-tight">Add "Part X" prefix when downloading/copying</span>
         </label>
       </div>

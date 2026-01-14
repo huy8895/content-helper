@@ -69,8 +69,8 @@ window.AudioDownloader = class {
       </div>
 
       <div class="flex justify-between items-center mb-2 px-1">
-        <label class="flex items-center gap-1.5 cursor-pointer select-none group">
-          <input type="checkbox" id="ad-select-all" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+        <label class="flex items-center gap-2 cursor-pointer select-none group">
+          <input type="checkbox" id="ad-select-all" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all" />
           <span class="text-[11px] text-gray-500 font-bold group-hover:text-gray-700">Select all messages</span>
         </label>
         <div id="ad-progress" class="text-[10px] font-bold text-indigo-600 animate-pulse"></div>
@@ -140,7 +140,7 @@ window.AudioDownloader = class {
 
       const cb = document.createElement("input");
       cb.type = "checkbox";
-      cb.className = "w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer";
+      cb.className = "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all";
       cb.checked = this.savedState.selected[msg.id] ?? true;
       cb.onchange = () => this._syncState();
 

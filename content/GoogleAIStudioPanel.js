@@ -71,9 +71,9 @@ const PANEL_HTML = `
       <textarea id="style-instructions" class="w-full h-20 p-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-y shadow-sm" placeholder="Nhập hướng dẫn phong cách..."></textarea>
     </div>
 
-    <div class="flex items-center justify-between p-2 rounded-lg border border-indigo-100 bg-indigo-50/30">
-        <label for="auto-set-value" class="text-xs font-bold text-indigo-700 cursor-pointer select-none">Tự động cấu hình (Auto Set)</label>
-        <input type="checkbox" id="auto-set-value" class="w-4 h-4 text-indigo-600 border-indigo-300 rounded focus:ring-indigo-500 cursor-pointer">
+    <div class="flex items-center justify-between p-2.5 rounded-xl border border-indigo-100 bg-white hover:bg-indigo-50/30 cursor-pointer transition-all group">
+        <label for="auto-set-value" class="text-xs font-bold text-gray-700 group-hover:text-indigo-700 cursor-pointer select-none transition-colors">Tự động cấu hình (Auto Set)</label>
+        <input type="checkbox" id="auto-set-value" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
     </div>
   </div>
 

@@ -218,3 +218,51 @@ select option {
   /* Force gray-300 */
   border-width: 1px !important;
 }
+
+/* Custom Checkbox Styling (Premium Tailwind Style) */
+.ts-panel input[type="checkbox"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  border: 1px solid #d1d5db !important;
+  /* gray-300 */
+  border-radius: 4px !important;
+  background-color: #fff !important;
+  cursor: pointer !important;
+  position: relative !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  transition: all 0.2s ease-in-out !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.ts-panel input[type="checkbox"]:checked {
+  background-color: #10b981 !important;
+  /* emerald-500 */
+  border-color: #10b981 !important;
+}
+
+.ts-panel input[type="checkbox"]:checked::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 5px !important;
+  top: 1px !important;
+  width: 5px !important;
+  height: 10px !important;
+  border: solid white !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
+}
+
+.ts-panel input[type="checkbox"]:hover {
+  border-color: #10b981 !important;
+  background-color: #f0fdf4 !important;
+  /* emerald-50 */
+}
+
+.ts-panel input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+  outline: none !important;
+}

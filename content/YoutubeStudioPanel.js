@@ -101,7 +101,7 @@ const YTB_PANEL_HTML = `
             <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Kênh lồng tiếng tự động (Aloud)</span>
             <span class="text-[9px] text-gray-400">Optimize for multi-language audio</span>
          </div>
-         <input type="checkbox" id="yt-aloud-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <input type="checkbox" id="yt-aloud-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
       </label>
       
       <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
@@ -109,7 +109,7 @@ const YTB_PANEL_HTML = `
             <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Tự động điền & Lưu</span>
             <span class="text-[9px] text-gray-400">Auto-fill metadata from JSON</span>
          </div>
-         <input type="checkbox" id="yt-autofill-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <input type="checkbox" id="yt-autofill-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
       </label>
   </div>
   
@@ -125,7 +125,7 @@ const YTB_PANEL_HTML = `
 
     <div class="flex items-center justify-between mb-2 px-1">
       <label class="flex items-center gap-1.5 cursor-pointer group">
-        <input type="checkbox" id="yt-filter-selected" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <input type="checkbox" id="yt-filter-selected" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
         <span class="text-[10px] font-bold text-gray-400 group-hover:text-gray-600">Đã chọn</span>
       </label>
       <button id="yt-copy-selected-btn" class="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-all">
@@ -194,7 +194,7 @@ window.YoutubeStudioPanel = class {
       const label = document.createElement('label');
       label.className = 'flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white transition-all cursor-pointer group yt-language-label';
       label.innerHTML = `
-        <input type="checkbox" value="${lang}" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"> 
+        <input type="checkbox" value="${lang}" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all"> 
         <span class="text-xs text-gray-600 group-hover:text-indigo-600 font-medium transition-colors">${lang}</span>
       `;
 
