@@ -54,54 +54,98 @@ const AVAILABLE_LANGUAGES = [
 
 
 const YTB_PANEL_HTML = `
-  <h3 class="ts-title">⚙️ Configure Languages & Translations</h3>
-  
-  <!-- Profile Management -->
-  <div class="profile-manager">
-    <select id="yt-profile-select" class="form-control"></select>
-    <button id="yt-delete-profile-btn" class="ts-btn ts-btn-danger" title="Delete selected profile">🗑️</button>
-  </div>
-  <div class="profile-new">
-    <input type="text" id="yt-new-profile-name" class="form-control" placeholder="Tên profile mới...">
-    <button id="yt-save-as-new-btn" class="ts-btn">➕ Lưu mới</button>
+  <div class="ts-title flex items-center mb-4 cursor-move select-none">
+    <span class="text-xl mr-2">⚙️</span>
+    <div>
+      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Video Subtitles & Info</h3>
+      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Languages & Metadata Automation</div>
+    </div>
   </div>
   
-  <!-- Channel Type Options -->
-  <div class="form-group form-check" style="margin-top: 10px;">
-    <label class="auto-set-label">
-      <input type="checkbox" id="yt-aloud-enabled">
-      Kênh có lồng tiếng tự động (Aloud)
-    </label>
+  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+    <div class="flex items-center justify-between mb-2 pl-1">
+      <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Profile Ngôn ngữ</label>
+      <div class="flex gap-2">
+         <button id="ytsp-new-profile" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors">➕ Mới</button>
+         <button id="ytsp-delete-profile" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 transition-colors">🗑️ Xóa</button>
+      </div>
+    </div>
+    <div class="flex gap-2 mb-3">
+      <div id="yt-profile-dropdown-container" class="custom-dropdown-container flex-1">
+        <button id="yt-profile-dropdown-trigger" class="custom-dropdown-trigger">
+          <span id="yt-profile-selected-text">Tải Profile...</span>
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div id="yt-profile-dropdown-menu" class="custom-dropdown-menu custom-scrollbar"></div>
+      </div>
+    </div>
+    
+    <div id="yt-new-profile-group" class="hidden flex gap-2 animate-in">
+      <input type="text" id="yt-new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
+      <button id="yt-save-as-new-btn" class="h-8 px-3 bg-indigo-50 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-100 transition-all active:scale-95">Lưu</button>
+    </div>
   </div>
-  <!-- === NEW: Auto-fill Checkbox === -->
-  <div class="form-group form-check" style="margin-bottom: 10px;">
-    <label class="auto-set-label">
-      <input type="checkbox" id="yt-autofill-enabled">
-      Tự động điền & Lưu (cho kênh Aloud)
-    </label>
-  </div>
-  
-  <!-- Language Selection -->
-  <p style="font-size: 13px; color: #555;">Select languages for the current profile.</p>
-  <input type="text" id="yt-language-search" class="form-control" placeholder="🔍 Tìm ngôn ngữ...">
-  <div class="yt-language-controls">
-    <label class="yt-filter-label">
-      <input type="checkbox" id="yt-filter-selected">
-      Show selected only
-    </label>
-    <button id="yt-copy-selected-btn" class="ts-btn">📋 Copy Selected</button>
-  </div>
-  <div id="yt-language-checkbox-container"></div>
-  
-  <!-- JSON Upload -->
 
-  <label for="yt-json-upload" class="ts-btn" style="display: block; text-align: center; margin-bottom: 5px;">
-    📂 Tải lên file JSON Dịch thuật
-  </label>
-  <input type="file" id="yt-json-upload" accept=".json,.txt" style="display: none;">
-  <span id="yt-json-filename" style="font-size: 12px; color: #888; text-align: center; display: block;">Chưa có file nào được chọn</span>
+  <div class="space-y-2 mb-4">
+      <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
+         <div class="flex flex-col">
+            <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700">Kênh lồng tiếng tự động (Aloud)</span>
+            <span class="text-[9px] text-gray-400">Optimize for multi-language audio</span>
+         </div>
+          <input type="checkbox" id="yt-aloud-enabled" class="ts-switch">
+      </label>
+      
+      <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
+         <div class="flex flex-col">
+            <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700">Tự động điền & Lưu</span>
+            <span class="text-[9px] text-gray-400">Auto-fill metadata from JSON</span>
+         </div>
+          <input type="checkbox" id="yt-autofill-enabled" class="ts-switch">
+      </label>
+  </div>
   
-  <button id="yt-save-languages-btn" class="ts-btn ts-btn-accent" style="width: 100%; margin-top: 10px;">💾 Cập nhật Profile</button>
+  <div class="flex flex-col flex-1 overflow-hidden bg-gray-50 rounded-xl border border-gray-100 p-3 mb-4">
+    <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest pl-1">🌍 Danh sách Ngôn ngữ</label>
+    
+    <div class="relative mb-2">
+      <input type="text" id="yt-language-search" 
+        class="w-full h-8 pl-8 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+        placeholder="Tìm ngôn ngữ...">
+      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">🔍</span>
+    </div>
+
+    <div class="flex items-center justify-between mb-2 px-1">
+      <label class="flex items-center gap-1.5 cursor-pointer group">
+          <input type="checkbox" id="yt-filter-selected" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
+        <span class="text-[10px] font-bold text-gray-400 group-hover:text-gray-600">Đã chọn</span>
+      </label>
+      <button id="yt-copy-selected-btn" class="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-all">
+         📋 Copy List
+      </button>
+    </div>
+
+    <div id="yt-language-checkbox-container" class="min-h-[120px] max-h-[160px] overflow-y-auto pr-1 space-y-0.5 custom-scrollbar"></div>
+  </div>
+  
+  <div class="mb-4">
+    <div class="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-100 mb-1 shadow-sm">
+        <div class="w-8 h-8 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-base">📄</div>
+        <div class="flex-1 min-w-0">
+             <div class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-0.5">Dữ liệu Dịch thuật</div>
+             <div id="yt-json-filename" class="text-[11px] text-gray-700 font-bold truncate">Chưa có file nào</div>
+        </div>
+        <label for="yt-json-upload" class="h-7 px-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[9px] flex items-center justify-center cursor-pointer transition-all active:scale-90">
+          Tải lên
+        </label>
+        <input type="file" id="yt-json-upload" accept=".json,.txt" class="hidden">
+    </div>
+  </div>
+  
+  <button id="yt-save-languages-btn" class="w-full h-[42px] flex-shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl text-[13px] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center shadow-sm">
+    Cập nhật Profile
+  </button>
 `;
 // =================================================================
 // REWRITTEN PANEL CLASS
@@ -130,7 +174,8 @@ window.YoutubeStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
-    this.el.className = 'panel-box ts-panel';
+    this.el.className = 'panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in';
+    this.el.style.maxHeight = "85vh";
     this.el.innerHTML = YTB_PANEL_HTML;
 
     ChatGPTHelper.mountPanel(this.el);
@@ -140,8 +185,11 @@ window.YoutubeStudioPanel = class {
     const container = this.el.querySelector('#yt-language-checkbox-container');
     AVAILABLE_LANGUAGES.forEach(lang => {
       const label = document.createElement('label');
-      label.className = 'yt-language-label';
-      label.innerHTML = `<input type="checkbox" value="${lang}"> ${lang}`;
+      label.className = 'flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white transition-all cursor-pointer group yt-language-label';
+      label.innerHTML = `
+        <input type="checkbox" value="${lang}" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all"> 
+        <span class="text-xs text-gray-600 group-hover:text-indigo-600 font-medium transition-colors">${lang}</span>
+      `;
 
       // === THÊM EVENT CHO TỪNG CHECKBOX ===
       // Khi tick/untick một ngôn ngữ, gọi lại hàm cập nhật hiển thị
@@ -163,11 +211,35 @@ window.YoutubeStudioPanel = class {
   // Thay thế hàm attachEvents()
 
   attachEvents() {
-    // Events cũ
     this.el.querySelector('#yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
-    this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
-    this.el.querySelector('#yt-delete-profile-btn').addEventListener('click', () => this.deleteSelectedProfile());
-    this.el.querySelector('#yt-profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
+    this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => {
+      this.saveAsNewProfile();
+      this.el.querySelector('#yt-new-profile-group').classList.add('hidden');
+    });
+    this.el.querySelector('#ytsp-new-profile').addEventListener('click', () => {
+      const group = this.el.querySelector('#yt-new-profile-group');
+      group.classList.toggle('hidden');
+      if (!group.classList.contains('hidden')) {
+        const input = this.el.querySelector('#yt-new-profile-name');
+        input.value = '';
+        input.focus();
+      }
+    });
+    this.el.querySelector('#ytsp-delete-profile').addEventListener('click', () => this.deleteSelectedProfile());
+
+    // Custom Dropdown Logic
+    const trigger = this.el.querySelector('#yt-profile-dropdown-trigger');
+    const menu = this.el.querySelector('#yt-profile-dropdown-menu');
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', () => {
+      menu.classList.remove('show');
+    });
+
     this.el.querySelector('#yt-json-upload').addEventListener('change', (e) => this.handleJsonUpload(e));
 
     // Sửa lại event search để gọi hàm mới
@@ -225,17 +297,29 @@ window.YoutubeStudioPanel = class {
     this.updateProfileDropdown();
     this.fillFormWithProfile(this.activeProfileName);
   }
-
+  // Cập nhật dropdown chọn profile
   updateProfileDropdown() {
-    const select = this.el.querySelector('#yt-profile-select');
-    if (!select) return;
-    select.innerHTML = '';
+    const trigger = this.el.querySelector('#yt-profile-selected-text');
+    const menu = this.el.querySelector('#yt-profile-dropdown-menu');
+
+    if (!trigger || !menu) return;
+
+    trigger.textContent = this.activeProfileName;
+    menu.innerHTML = '';
+
     Object.keys(this.profiles).forEach(name => {
-      const option = document.createElement('option');
-      option.value = name; option.textContent = name;
-      select.appendChild(option);
+      const item = document.createElement('div');
+      item.className = `custom-dropdown-item ${name === this.activeProfileName ? 'selected' : ''}`;
+      item.innerHTML = `
+        <span>${name}</span>
+        ${name === this.activeProfileName ? '<span class="text-indigo-500">✓</span>' : ''}
+      `;
+      item.onclick = () => {
+        this.switchProfile(name);
+        menu.classList.remove('show');
+      };
+      menu.appendChild(item);
     });
-    select.value = this.activeProfileName;
   }
 
   fillFormWithProfile(profileName) {
@@ -266,7 +350,7 @@ window.YoutubeStudioPanel = class {
       profiles: this.profiles,
       activeProfileName: this.activeProfileName,
     };
-    chrome.storage.local.set({ [this.storageKey]: dataToSave }, callback);
+    chrome.storage.local.set({ [this.storageKeyProfiles]: dataToSave }, callback);
     this._syncToFirestore();
   }
 
@@ -289,8 +373,9 @@ window.YoutubeStudioPanel = class {
     });
   }
 
+  // Xóa profile đang được chọn
   deleteSelectedProfile() {
-    const profileToDelete = this.el.querySelector('#yt-profile-select').value;
+    const profileToDelete = this.activeProfileName;
     if (Object.keys(this.profiles).length <= 1) {
       return alert("Cannot delete the last profile.");
     }

@@ -18,49 +18,49 @@ BUTTONS = {
   MANAGE_SCENARIO: {
     id: "chatgpt-helper-button",
     text: "🛠 Quản lý kịch bản",
-    className: "scenario-btn btn-setup",
+    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleBuilder(),
   },
   RUN_SCENARIO: {
     id: "chatgpt-run-button",
     text: "📤 Chạy kịch bản",
-    className: "scenario-btn btn-run",
+    className: "bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100",
     onClick: () => window.__helperInjected?._toggleRunner(),
   },
   COPY_CONTENT: {
     id: "chatgpt-copy-content-button",
     text: "📋 Copy Content",
-    className: "scenario-btn btn-tool",
+    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
   },
   SPLITTER: {
     id: "chatgpt-splitter-button",
     text: "✂️ Text Split",
-    className: "scenario-btn btn-tool",
+    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleSplitter(),
   },
   AUDIO: {
     id: "chatgpt-audio-button",
     text: "🎵 Audio",
-    className: "scenario-btn btn-tool",
+    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleAudioDownloader(),
   },
   AI_STUDIO_SETTINGS: {
     id: "chatgpt-aistudio-settings-button",
     text: "⚙️ AI Studio Settings",
-    className: "scenario-btn btn-tool",
+    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
   },
   SRT_AUTOMATION: {
     id: "chatgpt-srt-automation-button",
     text: "🤖 SRT Automation",
-    className: "scenario-btn btn-run",
+    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleSRTAutomation(),
   },
   COLLAPSE_CODE: {
     id: "chatgpt-collapse-code-button",
     text: "Collapse Code",
-    className: "scenario-btn btn-tool",
+    className: "bg-white text-gray-600 border border-gray-100 hover:bg-gray-50",
     onClick: () => {
       // Gọi đến một hàm của adapter hiện tại
       if (window.ChatAdapter
@@ -72,7 +72,7 @@ BUTTONS = {
   YT_STUDIO_SETTINGS: {
     id: "chatgpt-ytstudio-settings-button",
     text: "🎬 YT Studio",
-    className: "scenario-btn btn-tool",
+    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleYoutubePanel(),
   },
 };
@@ -137,6 +137,7 @@ class BaseChatAdapter {
 
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
+    container.className = "flex flex-row gap-1.5 mt-1.5 justify-center py-1.5";
 
     // Lấy danh sách button từ lớp con
     const buttons = this.getButtonConfigs();
@@ -155,7 +156,8 @@ class BaseChatAdapter {
     const btn = document.createElement("button");
     btn.id = id;
     btn.textContent = text;
-    btn.className = className;
+    // Base Tailwind styles for all buttons + specific classes from config
+    btn.className = `px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-all active:scale-95 shadow-sm border cursor-pointer flex items-center gap-1 ${className}`;
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -536,12 +538,13 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     const configButton = this._createButton({
       id: 'helper-config-languages',
       text: '⚙️ Configure',
-      className: 'style-scope ytcp-button',
+      className: 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
       onClick: () => this._toggleYoutubePanel()
     });
     const runButton = this._createButton({
       id: 'helper-add-my-languages', text: '🌐 Add Languages',
-      className: 'scenario-btn btn-run', onClick: () => this.addMyLanguages()
+      className: 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100',
+      onClick: () => this.addMyLanguages()
     });
     configButton.style.marginLeft = '10px';
     runButton.style.marginLeft = '10px';

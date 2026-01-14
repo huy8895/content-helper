@@ -1,7 +1,7 @@
 /*********************************************
  * AudioDownloader – download TTS audio *
  *********************************************/
-window.AudioDownloader = class  {
+window.AudioDownloader = class {
   constructor(onClose) {
     this.onClose = onClose;
     this.inFlight = 0;
@@ -27,46 +27,56 @@ window.AudioDownloader = class  {
   _render() {
     this.el = document.createElement("div");
     this.el.id = "audio-downloader";
-    this.el.className = "panel-box ts-panel";
+    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative";
+    this.el.style.maxHeight = "580px";
 
     this.el.innerHTML = `
-      <h3 class="ts-title">🎵 Audio Downloader</h3>
-
-      <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <select id="ad-voice"  class="ts-limit">
-          <option value="shade">Monday</option>
-          <option value="glimmer">Sol</option>
-          <option value="vale">Vale</option>
-          <option value="cove">Cove</option>
-          <option value="fathom">Arbor</option>
-          <option value="juniper">Juniper</option>
-          <option value="maple">Maple</option>
-          <option value="breeze">Breeze</option>
-          <option value="ember">Ember</option>
-          <option value="orbit">Spruce</option>
-        </select>
-
-        <select id="ad-format" class="ts-limit">
-          <option value="mp3">mp3</option>
-          <option value="aac">aac</option>
-        </select>
-
-        <button id="ad-dlall" class="ts-btn ts-btn-accent" style="flex:1">
-          Download&nbsp;All
-        </button>
-        <button id="ad-reset" class="ts-btn ts-btn-danger">
-          🔄 Reset
-        </button>
+      <div class="ts-title flex items-center mb-4 cursor-move select-none">
+        <span class="text-xl mr-2">🎵</span>
+        <div>
+          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Audio Downloader</h3>
+          <div id="srt-status-text" class="text-[10px] text-gray-500 font-medium tracking-tight">TTS Audio Generator</div>
+        </div>
       </div>
 
-      <label style="font-size:12px;display:block;margin-bottom:4px;">
-        <input type="checkbox" id="ad-select-all" /> Select all
-      </label>
+      <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+        <div class="flex gap-3 mb-3">
+          <div class="flex-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest pl-1">Voice Model</label>
+            <select id="ad-voice" class="w-full h-8 px-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all">
+              <option value="shade">Monday</option>
+              <option value="glimmer">Sol</option>
+              <option value="vale">Vale</option>
+              <option value="cove">Cove</option>
+              <option value="fathom">Arbor</option>
+              <option value="juniper">Juniper</option>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <select id="ad-voice" class="h-8 px-2 bg-white border border-gray-300 rounded-lg text-[11px] font-bold text-indigo-600 outline-none focus:border-indigo-500 transition-all cursor-pointer"></select>
+          <select id="ad-format" class="h-8 px-2 bg-white border border-gray-300 rounded-lg text-[11px] font-bold text-indigo-600 outline-none focus:border-indigo-500 transition-all cursor-pointer">
+            <option value="mp3">MP3</option>
+            <option value="wav">WAV</option>
+          </select>
+        </div>
 
-      <div id="ad-progress"
-           style="font-size:12px; margin:4px 0 8px; color:#0369a1;"></div>
+        <div class="flex gap-2">
+          <button id="ad-dlall" class="flex-[2] h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
+            Download All
+          </button>
+          <button id="ad-reset" class="flex-1 h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
+            🔄 Reset
+          </button>
+        </div>
+      </div>
 
-      <div id="ad-list" class="ts-results"></div>
+      <div class="flex justify-between items-center mb-2 px-1">
+        <label class="flex items-center gap-2 cursor-pointer select-none group">
+          <input type="checkbox" id="ad-select-all" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all" />
+          <span class="text-[11px] text-gray-500 font-bold group-hover:text-gray-700">Select all messages</span>
+        </label>
+        <div id="ad-progress" class="text-[10px] font-bold text-indigo-600 animate-pulse"></div>
+      </div>
+
+      <div id="ad-list" class="ts-results flex-1 overflow-y-auto pr-1 bg-white rounded-xl border border-gray-50 p-1.5 custom-scrollbar"></div>
     `;
 
     ChatGPTHelper.mountPanel(this.el);
@@ -74,43 +84,43 @@ window.AudioDownloader = class  {
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
 
     // Set saved voice and format
-    this.el.querySelector("#ad-voice").value  = this.savedState.voice || 'shade';
+    this.el.querySelector("#ad-voice").value = this.savedState.voice || 'shade';
     this.el.querySelector("#ad-format").value = this.savedState.format || 'mp3';
     this._updateProgressDisplay();
 
     // Event listeners
-    this.el.querySelector("#ad-voice").onchange  = () => this._syncState();
+    this.el.querySelector("#ad-voice").onchange = () => this._syncState();
     this.el.querySelector("#ad-format").onchange = () => this._syncState();
-    this.el.querySelector("#ad-dlall").onclick   = () => this._downloadAllZip();
-    this.el.querySelector("#ad-reset").onclick   = () => this._reset();
-    this.el.querySelector("#ad-select-all").onchange = (e)=> this._toggleAll(e.target.checked);
+    this.el.querySelector("#ad-dlall").onclick = () => this._downloadAllZip();
+    this.el.querySelector("#ad-reset").onclick = () => this._reset();
+    this.el.querySelector("#ad-select-all").onchange = (e) => this._toggleAll(e.target.checked);
   }
 
   _loadMessages() {
     chrome.storage.local.get(
-        ["responseData", "conversationId", "requestHeaders"],
-        (data) => {
-          this.data = data;
-          const mapping = data.responseData?.mapping || {};
-          const msgs = Object.values(mapping)
-              .filter(m => m.message?.author?.role === "assistant"
-                  && m.message?.content?.content_type === "text")
-              .sort((a,b)=>a.message.create_time - b.message.create_time)
-              .map(m => ({
-                id   : m.message.id,
-                text : m.message.content.parts[0].slice(0,80) + "…"
-              }));
+      ["responseData", "conversationId", "requestHeaders"],
+      (data) => {
+        this.data = data;
+        const mapping = data.responseData?.mapping || {};
+        const msgs = Object.values(mapping)
+          .filter(m => m.message?.author?.role === "assistant"
+            && m.message?.content?.content_type === "text")
+          .sort((a, b) => a.message.create_time - b.message.create_time)
+          .map(m => ({
+            id: m.message.id,
+            text: m.message.content.parts[0].slice(0, 80) + "…"
+          }));
 
-          this._renderRows(msgs);
-        }
+        this._renderRows(msgs);
+      }
     );
   }
 
   /* Trả về button của messageId nếu panel đang mở, hoặc null */
-  _getBtnById(id){
+  _getBtnById(id) {
     return this.el
-        ? this.el.querySelector(`#ad-list button[data-mid="${id}"]`)
-        : null;
+      ? this.el.querySelector(`#ad-list button[data-mid="${id}"]`)
+      : null;
   }
 
 
@@ -118,29 +128,23 @@ window.AudioDownloader = class  {
     const wrap = this.el.querySelector("#ad-list");
     wrap.innerHTML = "";
 
-    if (!rows.length){
-      wrap.textContent = "No assistant messages detected.";
+    if (!rows.length) {
+      wrap.innerHTML = "<div class='text-center py-10 text-gray-400 text-sm'>No assistant messages detected.</div>";
       return;
     }
 
-    rows.forEach((msg, idx)=>{
+    rows.forEach((msg, idx) => {
       const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.marginBottom = "6px";
+      row.className = "flex items-center gap-2 p-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg group";
       row.dataset.mid = msg.id;
 
       const cb = document.createElement("input");
       cb.type = "checkbox";
+      cb.className = "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all";
       cb.checked = this.savedState.selected[msg.id] ?? true;
-      cb.style.marginRight = "6px";
       cb.onchange = () => this._syncState();
 
       const btn = document.createElement("button");
-      btn.className = "ts-btn";
-      btn.style.flex = "0 0 120px";
-
-      /* ➜ thêm dòng này để gắn message-id vào chính button */
       btn.dataset.mid = msg.id;
 
       const alreadyDownloaded = this.savedState.downloaded.includes(msg.id);
@@ -155,19 +159,23 @@ window.AudioDownloader = class  {
         }
       }
 
-      btn.textContent = alreadyDownloaded
-          ? "✅ Downloaded"
-          : isDownloading
-              ? "Downloading…"
-              : `Download #${idx+1}`;
-      btn.disabled = alreadyDownloaded || isDownloading;
+      const btnBaseClass = "h-7 px-2 text-[10px] font-bold rounded-lg transition-all active:scale-95 shadow-sm flex-shrink-0 w-24";
+      if (alreadyDownloaded) {
+        btn.className = `${btnBaseClass} bg-gray-100 text-gray-500 cursor-default`;
+        btn.textContent = "✅ Saved";
+      } else if (isDownloading) {
+        btn.className = `${btnBaseClass} bg-indigo-50 text-indigo-600 animate-pulse cursor-wait`;
+        btn.textContent = "Saving…";
+      } else {
+        btn.className = `${btnBaseClass} bg-white border border-gray-200 text-gray-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600`;
+        btn.textContent = `Get #${idx + 1}`;
+      }
 
-      btn.onclick = ()=> this._download(btn, idx+1);
+      btn.disabled = alreadyDownloaded || isDownloading;
+      btn.onclick = () => this._download(btn, idx + 1);
 
       const span = document.createElement("span");
-      span.style.fontSize = "11px";
-      span.style.marginLeft = "8px";
-      span.style.color = "#555";
+      span.className = "text-[10px] text-gray-400 truncate group-hover:text-gray-700 font-medium";
       span.textContent = msg.text;
 
       row.append(cb, btn, span);
@@ -177,12 +185,12 @@ window.AudioDownloader = class  {
     this._updateProgressDisplay();
   }
 
-  _download(btn, ordinal){
+  _download(btn, ordinal) {
     console.log("start download: #", ordinal, btn)
-    const row   = btn.parentElement;
+    const row = btn.parentElement;
     const msgId = row.dataset.mid;
-    const {conversationId, requestHeaders} = this.data;
-    const voice  = this.el.querySelector("#ad-voice").value;
+    const { conversationId, requestHeaders } = this.data;
+    const voice = this.el.querySelector("#ad-voice").value;
     const format = this.el.querySelector("#ad-format").value;
 
     btn.disabled = true;
@@ -192,14 +200,14 @@ window.AudioDownloader = class  {
     this._updateProgressDisplay();
 
     chrome.runtime.sendMessage({
-      action        :"downloadAudio",
-      indexCell     : ordinal,
+      action: "downloadAudio",
+      indexCell: ordinal,
       conversationId: conversationId,
-      messageId     : msgId,
+      messageId: msgId,
       requestHeaders: requestHeaders,
-      selectedVoice : voice,
-      format        : format
-    }, (res)=>{
+      selectedVoice: voice,
+      format: format
+    }, (res) => {
       console.log("✅ Downloaded done ", msgId)
       const idx = this.savedState.downloading.indexOf(msgId);
       if (idx !== -1) this.savedState.downloading.splice(idx, 1);
@@ -221,19 +229,19 @@ window.AudioDownloader = class  {
     });
   }
 
-  _updateProgressDisplay(){
+  _updateProgressDisplay() {
     const box = this.el.querySelector("#ad-progress");
     box.textContent = this.inFlight
-        ? `🔊 Downloading… (${this.inFlight})`
-        : "";
+      ? `🔊 Downloading… (${this.inFlight})`
+      : "";
   }
 
-  _syncState(){
+  _syncState() {
     console.log("[TextSplitter] sync state : ", this.el.querySelector("#ad-voice").value);
     const selected = {};
     this.el.querySelectorAll("#ad-list > div").forEach(row => {
       const mid = row.dataset.mid;
-      const cb  = row.querySelector("input[type=checkbox]");
+      const cb = row.querySelector("input[type=checkbox]");
       selected[mid] = cb.checked;
     });
 
@@ -249,13 +257,13 @@ window.AudioDownloader = class  {
     });
   }
 
-  _downloadAll(){
+  _downloadAll() {
     const rows = Array.from(
-        this.el.querySelectorAll("#ad-list > div")
+      this.el.querySelectorAll("#ad-list > div")
     ).filter(r => r.querySelector("input").checked);
 
-    rows.forEach( (row,i) =>{
-      setTimeout(()=> row.querySelector("button").click(), i*400);
+    rows.forEach((row, i) => {
+      setTimeout(() => row.querySelector("button").click(), i * 400);
     });
   }
 
@@ -271,10 +279,10 @@ window.AudioDownloader = class  {
 
     // 3) Thu thập các messageId được chọn
     const ids = Array.from(
-        this.el.querySelectorAll('#ad-list > div')
+      this.el.querySelectorAll('#ad-list > div')
     )
-        .filter(r => r.querySelector('input').checked)
-        .map(r => r.dataset.mid);
+      .filter(r => r.querySelector('input').checked)
+      .map(r => r.dataset.mid);
 
     if (!ids.length) {
       alert('Chọn ít nhất 1 mục để zip');
@@ -286,12 +294,12 @@ window.AudioDownloader = class  {
 
     // 4) Gửi yêu cầu downloadAudioZip vào background
     chrome.runtime.sendMessage({
-      action        : 'downloadAudioZip',
-      messageIds    : ids,
+      action: 'downloadAudioZip',
+      messageIds: ids,
       conversationId: this.data.conversationId,
       requestHeaders: this.data.requestHeaders,
-      selectedVoice : this.savedState.voice,
-      format        : this.savedState.format
+      selectedVoice: this.savedState.voice,
+      format: this.savedState.format
     }, (res) => {
       // 5) Khi kết thúc (thành công hoặc lỗi), phục hồi lại nút
       if (res.status === 'completed') {
@@ -308,18 +316,19 @@ window.AudioDownloader = class  {
 
       // 6) Phục hồi UI cho nút Download All
       dlAllBtn.textContent = 'Download Done ✅';
+      dlAllBtn.className = dlAllBtn.className.replace('bg-indigo-600', 'bg-emerald-600');
     });
   }
 
 
 
-  _toggleAll(state){
+  _toggleAll(state) {
     this.el.querySelectorAll("#ad-list input[type=checkbox]")
-        .forEach(cb => cb.checked = state);
+      .forEach(cb => cb.checked = state);
     this._syncState();
   }
 
-  _reset(){
+  _reset() {
     this.savedState.downloaded = [];
     this.savedState.downloading = [];
     this.savedState.selected = {};
@@ -331,7 +340,11 @@ window.AudioDownloader = class  {
     location.reload();  // 👈 Thêm dòng này để refresh trang
   }
 
-  destroy(){
+  _isBusy() {
+    return this.inFlight > 0;
+  }
+
+  destroy() {
     this._syncState();
     this.el?.remove();
     this.onClose?.();
