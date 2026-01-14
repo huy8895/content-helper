@@ -104,8 +104,14 @@ window.GoogleAIStudioPanel = class {
 
   attachEvents() {
     this.el.querySelector('#save-settings-btn').addEventListener('click', () => this.saveCurrentProfile());
+    this.el.querySelector('#gaisp-save-profile').addEventListener('click', () => this.saveCurrentProfile());
     this.el.querySelector('#save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
-    this.el.querySelector('#delete-profile-btn').addEventListener('click', () => this.deleteSelectedProfile());
+    this.el.querySelector('#gaisp-new-profile').addEventListener('click', () => {
+      const input = this.el.querySelector('#new-profile-name');
+      input.value = '';
+      input.focus();
+    });
+    this.el.querySelector('#gaisp-delete-profile').addEventListener('click', () => this.deleteSelectedProfile());
     this.el.querySelector('#profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
   }
 

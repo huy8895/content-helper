@@ -206,10 +206,15 @@ window.YoutubeStudioPanel = class {
   // Thay thế hàm attachEvents()
 
   attachEvents() {
-    // Events cũ
     this.el.querySelector('#yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
+    this.el.querySelector('#ytsp-save-profile').addEventListener('click', () => this.saveCurrentProfile());
     this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => this.saveAsNewProfile());
-    this.el.querySelector('#yt-delete-profile-btn').addEventListener('click', () => this.deleteSelectedProfile());
+    this.el.querySelector('#ytsp-new-profile').addEventListener('click', () => {
+      const input = this.el.querySelector('#yt-new-profile-name');
+      input.value = '';
+      input.focus();
+    });
+    this.el.querySelector('#ytsp-delete-profile').addEventListener('click', () => this.deleteSelectedProfile());
     this.el.querySelector('#yt-profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
     this.el.querySelector('#yt-json-upload').addEventListener('change', (e) => this.handleJsonUpload(e));
 
