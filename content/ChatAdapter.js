@@ -24,7 +24,7 @@ BUTTONS = {
   RUN_SCENARIO: {
     id: "chatgpt-run-button",
     text: "📤 Chạy kịch bản",
-    className: "bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100",
+    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleRunner(),
   },
   COPY_CONTENT: {
@@ -489,7 +489,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     console.log(`Hoàn tất! Đã click vào ${clickCount} nút 'collapse'.`);
     // Có thể thêm alert nếu muốn
     if (clickCount > 0) {
-      alert(`Đã thu gọn ${clickCount} khối code.`);
+      ChatGPTHelper.showToast(`Đã thu gọn ${clickCount} khối code.`, "success");
     }
   }
 }
@@ -587,10 +587,16 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     const isAloudChannel = activeProfile.isAloudChannel || false;
     const isAutofillEnabled = activeProfile.isAutofillEnabled || false;
 
-    if (LANGUAGES_TO_ADD.length === 0) return alert(`No languages for profile "${activeProfileName}".`);
+    if (LANGUAGES_TO_ADD.length === 0) {
+      ChatGPTHelper.showToast(`No languages for profile "${activeProfileName}".`, "warning");
+      return;
+    }
 
     const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
-    if (!addLanguageBtn) return alert("Cannot find 'Add language' button!");
+    if (!addLanguageBtn) {
+      ChatGPTHelper.showToast("Cannot find 'Add language' button!", "error");
+      return;
+    }
 
     const itemSelector = isAloudChannel ? 'yt-formatted-string.item-text' : 'tp-yt-paper-item .item-text';
 
@@ -629,7 +635,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
         await this.sleep(100);
       }
     }
-    alert("Finished adding all configured languages!");
+    ChatGPTHelper.showToast("Finished adding all configured languages!", "success");
   }
 
   /**

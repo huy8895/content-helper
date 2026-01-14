@@ -164,7 +164,7 @@ class ChatGPTHelper {
       this.youtubePanel = new YoutubeStudioPanel(
         () => (this.youtubePanel = null));
     } else {
-      alert("Lỗi: Không tìm thấy YoutubeStudioPanel.");
+      ChatGPTHelper.showToast("Lỗi: Không tìm thấy YoutubeStudioPanel.", "error");
     }
   }
 
@@ -375,6 +375,51 @@ class ChatGPTHelper {
     }
 
     return score;
+  }
+
+  /**
+   * Hiển thị thông báo Toast siêu cấp
+   * @param {string} message 
+   * @param {'success'|'error'|'warning'|'info'} type 
+   * @param {number} duration 
+   */
+  static showToast(message, type = 'info', duration = 3500) {
+    let container = document.getElementById('ts-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'ts-toast-container';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `ts-toast ${type}`;
+
+    const icons = {
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: 'ℹ️'
+    };
+
+    toast.innerHTML = `
+      <span class="ts-toast-icon">${icons[type]}</span>
+      <span class="ts-toast-message">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Tự động đóng sau duration
+    const hideTimeout = setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+
+    // Click để đóng ngay lập tức
+    toast.onclick = () => {
+      clearTimeout(hideTimeout);
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    };
   }
 }
 

@@ -141,11 +141,11 @@ window.ContentCopyPanel = class {
     navigator.clipboard.writeText(text)
       .then(() => {
         console.log(successMessage);
-        alert(successMessage);
+        ChatGPTHelper.showToast(successMessage, "success");
       })
       .catch(err => {
         console.error('❌ Copy failed:', err);
-        alert('❌ Failed to copy text.');
+        ChatGPTHelper.showToast('❌ Failed to copy text.', "error");
       });
   }
 

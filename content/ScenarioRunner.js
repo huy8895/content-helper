@@ -68,7 +68,7 @@ window.ScenarioRunner = class {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
     if (!window.ChatAdapter) {
-      alert("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.");
+      ChatGPTHelper.showToast("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.", "error");
       throw new Error("ChatAdapter not available");
     }
 
@@ -146,10 +146,10 @@ window.ScenarioRunner = class {
 
         scoredItems.forEach(item => {
           if (item.score > 0) {
-            item.div.style.display = "flex";
+            item.div.style.setProperty('display', 'flex', 'important');
             item.div.style.order = -item.score;
           } else {
-            item.div.style.display = "none";
+            item.div.style.setProperty('display', 'none', 'important');
           }
         });
       });
@@ -273,7 +273,8 @@ window.ScenarioRunner = class {
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
 
       if (!selectedDiv) {
-        return alert("Vui lòng chọn một kịch bản hợp lệ từ danh sách!");
+        ChatGPTHelper.showToast("Vui lòng chọn một kịch bản hợp lệ từ danh sách!", "warning");
+        return;
       }
       const name = selectedDiv.dataset.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
@@ -281,7 +282,7 @@ window.ScenarioRunner = class {
       this.queue.push({ name, startAt, values });
 
       this._refreshQueueUI();
-      alert(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`);
+      ChatGPTHelper.showToast(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`, "success");
       this._clearVariableInputs();
     };
   }
@@ -320,7 +321,10 @@ window.ScenarioRunner = class {
     if (this.queue.length === 0) {
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
-      if (!selectedDiv) return alert("Vui lòng chọn một kịch bản!");
+      if (!selectedDiv) {
+        ChatGPTHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
+        return;
+      }
 
       const name = selectedDiv.dataset.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
@@ -348,7 +352,7 @@ window.ScenarioRunner = class {
     this._updateQueueIndicator();
 
     if (bigList.length === 0) {
-      alert("Không có prompt nào.");
+      ChatGPTHelper.showToast("Không có prompt nào.", "warning");
       this._resetControls();
       return;
     }
@@ -534,7 +538,7 @@ window.ScenarioRunner = class {
     const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
     const prompts = this._expandScenario(tplArr.slice(job.startAt), job.values);
     if (prompts.length === 0) return;
-    navigator.clipboard.writeText(prompts.map(p => p.text).join('\n\n---\n\n')).then(() => alert(`✅ Copied!`));
+    navigator.clipboard.writeText(prompts.map(p => p.text).join('\n\n---\n\n')).then(() => ChatGPTHelper.showToast(`✅ Copied!`, "success"));
   }
 
   _shortenText(text, maxLength = 60) {

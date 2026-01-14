@@ -305,3 +305,100 @@ select option {
 .ts-switch:checked::before {
   transform: translateX(14px) !important;
 }
+
+/* Toast System Styles */
+#ts-toast-container {
+  position: fixed !important;
+  top: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  pointer-events: none !important;
+}
+
+.ts-toast {
+  pointer-events: auto !important;
+  min-width: 280px !important;
+  max-width: 400px !important;
+  background: white !important;
+  border-radius: 12px !important;
+  padding: 14px 20px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  /* Đổ bóng cực mạnh */
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-left: 6px solid #6366f1 !important;
+  /* Vạch màu dày hơn */
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  animation: ts-toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+}
+
+.ts-toast.success {
+  background: #f0fdf4 !important;
+  /* Emerald-50 */
+  border-left-color: #10b981 !important;
+  border-top: 1px solid #dcfce7 !important;
+  border-right: 1px solid #dcfce7 !important;
+  border-bottom: 1px solid #dcfce7 !important;
+}
+
+.ts-toast.error {
+  background: #fef2f2 !important;
+  /* Red-50 */
+  border-left-color: #f43f5e !important;
+  border-top: 1px solid #fee2e2 !important;
+  border-right: 1px solid #fee2e2 !important;
+  border-bottom: 1px solid #fee2e2 !important;
+}
+
+.ts-toast.warning {
+  background: #fffbeb !important;
+  /* Amber-50 */
+  border-left-color: #f59e0b !important;
+  border-top: 1px solid #fef3c7 !important;
+  border-right: 1px solid #fef3c7 !important;
+  border-bottom: 1px solid #fef3c7 !important;
+}
+
+.ts-toast.info {
+  background: #eff6ff !important;
+  /* Blue-50 */
+  border-left-color: #3b82f6 !important;
+  border-top: 1px solid #dbeafe !important;
+  border-right: 1px solid #dbeafe !important;
+  border-bottom: 1px solid #dbeafe !important;
+}
+
+.ts-toast-icon {
+  font-size: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.ts-toast-message {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  line-height: 1.4 !important;
+}
+
+@keyframes ts-toast-slide-in {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.ts-toast.fade-out {
+  transform: translateX(120%) !important;
+  opacity: 0 !important;
+}
