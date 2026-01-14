@@ -1,9 +1,7 @@
 window.SRTAutomationPanel = class {
     constructor(onClose) {
         this.onClose = onClose;
-        this.isMonitoring = false;
         this.collectedSRTs = {}; // languageLabel -> srtContent
-        this._observer = null;
         this._render();
     }
 
@@ -11,32 +9,60 @@ window.SRTAutomationPanel = class {
         this.el = document.createElement("div");
         this.el.id = "srt-automation-panel";
         this.el.className = "panel-box ts-panel";
-        this.el.style.width = "400px";
+        this.el.style.width = "420px";
+        this.el.style.padding = "20px";
+        this.el.style.borderRadius = "16px";
+        this.el.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
+        this.el.style.background = "#fff";
 
         const html = `
-      <h3 class="ts-title">🤖 SRT Automation <span id="srt-status-dot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ccc; margin-left:10px;"></span></h3>
-      <div id="srt-status-text" style="font-size: 11px; color: #888; margin-top: -10px; margin-bottom: 10px;">Status: Standby</div>
+      <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <span style="font-size: 24px; margin-right: 12px;">🤖</span>
+        <div>
+          <h3 style="margin: 0; font-size: 18px; color: #1a1a1a; font-weight: 700;">SRT Automation</h3>
+          <div id="srt-status-text" style="font-size: 12px; color: #666; margin-top: 2px;">Status: Standby (Scan ready)</div>
+        </div>
+      </div>
       
-      <div style="margin-bottom: 10px;">
-        <label style="font-size: 11px; color: #555; display: block; margin-bottom: 4px;">Manual Labels (comma separated) for Scan:</label>
-        <textarea id="srt-labels-input" class="ts-input" style="width: 100%; height: 50px; font-size: 12px; resize: vertical;" 
-          placeholder="e.g. Arabic, Chinese, English, French"></textarea>
+      <div style="margin-bottom: 20px;">
+        <label for="srt-labels-input" style="font-size: 13px; font-weight: 600; color: #444; display: block; margin-bottom: 8px;">Manual Labels (comma separated):</label>
+        <div style="position: relative;">
+          <textarea id="srt-labels-input" 
+            style="width: 100%; height: 80px; font-size: 13px; padding: 12px; border: 1.5px solid #e0e0e0; border-radius: 12px; resize: vertical; outline: none; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; line-height: 1.5;" 
+            placeholder="e.g. Arabic, Chinese, English, French"
+            onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 3px rgba(79, 70, 229, 0.1)'"
+            onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"></textarea>
+        </div>
       </div>
 
-      <div class="sr-controls" style="margin-bottom: 10px; display: flex; gap: 5px;">
-        <button id="srt-start-monitor" class="ts-btn ts-btn-accent" style="flex: 1;">START Listening</button>
-        <button id="srt-stop-monitor" class="ts-btn" disabled>STOP</button>
-        <button id="srt-scan-existing" class="ts-btn" title="Scan existing chat for SRTs">🔍 Scan Chat</button>
+      <div class="sr-controls" style="margin-bottom: 24px;">
+        <button id="srt-scan-existing" class="ts-btn ts-btn-accent" 
+          style="width: 100%; height: 44px; font-weight: 600; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; cursor: pointer; transition: transform 0.1s; background: #4f46e5; border: none; color: white;"
+          onmousedown="this.style.transform='scale(0.98)'"
+          onmouseup="this.style.transform='scale(1)'">
+          <span style="font-size: 16px;">🔍</span> Scan Chat Content
+        </button>
       </div>
 
-      <div class="sr-queue-box" style="max-height: 200px; overflow-y: auto;">
-        <strong>Collected SRTs:</strong>
-        <ul id="srt-list" class="sr-queue-list"></ul>
+      <div style="background: #f8f9fa; border-radius: 12px; padding: 15px; border: 1px solid #f0f0f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+           <strong style="font-size: 14px; color: #333;">Collected SRTs</strong>
+           <span id="srt-count-badge" style="background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;">0 files</span>
+        </div>
+        <div class="sr-queue-box" style="max-height: 180px; overflow-y: auto; padding-right: 5px;">
+          <ul id="srt-list" class="sr-queue-list" style="margin: 0; padding: 0; list-style: none;"></ul>
+        </div>
       </div>
 
-      <div class="sr-controls" style="margin-top: 10px; display: flex; gap: 5px;">
-        <button id="srt-download-zip" class="ts-btn ts-btn-accent" style="flex: 1;">📥 Download ZIP</button>
-        <button id="srt-clear" class="ts-btn" style="width: 80px;">Clear</button>
+      <div class="sr-controls" style="margin-top: 20px; display: flex; gap: 10px;">
+        <button id="srt-download-zip" class="ts-btn ts-btn-accent" 
+          style="flex: 2; height: 44px; font-weight: 600; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #10b981; border: none; color: white;">
+          📥 Download ZIP
+        </button>
+        <button id="srt-clear" class="ts-btn" 
+          style="flex: 1; height: 44px; font-weight: 600; border-radius: 12px; background: #fff; border: 1.5px solid #ef4444; color: #ef4444; font-size: 13px;">
+          Clear
+        </button>
       </div>
     `;
 
@@ -51,52 +77,23 @@ window.SRTAutomationPanel = class {
     }
 
     _bindEvents() {
-        const btnStart = this.el.querySelector('#srt-start-monitor');
-        const btnStop = this.el.querySelector('#srt-stop-monitor');
         const btnScan = this.el.querySelector('#srt-scan-existing');
         const btnDownload = this.el.querySelector('#srt-download-zip');
         const btnClear = this.el.querySelector('#srt-clear');
         const statusText = this.el.querySelector('#srt-status-text');
-        const statusDot = this.el.querySelector('#srt-status-dot');
-
-        btnStart.onclick = () => {
-            this.isMonitoring = true;
-            btnStart.disabled = true;
-            btnStop.disabled = false;
-            btnStop.style.backgroundColor = '#ff4d4d';
-            btnStop.style.color = 'white';
-
-            statusText.textContent = 'Status: Listening...';
-            statusText.style.color = '#4caf50';
-            statusDot.style.background = '#4caf50';
-            statusDot.classList.add('pulse');
-
-            this._startObserving();
-        };
-
-        btnStop.onclick = () => {
-            this.isMonitoring = false;
-            btnStart.disabled = false;
-            btnStop.disabled = true;
-            btnStop.style.backgroundColor = '';
-            btnStop.style.color = '';
-
-            statusText.textContent = 'Status: Stopped';
-            statusText.style.color = '#888';
-            statusDot.style.background = '#ccc';
-            statusDot.classList.remove('pulse');
-
-            this._stopObserving();
-        };
 
         btnScan.onclick = () => {
             const originalText = btnScan.textContent;
             btnScan.disabled = true;
             btnScan.textContent = 'Scanning...';
+            statusText.textContent = 'Status: Scanning chat...';
+
             this._scanExisting();
+
             setTimeout(() => {
                 btnScan.disabled = false;
                 btnScan.textContent = originalText;
+                statusText.textContent = 'Status: Standby (Scan ready)';
             }, 1000);
         };
 
@@ -110,44 +107,20 @@ window.SRTAutomationPanel = class {
         };
     }
 
-    _startObserving() {
-        console.log("👀 [SRTAutomation] Started observing...");
-        if (this._observer) this._observer.disconnect();
-
-        this._observer = new MutationObserver((mutations) => {
-            if (!this.isMonitoring) return;
-
-            for (const mutation of mutations) {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === 1) {
-                        const panels = node.tagName === 'MAT-EXPANSION-PANEL' ? [node] : node.querySelectorAll('mat-expansion-panel');
-                        panels.forEach(panel => {
-                            console.log("🧩 [SRTAutomation] Detected new expansion panel.");
-                            this._processPanel(panel);
-                        });
-                    }
-                }
-            }
-        });
-
-        this._observer.observe(document.body, { childList: true, subtree: true });
-    }
-
-    _stopObserving() {
-        console.log("🛑 [SRTAutomation] Stopped observing.");
-        this._observer?.disconnect();
-        this._observer = null;
-    }
-
     _scanExisting() {
-        console.log("🔍 [SRTAutomation] Scanning existing content with manual labels...");
+        console.log("� [SRTAutomation] Scanning existing content with manual labels...");
 
         // Parse labels
         const labelInput = this.el.querySelector('#srt-labels-input').value;
+        if (!labelInput.trim()) {
+            alert('Please enter at least one label in the "Manual Labels" field.');
+            return;
+        }
+
         const manualLabels = labelInput.split(/[,;\n]/).map(l => l.trim()).filter(l => l);
 
         if (manualLabels.length === 0) {
-            alert('Please enter at least one label in the "Manual Labels" field (e.g. Arabic, Chinese).');
+            alert('Please enter valid labels (e.g. Arabic, Chinese).');
             return;
         }
 
@@ -174,102 +147,43 @@ window.SRTAutomationPanel = class {
 
         // Map them
         let mappedCount = 0;
+        this.collectedSRTs = {}; // Reset list for a fresh scan? Or append? 
+        // User's request implies a fresh scan mapping names to results in order.
+
         foundSRTs.forEach((item, index) => {
-            const label = manualLabels[index] || `srt_extra_${index + 1}`;
-            this._saveContent(item.text, label);
-            item.panel.dataset.processed = "true";
-            mappedCount++;
+            if (index < manualLabels.length) {
+                const label = manualLabels[index];
+                this.collectedSRTs[label] = item.text;
+                mappedCount++;
+            }
         });
 
+        this._updateList();
         console.log(`✅ [SRTAutomation] Scan complete. Mapped ${mappedCount} SRTs.`);
         alert(`Successfully scanned and mapped ${mappedCount} files.`);
     }
 
-    _processPanel(panel) {
-        if (panel.dataset.processed || panel.dataset.waiting) return;
-        panel.dataset.waiting = "true";
-
-        let stableCount = 0;
-        let lastContentLength = 0;
-
-        const interval = setInterval(() => {
-            if (!this.isMonitoring) {
-                clearInterval(interval);
-                return;
-            }
-
-            const adapterDone = window.ChatAdapter?.isDone();
-            const body = panel.querySelector('.mat-expansion-panel-content') || panel.querySelector('.mat-expansion-panel-body');
-            const currentContent = body ? body.innerText.trim() : '';
-
-            if (adapterDone) {
-                if (currentContent.length > 0 && currentContent.length === lastContentLength) {
-                    stableCount++;
-                } else {
-                    stableCount = 0;
-                    lastContentLength = currentContent.length;
-                }
-
-                if (stableCount >= 2) {
-                    clearInterval(interval);
-                    console.log("✅ [SRTAutomation] Stable and ready.");
-                    this._extractContent(panel);
-                }
-            } else {
-                stableCount = 0;
-                lastContentLength = currentContent.length;
-            }
-        }, 1000);
-    }
-
-    _extractContent(panel) {
-        if (panel.dataset.processed) return;
-
-        const body = panel.querySelector('.mat-expansion-panel-content') || panel.querySelector('.mat-expansion-panel-body');
-        if (body) {
-            const srtText = body.innerText.trim();
-            if (srtText.length > 20 && (srtText.includes('-->') || srtText.includes('00:00'))) {
-                this._saveContent(srtText);
-                panel.dataset.processed = "true";
-            }
-        }
-    }
-
-    _saveContent(content, suggestedLabel = null) {
-        const runner = window.__helperInjected?.runner;
-        const seq = runner?.sequencer;
-        let label = suggestedLabel;
-
-        // Normal monitoring uses ScenarioRunner labels
-        if (!label && seq) {
-            label = seq.currentLabel || seq.lastLabel;
-        }
-
-        if (!label) {
-            label = `srt_${Object.keys(this.collectedSRTs).length + 1}`;
-        }
-
-        let entryLabel = label;
-        let suffix = 1;
-        while (this.collectedSRTs[entryLabel]) {
-            entryLabel = `${label}_${suffix++}`;
-        }
-
-        console.log(`💾 [SRTAutomation] SAVING -> ${entryLabel}.srt`);
-        this.collectedSRTs[entryLabel] = content;
-        this._updateList();
-    }
-
     _updateList() {
         const listEl = this.el.querySelector('#srt-list');
+        const countBadge = this.el.querySelector('#srt-count-badge');
+        const keys = Object.keys(this.collectedSRTs);
+
+        if (countBadge) countBadge.textContent = `${keys.length} files`;
+
         listEl.innerHTML = '';
-        Object.keys(this.collectedSRTs).forEach(label => {
+        keys.forEach(label => {
             const li = document.createElement('li');
             li.style.display = 'flex';
             li.style.justifyContent = 'space-between';
-            li.style.padding = '4px 0';
+            li.style.alignItems = 'center';
+            li.style.padding = '8px 4px';
             li.style.borderBottom = '1px solid #eee';
-            li.innerHTML = `<span>✅ ${label}.srt</span> <span style="font-size: 10px; color: #999;">${new Date().toLocaleTimeString()}</span>`;
+            li.innerHTML = `
+                <span style="font-size: 13px; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #10b981;">✅</span> ${label}.srt
+                </span> 
+                <span style="font-size: 11px; color: #999;">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            `;
             listEl.appendChild(li);
         });
 
@@ -311,7 +225,6 @@ window.SRTAutomationPanel = class {
     }
 
     destroy() {
-        this._stopObserving();
         this.el?.remove();
         this.onClose?.();
     }
