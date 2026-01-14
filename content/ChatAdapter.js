@@ -565,6 +565,8 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
       btn.style.display = 'inline-flex';
       btn.style.alignItems = 'center';
       btn.style.justifyContent = 'center';
+      btn.style.whiteSpace = 'nowrap';
+      btn.style.flexShrink = '0';
     });
 
     addLanguageBtn.after(runButton);

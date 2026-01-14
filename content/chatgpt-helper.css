@@ -246,39 +246,39 @@
 
 /* Typography */
 .ts-text-\[9px\] {
-  font-size: 9px !important;
-}
-
-.ts-text-\[10px\] {
-  font-size: 10px !important;
-}
-
-.ts-text-\[11px\] {
   font-size: 11px !important;
 }
 
-.ts-text-\[13px\] {
+.ts-text-\[10px\] {
+  font-size: 12.5px !important;
+}
+
+.ts-text-\[11px\] {
   font-size: 13px !important;
 }
 
+.ts-text-\[13px\] {
+  font-size: 14px !important;
+}
+
 .ts-text-xs {
-  font-size: 0.75rem !important;
-  line-height: 1rem !important;
+  font-size: 0.8rem !important;
+  line-height: 1.1rem !important;
 }
 
 .ts-text-sm {
-  font-size: 0.875rem !important;
-  line-height: 1.25rem !important;
+  font-size: 0.925rem !important;
+  line-height: 1.35rem !important;
 }
 
 .ts-text-base {
-  font-size: 1rem !important;
-  line-height: 1.5rem !important;
+  font-size: 1.05rem !important;
+  line-height: 1.6rem !important;
 }
 
 .ts-text-xl {
-  font-size: 1.25rem !important;
-  line-height: 1.75rem !important;
+  font-size: 1.3rem !important;
+  line-height: 1.8rem !important;
 }
 
 .ts-font-medium {
