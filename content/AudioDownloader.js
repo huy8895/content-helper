@@ -347,6 +347,10 @@ window.AudioDownloader = class {
     location.reload();  // 👈 Thêm dòng này để refresh trang
   }
 
+  _isBusy() {
+    return this.inFlight > 0;
+  }
+
   destroy() {
     this._syncState();
     this.el?.remove();

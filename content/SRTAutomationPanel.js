@@ -213,6 +213,12 @@ window.SRTAutomationPanel = class {
         }
     }
 
+    _isBusy() {
+        // Kiểm tra xem nút scan có đang disabled không (trạng thái đang quét)
+        const btnScan = this.el?.querySelector('#srt-scan-existing');
+        return btnScan ? btnScan.disabled : false;
+    }
+
     destroy() {
         this.el?.remove();
         this.onClose?.();

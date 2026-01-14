@@ -507,6 +507,10 @@ window.TextSplitter = class {
   _waitForAdapterBtn = ScenarioRunner.prototype._waitForAdapterBtn;
   _waitForElement = ScenarioRunner.prototype._waitForAdapterBtn;  // alias phụ (tuỳ dùng)
 
+  _isBusy() {
+    return !!this.sequencer && !this.sequencer.stopped;
+  }
+
   /* ---------- Clean up ---------- */
   destroy() {
     console.log("❌ [TextSplitter] destroy");

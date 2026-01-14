@@ -542,6 +542,10 @@ window.ScenarioRunner = class {
     return (text.length <= maxLength) ? text : text.slice(0, maxLength) + '...';
   }
 
+  _isBusy() {
+    return !!this.sequencer && !this.sequencer.stopped;
+  }
+
   _clearVariableInputs() {
     this.el.querySelectorAll('#scenario-inputs [data-key]').forEach(el => el.value = '');
     this.el.querySelector('#scenario-inputs [data-key]')?.focus();
