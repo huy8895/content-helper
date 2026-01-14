@@ -91,18 +91,18 @@ const YTB_PANEL_HTML = `
   <div class="space-y-2 mb-4">
       <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
          <div class="flex flex-col">
-            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Kênh lồng tiếng tự động (Aloud)</span>
+            <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700">Kênh lồng tiếng tự động (Aloud)</span>
             <span class="text-[9px] text-gray-400">Optimize for multi-language audio</span>
          </div>
-          <input type="checkbox" id="yt-aloud-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
+          <input type="checkbox" id="yt-aloud-enabled" class="ts-switch">
       </label>
       
       <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
          <div class="flex flex-col">
-            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Tự động điền & Lưu</span>
+            <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700">Tự động điền & Lưu</span>
             <span class="text-[9px] text-gray-400">Auto-fill metadata from JSON</span>
          </div>
-          <input type="checkbox" id="yt-autofill-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
+          <input type="checkbox" id="yt-autofill-enabled" class="ts-switch">
       </label>
   </div>
   
