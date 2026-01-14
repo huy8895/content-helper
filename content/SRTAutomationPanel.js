@@ -26,7 +26,7 @@ window.SRTAutomationPanel = class {
         <label for="srt-labels-input" class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Manual Labels (comma separated):</label>
         <div class="relative">
           <textarea id="srt-labels-input" 
-            class="w-full h-16 text-xs p-2.5 border border-gray-200 rounded-lg resize-none outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans leading-snug" 
+            class="w-full h-16 text-xs p-2.5 border border-gray-300 rounded-lg resize-y outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans leading-snug" 
             placeholder="e.g. Arabic, Chinese, English, French"></textarea>
         </div>
       </div>

@@ -106,7 +106,7 @@ const YTB_PANEL_HTML = `
     
     <div class="relative mb-2">
       <input type="text" id="yt-language-search" 
-        class="w-full h-8 pl-8 pr-3 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" 
+        class="w-full h-8 pl-8 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
         placeholder="Tìm ngôn ngữ...">
       <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">🔍</span>
     </div>

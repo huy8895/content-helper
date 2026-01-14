@@ -90,7 +90,7 @@ window.ScenarioBuilder = class {
 
     const textarea = document.createElement("textarea");
     textarea.placeholder = "Câu hỏi... (VD: ${topic|AI,Tech} hoặc ${name})";
-    textarea.className = "question-input w-full min-h-[50px] p-2 text-sm bg-gray-50 border-none rounded-md focus:bg-white focus:ring-1 focus:ring-indigo-500/20 outline-none transition-all resize-none mb-2 font-sans leading-snug text-indigo-900 font-medium";
+    textarea.className = "question-input w-full min-h-[50px] p-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all resize-y mb-2 font-sans leading-snug text-indigo-900 font-medium";
     textarea.value = q.text || "";
 
     const actionWrap = document.createElement("div");

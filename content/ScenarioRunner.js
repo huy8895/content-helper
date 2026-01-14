@@ -13,7 +13,7 @@ const ScenarioRunnerInnerHTML = `
     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
     <div class="relative">
       <input type="text" id="sr-scenario-search" 
-        class="w-full h-9 pl-9 pr-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 transition-all outline-none" 
+        class="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 transition-all outline-none" 
         placeholder="Tìm kịch bản nhanh...">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
     </div>
@@ -205,7 +205,7 @@ window.ScenarioRunner = class {
         label.textContent = varName;
 
         let inputEl;
-        const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none";
+        const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
@@ -224,11 +224,11 @@ window.ScenarioRunner = class {
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[50px] font-mono text-[10px] text-indigo-600`;
+          inputEl.className = `${baseClasses} min-h-[50px] font-mono text-[10px] text-indigo-600 resize-y`;
           inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy...";
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[60px]`;
+          inputEl.className = `${baseClasses} min-h-[60px] resize-y`;
           inputEl.placeholder = "Nhập nội dung cho " + varName;
         }
 

@@ -104,13 +104,13 @@ window.TextSplitter = class {
 
       <!-- Textarea input -->
       <textarea id="ts-input" 
-        class="ts-textarea w-full h-24 p-2 text-xs border border-gray-100 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none resize-none mb-4 hidden"
+        class="ts-textarea w-full h-24 p-2 text-xs border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none resize-y mb-4 hidden"
         placeholder="Paste or type your long text…"></textarea>
 
       <div class="flex items-center justify-between mb-4 bg-gray-50/50 p-2 rounded-xl border border-gray-100">
         <div class="flex items-center gap-1.5">
           <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest pl-1">Limit:</span>
-          <input id="ts-limit" type="number" value="1000" class="w-16 h-7 px-2 text-center text-xs font-bold bg-white border border-gray-200 rounded-lg text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-500/20">
+          <input id="ts-limit" type="number" value="1000" class="w-16 h-7 px-2 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-500/20">
           <span class="text-[9px] font-bold text-gray-300">chars</span>
         </div>
         <button id="ts-split" class="h-7 px-4 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
