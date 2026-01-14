@@ -532,22 +532,40 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     if (document.getElementById('helper-config-languages')) return;
     const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
     if (!addLanguageBtn) return;
-    const container = addLanguageBtn.closest('div, .style-scope.ytcp-primary-action-bar');
+
+    // Tìm container chứa các action
+    const container = addLanguageBtn.parentElement;
     if (!container) return;
+
+    // Đảm bảo container là flex row để không bị nhảy hàng
+    container.style.setProperty('display', 'flex', 'important');
+    container.style.setProperty('flex-direction', 'row', 'important');
+    container.style.setProperty('align-items', 'center', 'important');
+    container.style.setProperty('gap', '10px', 'important');
+    container.style.setProperty('flex-wrap', 'nowrap', 'important');
 
     const configButton = this._createButton({
       id: 'helper-config-languages',
       text: '⚙️ Configure',
-      className: 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
+      className: 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100 h-10 rounded-full px-4 shadow-sm',
       onClick: () => this._toggleYoutubePanel()
     });
+
     const runButton = this._createButton({
-      id: 'helper-add-my-languages', text: '🌐 Add Languages',
-      className: 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100',
+      id: 'helper-add-my-languages',
+      text: '🌐 Add Languages',
+      className: 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700 h-10 rounded-full px-5 shadow-lg',
       onClick: () => this.addMyLanguages()
     });
-    configButton.style.marginLeft = '10px';
-    runButton.style.marginLeft = '10px';
+
+    // Ép kiểu lại text để tránh lỗi icon bị nổi lên (floating icon)
+    [configButton, runButton].forEach(btn => {
+      btn.style.lineHeight = '1';
+      btn.style.fontSize = '12px';
+      btn.style.display = 'inline-flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'center';
+    });
 
     addLanguageBtn.after(runButton);
     addLanguageBtn.after(configButton);
