@@ -918,3 +918,304 @@ select option {
   transform: translateX(120%) !important;
   opacity: 0 !important;
 }
+
+/* === DARK MODE SUPPORT === */
+@media (prefers-color-scheme: dark) {
+
+  /* Main Panel Container */
+  .ts-panel {
+    background-color: #1f2937 !important;
+    /* gray-800 */
+    color: #f3f4f6 !important;
+    /* gray-100 */
+    border-color: #374151 !important;
+    /* gray-700 */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  /* Text Colors */
+  .ts-text-gray-900 {
+    color: #f9fafb !important;
+  }
+
+  /* gray-50 */
+  .ts-text-gray-700 {
+    color: #e5e7eb !important;
+  }
+
+  /* gray-200 */
+  .ts-text-gray-600 {
+    color: #d1d5db !important;
+  }
+
+  /* gray-300 */
+  .ts-text-gray-500 {
+    color: #9ca3af !important;
+  }
+
+  /* gray-400 */
+  .ts-text-gray-400 {
+    color: #9ca3af !important;
+  }
+
+  /* gray-400 */
+
+  /* Background Colors */
+  .ts-bg-white {
+    background-color: #1f2937 !important;
+  }
+
+  /* gray-800 */
+  .ts-bg-gray-50 {
+    background-color: #111827 !important;
+  }
+
+  /* gray-900 */
+  .ts-bg-indigo-50 {
+    background-color: #312e81 !important;
+  }
+
+  /* indigo-900 */
+
+  /* Borders */
+  .ts-border-gray-100 {
+    border-color: #374151 !important;
+  }
+
+  /* gray-700 */
+  .ts-border-gray-200 {
+    border-color: #4b5563 !important;
+  }
+
+  /* gray-600 */
+  .ts-border-gray-300 {
+    border-color: #4b5563 !important;
+  }
+
+  /* gray-600 */
+  .ts-border-indigo-100 {
+    border-color: #4338ca !important;
+  }
+
+  /* indigo-700 */
+
+  /* Inputs & Selects */
+  .ts-panel input[type="text"],
+  .ts-panel input[type="search"],
+  .ts-panel select,
+  .custom-dropdown-trigger {
+    background-color: #374151 !important;
+    /* gray-700 */
+    color: #f3f4f6 !important;
+    /* gray-100 */
+    border-color: #4b5563 !important;
+    /* gray-600 */
+  }
+
+  .ts-panel input::placeholder {
+    color: #9ca3af !important;
+    /* gray-400 */
+  }
+
+  /* Custom Dropdowns */
+  .custom-dropdown-menu {
+    background-color: #1f2937 !important;
+    /* gray-800 */
+    border-color: #374151 !important;
+    /* gray-700 */
+  }
+
+  .custom-dropdown-item {
+    color: #e5e7eb !important;
+    /* gray-200 */
+  }
+
+  .custom-dropdown-item:hover {
+    background-color: #374151 !important;
+    /* gray-700 */
+    color: #fff !important;
+  }
+
+  .custom-dropdown-item.selected {
+    background-color: #312e81 !important;
+    /* indigo-900 */
+    color: #818cf8 !important;
+    /* indigo-400 */
+  }
+
+  /* Checkboxes */
+  .ts-panel input[type="checkbox"]:not(.ts-switch) {
+    background-color: #374151 !important;
+    /* gray-700 */
+    border-color: #4b5563 !important;
+    /* gray-600 */
+  }
+
+  .ts-panel input[type="checkbox"]:not(.ts-switch)::before {
+    background-color: #374151 !important;
+    /* match bg for clip path mask effect */
+  }
+
+  /* Hover States */
+  .ts-hover\:bg-white:hover {
+    background-color: #374151 !important;
+  }
+
+  .ts-hover\:bg-indigo-100:hover {
+    background-color: #312e81 !important;
+  }
+
+  .ts-hover\:text-gray-600:hover {
+    color: #f3f4f6 !important;
+  }
+
+  .group:hover .group-hover\:text-gray-600 {
+    color: #f3f4f6 !important;
+  }
+
+  /* Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* === STANDARD TAILWIND COMPATIBILITY (Targeting classes inside .ts-panel) === */
+
+  /* Text */
+  .ts-panel .text-gray-900 {
+    color: #f9fafb !important;
+  }
+
+  .ts-panel .text-gray-700 {
+    color: #e5e7eb !important;
+  }
+
+  .ts-panel .text-gray-600 {
+    color: #d1d5db !important;
+  }
+
+  .ts-panel .text-gray-500 {
+    color: #9ca3af !important;
+  }
+
+  .ts-panel .text-gray-400 {
+    color: #9ca3af !important;
+  }
+
+  /* Headers */
+  .ts-panel h3 {
+    color: #f9fafb !important;
+  }
+
+  .ts-panel .text-indigo-600 {
+    color: #818cf8 !important;
+    /* brighter indigo for dark mode */
+  }
+
+  .ts-panel .text-indigo-700 {
+    color: #a5b4fc !important;
+  }
+
+  /* === HELPER BUTTONS (Outside .ts-panel) === */
+  #chatgpt-helper-button-container button {
+    background-color: #1f2937 !important;
+    /* gray-800 */
+    color: #e5e7eb !important;
+    /* gray-200 */
+    border-color: #374151 !important;
+    /* gray-700 */
+  }
+
+  #chatgpt-helper-button-container button:hover {
+    background-color: #374151 !important;
+    /* gray-700 */
+    color: #fff !important;
+  }
+
+  /* === DROPDOWN HOVER STATES === */
+  /* Fix invisible text/bg on hover in dark mode */
+  .ts-panel .hover\:bg-indigo-50:hover {
+    background-color: #312e81 !important;
+    /* indigo-900 */
+  }
+
+  .ts-panel .hover\:bg-gray-50:hover {
+    background-color: #374151 !important;
+    /* gray-700 */
+  }
+
+  .ts-panel .group:hover .group-hover\:text-indigo-600 {
+    color: #818cf8 !important;
+    /* indigo-400 */
+  }
+
+  /* Start Step Label Fix */
+  .ts-panel label.text-gray-400 {
+    color: #e5e7eb !important;
+    /* gray-200 - Higher contrast */
+  }
+
+  .ts-panel .text-rose-500 {
+    color: #fb7185 !important;
+  }
+
+  /* brighter rose */
+
+  /* Backgrounds */
+  .ts-panel .bg-white {
+    background-color: #1f2937 !important;
+  }
+
+  /* gray-800 */
+  .ts-panel .bg-gray-50 {
+    background-color: #111827 !important;
+  }
+
+  /* gray-900 */
+  .ts-panel .bg-indigo-50 {
+    background-color: #312e81 !important;
+    border-color: #4338ca !important;
+  }
+
+  /* indigo-900 */
+  .ts-panel .bg-rose-50 {
+    background-color: #881337 !important;
+  }
+
+  /* rose-900 */
+
+  /* Borders */
+  .ts-panel .border-gray-100 {
+    border-color: #374151 !important;
+  }
+
+  .ts-panel .border-gray-200 {
+    border-color: #4b5563 !important;
+  }
+
+  .ts-panel .border-gray-300 {
+    border-color: #4b5563 !important;
+  }
+
+  .ts-panel .border-indigo-100 {
+    border-color: #4338ca !important;
+  }
+
+  .ts-panel .border-indigo-200 {
+    border-color: #6366f1 !important;
+  }
+
+  /* Inputs/Textareas Generic Override */
+  .ts-panel input:not([type="checkbox"]):not([type="radio"]),
+  .ts-panel textarea,
+  .ts-panel select {
+    background-color: #374151 !important;
+    /* gray-700 */
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+  }
+
+}
