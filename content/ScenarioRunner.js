@@ -1,14 +1,13 @@
-```javascript
-// --- START OF FILE ScenarioRunner.js (UPDATED) ---
+// --- STAGE: ScenarioRunner.js (CLEANED & COMPACT) ---
 
 const ScenarioRunnerInnerHTML = `
-  < div class="sr-header flex items-center mb-4 cursor-move select-none" >
+  <div class="sr-header flex items-center mb-4 cursor-move select-none">
     <span class="text-xl mr-2">📤</span>
     <div>
       <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Scenario Runner</h3>
       <div class="text-[10px] text-gray-500 font-medium tracking-tight">Execute automation sequences</div>
     </div>
-  </div >
+  </div>
 
   <div id="sr-scenario-browser" class="mb-4 relative">
     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
@@ -32,7 +31,7 @@ const ScenarioRunnerInnerHTML = `
 
   <div id="scenario-inputs" class="space-y-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar"></div>
 
-  <!--Thanh tiến trình-- >
+  <!-- Thanh tiến trình -->
   <div id="sr-progress-box" class="mb-4 hidden">
     <div class="flex justify-between items-end mb-1.5 px-1">
       <div class="text-[10px] font-bold text-gray-500 uppercase">
@@ -101,10 +100,6 @@ window.ScenarioRunner = class {
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
   }
 
-  /**
-   * Tải danh sách kịch bản và thiết lập ô tìm kiếm động
-   */
-
   _setupScenarioSearch() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       this.templates = items.scenarioTemplates || {};
@@ -118,11 +113,11 @@ window.ScenarioRunner = class {
         const group = Array.isArray(raw) ? "" : (raw.group || "");
 
         const item = document.createElement("div");
-        item.className = "px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
+        item.className = "scenario-dropdown-item px-3 py-2 hover:bg-indigo-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
 
         const titleSpan = document.createElement("span");
-        titleSpan.className = "text-sm text-gray-700 font-medium group-hover:text-indigo-600";
-        titleSpan.textContent = group ? `[${ group }] ${ name } ` : name;
+        titleSpan.className = "text-[11px] text-gray-700 font-bold group-hover:text-indigo-600";
+        titleSpan.textContent = group ? `[${group}] ${name}` : name;
 
         item.appendChild(titleSpan);
         item.dataset.name = name;
@@ -130,21 +125,16 @@ window.ScenarioRunner = class {
 
         // Sử dụng 'mousedown' để đảm bảo sự kiện được xử lý trước 'blur'
         item.addEventListener("mousedown", (e) => {
-          e.preventDefault(); // Ngăn input mất focus ngay lập tức
-
+          e.preventDefault();
           searchBox.value = item.textContent;
-          dropdown.classList.add("hidden-dropdown"); // Ẩn ngay
+          dropdown.classList.add("hidden-dropdown");
           this._onScenarioSelected(name);
-
-          // Chủ động làm input mất focus
           searchBox.blur();
         });
 
         dropdown.appendChild(item);
       });
 
-      // --- PHẦN BỊ THIẾU ĐÃ ĐƯỢC KHÔI PHỤC ---
-      // Gắn sự kiện cho ô tìm kiếm
       searchBox.addEventListener("input", () => {
         dropdown.classList.remove("hidden-dropdown");
         const keyword = searchBox.value.trim();
@@ -155,7 +145,6 @@ window.ScenarioRunner = class {
           return { div, score };
         });
 
-        // Sắp xếp và hiển thị
         scoredItems.forEach(item => {
           if (item.score > 0) {
             item.div.style.display = "flex";
@@ -169,14 +158,11 @@ window.ScenarioRunner = class {
       // Cần đảm bảo dropdown là flex column để 'order' hoạt động
       dropdown.style.display = "flex";
       dropdown.style.flexDirection = "column";
-      // --- KẾT THÚC PHẦN KHÔI PHỤC ---
 
-      // Hiện dropdown khi người dùng focus
       searchBox.addEventListener("focus", () => {
         dropdown.classList.remove("hidden-dropdown");
       });
 
-      // Ẩn dropdown khi click ra ngoài
       document.addEventListener('click', (event) => {
         if (!browserWrapper.contains(event.target)) {
           dropdown.classList.add('hidden-dropdown');
@@ -184,10 +170,6 @@ window.ScenarioRunner = class {
       });
     });
   }
-  /**
-   * Hàm được gọi khi một kịch bản được chọn từ danh sách
-   * @param {string} name Tên của kịch bản
-   */
 
   _onScenarioSelected(name) {
     const raw = this.templates[name] || {};
@@ -197,7 +179,7 @@ window.ScenarioRunner = class {
     const stepSelect = this.el.querySelector("#step-select");
     stepSelect.innerHTML = list.map((q, idx) => {
       const preview = q.text?.slice(0, 40) || "";
-      return `< option value = "${idx}" title = "${q.text}" > #${ idx + 1 }: ${ preview }...</option > `;
+      return `<option value="${idx}" title="${q.text}">#${idx + 1}: ${preview}...</option>`;
     }).join("");
     stepSelect.disabled = list.length === 0;
 
@@ -217,19 +199,17 @@ window.ScenarioRunner = class {
         shown.add(varName);
 
         const wrapper = document.createElement("div");
-        wrapper.className = "sr-input-group flex flex-col gap-1.5";
+        wrapper.className = "sr-input-group flex flex-col gap-1";
         const label = document.createElement("label");
-        label.className = "text-[11px] font-bold text-gray-500 uppercase tracking-widest pl-1";
+        label.className = "text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1";
         label.textContent = varName;
 
         let inputEl;
-        // === CẬP NHẬT LOGIC TẠO INPUT ===
-        const baseClasses = "w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none";
+        const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none";
 
         if (optionsStr) {
-          // Nếu có danh sách lựa chọn, tạo dropdown
           inputEl = document.createElement("select");
-          inputEl.className = `${ baseClasses } h - 10 font - bold text - indigo - 600 cursor - pointer`;
+          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-600 cursor-pointer`;
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -238,23 +218,19 @@ window.ScenarioRunner = class {
             inputEl.appendChild(option);
           });
         } else if (q.type === "loop" && varName === loopKey) {
-          // 'loop' vẫn là input number
           inputEl = document.createElement("input");
           inputEl.type = "number";
-          inputEl.className = `${ baseClasses } h - 10 font - bold text - indigo - 600`;
+          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-600`;
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
-          // 'list' sẽ là textarea
           inputEl = document.createElement("textarea");
-          inputEl.className = `${ baseClasses } min - h - [60px] font - mono text - xs text - indigo - 600`;
-          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: value1, value2)";
+          inputEl.className = `${baseClasses} min-h-[50px] font-mono text-[10px] text-indigo-600`;
+          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy...";
         } else {
-          // Các biến còn lại mặc định là textarea
           inputEl = document.createElement("textarea");
-          inputEl.className = `${ baseClasses } min - h - [80px]`;
+          inputEl.className = `${baseClasses} min-h-[60px]`;
           inputEl.placeholder = "Nhập nội dung cho " + varName;
         }
-        // === KẾT THÚC CẬP NHẬT ===
 
         inputEl.dataset.key = varName;
         inputEl.addEventListener("input", () => this._saveVariableValues(name));
@@ -270,15 +246,11 @@ window.ScenarioRunner = class {
         const key = el.dataset.key;
         const val = saved[key];
         if (val !== undefined) {
-          el.value = val; // Logic tải lại giá trị đã lưu không cần thay đổi
+          el.value = val;
         }
       });
     });
   }
-  /**
-   * Gắn sự kiện cho các nút Start, Pause, Resume, Add to Queue
-   */
-  // Thay thế hàm này trong file ScenarioRunner.js
 
   _attachControlEvents() {
     const btnStart = this.el.querySelector('#sr-start');
@@ -298,7 +270,6 @@ window.ScenarioRunner = class {
       btnPause.disabled = false;
     };
     btnAdd.onclick = () => {
-      // Lấy tên kịch bản từ ô search thay vì select
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
 
@@ -306,26 +277,20 @@ window.ScenarioRunner = class {
         return alert("Vui lòng chọn một kịch bản hợp lệ từ danh sách!");
       }
       const name = selectedDiv.dataset.name;
-
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
       this.queue.push({ name, startAt, values });
 
       this._refreshQueueUI();
-      alert(`✅ Đã thêm bộ biến vào hàng đợi(#${ this.queue.length }).Bạn có thể nhập bộ tiếp theo.`);
-
-      // === GỌI HÀM MỚI TẠI ĐÂY ===
+      alert(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`);
       this._clearVariableInputs();
     };
   }
-  // Thay thế hàm này trong file ScenarioRunner.js
 
   _readVariableValues() {
     const data = {};
     this.el.querySelectorAll("[data-key]").forEach(el => {
-      const k = el.dataset.key;
-      // Áp dụng logic mới: luôn lấy giá trị và trim()
-      data[k] = el.value.trim();
+      data[el.dataset.key] = el.value.trim();
     });
     return data;
   }
@@ -333,25 +298,16 @@ window.ScenarioRunner = class {
   _updateQueueIndicator() {
     this.el.querySelector("#sr-queue-count").textContent = String(this.queue.length);
   }
+
   _getLoopKey(q) {
     return q.loopKey || (q.text.match(/\$\{(\w+)\}/) || [])[1];
   }
-  // Thay thế hàm này trong file ScenarioRunner.js
 
   _saveVariableValues(templateName) {
     const inputPanel = this.el.querySelector("#scenario-inputs");
     const data = {};
     inputPanel.querySelectorAll("[data-key]").forEach(el => {
-      const key = el.dataset.key;
-
-      // === THAY ĐỔI LOGIC XỬ LÝ TEXTAREA ===
-      if (el.tagName === "TEXTAREA") {
-        // Giữ nguyên toàn bộ nội dung, chỉ xóa khoảng trắng thừa ở đầu/cuối cả đoạn
-        data[key] = el.value.trim();
-      } else {
-        // Các input khác (như 'number' cho vòng lặp) vẫn xử lý như cũ
-        data[key] = el.value.trim();
-      }
+      data[el.dataset.key] = el.value.trim();
     });
 
     chrome.storage.local.get("scenarioInputValues", (items) => {
@@ -359,330 +315,241 @@ window.ScenarioRunner = class {
       all[templateName] = data;
       chrome.storage.local.set({ scenarioInputValues: all });
     });
-  } async _start() {
+  }
+
+  async _start() {
     if (this.queue.length === 0) {
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
-      if (!selectedDiv) return alert("Vui lòng chọn một kịch bản hợp lệ từ danh sách.");
+      if (!selectedDiv) return alert("Vui lòng chọn một kịch bản!");
 
       const name = selectedDiv.dataset.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
       this.queue.push({ name, startAt, values });
     }
+
     this.el.querySelector("#sr-start").disabled = true;
     this.el.querySelector("#sr-addqueue").disabled = true;
     this.el.querySelector("#sr-pause").disabled = false;
     this.el.querySelector("#sr-resume").disabled = true;
+
     const bigList = [];
     for (const job of this.queue) {
       const raw = this.templates[job.name];
-      if (!raw) {
-        console.warn("⚠️ Template not found:", job.name);
-        continue;
-      }
+      if (!raw) continue;
       const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
       const slice = tplArr.slice(job.startAt);
       const prompts = this._expandScenario(slice, job.values);
       bigList.push(...prompts);
     }
+
     this.queue = [];
     this._refreshQueueUI();
     this._updateQueueIndicator();
+
     if (bigList.length === 0) {
-      alert("Không có prompt nào để chạy.");
+      alert("Không có prompt nào.");
       this._resetControls();
       return;
     }
+
     this.sequencer = new PromptSequencer(
       bigList, this._sendPrompt.bind(this), this._waitForResponse.bind(this),
       (idx, total) => {
-        console.log(`📤 ${ idx }/${total} done`);
-this._updateProgress(idx, total);
+        this._updateProgress(idx, total);
       }, "ScenarioRunner"
     );
 
-this._showProgress(true);
-this._updateProgress(0, bigList.length);
-this._clearDoneList(); // Xóa danh sách cũ khi bắt đầu mới
-this.sequencer.start(() => this._resetControls());
+    this._showProgress(true);
+    this._updateProgress(0, bigList.length);
+    this._clearDoneList();
+    this.sequencer.start(() => this._resetControls());
   }
 
-_resetControls() {
-  this.el.querySelector("#sr-start").disabled = false;
-  this.el.querySelector("#sr-addqueue").disabled = false;
-  this.el.querySelector("#sr-pause").disabled = true;
-  this.el.querySelector("#sr-resume").disabled = true;
-
-  // KHÔNG TỰ ĐỘNG ẨN THANH TIẾN TRÌNH THEO YÊU CẦU NGƯỜI DÙNG
-  console.log("🏁 Scenario completed. Progress bar remains visible.");
-}
-
-_showProgress(show) {
-  const box = this.el.querySelector("#sr-progress-box");
-  if (box) {
-    if (show) box.classList.remove('hidden');
-    else box.classList.add('hidden');
+  _resetControls() {
+    this.el.querySelector("#sr-start").disabled = false;
+    this.el.querySelector("#sr-addqueue").disabled = false;
+    this.el.querySelector("#sr-pause").disabled = true;
+    this.el.querySelector("#sr-resume").disabled = true;
   }
-}
 
-_updateProgress(idx, total) {
-  const bar = this.el.querySelector("#sr-progress-bar");
-  const textStep = this.el.querySelector("#sr-progress-step");
-  const textTotal = this.el.querySelector("#sr-progress-total");
-  const textPercent = this.el.querySelector("#sr-progress-percent");
-
-  if (!bar || !textStep || !textTotal || !textPercent) return;
-
-  textStep.textContent = idx;
-  textTotal.textContent = total;
-
-  const percent = total > 0 ? Math.round((idx / total) * 100) : 0;
-  textPercent.textContent = `${percent}%`;
-  bar.style.width = `${percent}%`;
-
-  // Cập nhật danh sách "Done" nếu có label cho bước vừa hoàn thành (idx-1)
-  if (idx > 0 && this.sequencer && this.sequencer.prompts) {
-    const lastPrompt = this.sequencer.prompts[idx - 1];
-    if (lastPrompt && lastPrompt.label) {
-      this._addDoneItem(lastPrompt.label);
+  _showProgress(show) {
+    const box = this.el.querySelector("#sr-progress-box");
+    if (box) {
+      if (show) box.classList.remove('hidden');
+      else box.classList.add('hidden');
     }
   }
-}
 
-_clearDoneList() {
-  const list = this.el.querySelector("#sr-done-list");
-  if (list) list.innerHTML = "";
-}
+  _updateProgress(idx, total) {
+    const bar = this.el.querySelector("#sr-progress-bar");
+    const textStep = this.el.querySelector("#sr-progress-step");
+    const textTotal = this.el.querySelector("#sr-progress-total");
+    const textPercent = this.el.querySelector("#sr-progress-percent");
 
-_addDoneItem(label) {
-  const list = this.el.querySelector("#sr-done-list");
-  if (!list) return;
+    if (!bar || !textStep || !textTotal || !textPercent) return;
 
-  // Nếu đã tồn tại thì không thêm nữa (tránh trùng lặp nếu logic sequencer gọi nhiều lần)
-  if (Array.from(list.children).some(el => el.textContent === label)) return;
+    textStep.textContent = idx;
+    textTotal.textContent = total;
 
-  const span = document.createElement("span");
-  span.className = "sr-done-item-tag";
-  span.textContent = label;
-  list.appendChild(span);
+    const percent = total > 0 ? Math.round((idx / total) * 100) : 0;
+    textPercent.textContent = `${percent}%`;
+    bar.style.width = `${percent}%`;
 
-  // Tự động cuộn xuống cuối danh sách nếu quá dài
-  list.scrollTop = list.scrollHeight;
-}
-// Thay thế hàm này trong file ScenarioRunner.js
-
-_expandScenario(questions, values) {
-  const result = [];
-  for (const q of questions) {
-    if (q.type === "text") {
-      result.push({ text: q.text, label: null });
-    } else if (q.type === "variable") {
-      const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
-      result.push({ text: filled, label: null });
-    } else if (q.type === "loop") {
-      const loopKey = this._getLoopKey(q);
-      const count = parseInt(values[loopKey] || "0", 10);
-      for (let i = 1; i <= count; i++) {
-        const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
-          if (k === loopKey) return String(i);
-          return values[k] || "";
-        });
-        result.push({ text: prompt, label: `Kỳ ${i}` });
-      }
-    }
-    else if (q.type === "list") {
-      const loopKey = this._getLoopKey(q);
-      const listValues = (values[loopKey] || "")
-        .split(',')
-        .map(v => v.trim())
-        .filter(Boolean);
-
-      for (const itemValue of listValues) {
-        const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
-          if (k === loopKey) return itemValue;
-          return values[k] || "";
-        });
-        result.push({ text: prompt, label: itemValue });
+    if (idx > 0 && this.sequencer && this.sequencer.prompts) {
+      const lastPrompt = this.sequencer.prompts[idx - 1];
+      if (lastPrompt && lastPrompt.label) {
+        this._addDoneItem(lastPrompt.label);
       }
     }
   }
-  return result;
-}
+
+  _clearDoneList() {
+    const list = this.el.querySelector("#sr-done-list");
+    if (list) list.innerHTML = "";
+  }
+
+  _addDoneItem(label) {
+    const list = this.el.querySelector("#sr-done-list");
+    if (!list) return;
+    if (Array.from(list.children).some(el => el.textContent === label)) return;
+
+    const span = document.createElement("span");
+    span.className = "bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[9px] font-bold border border-indigo-100";
+    span.textContent = label;
+    list.appendChild(span);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  _expandScenario(questions, values) {
+    const result = [];
+    for (const q of questions) {
+      if (q.type === "text") {
+        result.push({ text: q.text, label: null });
+      } else if (q.type === "variable") {
+        const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
+        result.push({ text: filled, label: null });
+      } else if (q.type === "loop") {
+        const loopKey = this._getLoopKey(q);
+        const count = parseInt(values[loopKey] || "0", 10);
+        for (let i = 1; i <= count; i++) {
+          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
+            if (k === loopKey) return String(i);
+            return values[k] || "";
+          });
+          result.push({ text: prompt, label: `Lần ${i}` });
+        }
+      } else if (q.type === "list") {
+        const loopKey = this._getLoopKey(q);
+        const listValues = (values[loopKey] || "").split(',').map(v => v.trim()).filter(Boolean);
+        for (const itemValue of listValues) {
+          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
+            if (k === loopKey) return itemValue;
+            return values[k] || "";
+          });
+          result.push({ text: prompt, label: itemValue });
+        }
+      }
+    }
+    return result;
+  }
 
   async _sendPrompt(prompt) {
-  const text = typeof prompt === 'string' ? prompt : prompt.text;
-  console.log("💬 [ScenarioRunner] send prompt →", text.slice(0, 40));
-  const chat = window.ChatAdapter;
-  const textarea = chat.getTextarea();
-  if (!textarea) throw new Error("❌ Không tìm thấy ô nhập");
-  if (textarea.tagName === 'TEXTAREA') {
-    textarea.value = text;
-  } else {
-    textarea.innerHTML = '';
-    textarea.appendChild(Object.assign(document.createElement('p'), { textContent: text }));
+    const text = typeof prompt === 'string' ? prompt : prompt.text;
+    const chat = window.ChatAdapter;
+    const textarea = chat.getTextarea();
+    if (!textarea) throw new Error("❌ No input");
+    if (textarea.tagName === 'TEXTAREA') {
+      textarea.value = text;
+    } else {
+      textarea.innerHTML = '';
+      textarea.appendChild(Object.assign(document.createElement('p'), { textContent: text }));
+    }
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    const sendBtn = await this._waitForAdapterBtn(() => chat.getSendBtn());
+    sendBtn?.click();
   }
-  textarea.dispatchEvent(new Event('input', { bubbles: true }));
-  const sendBtn = await this._waitForAdapterBtn(() => chat.getSendBtn());
-  sendBtn?.click();
-}
-_waitForResponse(timeout = 600000) {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const timer = setInterval(() => {
-      const done = window.ChatAdapter.isDone();
-      if (done) {
-        clearInterval(timer);
-        resolve();
-      }
-      if (Date.now() - start > timeout) {
-        clearInterval(timer);
-        reject(new Error("Timeout waiting for response"));
-      }
-    }, 1000);
-  });
-}
-_waitForAdapterBtn(fnGet, maxRetries = 25, interval = 300) {
-  return new Promise((resolve) => {
-    let tries = 0;
-    const id = setInterval(() => {
-      const el = fnGet();
-      if (el || tries >= maxRetries) {
-        clearInterval(id);
-        resolve(el);
-      }
-      tries++;
-    }, interval);
-  });
-}
-destroy() {
-  console.log("❌ [ScenarioRunner] destroy");
-  this.el?.remove();
-  this.onClose();
-  this.sequencer?.stop();
-}
-// Thay thế hàm này trong file ScenarioRunner.js
 
-// Thay thế toàn bộ hàm _refreshQueueUI() bằng phiên bản này
+  _waitForResponse(timeout = 600000) {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.ChatAdapter.isDone()) {
+          clearInterval(timer);
+          resolve();
+        } else if (Date.now() - start > timeout) {
+          clearInterval(timer);
+          reject(new Error("Timeout"));
+        }
+      }, 1000);
+    });
+  }
 
-_refreshQueueUI() {
-  this._updateQueueIndicator();
-  const listEl = this.el.querySelector("#sr-queue-list");
-  listEl.innerHTML = this.queue.map((job, i) => {
-    // 1. Tạo chuỗi biến đầy đủ như cũ
-    const fullVars = Object.entries(job.values)
-      .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('|') : v}`)
-      .join(', ');
+  _waitForAdapterBtn(fnGet, maxRetries = 25, interval = 300) {
+    return new Promise((resolve) => {
+      let tries = 0;
+      const id = setInterval(() => {
+        const el = fnGet();
+        if (el || tries >= maxRetries) {
+          clearInterval(id);
+          resolve(el);
+        }
+        tries++;
+      }, interval);
+    });
+  }
 
-    // 2. Sử dụng hàm helper để rút gọn chuỗi đó
-    const shortenedVars = this._shortenText(fullVars); // Mặc định là 60 ký tự
-
-    // 3. Sử dụng cả 2 phiên bản trong HTML
-    return `
-        <li class="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
-          <div class="flex-1 min-w-0 pr-3">
-             <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] font-black text-gray-400">#${i + 1}</span>
-                <span class="text-xs font-bold text-gray-900 truncate">${job.name}</span>
-                <span class="text-[10px] font-medium text-gray-500 bg-white px-1.5 py-0.5 rounded border border-gray-100">Step ${job.startAt + 1}+</span>
+  _refreshQueueUI() {
+    this._updateQueueIndicator();
+    const listEl = this.el.querySelector("#sr-queue-list");
+    listEl.innerHTML = this.queue.map((job, i) => {
+      const fullVars = Object.entries(job.values).map(([k, v]) => `${k}=${v}`).join(', ');
+      const shortenedVars = this._shortenText(fullVars);
+      return `
+        <li class="bg-gray-50 border border-gray-100 rounded-xl p-2.5 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
+          <div class="flex-1 min-w-0 pr-2">
+             <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="text-[9px] font-black text-gray-300">#${i + 1}</span>
+                <span class="text-xs font-bold text-gray-700 truncate">${job.name}</span>
              </div>
-             <div class="text-[10px] text-gray-500 italic truncate" title="${fullVars}">${shortenedVars}</div>
+             <div class="text-[10px] text-gray-400 italic truncate" title="${fullVars}">${shortenedVars}</div>
           </div>
-          <button class="sr-queue-copy w-7 h-7 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-[10px] hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all active:scale-90" data-idx="${i}" title="Copy prompts to clipboard">
+          <button class="sr-queue-copy w-6 h-6 flex items-center justify-center bg-white border border-gray-100 rounded-md text-[10px] hover:bg-indigo-600 hover:text-white transition-all active:scale-90" data-idx="${i}">
              📋
           </button>
         </li>
       `;
-  }).join("");
+    }).join("");
 
-  // Gắn lại sự kiện cho các nút copy
-  listEl.querySelectorAll('.sr-queue-copy').forEach(btn => {
-    btn.onclick = (e) => {
-      // Dùng currentTarget để đảm bảo lấy đúng button
-      const index = parseInt(e.currentTarget.dataset.idx, 10);
-      this._copyQueueItem(index);
-    };
-  });
-}
-// Thêm hàm mới này vào class ScenarioRunner
-
-/**
- * Biên dịch và sao chép một mục trong hàng đợi vào clipboard
- * @param {number} index - Vị trí của mục trong this.queue
- */
-_copyQueueItem(index) {
-  const job = this.queue[index];
-  if (!job) {
-    console.error("Không tìm thấy mục để copy tại index:", index);
-    return;
+    listEl.querySelectorAll('.sr-queue-copy').forEach(btn => {
+      btn.onclick = (e) => this._copyQueueItem(parseInt(e.currentTarget.dataset.idx, 10));
+    });
   }
 
-  // Lấy template, hỗ trợ cả 2 định dạng
-  const raw = this.templates[job.name];
-  if (!raw) {
-    console.warn("⚠️ Template not found:", job.name);
-    return;
-  }
-  const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
-
-  // "Biên dịch" các prompt
-  const slice = tplArr.slice(job.startAt);
-  const prompts = this._expandScenario(slice, job.values);
-
-  if (prompts.length === 0) {
-    alert("Không có prompt nào được tạo ra từ mục này.");
-    return;
+  _copyQueueItem(index) {
+    const job = this.queue[index];
+    if (!job) return;
+    const raw = this.templates[job.name];
+    if (!raw) return;
+    const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
+    const prompts = this._expandScenario(tplArr.slice(job.startAt), job.values);
+    if (prompts.length === 0) return;
+    navigator.clipboard.writeText(prompts.map(p => p.text).join('\n\n---\n\n')).then(() => alert(`✅ Copied!`));
   }
 
-  // Nối tất cả các prompt lại, cách nhau bằng hai dòng mới
-  const fullText = prompts.join('\n\n---\n\n');
-
-  // Sao chép vào clipboard
-  navigator.clipboard.writeText(fullText).then(() => {
-    alert(`✅ Đã sao chép ${prompts.length} prompt vào clipboard!`);
-  }).catch(err => {
-    console.error('Lỗi khi sao chép:', err);
-    alert('❌ Đã xảy ra lỗi khi sao chép.');
-  });
-}
-
-// Thêm hàm mới này vào class ScenarioRunner, ví dụ: trước hàm destroy()
-
-/**
- * Rút gọn văn bản nếu nó dài hơn giới hạn cho phép.
- * @param {string} text - Văn bản cần rút gọn.
- * @param {number} maxLength - Chiều dài tối đa.
- * @returns {string} - Văn bản đã được rút gọn.
- */
-_shortenText(text, maxLength = 60) {
-  if (typeof text !== 'string' || text.length <= maxLength) {
-    return text;
+  _shortenText(text, maxLength = 60) {
+    return (text.length <= maxLength) ? text : text.slice(0, maxLength) + '...';
   }
-  return text.slice(0, maxLength) + '...';
-}
 
-/**
- * Xóa nội dung của tất cả các ô nhập liệu biến trên giao diện.
- */
-_clearVariableInputs() {
-  this.el.querySelectorAll('#scenario-inputs [data-key]').forEach(inputEl => {
-    inputEl.value = '';
-  });
-  console.log("📝 Đã xóa trắng các ô nhập liệu biến.");
-
-  // Tùy chọn: Focus vào ô nhập liệu đầu tiên để người dùng có thể gõ ngay
-  const firstInput = this.el.querySelector('#scenario-inputs [data-key]');
-  if (firstInput) {
-    firstInput.focus();
+  _clearVariableInputs() {
+    this.el.querySelectorAll('#scenario-inputs [data-key]').forEach(el => el.value = '');
+    this.el.querySelector('#scenario-inputs [data-key]')?.focus();
   }
-}
 
-/**
- * Kiểm tra xem kịch bản có đang chạy hay không.
- * @returns {boolean} true nếu đang chạy.
- */
-_isBusy() {
-  return this.sequencer && !this.sequencer.stopped && this.sequencer.idx < this.sequencer.prompts.length;
-}
+  destroy() {
+    this.el?.remove();
+    this.onClose();
+    this.sequencer?.stop();
+  }
 };
-// --- END OF FILE ScenarioRunner.js (UPDATED) ---
