@@ -54,27 +54,27 @@ const AVAILABLE_LANGUAGES = [
 
 
 const YTB_PANEL_HTML = `
-  <div class="ts-title flex items-center mb-4 cursor-move select-none">
-    <span class="text-xl mr-2">⚙️</span>
+  <div class="ts-title ts-flex ts-items-center ts-mb-4 ts-cursor-move ts-select-none">
+    <span class="ts-text-xl ts-mr-2">⚙️</span>
     <div>
-      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Video Subtitles & Info</h3>
-      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Languages & Metadata Automation</div>
+      <h3 class="ts-m-0 ts-text-base ts-font-bold ts-text-gray-900 ts-leading-tight">Video Subtitles & Info</h3>
+      <div class="ts-text-[10px] ts-text-gray-500 ts-font-medium ts-tracking-tight">Languages & Metadata Automation</div>
     </div>
   </div>
   
-  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
-    <div class="flex items-center justify-between mb-2 pl-1">
-      <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Profile Ngôn ngữ</label>
-      <div class="flex gap-2">
-         <button id="ytsp-new-profile" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors">➕ Mới</button>
-         <button id="ytsp-delete-profile" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 transition-colors">🗑️ Xóa</button>
+  <div class="ts-bg-gray-50 ts-p-3 ts-rounded-xl ts-border ts-border-gray-100 ts-mb-4">
+    <div class="ts-flex ts-items-center ts-justify-between ts-mb-2 ts-pl-1">
+      <label class="ts-text-[10px] ts-font-bold ts-text-gray-400 ts-uppercase ts-tracking-widest ts-leading-none">Profile Ngôn ngữ</label>
+      <div class="ts-flex ts-gap-2">
+         <button id="ytsp-new-profile" class="ts-text-[10px] ts-font-bold ts-text-indigo-600 ts-hover:text-indigo-800 ts-transition-colors">➕ Mới</button>
+         <button id="ytsp-delete-profile" class="ts-text-[10px] ts-font-bold ts-text-rose-500 ts-hover:text-rose-700 ts-transition-colors">🗑️ Xóa</button>
       </div>
     </div>
-    <div class="flex gap-2 mb-3">
-      <div id="yt-profile-dropdown-container" class="custom-dropdown-container flex-1">
+    <div class="ts-flex ts-gap-2 ts-mb-3">
+      <div id="yt-profile-dropdown-container" class="custom-dropdown-container ts-flex-1">
         <button id="yt-profile-dropdown-trigger" class="custom-dropdown-trigger">
           <span id="yt-profile-selected-text">Tải Profile...</span>
-          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="ts-w-4 ts-h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
@@ -82,68 +82,68 @@ const YTB_PANEL_HTML = `
       </div>
     </div>
     
-    <div id="yt-new-profile-group" class="hidden flex gap-2 animate-in">
-      <input type="text" id="yt-new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
-      <button id="yt-save-as-new-btn" class="h-8 px-3 bg-indigo-50 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-100 transition-all active:scale-95">Lưu</button>
+    <div id="yt-new-profile-group" class="ts-hidden ts-flex ts-gap-2 animate-in">
+      <input type="text" id="yt-new-profile-name" class="ts-flex-1 ts-h-8 ts-px-2 ts-text-sm ts-border ts-border-gray-200 ts-rounded-md ts-bg-white ts-focus:border-indigo-500 ts-outline-none ts-transition-all" placeholder="Tên profile mới...">
+      <button id="yt-save-as-new-btn" class="ts-h-8 ts-px-3 ts-bg-indigo-50 ts-text-indigo-600 ts-font-bold ts-rounded-md ts-text-[10px] ts-hover:bg-indigo-100 ts-transition-all ts-active:scale-95">Lưu</button>
     </div>
   </div>
 
-  <div class="space-y-2 mb-4">
-      <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
-         <div class="flex flex-col">
-            <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700">Kênh lồng tiếng tự động (Aloud)</span>
-            <span class="text-[9px] text-gray-400">Optimize for multi-language audio</span>
+  <div class="ts-space-y-2 ts-mb-4">
+      <label class="ts-flex ts-items-center ts-justify-between ts-p-2 ts-rounded-xl ts-border ts-border-gray-100 ts-bg-white ts-hover:border-indigo-100 ts-cursor-pointer ts-transition-all group">
+         <div class="ts-flex ts-flex-col">
+            <span class="ts-text-xs ts-font-bold ts-text-gray-700 group-hover:text-emerald-700">Kênh lồng tiếng tự động (Aloud)</span>
+            <span class="ts-text-[9px] ts-text-gray-400">Optimize for multi-language audio</span>
          </div>
           <input type="checkbox" id="yt-aloud-enabled" class="ts-switch">
       </label>
       
-      <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
-         <div class="flex flex-col">
-            <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700">Tự động điền & Lưu</span>
-            <span class="text-[9px] text-gray-400">Auto-fill metadata from JSON</span>
+      <label class="ts-flex ts-items-center ts-justify-between ts-p-2 ts-rounded-xl ts-border ts-border-gray-100 ts-bg-white ts-hover:border-indigo-100 ts-cursor-pointer ts-transition-all group">
+         <div class="ts-flex ts-flex-col">
+            <span class="ts-text-xs ts-font-bold ts-text-gray-700 group-hover:text-emerald-700">Tự động điền & Lưu</span>
+            <span class="ts-text-[9px] ts-text-gray-400">Auto-fill metadata from JSON</span>
          </div>
           <input type="checkbox" id="yt-autofill-enabled" class="ts-switch">
       </label>
   </div>
   
-  <div class="flex flex-col flex-1 overflow-hidden bg-gray-50 rounded-xl border border-gray-100 p-3 mb-4">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest pl-1">🌍 Danh sách Ngôn ngữ</label>
+  <div class="ts-flex ts-flex-col ts-flex-1 ts-overflow-hidden ts-bg-gray-50 ts-rounded-xl ts-border ts-border-gray-100 ts-p-3 ts-mb-4">
+    <label class="ts-text-[10px] ts-font-bold ts-text-gray-400 ts-uppercase ts-mb-2 ts-block ts-tracking-widest ts-pl-1">🌍 Danh sách Ngôn ngữ</label>
     
-    <div class="relative mb-2">
+    <div class="ts-relative ts-mb-2">
       <input type="text" id="yt-language-search" 
-        class="w-full h-8 pl-8 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+        class="ts-w-full ts-h-8 ts-pl-8 ts-pr-3 ts-text-sm ts-border ts-border-gray-300 ts-rounded-lg ts-bg-gray-50 ts-focus:bg-white ts-focus:border-indigo-500 ts-outline-none ts-transition-all"
         placeholder="Tìm ngôn ngữ...">
-      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">🔍</span>
+      <span class="ts-absolute ts-left-2.5 ts-top-1/2 ts--translate-y-1/2 ts-text-gray-400 ts-text-[10px]">🔍</span>
     </div>
 
-    <div class="flex items-center justify-between mb-2 px-1">
-      <label class="flex items-center gap-1.5 cursor-pointer group">
-          <input type="checkbox" id="yt-filter-selected" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all">
-        <span class="text-[10px] font-bold text-gray-400 group-hover:text-gray-600">Đã chọn</span>
+    <div class="ts-flex ts-items-center ts-justify-between ts-mb-2 ts-px-1">
+      <label class="ts-flex ts-items-center ts-gap-1.5 ts-cursor-pointer group">
+          <input type="checkbox" id="yt-filter-selected" class="ts-w-4 ts-h-4 ts-text-indigo-600 ts-border-gray-300 ts-rounded ts-focus:ring-indigo-500 ts-cursor-pointer ts-transition-all">
+        <span class="ts-text-[10px] ts-font-bold ts-text-gray-400 group-hover:text-gray-600">Đã chọn</span>
       </label>
-      <button id="yt-copy-selected-btn" class="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-all">
+      <button id="yt-copy-selected-btn" class="ts-text-[9px] ts-font-bold ts-text-indigo-500 ts-hover:text-indigo-700 ts-flex ts-items-center ts-gap-1 ts-transition-all">
          📋 Copy List
       </button>
     </div>
 
-    <div id="yt-language-checkbox-container" class="min-h-[120px] max-h-[160px] overflow-y-auto pr-1 space-y-0.5 custom-scrollbar"></div>
+    <div id="yt-language-checkbox-container" class="ts-min-h-[120px] ts-max-h-[160px] ts-overflow-y-auto ts-pr-1 ts-space-y-0.5 custom-scrollbar"></div>
   </div>
   
-  <div class="mb-4">
-    <div class="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-100 mb-1 shadow-sm">
-        <div class="w-8 h-8 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-base">📄</div>
-        <div class="flex-1 min-w-0">
-             <div class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-0.5">Dữ liệu Dịch thuật</div>
-             <div id="yt-json-filename" class="text-[11px] text-gray-700 font-bold truncate">Chưa có file nào</div>
+  <div class="ts-mb-4">
+    <div class="ts-flex ts-items-center ts-gap-3 ts-bg-white ts-p-2.5 ts-rounded-xl ts-border ts-border-gray-100 ts-mb-1 ts-shadow-sm">
+        <div class="ts-w-8 ts-h-8 ts-flex ts-items-center ts-justify-center ts-bg-indigo-50 ts-text-indigo-600 ts-rounded-lg ts-text-base">📄</div>
+        <div class="ts-flex-1 ts-min-w-0">
+             <div class="ts-text-[9px] ts-font-bold ts-text-gray-400 ts-uppercase ts-leading-none ts-mb-0.5">Dữ liệu Dịch thuật</div>
+             <div id="yt-json-filename" class="ts-text-[11px] ts-text-gray-700 ts-font-bold ts-truncate">Chưa có file nào</div>
         </div>
-        <label for="yt-json-upload" class="h-7 px-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[9px] flex items-center justify-center cursor-pointer transition-all active:scale-90">
+        <label for="yt-json-upload" class="ts-h-7 ts-px-2.5 ts-bg-indigo-600 ts-hover:bg-indigo-700 ts-text-white ts-font-bold ts-rounded-lg ts-text-[9px] ts-flex ts-items-center ts-justify-center ts-cursor-pointer ts-transition-all ts-active:scale-90">
           Tải lên
         </label>
-        <input type="file" id="yt-json-upload" accept=".json,.txt" class="hidden">
+        <input type="file" id="yt-json-upload" accept=".json,.txt" class="ts-hidden">
     </div>
   </div>
   
-  <button id="yt-save-languages-btn" class="w-full h-[42px] flex-shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl text-[13px] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center shadow-sm">
+  <button id="yt-save-languages-btn" class="ts-w-full ts-h-[42px] ts-flex-shrink-0 ts-bg-indigo-50 ts-border ts-border-indigo-100 ts-text-indigo-700 ts-font-bold ts-rounded-xl ts-text-[13px] ts-hover:bg-indigo-100 ts-transition-all ts-active:scale-95 ts-flex ts-items-center ts-justify-center ts-shadow-sm">
     Cập nhật Profile
   </button>
 `;
@@ -174,8 +174,8 @@ window.YoutubeStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
-    this.el.className = 'panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in';
-    this.el.style.maxHeight = "85vh";
+    this.el.className = 'ts-panel animate-in';
+
     this.el.innerHTML = YTB_PANEL_HTML;
 
     ChatGPTHelper.mountPanel(this.el);
