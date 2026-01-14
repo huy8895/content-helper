@@ -96,7 +96,7 @@ window.GoogleAIStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = "google-ai-studio-panel";
-    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
+    this.el.className = "ts-panel animate-in";
     this.el.innerHTML = PANEL_HTML;
 
     ChatGPTHelper.mountPanel(this.el);

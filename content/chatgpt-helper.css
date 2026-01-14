@@ -3,6 +3,522 @@
   pointer-events: auto !important;
 }
 
+/* === MAIN PANEL CONTAINER FIXED STYLES === */
+.ts-panel {
+  position: fixed !important;
+  /* Ensure it floats */
+  width: 420px !important;
+  min-width: 420px !important;
+  max-width: 420px !important;
+  max-height: 85vh !important;
+  min-height: 200px !important;
+
+  /* Visuals */
+  background-color: white !important;
+  padding: 16px !important;
+  /* p-4 */
+  border-radius: 12px !important;
+  /* rounded-xl */
+  border: 1px solid #f3f4f6 !important;
+  /* border-gray-100 */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  /* shadow-2xl */
+
+  /* Layout */
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+
+  /* Reset / Override Host Styles */
+  z-index: 2147483647 !important;
+  /* Max Z-Index */
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #1f2937 !important;
+  /* gray-800 */
+  text-align: left !important;
+}
+
+/* === SCOPED TAILWIND UTILITIES (ts-*) === */
+/* Flexbox & Layout */
+.ts-flex {
+  display: flex !important;
+}
+
+.ts-flex-col {
+  flex-direction: column !important;
+}
+
+.ts-items-center {
+  align-items: center !important;
+}
+
+.ts-justify-between {
+  justify-content: space-between !important;
+}
+
+.ts-justify-center {
+  justify-content: center !important;
+}
+
+.ts-flex-1 {
+  flex: 1 1 0% !important;
+}
+
+.ts-gap-1 {
+  gap: 0.25rem !important;
+}
+
+.ts-gap-1\.5 {
+  gap: 0.375rem !important;
+}
+
+.ts-gap-2 {
+  gap: 0.5rem !important;
+}
+
+.ts-gap-2\.5 {
+  gap: 0.625rem !important;
+}
+
+.ts-gap-3 {
+  gap: 0.75rem !important;
+}
+
+.ts-hidden {
+  display: none !important;
+}
+
+.ts-block {
+  display: block !important;
+}
+
+.ts-relative {
+  position: relative !important;
+}
+
+.ts-absolute {
+  position: absolute !important;
+}
+
+.ts-top-1\/2 {
+  top: 50% !important;
+}
+
+.ts-left-2\.5 {
+  left: 0.625rem !important;
+}
+
+.ts--translate-y-1\/2 {
+  transform: translateY(-50%) !important;
+}
+
+/* Spacing */
+.ts-m-0 {
+  margin: 0 !important;
+}
+
+.ts-mb-0\.5 {
+  margin-bottom: 0.125rem !important;
+}
+
+.ts-mb-1 {
+  margin-bottom: 0.25rem !important;
+}
+
+.ts-mb-2 {
+  margin-bottom: 0.5rem !important;
+}
+
+.ts-mb-3 {
+  margin-bottom: 0.75rem !important;
+}
+
+.ts-mb-4 {
+  margin-bottom: 1rem !important;
+}
+
+.ts-mr-2 {
+  margin-right: 0.5rem !important;
+}
+
+.ts-p-2 {
+  padding: 0.5rem !important;
+}
+
+.ts-p-2\.5 {
+  padding: 0.625rem !important;
+}
+
+.ts-p-3 {
+  padding: 0.75rem !important;
+}
+
+.ts-px-1 {
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+}
+
+.ts-px-2 {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+.ts-px-2\.5 {
+  padding-left: 0.625rem !important;
+  padding-right: 0.625rem !important;
+}
+
+.ts-px-3 {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+.ts-pl-1 {
+  padding-left: 0.25rem !important;
+}
+
+.ts-pl-8 {
+  padding-left: 2rem !important;
+}
+
+.ts-pr-1 {
+  padding-right: 0.25rem !important;
+}
+
+.ts-pr-3 {
+  padding-right: 0.75rem !important;
+}
+
+.ts-space-y-0\.5> :not([hidden])~ :not([hidden]) {
+  margin-top: 0.125rem !important;
+}
+
+.ts-space-y-2> :not([hidden])~ :not([hidden]) {
+  margin-top: 0.5rem !important;
+}
+
+/* Sizing */
+.ts-w-full {
+  width: 100% !important;
+}
+
+.ts-w-4 {
+  width: 1rem !important;
+}
+
+.ts-w-8 {
+  width: 2rem !important;
+}
+
+.ts-h-4 {
+  height: 1rem !important;
+}
+
+.ts-h-7 {
+  height: 1.75rem !important;
+}
+
+.ts-h-8 {
+  height: 2rem !important;
+}
+
+.ts-h-\[42px\] {
+  height: 42px !important;
+}
+
+.ts-min-w-0 {
+  min-width: 0 !important;
+}
+
+.ts-min-h-\[120px\] {
+  min-height: 120px !important;
+}
+
+.ts-max-h-\[160px\] {
+  max-height: 160px !important;
+}
+
+.ts-flex-shrink-0 {
+  flex-shrink: 0 !important;
+}
+
+/* Typography */
+.ts-text-\[9px\] {
+  font-size: 9px !important;
+}
+
+.ts-text-\[10px\] {
+  font-size: 10px !important;
+}
+
+.ts-text-\[11px\] {
+  font-size: 11px !important;
+}
+
+.ts-text-\[13px\] {
+  font-size: 13px !important;
+}
+
+.ts-text-xs {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+.ts-text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.ts-text-base {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+}
+
+.ts-text-xl {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+}
+
+.ts-font-medium {
+  font-weight: 500 !important;
+}
+
+.ts-font-bold {
+  font-weight: 700 !important;
+}
+
+.ts-uppercase {
+  text-transform: uppercase !important;
+}
+
+.ts-leading-none {
+  line-height: 1 !important;
+}
+
+.ts-leading-tight {
+  line-height: 1.25 !important;
+}
+
+.ts-tracking-tight {
+  letter-spacing: -0.025em !important;
+}
+
+.ts-tracking-widest {
+  letter-spacing: 0.1em !important;
+}
+
+.ts-truncate {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Colors */
+.ts-text-white {
+  color: white !important;
+}
+
+.ts-text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.ts-text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.ts-text-gray-700 {
+  color: #374151 !important;
+}
+
+.ts-text-gray-900 {
+  color: #111827 !important;
+}
+
+.ts-text-indigo-500 {
+  color: #6366f1 !important;
+}
+
+.ts-text-indigo-600 {
+  color: #4f46e5 !important;
+}
+
+.ts-text-indigo-700 {
+  color: #4338ca !important;
+}
+
+.ts-text-rose-500 {
+  color: #f43f5e !important;
+}
+
+.ts-bg-white {
+  background-color: white !important;
+}
+
+.ts-bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.ts-bg-indigo-50 {
+  background-color: #eef2ff !important;
+}
+
+.ts-bg-indigo-600 {
+  background-color: #4f46e5 !important;
+}
+
+.ts-border-gray-100 {
+  border-color: #f3f4f6 !important;
+}
+
+.ts-border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+.ts-border-gray-300 {
+  border-color: #d1d5db !important;
+}
+
+.ts-border-indigo-100 {
+  border-color: #e0e7ff !important;
+}
+
+/* Borders & Effects */
+.ts-rounded {
+  border-radius: 0.25rem !important;
+}
+
+.ts-rounded-md {
+  border-radius: 0.375rem !important;
+}
+
+.ts-rounded-lg {
+  border-radius: 0.5rem !important;
+}
+
+.ts-rounded-xl {
+  border-radius: 0.75rem !important;
+}
+
+.ts-border {
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.ts-shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.ts-outline-none {
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
+}
+
+/* Interactivity */
+.ts-cursor-pointer {
+  cursor: pointer !important;
+}
+
+.ts-cursor-move {
+  cursor: move !important;
+}
+
+.ts-select-none {
+  user-select: none !important;
+}
+
+.ts-transition-all {
+  transition-property: all !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-duration: 150ms !important;
+}
+
+.ts-transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-duration: 150ms !important;
+}
+
+/* States (Hover, Focus, Active) */
+.ts-hover\:bg-white:hover {
+  background-color: white !important;
+}
+
+.ts-hover\:bg-indigo-100:hover {
+  background-color: #e0e7ff !important;
+}
+
+.ts-hover\:bg-indigo-700:hover {
+  background-color: #4338ca !important;
+}
+
+.ts-hover\:text-gray-600:hover {
+  color: #4b5563 !important;
+}
+
+.ts-hover\:text-indigo-600:hover {
+  color: #4f46e5 !important;
+}
+
+.ts-hover\:text-indigo-700:hover {
+  color: #4338ca !important;
+}
+
+.ts-hover\:text-indigo-800:hover {
+  color: #3730a3 !important;
+}
+
+.ts-hover\:text-rose-700:hover {
+  color: #be123c !important;
+}
+
+.ts-hover\:border-indigo-100:hover {
+  border-color: #e0e7ff !important;
+}
+
+.group:hover .group-hover\:text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.group:hover .group-hover\:text-emerald-700 {
+  color: #047857 !important;
+}
+
+.ts-focus\:bg-white:focus {
+  background-color: white !important;
+}
+
+.ts-focus\:border-indigo-500:focus {
+  border-color: #6366f1 !important;
+}
+
+.ts-focus\:ring-indigo-500:focus {
+  box-shadow: 0 0 0 2px #6366f1 !important;
+}
+
+.ts-active\:scale-90:active {
+  transform: scale(0.9) !important;
+}
+
+.ts-active\:scale-95:active {
+  transform: scale(0.95) !important;
+}
+
+/* Overflows */
+.ts-overflow-hidden {
+  overflow: hidden !important;
+}
+
+.ts-overflow-y-auto {
+  overflow-y: auto !important;
+}
+
+/* Global Reset for Panel Children */
+.ts-panel * {
+  box-sizing: border-box !important;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
