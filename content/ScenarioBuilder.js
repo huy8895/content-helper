@@ -97,7 +97,7 @@ window.ScenarioBuilder = class {
     actionWrap.className = "flex items-center gap-2";
 
     const select = document.createElement("select");
-    select.className = "question-type h-6 px-1 text-[9px] font-bold uppercase bg-gray-50 border border-gray-100 rounded-md outline-none focus:border-indigo-500 text-gray-600 cursor-pointer";
+    select.className = "question-type h-6 px-1.5 text-[10px] font-bold uppercase bg-white border border-gray-300 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-indigo-600 cursor-pointer transition-all";
 
     ["text", "variable", "loop", "list"].forEach(t => {
       const opt = document.createElement("option");

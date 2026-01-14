@@ -101,3 +101,120 @@
 .mat-mdc-select-panel {
   max-height: 400px !important;
 }
+
+/* Global Select & Option Styling */
+select {
+  color: #4f46e5 !important;
+  /* indigo-600 */
+  font-weight: 700 !important;
+}
+
+/* Custom Dropdown UI (Tailwind Style) */
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown-trigger {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  /* gray-300 */
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4f46e5;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.custom-dropdown-trigger:hover {
+  border-color: #4f46e5;
+  background-color: #f9fafb;
+}
+
+.custom-dropdown-trigger:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  outline: none;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+  display: none;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.custom-dropdown-menu.show {
+  display: block;
+}
+
+.custom-dropdown-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-dropdown-item:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.custom-dropdown-item.selected {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+select option {
+  background-color: white !important;
+  color: #374151 !important;
+  /* gray-700 */
+  padding: 10px !important;
+  font-weight: 500 !important;
+}
+
+/* Ensure borders are visible in ChatGPT dark mode if needed */
+.ts-panel input,
+.ts-panel textarea,
+.ts-panel select {
+  border: 1px solid #d1d5db !important;
+  /* Force gray-300 */
+  border-width: 1px !important;
+}

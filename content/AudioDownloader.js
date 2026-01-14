@@ -50,19 +50,12 @@ window.AudioDownloader = class {
               <option value="cove">Cove</option>
               <option value="fathom">Arbor</option>
               <option value="juniper">Juniper</option>
-              <option value="maple">Maple</option>
-              <option value="breeze">Breeze</option>
-              <option value="ember">Ember</option>
-              <option value="orbit">Spruce</option>
-            </select>
-          </div>
-          <div class="w-24">
-            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest pl-1">Format</label>
-            <select id="ad-format" class="w-full h-8 px-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all">
-              <option value="mp3">mp3</option>
-              <option value="aac">aac</option>
-            </select>
-          </div>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <select id="ad-voice" class="h-8 px-2 bg-white border border-gray-300 rounded-lg text-[11px] font-bold text-indigo-600 outline-none focus:border-indigo-500 transition-all cursor-pointer"></select>
+          <select id="ad-format" class="h-8 px-2 bg-white border border-gray-300 rounded-lg text-[11px] font-bold text-indigo-600 outline-none focus:border-indigo-500 transition-all cursor-pointer">
+            <option value="mp3">MP3</option>
+            <option value="wav">WAV</option>
+          </select>
         </div>
 
         <div class="flex gap-2">

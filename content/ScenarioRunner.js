@@ -20,13 +20,12 @@ const ScenarioRunnerInnerHTML = `
     <div id="sr-scenario-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto hidden-dropdown custom-scrollbar p-1 flex flex-col"></div>
   </div>
 
-  <div class="flex items-center gap-3 mb-4">
-    <div class="flex-1">
-      <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1" for="step-select">BẮT ĐẦU TỪ CÂU</label>
-      <select id="step-select" class="w-full h-8 px-2 bg-white border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all disabled:opacity-50" disabled>
-        <option value="0">(Chọn kịch bản)</option>
-      </select>
-    </div>
+  <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100 mb-4">
+    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1" for="step-select">BẮT ĐẦU TỪ BƯỚC</label>
+    <select id="step-select" class="w-full h-9 px-3 text-sm font-bold text-indigo-600 bg-white border border-gray-300 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all cursor-pointer" disabled>
+      <option value="0">Vui lòng chọn kịch bản...</option>
+    </select>
+  </div>
   </div>
 
   <div id="scenario-inputs" class="space-y-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar"></div>
@@ -209,7 +208,7 @@ window.ScenarioRunner = class {
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-600 cursor-pointer`;
+          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer border-gray-300`;
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");

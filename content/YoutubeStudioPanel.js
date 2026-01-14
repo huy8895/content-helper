@@ -64,6 +64,18 @@ const YTB_PANEL_HTML = `
   
   <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Chọn Profile Ngôn ngữ</label>
+    <div class="flex gap-2 mb-3">
+      <div id="yt-profile-dropdown-container" class="custom-dropdown-container flex-1">
+        <button id="yt-profile-dropdown-trigger" class="custom-dropdown-trigger">
+          <span id="yt-profile-selected-text">Tải Profile...</span>
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div id="yt-profile-dropdown-menu" class="custom-dropdown-menu custom-scrollbar"></div>
+      </div>
+    </div>
+    
     <div class="grid grid-cols-2 gap-2 mb-4">
       <button id="ytsp-save-profile" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
         💾 Save Config
@@ -215,7 +227,20 @@ window.YoutubeStudioPanel = class {
       input.focus();
     });
     this.el.querySelector('#ytsp-delete-profile').addEventListener('click', () => this.deleteSelectedProfile());
-    this.el.querySelector('#yt-profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
+
+    // Custom Dropdown Logic
+    const trigger = this.el.querySelector('#yt-profile-dropdown-trigger');
+    const menu = this.el.querySelector('#yt-profile-dropdown-menu');
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', () => {
+      menu.classList.remove('show');
+    });
+
     this.el.querySelector('#yt-json-upload').addEventListener('change', (e) => this.handleJsonUpload(e));
 
     // Sửa lại event search để gọi hàm mới
@@ -273,17 +298,29 @@ window.YoutubeStudioPanel = class {
     this.updateProfileDropdown();
     this.fillFormWithProfile(this.activeProfileName);
   }
-
+  // Cập nhật dropdown chọn profile
   updateProfileDropdown() {
-    const select = this.el.querySelector('#yt-profile-select');
-    if (!select) return;
-    select.innerHTML = '';
+    const trigger = this.el.querySelector('#yt-profile-selected-text');
+    const menu = this.el.querySelector('#yt-profile-dropdown-menu');
+
+    if (!trigger || !menu) return;
+
+    trigger.textContent = this.activeProfileName;
+    menu.innerHTML = '';
+
     Object.keys(this.profiles).forEach(name => {
-      const option = document.createElement('option');
-      option.value = name; option.textContent = name;
-      select.appendChild(option);
+      const item = document.createElement('div');
+      item.className = `custom-dropdown-item ${name === this.activeProfileName ? 'selected' : ''}`;
+      item.innerHTML = `
+        <span>${name}</span>
+        ${name === this.activeProfileName ? '<span class="text-indigo-500">✓</span>' : ''}
+      `;
+      item.onclick = () => {
+        this.switchProfile(name);
+        menu.classList.remove('show');
+      };
+      menu.appendChild(item);
     });
-    select.value = this.activeProfileName;
   }
 
   fillFormWithProfile(profileName) {
@@ -314,7 +351,7 @@ window.YoutubeStudioPanel = class {
       profiles: this.profiles,
       activeProfileName: this.activeProfileName,
     };
-    chrome.storage.local.set({ [this.storageKey]: dataToSave }, callback);
+    chrome.storage.local.set({ [this.storageKeyProfiles]: dataToSave }, callback);
     this._syncToFirestore();
   }
 
@@ -337,8 +374,9 @@ window.YoutubeStudioPanel = class {
     });
   }
 
+  // Xóa profile đang được chọn
   deleteSelectedProfile() {
-    const profileToDelete = this.el.querySelector('#yt-profile-select').value;
+    const profileToDelete = this.activeProfileName;
     if (Object.keys(this.profiles).length <= 1) {
       return alert("Cannot delete the last profile.");
     }
