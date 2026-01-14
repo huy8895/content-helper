@@ -24,7 +24,7 @@ BUTTONS = {
   RUN_SCENARIO: {
     id: "chatgpt-run-button",
     text: "📤 Chạy kịch bản",
-    className: "bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100",
+    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleRunner(),
   },
   COPY_CONTENT: {
