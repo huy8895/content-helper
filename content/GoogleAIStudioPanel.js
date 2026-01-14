@@ -3,62 +3,62 @@
 // =================================================================
 
 const PANEL_HTML = `
-  <div class="ts-title flex items-center mb-6 cursor-move select-none">
-    <span class="text-2xl mr-3">📌</span>
+  <div class="ts-title flex items-center mb-4 cursor-move select-none">
+    <span class="text-xl mr-2">📌</span>
     <div>
-      <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">AI Studio Settings</h3>
-      <div class="text-xs text-gray-500 mt-0.5 font-medium">Profile & Automation Config</div>
+      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">AI Studio Settings</h3>
+      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Profile & Automation Config</div>
     </div>
   </div>
   
-  <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6">
-    <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block tracking-wider">Chọn Profile</label>
-    <div class="flex gap-2 mb-4">
-      <select id="profile-select" class="flex-1 h-11 px-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-indigo-600 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all cursor-pointer"></select>
-      <button id="delete-profile-btn" class="w-11 h-11 flex items-center justify-center bg-white border border-rose-100 text-rose-500 rounded-xl hover:bg-rose-50 transition-all active:scale-90 shadow-sm" title="Delete selected profile">🗑️</button>
+  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Chọn Profile</label>
+    <div class="flex gap-2 mb-3">
+      <select id="profile-select" class="flex-1 h-9 px-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer"></select>
+      <button id="delete-profile-btn" class="w-9 h-9 flex items-center justify-center bg-white border border-rose-100 text-rose-500 rounded-lg hover:bg-rose-50 transition-all active:scale-90 shadow-sm" title="Delete selected profile">🗑️</button>
     </div>
     
     <div class="flex gap-2">
-      <input type="text" id="new-profile-name" class="flex-1 h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
-      <button id="save-as-new-btn" class="h-10 px-4 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs hover:bg-indigo-100 transition-all active:scale-95">➕ Lưu mới</button>
+      <input type="text" id="new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
+      <button id="save-as-new-btn" class="h-8 px-3 bg-indigo-0 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-50 transition-all active:scale-95">➕ Lưu mới</button>
     </div>
   </div>
 
-  <div id="profile-settings-form" class="space-y-4 mb-6">
-    <div class="grid grid-cols-2 gap-4">
+  <div id="profile-settings-form" class="space-y-3 mb-4">
+    <div class="grid grid-cols-2 gap-3">
       <div class="form-group">
-        <label for="input-value1" class="text-[11px] font-bold text-gray-500 uppercase mb-1 block pl-1">Speaker 1</label>
-        <input id="input-value1" type="text" class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all">
+        <label for="input-value1" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Speaker 1</label>
+        <input id="input-value1" type="text" class="w-full h-8 px-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all">
       </div>
       <div class="form-group">
-        <label for="input-value2" class="text-[11px] font-bold text-gray-500 uppercase mb-1 block pl-1">Speaker 2</label>
-        <input id="input-value2" type="text" class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all">
+        <label for="input-value2" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Speaker 2</label>
+        <input id="input-value2" type="text" class="w-full h-8 px-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all">
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-3">
       <div class="form-group">
-        <label for="voice1" class="text-[11px] font-bold text-gray-500 uppercase mb-1 block pl-1">Voice 1</label>
-        <input id="voice1" type="text" class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all" placeholder="VD: Aoede">
+        <label for="voice1" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Voice 1</label>
+        <input id="voice1" type="text" class="w-full h-8 px-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Aoede">
       </div>
       <div class="form-group">
-        <label for="voice2" class="text-[11px] font-bold text-gray-500 uppercase mb-1 block pl-1">Voice 2</label>
-        <input id="voice2" type="text" class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all" placeholder="VD: Charon">
+        <label for="voice2" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Voice 2</label>
+        <input id="voice2" type="text" class="w-full h-8 px-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Charon">
       </div>
     </div>
 
     <div class="form-group">
-      <label for="style-instructions" class="text-[11px] font-bold text-gray-500 uppercase mb-1 block pl-1">Style instructions</label>
-      <textarea id="style-instructions" class="w-full h-24 p-3 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-none" placeholder="Nhập hướng dẫn phong cách..."></textarea>
+      <label for="style-instructions" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Style instructions</label>
+      <textarea id="style-instructions" class="w-full h-20 p-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-none" placeholder="Nhập hướng dẫn phong cách..."></textarea>
     </div>
 
-    <div class="flex items-center justify-between p-3 rounded-xl border border-indigo-100 bg-indigo-50/30">
-        <label for="auto-set-value" class="text-sm font-bold text-indigo-700 cursor-pointer select-none">Tự động cấu hình (Auto Set)</label>
-        <input type="checkbox" id="auto-set-value" class="w-5 h-5 text-indigo-600 border-indigo-300 rounded focus:ring-indigo-500 cursor-pointer">
+    <div class="flex items-center justify-between p-2 rounded-lg border border-indigo-100 bg-indigo-50/30">
+        <label for="auto-set-value" class="text-xs font-bold text-indigo-700 cursor-pointer select-none">Tự động cấu hình (Auto Set)</label>
+        <input type="checkbox" id="auto-set-value" class="w-4 h-4 text-indigo-600 border-indigo-300 rounded focus:ring-indigo-500 cursor-pointer">
     </div>
   </div>
 
-  <button id="save-settings-btn" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+  <button id="save-settings-btn" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all active:scale-95 shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5">
     💾 Cập nhật Profile Hiện tại
   </button>
 `;
@@ -81,7 +81,7 @@ window.GoogleAIStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = "google-ai-studio-panel";
-    this.el.className = "panel-box ts-panel w-[460px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
+    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
     this.el.innerHTML = PANEL_HTML;
 
     ChatGPTHelper.mountPanel(this.el);

@@ -27,23 +27,23 @@ window.AudioDownloader = class {
   _render() {
     this.el = document.createElement("div");
     this.el.id = "audio-downloader";
-    this.el.className = "panel-box ts-panel w-[460px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col";
-    this.el.style.maxHeight = "600px";
+    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative";
+    this.el.style.maxHeight = "580px";
 
     this.el.innerHTML = `
-      <div class="ts-title flex items-center mb-5 cursor-move select-none">
-        <span class="text-2xl mr-3">🎵</span>
+      <div class="ts-title flex items-center mb-4 cursor-move select-none">
+        <span class="text-xl mr-2">🎵</span>
         <div>
-          <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">Audio Downloader</h3>
-          <div id="srt-status-text" class="text-xs text-gray-500 mt-0.5">TTS Audio Generator</div>
+          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Audio Downloader</h3>
+          <div id="srt-status-text" class="text-[10px] text-gray-500 font-medium tracking-tight">TTS Audio Generator</div>
         </div>
       </div>
 
-      <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-5">
-        <div class="flex gap-3 mb-4">
+      <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+        <div class="flex gap-3 mb-3">
           <div class="flex-1">
-            <label class="text-[11px] font-bold text-gray-500 uppercase mb-1 block">Voice Model</label>
-            <select id="ad-voice" class="w-full h-10 px-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest pl-1">Voice Model</label>
+            <select id="ad-voice" class="w-full h-8 px-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all">
               <option value="shade">Monday</option>
               <option value="glimmer">Sol</option>
               <option value="vale">Vale</option>
@@ -57,8 +57,8 @@ window.AudioDownloader = class {
             </select>
           </div>
           <div class="w-24">
-            <label class="text-[11px] font-bold text-gray-500 uppercase mb-1 block">Format</label>
-            <select id="ad-format" class="w-full h-10 px-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest pl-1">Format</label>
+            <select id="ad-format" class="w-full h-8 px-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all">
               <option value="mp3">mp3</option>
               <option value="aac">aac</option>
             </select>
@@ -66,24 +66,24 @@ window.AudioDownloader = class {
         </div>
 
         <div class="flex gap-2">
-          <button id="ad-dlall" class="flex-[2] h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm transition-all active:scale-95 shadow-sm">
+          <button id="ad-dlall" class="flex-[2] h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all active:scale-95 shadow-sm">
             Download All
           </button>
-          <button id="ad-reset" class="flex-1 h-10 bg-white border border-rose-200 text-rose-500 font-bold rounded-lg text-xs hover:bg-rose-50 transition-all active:scale-95">
+          <button id="ad-reset" class="flex-1 h-8 bg-white border border-rose-100 text-rose-500 font-bold rounded-lg text-[10px] hover:bg-rose-50 transition-all active:scale-95">
             🔄 Reset
           </button>
         </div>
       </div>
 
-      <div class="flex justify-between items-center mb-3">
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-          <input type="checkbox" id="ad-select-all" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-          <span class="text-[13px] text-gray-600 font-semibold">Select all messages</span>
+      <div class="flex justify-between items-center mb-2 px-1">
+        <label class="flex items-center gap-1.5 cursor-pointer select-none group">
+          <input type="checkbox" id="ad-select-all" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+          <span class="text-[11px] text-gray-500 font-bold group-hover:text-gray-700">Select all messages</span>
         </label>
-        <div id="ad-progress" class="text-[11px] font-bold text-indigo-600 animate-pulse"></div>
+        <div id="ad-progress" class="text-[10px] font-bold text-indigo-600 animate-pulse"></div>
       </div>
 
-      <div id="ad-list" class="ts-results flex-1 overflow-y-auto pr-1 bg-white rounded-xl border border-gray-50 p-2 custom-scrollbar"></div>
+      <div id="ad-list" class="ts-results flex-1 overflow-y-auto pr-1 bg-white rounded-xl border border-gray-50 p-1.5 custom-scrollbar"></div>
     `;
 
     ChatGPTHelper.mountPanel(this.el);
@@ -142,12 +142,12 @@ window.AudioDownloader = class {
 
     rows.forEach((msg, idx) => {
       const row = document.createElement("div");
-      row.className = "flex items-center gap-3 p-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg group";
+      row.className = "flex items-center gap-2 p-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg group";
       row.dataset.mid = msg.id;
 
       const cb = document.createElement("input");
       cb.type = "checkbox";
-      cb.className = "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer";
+      cb.className = "w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer";
       cb.checked = this.savedState.selected[msg.id] ?? true;
       cb.onchange = () => this._syncState();
 
@@ -166,23 +166,23 @@ window.AudioDownloader = class {
         }
       }
 
-      const btnBaseClass = "h-8 px-3 text-[11px] font-bold rounded-lg transition-all active:scale-95 shadow-sm flex-shrink-0 w-28";
+      const btnBaseClass = "h-7 px-2 text-[10px] font-bold rounded-lg transition-all active:scale-95 shadow-sm flex-shrink-0 w-24";
       if (alreadyDownloaded) {
         btn.className = `${btnBaseClass} bg-gray-100 text-gray-500 cursor-default`;
-        btn.textContent = "✅ Downloaded";
+        btn.textContent = "✅ Saved";
       } else if (isDownloading) {
         btn.className = `${btnBaseClass} bg-indigo-50 text-indigo-600 animate-pulse cursor-wait`;
-        btn.textContent = "Downloading…";
+        btn.textContent = "Saving…";
       } else {
-        btn.className = `${btnBaseClass} bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600`;
-        btn.textContent = `Download #${idx + 1}`;
+        btn.className = `${btnBaseClass} bg-white border border-gray-200 text-gray-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600`;
+        btn.textContent = `Get #${idx + 1}`;
       }
 
       btn.disabled = alreadyDownloaded || isDownloading;
       btn.onclick = () => this._download(btn, idx + 1);
 
       const span = document.createElement("span");
-      span.className = "text-[11px] text-gray-500 truncate group-hover:text-gray-900";
+      span.className = "text-[10px] text-gray-400 truncate group-hover:text-gray-700 font-medium";
       span.textContent = msg.text;
 
       row.append(cb, btn, span);

@@ -9,44 +9,44 @@ window.ContentCopyPanel = class {
   _render() {
     this.el = document.createElement("div");
     this.el.id = "content-copy-panel";
-    this.el.className = "panel-box ts-panel w-[480px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col";
-    this.el.style.maxHeight = "600px";
+    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative";
+    this.el.style.maxHeight = "580px";
 
     const html = `
-      <div class="ts-title flex items-center mb-5 cursor-move select-none">
-        <span class="text-2xl mr-3">📋</span>
+      <div class="ts-title flex items-center mb-4 cursor-move select-none">
+        <span class="text-xl mr-2">📋</span>
         <div>
-          <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">Copy Content</h3>
-          <div class="text-xs text-gray-500 mt-0.5">Found ${this.elements.length} message blocks</div>
+          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Copy Content</h3>
+          <div class="text-[10px] text-gray-500 font-medium tracking-tight">Found ${this.elements.length} message blocks</div>
         </div>
       </div>
 
-      <div class="flex flex-col gap-4 mb-6">
-        <div class="flex items-center gap-3">
-          <button id="ccp-copy-all" class="ts-btn ts-btn-accent h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all active:scale-95 shadow-sm">
+      <div class="flex flex-col gap-3 mb-4">
+        <div class="flex items-center gap-2.5">
+          <button id="ccp-copy-all" class="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] transition-all active:scale-95 shadow-sm">
             Copy All
           </button>
-          <div class="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+          <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-lg border border-gray-100">
             <input type="number" id="ccp-index" placeholder="Idx" min="1" 
-              class="w-16 h-8 text-center text-sm border-none bg-transparent focus:ring-0 font-medium" />
-            <button id="ccp-copy-from" class="h-8 px-3 bg-white text-gray-700 text-xs font-bold rounded-lg border border-gray-200 hover:bg-gray-50 shadow-sm transition-all active:scale-95">
+              class="w-12 h-6 text-center text-[10px] border-none bg-transparent focus:ring-0 font-bold text-indigo-600" />
+            <button id="ccp-copy-from" class="h-6 px-2 bg-white text-gray-600 text-[9px] font-bold rounded-md border border-gray-200 hover:bg-gray-50 shadow-sm transition-all active:scale-95">
               Copy From
             </button>
           </div>
-          <button id="ccp-download" class="h-10 px-4 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-sm ml-auto">
+          <button id="ccp-download" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition-all active:scale-95 shadow-sm ml-auto">
             <span>⬇️</span> Download
           </button>
         </div>
 
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-          <input type="checkbox" id="ccp-prefix-part" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-          <span class="text-[13px] text-gray-600 font-medium">Add "Part X" prefix when downloading/copying</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none group px-1">
+          <input type="checkbox" id="ccp-prefix-part" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+          <span class="text-[11px] text-gray-400 font-bold group-hover:text-gray-600 tracking-tight">Add "Part X" prefix when downloading/copying</span>
         </label>
       </div>
 
-      <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 flex-1 overflow-hidden flex flex-col">
-        <strong class="text-sm text-gray-800 mb-3 block">Content Preview</strong>
-        <div id="ccp-list" class="ts-results flex-1 overflow-y-auto pr-2 custom-scrollbar"></div>
+      <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 flex-1 overflow-hidden flex flex-col">
+        <strong class="text-[11px] font-bold text-gray-400 uppercase mb-2 block tracking-widest pl-1">Content Preview</strong>
+        <div id="ccp-list" class="ts-results flex-1 overflow-y-auto pr-1 custom-scrollbar"></div>
       </div>
     `;
 
@@ -66,14 +66,14 @@ window.ContentCopyPanel = class {
 
     this.elements.forEach((el, idx) => {
       const row = document.createElement("div");
-      row.className = "mb-2 py-2 border-b border-gray-100 last:border-0 hover:bg-white hover:rounded-lg hover:px-2 transition-all group cursor-default";
+      row.className = "mb-1 py-1.5 border-b border-gray-50 last:border-0 hover:bg-white hover:rounded hover:px-1.5 transition-all group cursor-default flex items-center";
 
       const number = document.createElement("span");
-      number.className = "font-bold text-indigo-700 mr-2 text-[13px]";
+      number.className = "font-bold text-indigo-400 mr-2 text-[10px] w-6 flex-shrink-0 text-right";
       number.textContent = `#${idx + 1}`;
 
       const preview = document.createElement("span");
-      preview.className = "text-[13px] text-gray-600 group-hover:text-gray-900";
+      preview.className = "text-[11px] text-gray-400 group-hover:text-gray-700 truncate font-medium";
       const text = el.innerText.trim();
       preview.textContent = this._shorten(text);
 

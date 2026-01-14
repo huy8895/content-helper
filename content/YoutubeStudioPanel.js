@@ -54,83 +54,83 @@ const AVAILABLE_LANGUAGES = [
 
 
 const YTB_PANEL_HTML = `
-  <div class="ts-title flex items-center mb-6 cursor-move select-none">
-    <span class="text-2xl mr-3">⚙️</span>
+  <div class="ts-title flex items-center mb-4 cursor-move select-none">
+    <span class="text-xl mr-2">⚙️</span>
     <div>
-      <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">Video Subtitles & Info</h3>
-      <div class="text-xs text-gray-500 mt-0.5 font-medium">Languages & Metadata Automation</div>
+      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Video Subtitles & Info</h3>
+      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Languages & Metadata Automation</div>
     </div>
   </div>
   
-  <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6">
-    <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block tracking-wider">Chọn Profile Ngôn ngữ</label>
-    <div class="flex gap-2 mb-4">
-      <select id="yt-profile-select" class="flex-1 h-11 px-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-indigo-600 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all cursor-pointer"></select>
-      <button id="yt-delete-profile-btn" class="w-11 h-11 flex items-center justify-center bg-white border border-rose-100 text-rose-500 rounded-xl hover:bg-rose-50 transition-all active:scale-90 shadow-sm" title="Delete selected profile">🗑️</button>
+  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Chọn Profile Ngôn ngữ</label>
+    <div class="flex gap-2 mb-3">
+      <select id="yt-profile-select" class="flex-1 h-9 px-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer"></select>
+      <button id="yt-delete-profile-btn" class="w-9 h-9 flex items-center justify-center bg-white border border-rose-100 text-rose-500 rounded-lg hover:bg-rose-50 transition-all active:scale-90 shadow-sm" title="Delete selected profile">🗑️</button>
     </div>
     
     <div class="flex gap-2">
-      <input type="text" id="yt-new-profile-name" class="flex-1 h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
-      <button id="yt-save-as-new-btn" class="h-10 px-4 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs hover:bg-indigo-100 transition-all active:scale-95">➕ Lưu mới</button>
+      <input type="text" id="yt-new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
+      <button id="yt-save-as-new-btn" class="h-8 px-3 bg-indigo-50 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-100 transition-all active:scale-95">➕ Lưu mới</button>
     </div>
   </div>
 
-  <div class="space-y-3 mb-6">
-      <label class="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
+  <div class="space-y-2 mb-4">
+      <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
          <div class="flex flex-col">
             <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Kênh lồng tiếng tự động (Aloud)</span>
-            <span class="text-[10px] text-gray-400">Optimize for multi-language audio</span>
+            <span class="text-[9px] text-gray-400">Optimize for multi-language audio</span>
          </div>
-         <input type="checkbox" id="yt-aloud-enabled" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+         <input type="checkbox" id="yt-aloud-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
       </label>
       
-      <label class="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
+      <label class="flex items-center justify-between p-2 rounded-xl border border-gray-100 bg-white hover:border-indigo-100 cursor-pointer transition-all group">
          <div class="flex flex-col">
             <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Tự động điền & Lưu</span>
-            <span class="text-[10px] text-gray-400">Auto-fill metadata from JSON</span>
+            <span class="text-[9px] text-gray-400">Auto-fill metadata from JSON</span>
          </div>
-         <input type="checkbox" id="yt-autofill-enabled" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+         <input type="checkbox" id="yt-autofill-enabled" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
       </label>
   </div>
   
-  <div class="flex flex-col flex-1 overflow-hidden bg-gray-50 rounded-2xl border border-gray-100 p-4 mb-6">
-    <label class="text-[11px] font-bold text-gray-500 uppercase mb-3 block tracking-wider">🌍 Danh sách Ngôn ngữ</label>
+  <div class="flex flex-col flex-1 overflow-hidden bg-gray-50 rounded-xl border border-gray-100 p-3 mb-4">
+    <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest pl-1">🌍 Danh sách Ngôn ngữ</label>
     
-    <div class="relative mb-3">
+    <div class="relative mb-2">
       <input type="text" id="yt-language-search" 
-        class="w-full h-10 pl-9 pr-4 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" 
+        class="w-full h-8 pl-8 pr-3 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" 
         placeholder="Tìm ngôn ngữ...">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">🔍</span>
     </div>
 
-    <div class="flex items-center justify-between mb-3 px-1">
-      <label class="flex items-center gap-2 cursor-pointer group">
-        <input type="checkbox" id="yt-filter-selected" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-        <span class="text-[11px] font-bold text-gray-500 group-hover:text-gray-700">Đã chọn</span>
+    <div class="flex items-center justify-between mb-2 px-1">
+      <label class="flex items-center gap-1.5 cursor-pointer group">
+        <input type="checkbox" id="yt-filter-selected" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+        <span class="text-[10px] font-bold text-gray-400 group-hover:text-gray-600">Đã chọn</span>
       </label>
-      <button id="yt-copy-selected-btn" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-all">
+      <button id="yt-copy-selected-btn" class="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-all">
          📋 Copy List
       </button>
     </div>
 
-    <div id="yt-language-checkbox-container" class="flex-1 overflow-y-auto pr-1 space-y-1 custom-scrollbar"></div>
+    <div id="yt-language-checkbox-container" class="flex-1 overflow-y-auto pr-1 space-y-0.5 custom-scrollbar"></div>
   </div>
   
-  <div class="mb-6">
-    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 mb-2 shadow-sm">
-        <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-lg">📄</div>
+  <div class="mb-4">
+    <div class="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-100 mb-1 shadow-sm">
+        <div class="w-8 h-8 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-base">📄</div>
         <div class="flex-1 min-w-0">
-             <div class="text-[11px] font-bold text-gray-400 uppercase leading-none mb-1">Dữ liệu Dịch thuật</div>
-             <div id="yt-json-filename" class="text-xs text-gray-700 font-bold truncate">Chưa có file nào</div>
+             <div class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-0.5">Dữ liệu Dịch thuật</div>
+             <div id="yt-json-filename" class="text-[11px] text-gray-700 font-bold truncate">Chưa có file nào</div>
         </div>
-        <label for="yt-json-upload" class="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] flex items-center justify-center cursor-pointer transition-all active:scale-90">
+        <label for="yt-json-upload" class="h-7 px-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[9px] flex items-center justify-center cursor-pointer transition-all active:scale-90">
           Tải lên
         </label>
         <input type="file" id="yt-json-upload" accept=".json,.txt" class="hidden">
     </div>
   </div>
   
-  <button id="yt-save-languages-btn" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+  <button id="yt-save-languages-btn" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5">
     💾 Cập nhật Profile
   </button>
 `;
@@ -161,8 +161,8 @@ window.YoutubeStudioPanel = class {
   _render() {
     this.el = document.createElement('div');
     this.el.id = 'youtube-studio-helper-panel';
-    this.el.className = 'panel-box ts-panel w-[460px] p-6 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in';
-    this.el.style.maxHeight = "800px";
+    this.el.className = 'panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in';
+    this.el.style.maxHeight = "780px";
     this.el.innerHTML = YTB_PANEL_HTML;
 
     ChatGPTHelper.mountPanel(this.el);

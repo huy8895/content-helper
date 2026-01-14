@@ -9,52 +9,52 @@ window.SRTAutomationPanel = class {
         this.el = document.createElement("div");
         this.el.id = "srt-automation-panel";
         // Tailwind classes for the main panel
-        this.el.className = "panel-box ts-panel w-[400px] p-5 rounded-2xl shadow-2xl bg-white border border-gray-50 flex flex-col relative animate-in";
+        this.el.className = "panel-box ts-panel w-[380px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
 
         const html = `
       <!-- Header / Draggable Area -->
-      <div class="ts-title flex items-center mb-5 cursor-move select-none">
-        <span class="text-2xl mr-3">🤖</span>
+      <div class="ts-title flex items-center mb-4 cursor-move select-none">
+        <span class="text-xl mr-2">🤖</span>
         <div>
-          <h3 class="m-0 text-lg font-bold text-gray-900 leading-tight">SRT Automation</h3>
-          <div id="srt-status-text" class="text-xs text-gray-500 mt-0.5">Status: Standby (Scan ready)</div>
+          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">SRT Automation</h3>
+          <div id="srt-status-text" class="text-[10px] text-gray-500 font-medium tracking-tight">Status: Standby (Scan ready)</div>
         </div>
       </div>
       
       <!-- Label Input Area -->
-      <div class="mb-5">
-        <label for="srt-labels-input" class="text-[13px] font-bold text-gray-700 block mb-2">Manual Labels (comma separated):</label>
+      <div class="mb-3">
+        <label for="srt-labels-input" class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Manual Labels (comma separated):</label>
         <div class="relative">
           <textarea id="srt-labels-input" 
-            class="w-full h-20 text-sm p-3 border border-gray-200 rounded-xl resize-vertical outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-sans leading-relaxed" 
+            class="w-full h-16 text-xs p-2.5 border border-gray-200 rounded-lg resize-none outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans leading-snug" 
             placeholder="e.g. Arabic, Chinese, English, French"></textarea>
         </div>
       </div>
 
       <!-- Action Button -->
-      <div class="sr-controls mb-6">
-        <button id="srt-scan-existing" class="ts-btn ts-btn-accent w-full h-11 font-bold rounded-xl flex items-center justify-center gap-2 text-sm cursor-pointer transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-sm h-11">
-          <span class="text-base">🔍</span> Scan Chat Content
+      <div class="sr-controls mb-4">
+        <button id="srt-scan-existing" class="ts-btn ts-btn-accent w-full h-9 font-bold rounded-lg flex items-center justify-center gap-2 text-xs cursor-pointer transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-sm h-9">
+          <span class="text-sm">🔍</span> Scan Chat Content
         </button>
       </div>
 
       <!-- Result List Area -->
-      <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-        <div class="flex justify-between items-center mb-3">
-           <strong class="text-sm text-gray-800">Collected SRTs</strong>
-           <span id="srt-count-badge" class="bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-sm">0 files</span>
+      <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+        <div class="flex justify-between items-center mb-2 px-1">
+           <strong class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Collected SRTs</strong>
+           <span id="srt-count-badge" class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-sm">0 files</span>
         </div>
-        <div class="sr-queue-box max-height-[180px] overflow-y-auto pr-1">
-          <ul id="srt-list" class="sr-queue-list m-0 p-0 list-none"></ul>
+        <div class="sr-queue-box max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+          <ul id="srt-list" class="sr-queue-list m-0 p-0 list-none space-y-0.5"></ul>
         </div>
       </div>
 
       <!-- Bottom Controls -->
-      <div class="sr-controls mt-5 flex gap-3">
-        <button id="srt-download-zip" class="ts-btn ts-btn-accent flex-[2] h-11 font-bold rounded-xl flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm transition-all active:scale-95">
+      <div class="sr-controls mt-4 flex gap-2.5">
+        <button id="srt-download-zip" class="ts-btn ts-btn-accent flex-[2] h-9 font-bold rounded-lg flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm transition-all active:scale-95 text-xs">
           📥 Download ZIP
         </button>
-        <button id="srt-clear" class="ts-btn flex-1 h-11 font-bold rounded-xl bg-white border-[1.5px] border-rose-500 text-rose-500 text-[13px] hover:bg-rose-50 transition-all active:scale-95">
+        <button id="srt-clear" class="ts-btn flex-1 h-9 font-bold rounded-lg bg-white border border-rose-100 text-rose-500 text-[10px] hover:bg-rose-50 transition-all active:scale-95">
           Clear
         </button>
       </div>
@@ -166,12 +166,12 @@ window.SRTAutomationPanel = class {
         listEl.innerHTML = '';
         keys.forEach(label => {
             const li = document.createElement('li');
-            li.className = "flex justify-between items-center py-2 border-b border-gray-100 last:border-0";
+            li.className = "flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0 hover:bg-white px-1 rounded transition-all";
             li.innerHTML = `
-                <span class="text-[13px] text-gray-700 flex items-center gap-2">
-                    <span class="text-emerald-500">✅</span> ${label}.srt
+                <span class="text-[11px] text-gray-700 flex items-center gap-1.5 font-medium">
+                    <span class="text-emerald-500 text-[10px]">✅</span> ${label}.srt
                 </span> 
-                <span class="text-[11px] text-gray-400">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span class="text-[9px] text-gray-400 font-bold">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             `;
             listEl.appendChild(li);
         });
