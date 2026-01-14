@@ -16,7 +16,7 @@ window.SRTAutomationPanel = class {
         this.el.style.background = "#fff";
 
         const html = `
-      <div style="display: flex; align-items: center; margin-bottom: 20px;">
+      <div class="ts-title" style="display: flex; align-items: center; margin-bottom: 20px; cursor: move; user-select: none;">
         <span style="font-size: 24px; margin-right: 12px;">🤖</span>
         <div>
           <h3 style="margin: 0; font-size: 18px; color: #1a1a1a; font-weight: 700;">SRT Automation</h3>
