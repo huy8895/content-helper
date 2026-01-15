@@ -82,6 +82,49 @@ window.ScenarioBuilder = class {
       this.el.querySelector("#questions-container").innerHTML = "";
       this.el.querySelector("#scenario-group").value = "";
     });
+
+    this._setupSearchListeners();
+  }
+
+  _setupSearchListeners() {
+    const searchBox = this.el.querySelector("#scenario-search");
+    const dropdown = this.el.querySelector("#scenario-dropdown");
+    const browserWrapper = this.el.querySelector("#scenario-browser");
+
+    searchBox.addEventListener("input", () => {
+      const k = searchBox.value.trim();
+      dropdown.classList.remove("hidden-dropdown");
+      dropdown.style.setProperty('display', 'flex', 'important');
+
+      const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
+
+      const scoredItems = items.map(div => {
+        const text = div.querySelector('.scenario-title')?.textContent || div.textContent;
+        const score = ChatGPTHelper.fuzzySearch(k, text);
+        return { div, score };
+      });
+
+      scoredItems.forEach(item => {
+        if (item.score > 0) {
+          item.div.style.setProperty('display', 'flex', 'important');
+          item.div.style.order = -item.score;
+        } else {
+          item.div.style.setProperty('display', 'none', 'important');
+        }
+      });
+    });
+
+    searchBox.addEventListener("focus", () => {
+      dropdown.classList.remove("hidden-dropdown");
+      dropdown.style.display = 'flex'; // Ensure it's visible on focus
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!browserWrapper.contains(event.target)) {
+        dropdown.classList.add('hidden-dropdown');
+        dropdown.style.removeProperty('display');
+      }
+    });
   }
 
   _addQuestion(q = { text: "", type: "text" }) {
@@ -228,7 +271,6 @@ window.ScenarioBuilder = class {
       this.allScenarios = templates;
 
       const dropdown = this.el.querySelector("#scenario-dropdown");
-      const browserWrapper = this.el.querySelector("#scenario-browser");
       dropdown.innerHTML = "";
 
       Object.keys(templates).forEach((name) => {
@@ -254,47 +296,10 @@ window.ScenarioBuilder = class {
           container.innerHTML = "";
           qs.forEach((q) => this._addQuestion(q));
           dropdown.classList.add("hidden-dropdown");
+          dropdown.style.removeProperty('display');
         });
 
         dropdown.appendChild(item);
-      });
-
-      const searchBox = this.el.querySelector("#scenario-search");
-
-      searchBox.addEventListener("input", () => {
-        const k = searchBox.value.trim();
-        dropdown.classList.remove("hidden-dropdown");
-        dropdown.style.setProperty('display', 'flex', 'important');
-
-        const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
-
-        const scoredItems = items.map(div => {
-          const text = div.querySelector('.scenario-title')?.textContent || div.textContent;
-          const score = ChatGPTHelper.fuzzySearch(k, text);
-          return { div, score };
-        });
-
-        scoredItems.forEach(item => {
-          if (item.score > 0) {
-            item.div.style.setProperty('display', 'flex', 'important');
-            item.div.style.order = -item.score;
-          } else {
-            item.div.style.setProperty('display', 'none', 'important');
-          }
-        });
-      });
-
-      dropdown.style.display = "flex";
-      dropdown.style.flexDirection = "column";
-
-      searchBox.addEventListener("focus", () => {
-        dropdown.classList.remove("hidden-dropdown");
-      });
-
-      document.addEventListener('click', (event) => {
-        if (!browserWrapper.contains(event.target)) {
-          dropdown.classList.add('hidden-dropdown');
-        }
       });
     });
   }
