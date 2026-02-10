@@ -806,6 +806,13 @@ class GeminiAdapter extends BaseChatAdapter {
 
     return true;
   }
+
+  getButtonConfigs() {
+    return [
+      BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.RUN_SCENARIO,
+    ];
+  }
 }
 
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
