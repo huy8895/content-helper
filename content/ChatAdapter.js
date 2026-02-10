@@ -719,6 +719,132 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   }
 }
 
+/* -----------------------------  Gemini (Google)  ----------------------------- */
+class GeminiAdapter extends BaseChatAdapter {
+  static matches(host) {
+    const isMatch = /gemini\.google\.com$/i.test(host);
+    if (isMatch) console.log("🎯 [GeminiAdapter] Matched host:", host);
+    return isMatch;
+  }
+
+  constructor() {
+    super();
+    console.log("🚀 [GeminiAdapter] Constructor started. Waiting for UI...");
+
+    // Gemini load chậm, nên ta dùng setInterval để check liên tục cho đến khi thấy khung chat
+    this.checkTimer = setInterval(() => {
+      this.tryInjectUI();
+    }, 1000);
+  }
+
+  tryInjectUI() {
+    // Nếu nút đã tồn tại thì không làm gì cả (tránh spam log)
+    if (document.querySelector('#chatgpt-helper-button-container')) {
+      return;
+    }
+
+    console.log("🔍 [GeminiAdapter] Scanning for chat box...");
+    const form = this.getForm();
+
+    if (form) {
+      console.log("✅ [GeminiAdapter] Chat box FOUND! Injecting buttons...");
+      this.insertHelperButtons();
+      // Không clear interval vì Gemini có thể reload lại khung chat khi đổi New Chat
+    } else {
+      console.log("⏳ [GeminiAdapter] Chat box NOT found yet. Retrying...");
+    }
+  }
+
+  getTextarea() {
+    // Selector dựa trên HTML bạn cung cấp
+    const el = document.querySelector('.ql-editor.textarea') ||
+      document.querySelector('div[contenteditable="true"][role="textbox"]');
+    // console.log("   --> [GeminiAdapter] getTextarea result:", el); // Uncomment nếu cần debug sâu
+    return el;
+  }
+
+  getSendBtn() {
+    // Nút gửi thường là button.send-button hoặc nút có icon send
+    const btn = document.querySelector('button.send-button') ||
+      document.querySelector('button[aria-label*="Gửi"]');
+    return btn;
+  }
+
+  getStopBtn() {
+    return document.querySelector('button[aria-label*="Stop"]') ||
+      document.querySelector('button[aria-label*="Dừng"]');
+  }
+
+  getForm() {
+    // 1. Tìm ô nhập liệu trước
+    const textarea = this.getTextarea();
+    if (!textarea) {
+      // console.log("   --> [GeminiAdapter] getForm failed: Textarea not found");
+      return null;
+    }
+
+    // 2. Leo lên tìm container bao ngoài để chèn nút
+    // Dựa trên HTML: div.ql-editor -> rich-textarea -> div.text-input-field_textarea-inner -> ...
+
+    // Cách 1: Tìm theo class cha lớn (input-area-container)
+    let container = textarea.closest('.input-area-container');
+
+    // Cách 2: Tìm theo class trong HTML bạn gửi (.text-input-field)
+    if (!container) {
+      const field = textarea.closest('.text-input-field');
+      // Nếu tìm thấy field, ta lấy cha của field để chèn nút xuống dưới nó
+      if (field) container = field.parentElement;
+    }
+
+    // Cách 3 (Fallback): Leo lên 5 cấp xem có div nào to không
+    if (!container) {
+      container = textarea.parentElement?.parentElement?.parentElement?.parentElement;
+    }
+
+    return container;
+  }
+
+  isDone() {
+    const sendBtn = this.getSendBtn();
+    // Nếu nút Send hiện diện và không bị disable -> Đã xong
+    return sendBtn && sendBtn.getAttribute('aria-disabled') !== 'true';
+  }
+
+  getContentElements() {
+    return Array.from(document.querySelectorAll('message-content, .model-response-text'));
+  }
+
+  sendMessage(text) {
+    console.log("📨 [GeminiAdapter] Sending message:", text);
+    const el = this.getTextarea();
+    if (!el) {
+      console.error("❌ [GeminiAdapter] Textarea not found when sending!");
+      return false;
+    }
+
+    el.focus();
+    el.classList.remove('ql-blank'); // Xóa placeholder
+    el.innerHTML = `<p>${text}</p>`; // Gemini dùng thẻ p trong div contenteditable
+
+    // Kích hoạt sự kiện để Angular nhận biết
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+
+    // Đợi 1 chút cho UI cập nhật trạng thái nút Send
+    setTimeout(() => {
+      const btn = this.getSendBtn();
+      if (btn) {
+        console.log("👉 [GeminiAdapter] Clicking send button...");
+        btn.click();
+      } else {
+        console.error("❌ [GeminiAdapter] Send button not found!");
+      }
+    }, 300);
+
+    return true;
+  }
+}
+
 /* -----------------------  Adapter Factory (runtime)  ---------------------- */
 const ADAPTER_CTORS = [
   ChatGPTAdapter,
@@ -726,7 +852,8 @@ const ADAPTER_CTORS = [
   QwenAdapter,
   GrokAdapter,
   GoogleAIStudioAdapter,
-  YoutubeStudioAdapter // <-- THÊM ADAPTER MỚI VÀO ĐÂY
+  YoutubeStudioAdapter,
+  GeminiAdapter
 ];
 
 // --- DÁN ĐOẠN NÀY VÀO THAY THẾ ---

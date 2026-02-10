@@ -40,7 +40,8 @@
         "https://chat.qwen.ai/*",
         "https://grok.com/*",
         "https://aistudio.google.com/*",
-        "https://studio.youtube.com/video/*"
+        "https://studio.youtube.com/video/*",
+        "https://gemini.google.com/*"
       ],
       "js": [
         "libs/tailwind.min.js",
