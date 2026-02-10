@@ -722,92 +722,62 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
 /* -----------------------------  Gemini (Google)  ----------------------------- */
 class GeminiAdapter extends BaseChatAdapter {
   static matches(host) {
-    const isMatch = /gemini\.google\.com$/i.test(host);
-    if (isMatch) console.log("🎯 [GeminiAdapter] Matched host:", host);
-    return isMatch;
+    return /gemini\.google\.com$/i.test(host);
   }
 
   constructor() {
     super();
-    console.log("🚀 [GeminiAdapter] Constructor started. Waiting for UI...");
-
-    // Gemini load chậm, nên ta dùng setInterval để check liên tục cho đến khi thấy khung chat
-    this.checkTimer = setInterval(() => {
-      this.tryInjectUI();
-    }, 1000);
+    console.log("🚀 [GeminiAdapter] Khởi tạo! Đang đợi khung chat...");
+    this.checkTimer = setInterval(() => this.tryInject(), 1000);
   }
 
-  tryInjectUI() {
-    // Nếu nút đã tồn tại thì không làm gì cả (tránh spam log)
-    if (document.querySelector('#chatgpt-helper-button-container')) {
-      return;
-    }
-
-    console.log("🔍 [GeminiAdapter] Scanning for chat box...");
+  tryInject() {
+    if (document.getElementById('chatgpt-helper-button-container')) return;
     const form = this.getForm();
-
     if (form) {
-      console.log("✅ [GeminiAdapter] Chat box FOUND! Injecting buttons...");
+      console.log("✅ [GeminiAdapter] Đã tìm thấy khung chat -> Inject nút.");
       this.insertHelperButtons();
-      // Không clear interval vì Gemini có thể reload lại khung chat khi đổi New Chat
-    } else {
-      console.log("⏳ [GeminiAdapter] Chat box NOT found yet. Retrying...");
     }
   }
 
   getTextarea() {
-    // Selector dựa trên HTML bạn cung cấp
-    const el = document.querySelector('.ql-editor.textarea') ||
+    return document.querySelector('.ql-editor.textarea') ||
       document.querySelector('div[contenteditable="true"][role="textbox"]');
-    // console.log("   --> [GeminiAdapter] getTextarea result:", el); // Uncomment nếu cần debug sâu
-    return el;
   }
 
   getSendBtn() {
-    // Nút gửi thường là button.send-button hoặc nút có icon send
-    const btn = document.querySelector('button.send-button') ||
-      document.querySelector('button[aria-label*="Gửi"]');
-    return btn;
+    // Nút gửi có class "send-button"
+    return document.querySelector('button.send-button');
   }
 
   getStopBtn() {
-    return document.querySelector('button[aria-label*="Stop"]') ||
-      document.querySelector('button[aria-label*="Dừng"]');
+    // Dựa trên HTML bạn gửi:
+    // Khi đang chạy, button có thêm class "stop" và aria-label="Ngừng tạo câu trả lời"
+    return document.querySelector('button.send-button.stop') ||
+      document.querySelector('button[aria-label*="Ngừng tạo"]') ||
+      document.querySelector('button[aria-label*="Stop generating"]');
   }
 
   getForm() {
-    // 1. Tìm ô nhập liệu trước
     const textarea = this.getTextarea();
-    if (!textarea) {
-      // console.log("   --> [GeminiAdapter] getForm failed: Textarea not found");
-      return null;
-    }
-
-    // 2. Leo lên tìm container bao ngoài để chèn nút
-    // Dựa trên HTML: div.ql-editor -> rich-textarea -> div.text-input-field_textarea-inner -> ...
-
-    // Cách 1: Tìm theo class cha lớn (input-area-container)
-    let container = textarea.closest('.input-area-container');
-
-    // Cách 2: Tìm theo class trong HTML bạn gửi (.text-input-field)
-    if (!container) {
-      const field = textarea.closest('.text-input-field');
-      // Nếu tìm thấy field, ta lấy cha của field để chèn nút xuống dưới nó
-      if (field) container = field.parentElement;
-    }
-
-    // Cách 3 (Fallback): Leo lên 5 cấp xem có div nào to không
-    if (!container) {
-      container = textarea.parentElement?.parentElement?.parentElement?.parentElement;
-    }
-
-    return container;
+    if (!textarea) return null;
+    const inputField = textarea.closest('.text-input-field');
+    if (inputField) return inputField.parentElement;
+    return textarea.parentElement?.parentElement?.parentElement?.parentElement;
   }
 
   isDone() {
+    // Nếu tìm thấy nút Stop -> Tức là đang chạy -> Trả về false
+    const stopBtn = this.getStopBtn();
+    if (stopBtn) return false;
+
+    // Nếu không có nút Stop, kiểm tra xem nút Gửi có tồn tại và sẵn sàng không
+    // Lưu ý: Khi Gemini đang suy nghĩ (nhưng chưa in text), nút stop có thể chưa hiện ngay
+    // nhưng nút send sẽ bị ẩn hoặc disabled.
     const sendBtn = this.getSendBtn();
-    // Nếu nút Send hiện diện và không bị disable -> Đã xong
-    return sendBtn && sendBtn.getAttribute('aria-disabled') !== 'true';
+
+    // Đã xong khi: Không có nút Stop VÀ Nút Send đang hiển thị (không bị hidden)
+    return !stopBtn && sendBtn && !sendBtn.classList.contains('hidden');
   }
 
   getContentElements() {
@@ -815,31 +785,24 @@ class GeminiAdapter extends BaseChatAdapter {
   }
 
   sendMessage(text) {
-    console.log("📨 [GeminiAdapter] Sending message:", text);
+    console.log("📨 [GeminiAdapter] Gửi tin:", text);
     const el = this.getTextarea();
-    if (!el) {
-      console.error("❌ [GeminiAdapter] Textarea not found when sending!");
-      return false;
-    }
+    if (!el) return false;
 
     el.focus();
-    el.classList.remove('ql-blank'); // Xóa placeholder
-    el.innerHTML = `<p>${text}</p>`; // Gemini dùng thẻ p trong div contenteditable
-
-    // Kích hoạt sự kiện để Angular nhận biết
+    el.classList.remove('ql-blank');
+    el.innerHTML = `<p>${text}</p>`;
     el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
 
-    // Đợi 1 chút cho UI cập nhật trạng thái nút Send
     setTimeout(() => {
       const btn = this.getSendBtn();
-      if (btn) {
-        console.log("👉 [GeminiAdapter] Clicking send button...");
+      if (btn && btn.getAttribute('aria-disabled') !== 'true') {
         btn.click();
       } else {
-        console.error("❌ [GeminiAdapter] Send button not found!");
+        // Fallback click mạnh hơn nếu state chưa cập nhật kịp
+        btn?.click();
       }
-    }, 300);
+    }, 500);
 
     return true;
   }
