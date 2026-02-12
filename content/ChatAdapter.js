@@ -289,51 +289,88 @@ class DeepSeekAdapter extends BaseChatAdapter {
 
 /* ----------------------------  qwen.ai  ----------------------------- */
 class QwenAdapter extends BaseChatAdapter {
-  /** Khớp domain Qwen */
-  static matches(host) { return /(?:qwen\.ai)$/i.test(host); }
+  static matches(host) {
+    return /(?:qwen\.ai|tongyi\.aliyun\.com)$/i.test(host);
+  }
 
-  /** Ô nhập prompt */
   getTextarea() {
-    return this._q('#chat-input');
+    return this._q('textarea.message-input-textarea');
   }
 
-  /** Nút GỬI – luôn có id cố định */
   getSendBtn() {
-    return this._q('#send-message-button');
+    return this._q('.message-input-right-button-send button.send-button');
   }
 
-  /** Nút STOP khi đang sinh lời đáp */
   getStopBtn() {
-    // Qwen không đặt id, nhưng icon bên trong có class "icon-StopIcon"
-    const icon = this._q('button i.icon-StopIcon');
-    return icon ? icon.closest('button') : null;
+    return this._q('.message-input-right-button-send button.stop-button');
+  }
+
+  getForm() {
+    return this._q('.message-input-container');
   }
 
   /**
-   * Hoàn tất sinh nội dung khi:
-   *   – KHÔNG còn nút stop, và
-   *   – Nút send tồn tại & đang disabled
+   * Logic kiểm tra trạng thái (Fix cho trường hợp nút Send disabled khi rỗng)
    */
   isDone() {
+    // 1. Ưu tiên cao nhất: Nếu thấy nút STOP -> Chắc chắn đang chạy -> False
     const stopBtn = this.getStopBtn();
+    if (stopBtn) return false;
+
+    // 2. Kiểm tra nút SEND
     const sendBtn = this.getSendBtn();
-    return !stopBtn && sendBtn && sendBtn.disabled;
+
+    // Nếu không có cả nút Stop lẫn nút Send -> Chưa load xong hoặc lỗi -> False
+    if (!sendBtn) return false;
+
+    // 3. Kiểm tra trạng thái nút Send
+    const isDisabled = sendBtn.disabled || sendBtn.classList.contains('disabled');
+
+    // Nếu nút Send SÁNG (có thể click) -> Chắc chắn là Done (đang chờ gửi)
+    if (!isDisabled) return true;
+
+    // 4. Trường hợp nút Send bị MỜ (Disabled)
+    // Có 2 khả năng: Đang xử lý ngầm HOẶC Đang rảnh nhưng chưa nhập gì.
+    // Ta kiểm tra nội dung ô Textarea.
+    const textarea = this.getTextarea();
+    const isEmpty = !textarea.value || textarea.value.trim() === '';
+
+    // Nếu Send Disabled VÀ Textarea Rỗng -> Chính là trạng thái IDLE (Đã xong)
+    if (isDisabled && isEmpty) {
+      return true;
+    }
+
+    // Các trường hợp khác -> False
+    return false;
   }
 
-  /** Form bao quanh textarea (dùng để submit) */
-  getForm() {
-    return this._q('.chat-message-input-container-inner');
+  /**
+   * Override hàm gửi tin nhắn (giữ nguyên logic đã fix ở bước trước)
+   */
+  sendMessage(text) {
+    const el = this.getTextarea();
+    if (!el) return false;
+
+    el.focus();
+    el.value = text;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+
+    setTimeout(() => {
+      const btn = this.getSendBtn();
+      if (btn && !btn.disabled) {
+        btn.click();
+      } else {
+        setTimeout(() => this.getSendBtn()?.click(), 500);
+      }
+    }, 300);
+
+    return true;
   }
 
-  /** Phần HTML chứa nội dung phản hồi của bot (markdown) */
   getContentElements() {
-    /* 1️⃣ Mỗi message của Qwen bọc trong .response-message-body  */
-    /* 2️⃣ Phần markdown luôn nằm trong .markdown-content-container / .markdown-prose */
-    /* 3️⃣ Mỗi khối còn có id #response-content-container (lặp lại)                  */
     return Array.from(document.querySelectorAll(
-      '.response-message-body .markdown-content-container,' +  // phần mới nhất
-      '.response-message-body .markdown-prose,' +              // fallback
-      '#response-content-container'                            // id (không unique)
+      '.response-message-body .markdown-content-container, .response-message-body .markdown-prose, .bot-message .markdown-body'
     ));
   }
 }
