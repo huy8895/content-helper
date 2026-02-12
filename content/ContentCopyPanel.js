@@ -21,6 +21,19 @@ window.ContentCopyPanel = class {
         </div>
       </div>
 
+      <!-- Custom Filenames Input -->
+      <div class="mb-3">
+        <label for="ccp-filenames" class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">
+          Custom Filenames (optional, comma separated):
+        </label>
+        <div class="relative">
+          <input type="text" id="ccp-filenames" 
+            class="w-full h-9 text-xs p-2.5 border border-gray-300 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans"
+            placeholder="e.g. intro, chapter1, conclusion (leave empty for auto-numbering)"
+          />
+        </div>
+      </div>
+
       <div class="flex flex-col gap-3 mb-4">
         <div class="flex items-center gap-2.5">
           <button id="ccp-copy-all" class="h-8 px-3 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
@@ -33,9 +46,16 @@ window.ContentCopyPanel = class {
               Copy From
             </button>
           </div>
-          <button id="ccp-download" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] hover:bg-emerald-100 transition-all active:scale-95 shadow-sm ml-auto">
-            <span>⬇️</span> Download
-          </button>
+          
+          <!-- Download buttons group -->
+          <div class="flex gap-1.5 ml-auto">
+            <button id="ccp-download-txt" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] hover:bg-emerald-100 transition-all active:scale-95 shadow-sm">
+              <span>📄</span> TXT
+            </button>
+            <button id="ccp-download-zip" class="h-8 px-3 flex items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700 font-bold rounded-lg text-[10px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm">
+              <span>📦</span> ZIP
+            </button>
+          </div>
         </div>
 
         <label class="flex items-center gap-2 cursor-pointer select-none group px-1">
@@ -63,7 +83,6 @@ window.ContentCopyPanel = class {
   _renderList() {
     const container = this.el.querySelector("#ccp-list");
     container.innerHTML = "";
-
     this.elements.forEach((el, idx) => {
       const row = document.createElement("div");
       row.className = "mb-1 py-1.5 border-b border-gray-50 last:border-0 hover:bg-white hover:rounded hover:px-1.5 transition-all group cursor-default flex items-center";
@@ -83,7 +102,6 @@ window.ContentCopyPanel = class {
     });
   }
 
-  // 👇 Thêm vào trong class
   _shorten(text, maxLen = 80) {
     if (text.length <= maxLen) {
       return text;
@@ -94,25 +112,27 @@ window.ContentCopyPanel = class {
   }
 
   _bindEvents() {
+    // Copy All
     this.el.querySelector("#ccp-copy-all").onclick = () => {
       const text = this.elements.map(el => el.innerText).join('\n\n');
       this._copyToClipboard(text, '✅ Copied all content!');
     };
 
+    // Copy From
     this.el.querySelector("#ccp-copy-from").onclick = () => {
       const indexInput = this.el.querySelector("#ccp-index");
       const index = parseInt(indexInput.value || "0", 10);
-      if (isNaN(index) || index < 0 || index >= this.elements.length) {
+      if (isNaN(index) || index < 0 || index > this.elements.length) {
         alert("Invalid index");
         return;
       }
       let start = index - 1;
-      const text = this.elements.slice(start).map(el => el.innerText).join(
-        '\n\n');
+      const text = this.elements.slice(start).map(el => el.innerText).join('\n\n');
       this._copyToClipboard(text, `✅ Copied from index ${index}`);
     };
 
-    this.el.querySelector("#ccp-download").onclick = () => {
+    // Download TXT
+    this.el.querySelector("#ccp-download-txt").onclick = () => {
       const indexInput = this.el.querySelector("#ccp-index");
       const prefixCheckbox = this.el.querySelector("#ccp-prefix-part");
 
@@ -126,7 +146,6 @@ window.ContentCopyPanel = class {
       const fromIndex = indexInput.value ? index - 1 : 0;
       const addPrefix = prefixCheckbox?.checked;
 
-
       const content = this.elements.slice(fromIndex).map((el, idx) => {
         const partLabel = `Part ${idx + 1}\n`;
         return addPrefix ? partLabel + el.innerText : el.innerText;
@@ -135,6 +154,10 @@ window.ContentCopyPanel = class {
       this._downloadFile(content, 'content.txt');
     };
 
+    // Download ZIP 👈 MỚI
+    this.el.querySelector("#ccp-download-zip").onclick = () => {
+      this._downloadZip();
+    };
   }
 
   _copyToClipboard(text, successMessage) {
@@ -161,6 +184,82 @@ window.ContentCopyPanel = class {
     URL.revokeObjectURL(url);
   }
 
+  // 👇 HÀM MỚI: Download ZIP
+  _downloadZip() {
+    const count = this.elements.length;
+    if (count === 0) {
+      ChatGPTHelper.showToast('No content to download.', "warning");
+      return;
+    }
+
+    const LibZip = window.JSZip || (typeof JSZip !== 'undefined' ? JSZip : null);
+    if (!LibZip) {
+      ChatGPTHelper.showToast('JSZip library not found.', "error");
+      return;
+    }
+
+    try {
+      const zip = new LibZip();
+      const filenamesInput = this.el.querySelector('#ccp-filenames')?.value || '';
+
+      // Parse custom filenames nếu có
+      let customNames = [];
+      if (filenamesInput.trim()) {
+        customNames = filenamesInput.split(',').map(n => n.trim()).filter(n => n);
+
+        // Cảnh báo nếu số lượng không khớp
+        if (customNames.length !== count) {
+          const proceed = confirm(
+            `⚠️ Filename count mismatch!\n\n` +
+            `Elements found: ${count}\n` +
+            `Filenames provided: ${customNames.length}\n\n` +
+            `Files without names will use auto-numbering.\n` +
+            `Continue anyway?`
+          );
+          if (!proceed) return;
+        }
+      }
+
+      // Thêm từng file vào ZIP
+      this.elements.forEach((el, idx) => {
+        const content = el.innerText;
+
+        // Xác định tên file
+        let filename = '';
+        if (customNames[idx]) {
+          // Dùng custom name nếu có
+          filename = customNames[idx];
+          // Thêm .txt nếu chưa có extension
+          if (!filename.toLowerCase().endsWith('.txt')) {
+            filename += '.txt';
+          }
+        } else {
+          // Auto-numbering
+          filename = `${idx + 1}.txt`;
+        }
+
+        zip.file(filename, content);
+      });
+
+      // Tạo và download ZIP
+      zip.generateAsync({ type: 'blob' }).then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `content_${count}_files_${new Date().getTime()}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        ChatGPTHelper.showToast(`✅ Downloaded ZIP with ${count} files!`, "success");
+      });
+
+    } catch (err) {
+      console.error('ZIP download error:', err);
+      ChatGPTHelper.showToast("❌ ZIP error: " + err.message, "error");
+    }
+  }
 
   destroy() {
     this.el?.remove();
