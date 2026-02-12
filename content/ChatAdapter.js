@@ -369,8 +369,14 @@ class QwenAdapter extends BaseChatAdapter {
   }
 
   getContentElements() {
+    // ✅ CHỈ chọn tin nhắn của AI (assistant)
+    // ✅ CHỈ chọn tầng .qwen-markdown.qwen-markdown-loose (tránh duplicate với parent)
+    // ✅ Fallback cho các phiên bản Qwen cũ
     return Array.from(document.querySelectorAll(
-      '.response-message-body .markdown-content-container, .response-message-body .markdown-prose, .bot-message .markdown-body'
+      '.qwen-chat-message-assistant .response-message-content.t2t.phase-answer .qwen-markdown.qwen-markdown-loose, ' +
+      '.response-message-body .markdown-content-container, ' +
+      '.response-message-body .markdown-prose, ' +
+      '.bot-message .markdown-body'
     ));
   }
 }
