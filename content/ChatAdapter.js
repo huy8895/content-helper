@@ -824,7 +824,7 @@ class GeminiAdapter extends BaseChatAdapter {
   }
 
   getContentElements() {
-    return Array.from(document.querySelectorAll('message-content, .model-response-text'));
+    return Array.from(document.querySelectorAll('message-content'));
   }
 
   sendMessage(text) {
@@ -854,6 +854,7 @@ class GeminiAdapter extends BaseChatAdapter {
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.COPY_CONTENT,
     ];
   }
 }
