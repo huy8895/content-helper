@@ -127,6 +127,9 @@ class BaseChatAdapter {
     ];
   }
 
+  // Chế độ thu gọn (mặc định false). Nếu true, các button sẽ nằm trong menu dropdown.
+  isCompactMode() { return false; }
+
   // Hàm chèn button (dùng chung cho mọi adapter)
   insertHelperButtons() {
     if (document.querySelector('#chatgpt-helper-button-container')) return; // Đã tồn tại
@@ -137,16 +140,66 @@ class BaseChatAdapter {
 
     const container = document.createElement("div");
     container.id = "chatgpt-helper-button-container";
-    container.className = "flex flex-row gap-1.5 mt-1.5 justify-center py-1.5";
+    // Thêm class relative để menu absolute định vị theo container này
+    container.className = "flex flex-row gap-1.5 mt-1.5 justify-center py-1.5 relative";
 
     // Lấy danh sách button từ lớp con
     const buttons = this.getButtonConfigs();
 
-    // Tạo button từ config
-    buttons.forEach(config => {
-      const btn = this._createButton(config);
-      container.appendChild(btn);
-    });
+    if (this.isCompactMode()) {
+      // --- CHẾ ĐỘ COMPACT: Hiển thị 1 nút Tools, bấm vào xổ ra menu ---
+
+      // 1. Tạo nút Toggle
+      const toggleBtn = this._createButton({
+        id: 'helper-toggle-button',
+        text: '🛠️ Tools',
+        className: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50',
+        onClick: () => {
+          const menu = document.getElementById('helper-buttons-menu');
+          if (menu) {
+            // Toggle hiển thị
+            if (menu.classList.contains('hidden')) {
+              menu.classList.remove('hidden');
+              menu.classList.add('flex');
+            } else {
+              menu.classList.add('hidden');
+              menu.classList.remove('flex');
+            }
+          }
+        },
+      });
+
+      // 2. Tạo Menu chứa các button con
+      const menu = document.createElement("div");
+      menu.id = "helper-buttons-menu";
+      // Style: absolute, đẩy lên trên (bottom-full), căn giữa, nền trắng, đổ bóng
+      menu.className = "hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex-col gap-1.5 p-2 bg-white shadow-xl rounded-lg border border-gray-200 z-50 min-w-[160px]";
+
+      buttons.forEach(config => {
+        const btn = this._createButton(config);
+        // Trong menu thì cho button full width và canh trái text
+        btn.classList.add('w-full', '!justify-start');
+        menu.appendChild(btn);
+      });
+
+      // 3. Xử lý click outside để đóng menu
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+          menu.classList.add('hidden');
+          menu.classList.remove('flex');
+        }
+      });
+
+      container.appendChild(menu);
+      container.appendChild(toggleBtn);
+
+    } else {
+      // --- CHẾ ĐỘ THƯỜNG: Render hàng ngang như cũ ---
+      buttons.forEach(config => {
+        const btn = this._createButton(config);
+        container.appendChild(btn);
+      });
+    }
 
     chatForm.after(container);
   }
@@ -439,6 +492,9 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   static matches(host) {
     return /aistudio.google.com$/i.test(host);
   }
+
+  // Bật chế độ compact cho Google AI Studio
+  isCompactMode() { return true; }
 
   constructor() {
     super();
@@ -792,6 +848,8 @@ class GeminiAdapter extends BaseChatAdapter {
     // Nút gửi có class "send-button"
     return document.querySelector('button.send-button');
   }
+
+  isCompactMode() { return true; }
 
   getStopBtn() {
     // Dựa trên HTML bạn gửi:
