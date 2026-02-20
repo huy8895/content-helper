@@ -913,6 +913,7 @@ class GeminiAdapter extends BaseChatAdapter {
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
       BUTTONS.COPY_CONTENT,
+      BUTTONS.YT_STUDIO_SETTINGS,
     ];
   }
 }
