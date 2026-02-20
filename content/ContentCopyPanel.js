@@ -111,10 +111,40 @@ window.ContentCopyPanel = class {
     return `${start} … ${end}`;
   }
 
+  _getText(el) {
+    if (!el) return '';
+    const wrapper = document.createElement('div');
+    // Clone node to avoid modifying original DOM
+    const clone = el.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    // Remove UI elements that shouldn't be copied
+    wrapper.querySelectorAll('button, .sr-only, script, style').forEach(x => x.remove());
+
+    // Replace <br> with newline
+    wrapper.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+
+    // Block elements -> append \n\n (Start/End of block with spacing)
+    // We want at least one empty line between paragraphs.
+    wrapper.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(b => b.after('\n\n'));
+
+    // Div, Li, Tr -> \n (Line break but no extra spacing)
+    // This preserves structure without forcing huge gaps.
+    wrapper.querySelectorAll('div, li, tr').forEach(b => b.after('\n'));
+
+    let text = wrapper.textContent;
+
+    // Normalize newlines: max 2 consecutive (\n\n = 1 empty line)
+    // First, collapse spaces around newlines if needed, but safer to just handle regex
+    return text.replace(/\n\s*\n\s*\n/g, '\n\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   _bindEvents() {
     // Copy All
     this.el.querySelector("#ccp-copy-all").onclick = () => {
-      const text = this.elements.map(el => el.innerText).join('\n\n');
+      const text = this.elements.map(el => this._getText(el)).join('\n\n');
       this._copyToClipboard(text, '✅ Copied all content!');
     };
 
@@ -127,7 +157,7 @@ window.ContentCopyPanel = class {
         return;
       }
       let start = index - 1;
-      const text = this.elements.slice(start).map(el => el.innerText).join('\n\n');
+      const text = this.elements.slice(start).map(el => this._getText(el)).join('\n\n');
       this._copyToClipboard(text, `✅ Copied from index ${index}`);
     };
 
@@ -148,7 +178,8 @@ window.ContentCopyPanel = class {
 
       const content = this.elements.slice(fromIndex).map((el, idx) => {
         const partLabel = `Part ${idx + 1}\n`;
-        return addPrefix ? partLabel + el.innerText : el.innerText;
+        const txt = this._getText(el);
+        return addPrefix ? partLabel + txt : txt;
       }).join('\n\n');
 
       this._downloadFile(content, 'content.txt');
@@ -222,7 +253,7 @@ window.ContentCopyPanel = class {
 
       // Thêm từng file vào ZIP
       this.elements.forEach((el, idx) => {
-        const content = el.innerText;
+        const content = this._getText(el);
 
         // Xác định tên file
         let filename = '';
