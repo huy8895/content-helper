@@ -65,7 +65,13 @@ window.ContentCopyPanel = class {
       </div>
 
       <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 flex-1 overflow-hidden flex flex-col">
-        <strong class="text-[11px] font-bold text-gray-400 uppercase mb-2 block tracking-widest pl-1">Content Preview</strong>
+        <div class="flex items-center mb-2 pl-1">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none group">
+            <input type="checkbox" id="ccp-select-all" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded cursor-pointer" checked />
+            <strong class="text-[11px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors">Content Preview</strong>
+          </label>
+          <span id="ccp-selected-count" class="ml-auto text-[10px] font-bold text-indigo-400"></span>
+        </div>
         <div id="ccp-list" class="ts-results flex-1 overflow-y-auto pr-1 custom-scrollbar"></div>
       </div>
     `;
@@ -85,21 +91,93 @@ window.ContentCopyPanel = class {
     container.innerHTML = "";
     this.elements.forEach((el, idx) => {
       const row = document.createElement("div");
-      row.className = "mb-1 py-1.5 border-b border-gray-50 last:border-0 hover:bg-white hover:rounded hover:px-1.5 transition-all group cursor-default flex items-center";
+      row.className = "mb-1 py-1.5 border-b border-gray-50 last:border-0 hover:bg-white hover:rounded hover:px-1.5 transition-all group cursor-default flex items-center gap-1.5";
+
+      // Checkbox chọn item
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "ccp-item-check flex-shrink-0 w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded cursor-pointer";
+      checkbox.dataset.idx = idx;
+      checkbox.checked = true;
+      checkbox.onclick = (e) => {
+        e.stopPropagation();
+        this._updateSelectAllState();
+        this._updateSelectedCount();
+      };
 
       const number = document.createElement("span");
-      number.className = "font-bold text-indigo-400 mr-2 text-[10px] w-6 flex-shrink-0 text-right";
+      number.className = "font-bold text-indigo-400 mr-1 text-[10px] w-6 flex-shrink-0 text-right";
       number.textContent = `#${idx + 1}`;
 
       const preview = document.createElement("span");
-      preview.className = "text-[11px] text-gray-400 group-hover:text-gray-700 truncate font-medium";
+      preview.className = "text-[11px] text-gray-400 group-hover:text-gray-700 truncate font-medium flex-1 min-w-0";
       const text = el.innerText.trim();
       preview.textContent = this._shorten(text);
 
+      // Button Download
+      const btnDownload = document.createElement("button");
+      btnDownload.className = "flex-shrink-0 h-6 px-1.5 flex items-center gap-1 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded text-[9px] hover:bg-emerald-100 transition-all active:scale-95 opacity-0 group-hover:opacity-100";
+      btnDownload.title = `Download item #${idx + 1}`;
+      btnDownload.innerHTML = "📄";
+      btnDownload.onclick = (e) => {
+        e.stopPropagation();
+        const filenamesInput = this.el.querySelector('#ccp-filenames')?.value || '';
+        const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
+        const addPrefix = prefixCheckbox?.checked;
+        let customNames = filenamesInput.trim() ? filenamesInput.split(',').map(n => n.trim()).filter(n => n) : [];
+        let filename = customNames[idx] ? customNames[idx] : `${idx + 1}`;
+        if (!filename.toLowerCase().endsWith('.txt')) filename += '.txt';
+        let content = this._getText(el);
+        if (addPrefix) content = `Part ${idx + 1}\n` + content;
+        this._downloadFile(content, filename);
+      };
+
+      // Button Copy
+      const btnCopy = document.createElement("button");
+      btnCopy.className = "flex-shrink-0 h-6 px-1.5 flex items-center gap-1 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded text-[9px] hover:bg-indigo-100 transition-all active:scale-95 opacity-0 group-hover:opacity-100";
+      btnCopy.title = `Copy item #${idx + 1}`;
+      btnCopy.innerHTML = "📋";
+      btnCopy.onclick = (e) => {
+        e.stopPropagation();
+        const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
+        const addPrefix = prefixCheckbox?.checked;
+        let content = this._getText(el);
+        if (addPrefix) content = `Part ${idx + 1}\n` + content;
+        this._copyToClipboard(content, `✅ Copied item #${idx + 1}!`);
+      };
+
+      row.appendChild(checkbox);
       row.appendChild(number);
       row.appendChild(preview);
+      row.appendChild(btnDownload);
+      row.appendChild(btnCopy);
       container.appendChild(row);
     });
+
+    this._updateSelectedCount();
+  }
+
+  _getCheckedIndices() {
+    return [...this.el.querySelectorAll('.ccp-item-check:checked')].map(cb => parseInt(cb.dataset.idx));
+  }
+
+  _updateSelectedCount() {
+    const total = this.elements.length;
+    const checked = this._getCheckedIndices().length;
+    const countEl = this.el.querySelector('#ccp-selected-count');
+    if (countEl) {
+      countEl.textContent = checked === total ? '' : `${checked}/${total} selected`;
+      countEl.style.color = checked === 0 ? '#ef4444' : '';
+    }
+  }
+
+  _updateSelectAllState() {
+    const checkboxes = [...this.el.querySelectorAll('.ccp-item-check')];
+    const checkedCount = checkboxes.filter(cb => cb.checked).length;
+    const selectAll = this.el.querySelector('#ccp-select-all');
+    if (!selectAll) return;
+    selectAll.checked = checkedCount === checkboxes.length;
+    selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
   }
 
   _shorten(text, maxLen = 80) {
@@ -185,7 +263,17 @@ window.ContentCopyPanel = class {
       this._downloadFile(content, 'content.txt');
     };
 
-    // Download ZIP 👈 MỚI
+    // Select All checkbox
+    const selectAllEl = this.el.querySelector('#ccp-select-all');
+    if (selectAllEl) {
+      selectAllEl.onclick = () => {
+        const checkboxes = this.el.querySelectorAll('.ccp-item-check');
+        checkboxes.forEach(cb => cb.checked = selectAllEl.checked);
+        this._updateSelectedCount();
+      };
+    }
+
+    // Download ZIP
     this.el.querySelector("#ccp-download-zip").onclick = () => {
       this._downloadZip();
     };
@@ -215,11 +303,11 @@ window.ContentCopyPanel = class {
     URL.revokeObjectURL(url);
   }
 
-  // 👇 HÀM MỚI: Download ZIP
+  // Download ZIP - chỉ các item được tích checkbox
   _downloadZip() {
-    const count = this.elements.length;
-    if (count === 0) {
-      ChatGPTHelper.showToast('No content to download.', "warning");
+    const checkedIndices = this._getCheckedIndices();
+    if (checkedIndices.length === 0) {
+      ChatGPTHelper.showToast('⚠️ Chưa chọn item nào để download.', "warning");
       return;
     }
 
@@ -232,46 +320,34 @@ window.ContentCopyPanel = class {
     try {
       const zip = new LibZip();
       const filenamesInput = this.el.querySelector('#ccp-filenames')?.value || '';
+      const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
+      const addPrefix = prefixCheckbox?.checked;
 
-      // Parse custom filenames nếu có
+      // Parse custom filenames nếu có (ánh xạ theo index gốc)
       let customNames = [];
       if (filenamesInput.trim()) {
         customNames = filenamesInput.split(',').map(n => n.trim()).filter(n => n);
-
-        // Cảnh báo nếu số lượng không khớp
-        if (customNames.length !== count) {
-          const proceed = confirm(
-            `⚠️ Filename count mismatch!\n\n` +
-            `Elements found: ${count}\n` +
-            `Filenames provided: ${customNames.length}\n\n` +
-            `Files without names will use auto-numbering.\n` +
-            `Continue anyway?`
-          );
-          if (!proceed) return;
-        }
       }
 
-      // Thêm từng file vào ZIP
-      this.elements.forEach((el, idx) => {
-        const content = this._getText(el);
+      // Thêm từng file được chọn vào ZIP
+      checkedIndices.forEach((origIdx, position) => {
+        const el = this.elements[origIdx];
+        let content = this._getText(el);
+        if (addPrefix) content = `Part ${origIdx + 1}\n` + content;
 
         // Xác định tên file
         let filename = '';
-        if (customNames[idx]) {
-          // Dùng custom name nếu có
-          filename = customNames[idx];
-          // Thêm .txt nếu chưa có extension
-          if (!filename.toLowerCase().endsWith('.txt')) {
-            filename += '.txt';
-          }
+        if (customNames[origIdx]) {
+          filename = customNames[origIdx];
+          if (!filename.toLowerCase().endsWith('.txt')) filename += '.txt';
         } else {
-          // Auto-numbering
-          filename = `${idx + 1}.txt`;
+          filename = `${origIdx + 1}.txt`;
         }
 
         zip.file(filename, content);
       });
 
+      const count = checkedIndices.length;
       // Tạo và download ZIP
       zip.generateAsync({ type: 'blob' }).then(blob => {
         const url = URL.createObjectURL(blob);
