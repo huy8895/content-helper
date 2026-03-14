@@ -329,19 +329,19 @@ window.ContentCopyPanel = class {
         customNames = filenamesInput.split(',').map(n => n.trim()).filter(n => n);
       }
 
-      // Thêm từng file được chọn vào ZIP
+      // Thêm từng file được chọn vào ZIP (map tên theo vị trí trong danh sách chọn)
       checkedIndices.forEach((origIdx, position) => {
         const el = this.elements[origIdx];
         let content = this._getText(el);
         if (addPrefix) content = `Part ${origIdx + 1}\n` + content;
 
-        // Xác định tên file
+        // Xác định tên file: ánh xạ theo position (thứ tự trong ds đã chọn)
         let filename = '';
-        if (customNames[origIdx]) {
-          filename = customNames[origIdx];
+        if (customNames[position]) {
+          filename = customNames[position];
           if (!filename.toLowerCase().endsWith('.txt')) filename += '.txt';
         } else {
-          filename = `${origIdx + 1}.txt`;
+          filename = `${position + 1}.txt`;
         }
 
         zip.file(filename, content);
