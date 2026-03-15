@@ -78,6 +78,13 @@ window.ContentCopyPanel = class {
 
     this.el.innerHTML = html;
 
+    // Load saved custom filenames từ localStorage
+    const savedFilenames = localStorage.getItem('ccp-filenames');
+    if (savedFilenames) {
+      const filenameInput = this.el.querySelector('#ccp-filenames');
+      if (filenameInput) filenameInput.value = savedFilenames;
+    }
+
     ChatGPTHelper.mountPanel(this.el);
     ChatGPTHelper.makeDraggable(this.el, ".ts-title");
     ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
@@ -220,6 +227,14 @@ window.ContentCopyPanel = class {
   }
 
   _bindEvents() {
+    // Lưu custom filenames vào localStorage khi thay đổi
+    const filenamesEl = this.el.querySelector('#ccp-filenames');
+    if (filenamesEl) {
+      filenamesEl.addEventListener('input', () => {
+        localStorage.setItem('ccp-filenames', filenamesEl.value);
+      });
+    }
+
     // Copy All
     this.el.querySelector("#ccp-copy-all").onclick = () => {
       const text = this.elements.map(el => this._getText(el)).join('\n\n');
