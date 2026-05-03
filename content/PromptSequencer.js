@@ -19,6 +19,7 @@ window.PromptSequencer = class {
   }
 
   async _run() {
+    let wasStoppedManually = false;
     while (this.idx < this.prompts.length && !this.stopped) {
       if (this.paused) {
         await new Promise(r => (this._resume = r));
@@ -30,7 +31,11 @@ window.PromptSequencer = class {
       this.onStep(this.idx, this.prompts.length);
     }
 
-    if (!this.stopped) {
+    if (this.stopped) {
+      wasStoppedManually = true;
+    }
+
+    if (!wasStoppedManually) {
       console.log("🔔start Gửi thông báo")
       // Gửi thông báo kèm tên kịch bản/action
       chrome.runtime.sendMessage({
@@ -42,13 +47,15 @@ window.PromptSequencer = class {
       // QUAN TRỌNG: Đánh dấu là đã dừng để _isBusy() trả về false
       this.stopped = true;
     }
+    
+    return wasStoppedManually;
   }
 
   start(onDone) {
     this.stopped = false;
     this.paused = false;
-    return this._run().then(() => {
-      if (!this.stopped) onDone?.();
+    return this._run().then((wasStoppedManually) => {
+      if (!wasStoppedManually) onDone?.();
     });
   }
 
