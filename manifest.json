@@ -59,6 +59,8 @@
         "content/PromptSequencer.js",
         "content/ScenarioBuilder.js",
         "content/ScenarioRunner.js",
+        "content/FlowSequencer.js",
+        "content/FlowRunnerPanel.js",
         "content/TextSplitter.js",
         "content/AudioDownloader.js",
         "content/ContentCopyPanel.js",

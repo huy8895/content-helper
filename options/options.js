@@ -9,6 +9,7 @@
     speech: null,
     youtube: null,
     scenarios: null,
+    flows: null,
   };
 
   let currentSection = null;
@@ -55,6 +56,11 @@
       case 'scenarios':
         if (!modules.scenarios) modules.scenarios = new ScenarioModule();
         modules.scenarios.render();
+        break;
+
+      case 'flows':
+        if (!modules.flows) modules.flows = new FlowModule();
+        modules.flows.render();
         break;
 
       case 'about':

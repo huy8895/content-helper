@@ -20,6 +20,9 @@ class ContentHelper {
     /** @type {ScenarioRunner|null} */
     this.runner = null;
 
+    /** @type {FlowRunnerPanel|null} */
+    this.flowRunner = null;
+
     /** @type {TextSplitter|null} */
     this.splitter = null;
 
@@ -118,6 +121,22 @@ class ContentHelper {
     }
     console.log("🚀 [ContentHelper] Opening ScenarioRunner");
     this.runner = new ScenarioRunner(() => (this.runner = null));
+  }
+
+  _toggleFlowRunner() {
+    if (this.flowRunner) {
+      if (this.flowRunner._isBusy && this.flowRunner._isBusy()) {
+        if (!confirm("Flow đang chạy. Bạn có chắc chắn muốn đóng và dừng flow không?")) {
+          return;
+        }
+      }
+      console.log("❌ [ContentHelper] Closing FlowRunnerPanel");
+      this.flowRunner.destroy();
+      this.flowRunner = null;
+      return;
+    }
+    console.log("🔗 [ContentHelper] Opening FlowRunnerPanel");
+    this.flowRunner = new FlowRunnerPanel(() => (this.flowRunner = null));
   }
 
   _toggleAudioDownloader() {
@@ -261,6 +280,7 @@ class ContentHelper {
         let instance = null;
         if (h.builder && h.builder.el === panelEl) instance = h.builder;
         else if (h.runner && h.runner.el === panelEl) instance = h.runner;
+        else if (h.flowRunner && h.flowRunner.el === panelEl) instance = h.flowRunner;
         else if (h.splitter && h.splitter.el === panelEl) instance = h.splitter;
         else if (h.audioDownloader && h.audioDownloader.el === panelEl) instance = h.audioDownloader;
         else if (h.contentCopyPanel && h.contentCopyPanel.el === panelEl) instance = h.contentCopyPanel;
@@ -513,6 +533,7 @@ function hideButtons() {
   const h = window.__helperInjected;
   h.builder?.destroy?.();
   h.runner?.destroy?.();
+  h.flowRunner?.destroy?.();
   h.splitter?.destroy?.();
   h.audioDownloader?.destroy?.();
   h.srtAutomation?.destroy?.();

@@ -27,6 +27,12 @@ BUTTONS = {
     className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleRunner(),
   },
+  RUN_FLOW: {
+    id: "chatgpt-run-flow-button",
+    text: "🔗 Chạy Flow",
+    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
+    onClick: () => window.__helperInjected?._toggleFlowRunner(),
+  },
   COPY_CONTENT: {
     id: "chatgpt-copy-content-button",
     text: "📋 Copy Content",
@@ -123,6 +129,7 @@ class BaseChatAdapter {
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.RUN_FLOW,
       BUTTONS.COPY_CONTENT,
     ];
   }
