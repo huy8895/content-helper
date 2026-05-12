@@ -532,9 +532,23 @@ async function _downloadFromFirestore() {
       console.log("✅ YouTube language profiles downloaded from Firestore.");
     }
   } catch (err) { console.error("❌ Error downloading YouTube profiles:", err); }
+
+  // --- 4. Tải cấu hình hiển thị nút ---
+  try {
+    helper.collection = 'button_configs';
+    const buttonConfigsData = await helper.loadUserConfig(userId);
+    if (buttonConfigsData) {
+      await chrome.storage.local.set({ button_configs: buttonConfigsData });
+      window.__buttonConfigs = buttonConfigsData;
+      console.log("✅ Button configs downloaded from Firestore.");
+    }
+  } catch (err) { console.error("❌ Error downloading button configs:", err); }
 }
 // ❶  auto‑check ngay khi trang / script được load
-chrome.storage.local.get('gg_access_token', data => {
+chrome.storage.local.get(['gg_access_token', 'button_configs'], data => {
+  if (data.button_configs) {
+    window.__buttonConfigs = data.button_configs;
+  }
   if (data.gg_access_token) {
     showButtons();
     _downloadFromFirestore();

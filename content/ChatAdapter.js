@@ -137,6 +137,18 @@ class BaseChatAdapter {
   // Chế độ thu gọn (mặc định false). Nếu true, các button sẽ nằm trong menu dropdown.
   isCompactMode() { return false; }
 
+  // Định danh nền tảng để map với cấu hình
+  getPlatformId() {
+    const name = this.constructor.name;
+    if (name === 'ChatGPTAdapter') return 'chatgpt';
+    if (name === 'DeepSeekAdapter') return 'deepseek';
+    if (name === 'QwenAdapter') return 'qwen';
+    if (name === 'GrokAdapter') return 'grok';
+    if (name === 'GoogleAIStudioAdapter') return 'aistudio';
+    if (name === 'YoutubeStudioAdapter') return 'ytstudio';
+    return '';
+  }
+
   // Hàm chèn button (dùng chung cho mọi adapter)
   insertHelperButtons() {
     if (document.querySelector('#content-helper-button-container')) return; // Đã tồn tại
@@ -151,9 +163,42 @@ class BaseChatAdapter {
     container.className = "flex flex-row gap-1.5 mt-1.5 justify-center py-1.5 relative";
 
     // Lấy danh sách button từ lớp con
-    const buttons = this.getButtonConfigs();
+    let buttons = this.getButtonConfigs();
 
-    if (this.isCompactMode()) {
+    // Mặc định
+    let isCompact = this.isCompactMode();
+    let isEnabled = true;
+
+    // --- Lọc nút và chế độ hiển thị theo cấu hình động ---
+    const platformId = this.getPlatformId();
+    if (platformId && window.__buttonConfigs) {
+      if (window.__buttonConfigs[platformId]) {
+        const platformConfig = window.__buttonConfigs[platformId];
+        
+        let allowedKeys = [];
+        if (Array.isArray(platformConfig)) {
+          allowedKeys = platformConfig; // Legacy array
+        } else {
+          isEnabled = platformConfig.enabled !== false; // Mặc định true nếu ko set false
+          allowedKeys = platformConfig.buttons || [];
+          isCompact = !!platformConfig.compactMode;
+        }
+        
+        buttons = allowedKeys.map(key => BUTTONS[key]).filter(Boolean);
+      } else {
+        // Có tồn tại config tổng nhưng platform này không có key => coi như đã bị disable hoàn toàn (với dữ liệu mới)
+        // Hoặc chưa từng lưu platform này. Để an toàn ta cứ coi như disabled nếu dùng config mới.
+        // Tuy nhiên theo code lưu thì nó luôn tạo key cho tất cả platforms khi lưu.
+      }
+    }
+
+    // Nếu người dùng chọn Tắt toàn bộ Extension cho trang này
+    if (!isEnabled) return;
+
+    // Nếu không có nút nào sau khi lọc, thoát luôn không render giao diện
+    if (buttons.length === 0) return;
+
+    if (isCompact) {
       // --- CHẾ ĐỘ COMPACT: Hiển thị 1 nút Tools dạng bong bóng nổi ---
 
       // Định dạng lại container thành fixed (mặc định ở góc dưới bên phải)

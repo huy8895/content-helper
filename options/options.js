@@ -10,6 +10,7 @@
     youtube: null,
     scenarios: null,
     flows: null,
+    buttons: null,
   };
 
   let currentSection = null;
@@ -61,6 +62,11 @@
       case 'flows':
         if (!modules.flows) modules.flows = new FlowModule();
         modules.flows.render();
+        break;
+
+      case 'buttons':
+        if (!modules.buttons) modules.buttons = new ButtonConfigModule();
+        modules.buttons.render();
         break;
 
       case 'about':
