@@ -356,7 +356,6 @@ class ChatGPTAdapter extends BaseChatAdapter {
 /* ----------------------------  DeepSeek.com  ----------------------------- */
 class DeepSeekAdapter extends BaseChatAdapter {
   countDivContent = 0;
-  timesCheckDone = 0;
   static matches(host) { return /deepseek\.com$/i.test(host); }
 
   constructor() {
@@ -410,14 +409,12 @@ class DeepSeekAdapter extends BaseChatAdapter {
   }  // DeepSeek places everything inside a <form>; inherit default getForm()
 
   isDone() {
-    console.log('check isDone times: ', this.timesCheckDone);
     const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
     if (this.countDivContent + 1 === elementHTMLCollectionOf.length) {
       this.countDivContent++;
-      console.log('isDone return true', this.countDivContent);
+      console.log('✅ [DeepSeek] isDone: true, tổng tin nhắn:', this.countDivContent);
       return true;
     }
-    console.log('isDone return false')
     return false;
   }
 

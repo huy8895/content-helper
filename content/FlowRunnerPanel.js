@@ -451,19 +451,13 @@ window.FlowRunnerPanel = class {
     }
   }
 
-  _waitForResponse(timeout = 600000) { // Timeout 10 phút
-    return new Promise((resolve, reject) => {
-      const start = Date.now();
-      const timer = setInterval(() => {
-        if (window.ChatAdapter.isDone()) {
-          clearInterval(timer);
-          resolve();
-        } else if (Date.now() - start > timeout) {
-          clearInterval(timer);
-          reject(new Error("Timeout khi chờ AI phản hồi"));
-        }
-      }, 1000);
-    });
+  /**
+   * Chờ AI phản hồi xong – sử dụng ResponseWaiter (MutationObserver + setTimeout fallback).
+   * Không bị throttle khi tab ẩn, có auto-scroll khi AI sinh nội dung.
+   * @param {number} timeout - Thời gian tối đa chờ (ms), mặc định 10 phút
+   */
+  _waitForResponse(timeout = 600000) {
+    return ResponseWaiter.waitForDone({ timeout, autoScroll: true });
   }
 
   _waitForAdapterBtn(fnGet, maxRetries = 25, interval = 300) {

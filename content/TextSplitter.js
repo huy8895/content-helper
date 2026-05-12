@@ -505,8 +505,10 @@ window.TextSplitter = class {
     return ScenarioRunner.prototype._sendPrompt.call(this, prefixed);
   }
 
-  // 🎯 Alias hàm đợi nút để ScenarioRunner._sendPrompt dùng được
-  _waitForResponse = ScenarioRunner.prototype._waitForResponse;
+  // 🎯 Chờ AI phản hồi xong – sử dụng ResponseWaiter (không bị throttle khi tab ẩn)
+  _waitForResponse(timeout = 600000) {
+    return ResponseWaiter.waitForDone({ timeout, autoScroll: true });
+  }
   _waitForAdapterBtn = ScenarioRunner.prototype._waitForAdapterBtn;
   _waitForElement = ScenarioRunner.prototype._waitForAdapterBtn;  // alias phụ (tuỳ dùng)
 
