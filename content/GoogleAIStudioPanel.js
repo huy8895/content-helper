@@ -11,7 +11,7 @@ const PANEL_HTML = `
     </div>
   </div>
   
-  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4 relative" style="z-index: 50;">
     <div class="flex items-center justify-between mb-2 pl-1">
       <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Profile Cài đặt</label>
       <div class="flex gap-2">

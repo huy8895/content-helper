@@ -56,6 +56,7 @@ class YoutubeProfileModule extends BaseModule {
     super('main-content', 'youtube_language_profiles', 'youtube_language_profiles');
     this.profiles = {};
     this.activeProfileName = 'default';
+    this.storageKeyTranslations = 'youtube_translation_data';
   }
 
   /**
@@ -106,6 +107,19 @@ class YoutubeProfileModule extends BaseModule {
               </div>
               <input type="checkbox" class="toggle-switch" id="yt-autofill">
             </label>
+          </div>
+
+          <!-- JSON Upload -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;">
+            <div style="font-size:24px;">📄</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;margin-bottom:4px;">Dữ liệu Dịch thuật</div>
+              <div id="yt-json-filename" style="font-size:13px;font-weight:600;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chưa có file nào</div>
+            </div>
+            <label for="yt-json-upload" class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;">
+              Tải lên
+            </label>
+            <input type="file" id="yt-json-upload" accept=".json,.txt" style="display:none;">
           </div>
 
           <!-- Language search + filter -->
@@ -278,5 +292,51 @@ class YoutubeProfileModule extends BaseModule {
       this._updateSelectedCount();
       this._filterLanguages();
     });
+
+    // Upload JSON
+    const jsonUploadEl = this.containerEl.querySelector('#yt-json-upload');
+    if (jsonUploadEl) {
+      jsonUploadEl.addEventListener('change', (e) => this._handleJsonUpload(e));
+    }
+  }
+
+  async _handleJsonUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const jsonDataArray = JSON.parse(e.target.result);
+        if (!Array.isArray(jsonDataArray)) {
+          throw new Error("JSON data is not an array.");
+        }
+
+        const translationsObject = {};
+        for (const item of jsonDataArray) {
+          if (item && item.language) {
+            const langKey = this._normalizeLangKey(item.language);
+            translationsObject[langKey] = {
+              title: item.title || '',
+              description: item.description || ''
+            };
+          }
+        }
+
+        await chrome.storage.local.set({ [this.storageKeyTranslations]: translationsObject });
+        this.containerEl.querySelector('#yt-json-filename').textContent = `✅ Đã tải lên: ${file.name}`;
+        BaseModule.showToast('Đã lưu dữ liệu dịch thuật thành công!', "success");
+      } catch (err) {
+        this.containerEl.querySelector('#yt-json-filename').textContent = `❌ Lỗi đọc file`;
+        BaseModule.showToast('Lỗi: File JSON không hợp lệ hoặc không đúng định dạng mảng.', "error");
+        console.error("JSON Process Error:", err);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  _normalizeLangKey(langName) {
+    if (typeof langName !== 'string') return '';
+    return langName.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 }

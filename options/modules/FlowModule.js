@@ -236,6 +236,18 @@ class FlowModule extends BaseModule {
     const saveBtn = document.getElementById('editor-save');
     saveBtn.onclick = () => this._handleSaveFlow();
 
+    // Sửa lỗi không bấm hủy được modal
+    const closeOverlay = () => {
+      document.getElementById('scenario-editor-overlay').classList.remove('show');
+    };
+    document.getElementById('editor-close').onclick = closeOverlay;
+    document.getElementById('editor-cancel').onclick = closeOverlay;
+    document.getElementById('scenario-editor-overlay').onclick = (e) => {
+      if (e.target === e.currentTarget) {
+        closeOverlay();
+      }
+    };
+
     overlay.classList.add('show');
   }
 

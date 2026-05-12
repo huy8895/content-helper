@@ -62,7 +62,7 @@ const YTB_PANEL_HTML = `
     </div>
   </div>
   
-  <div class="ts-bg-gray-50 ts-p-3 ts-rounded-xl ts-border ts-border-gray-100 ts-mb-4">
+  <div class="ts-bg-gray-50 ts-p-3 ts-rounded-xl ts-border ts-border-gray-100 ts-mb-4 ts-relative" style="z-index: 50;">
     <div class="ts-flex ts-items-center ts-justify-between ts-mb-2 ts-pl-1">
       <label class="ts-text-[10px] ts-font-bold ts-text-gray-400 ts-uppercase ts-tracking-widest ts-leading-none">Profile Ngôn ngữ</label>
       <div class="ts-flex ts-gap-2">
