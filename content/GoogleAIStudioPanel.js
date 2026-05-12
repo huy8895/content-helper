@@ -208,6 +208,7 @@ window.GoogleAIStudioPanel = class {
   switchProfile(profileName) {
     this.activeProfileName = profileName;
     this.fillFormWithProfile(profileName);
+    this.updateProfileDropdown();
     this.saveAllDataToStorage(); // Lưu lại profile đang active
   }
 

@@ -335,6 +335,7 @@ window.YoutubeStudioPanel = class {
   switchProfile(profileName) {
     this.activeProfileName = profileName;
     this.fillFormWithProfile(profileName);
+    this.updateProfileDropdown();
     this.saveAllDataToStorage();
   }
 
