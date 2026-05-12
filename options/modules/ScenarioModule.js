@@ -186,24 +186,36 @@ class ScenarioModule extends BaseModule {
     }
 
     body.innerHTML = `
-      <div class="grid-2" style="margin-bottom:16px">
-        <div class="form-group" style="margin-bottom:0">
+      <!-- Cột trái: Metadata -->
+      <div class="editor-sidebar">
+        <div class="meta-section-title">Thông tin</div>
+        <div class="form-group">
           <label class="form-label">Tên kịch bản</label>
           <input type="text" class="form-input" id="ed-name" value="${this._escapeHTML(scenarioName)}"
-            placeholder="Tên kịch bản" ${name ? 'readonly style="opacity:0.6"' : ''}>
+            placeholder="Tên kịch bản" ${name ? 'readonly style="opacity:0.6;cursor:not-allowed"' : ''}>
         </div>
-        <div class="form-group" style="margin-bottom:0">
+        <div class="form-group">
           <label class="form-label">Nhóm</label>
           <input type="text" class="form-input" id="ed-group" value="${this._escapeHTML(group)}"
             placeholder="podcast / video / blog">
         </div>
+        <div class="meta-section-title" style="margin-top:8px">Thống kê</div>
+        <div class="meta-stat">
+          <span>Số câu hỏi</span>
+          <strong id="ed-question-count">${questions.length}</strong>
+        </div>
       </div>
 
-      <div class="form-label" style="margin-bottom:8px">Danh sách câu hỏi</div>
-      <div id="ed-questions" class="custom-scroll" style="max-height:360px;overflow-y:auto"></div>
-      <button class="btn btn-ghost btn-sm" id="ed-add-question" style="width:100%;margin-top:8px;border-style:dashed">
-        + Thêm câu hỏi mới
-      </button>
+      <!-- Cột phải: Danh sách câu hỏi -->
+      <div class="editor-main">
+        <div class="editor-main-header">
+          <div class="form-label">Danh sách câu hỏi</div>
+          <button class="btn btn-ghost btn-xs" id="ed-add-question" style="height:26px;font-size:11px;gap:4px">
+            <span style="font-size:13px">+</span> Thêm
+          </button>
+        </div>
+        <div class="editor-questions custom-scroll" id="ed-questions"></div>
+      </div>
     `;
 
     // Render questions
@@ -213,6 +225,9 @@ class ScenarioModule extends BaseModule {
     // Bind thêm câu hỏi
     body.querySelector('#ed-add-question').onclick = () => {
       this._addQuestionToEditor(qContainer, { text: '', type: 'text' });
+      this._updateQuestionCount();
+      // Auto-scroll xuống cuối
+      qContainer.scrollTop = qContainer.scrollHeight;
     };
 
     overlay.classList.add('show');
@@ -238,10 +253,10 @@ class ScenarioModule extends BaseModule {
           <option value="loop" ${q.type === 'loop' ? 'selected' : ''}>LOOP</option>
           <option value="list" ${q.type === 'list' ? 'selected' : ''}>LIST</option>
         </select>
-        <input type="text" class="form-input ed-loopkey ${loopHidden}"
+        <input type="text" class="ed-loopkey ${loopHidden}"
           placeholder="Loop key" value="${this._escapeHTML(q.loopKey || '')}"
-          style="height:28px;font-size:11px;flex:1">
-        <button class="btn btn-danger btn-xs ed-remove-q">🗑️</button>
+          style="height:24px;font-size:10px;padding:0 6px;flex:1;border:1px solid var(--color-border);border-radius:4px;outline:none;background:var(--color-bg);font-family:inherit">
+        <button class="btn btn-ghost btn-xs ed-remove-q" style="height:22px;width:22px;padding:0;color:var(--color-text-muted);font-size:11px;border:none" title="Xóa">✕</button>
       </div>
     `;
 
@@ -256,9 +271,23 @@ class ScenarioModule extends BaseModule {
     };
 
     // Xóa question
-    div.querySelector('.ed-remove-q').onclick = () => div.remove();
+    div.querySelector('.ed-remove-q').onclick = () => {
+      div.remove();
+      this._updateQuestionCount();
+    };
 
     container.appendChild(div);
+  }
+
+  /**
+   * Cập nhật số câu hỏi hiển thị trên sidebar.
+   */
+  _updateQuestionCount() {
+    const countEl = document.getElementById('ed-question-count');
+    if (countEl) {
+      const items = document.querySelectorAll('#ed-questions .question-item-opt');
+      countEl.textContent = items.length;
+    }
   }
 
   /**
