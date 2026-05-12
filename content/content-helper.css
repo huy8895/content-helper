@@ -596,6 +596,89 @@
   }
 }
 
+/* --- Hiệu ứng viền chạy AI (AI Gradient Border) - Phương pháp 100% tương thích --- */
+.ai-gradient-border {
+  position: relative !important;
+  background: transparent !important;
+  border: none !important;
+  color: #111827 !important; /* Chữ xám đậm cho light mode */
+  overflow: hidden !important;
+  z-index: 1 !important;
+}
+
+/* Gradient nền quay liên tục */
+.ai-gradient-border::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  background: conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #f43f5e, #f59e0b, #3b82f6);
+  animation: spin-gradient 3s linear infinite;
+  z-index: -2;
+  transform: translate(-50%, -50%);
+}
+
+/* Nền đè lên giữa để lộ ra viền 2px */
+.ai-gradient-border::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: white; /* Nền sáng */
+  border-radius: inherit;
+  z-index: -1;
+  transition: background 0.2s ease;
+}
+
+.ai-gradient-border:hover::after {
+  background: #f3f4f6;
+}
+
+@keyframes spin-gradient {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Hỗ trợ Dark Mode cho các trang như ChatGPT, AI Studio bằng CSS Selector */
+.dark .ai-gradient-border,
+[data-theme="dark"] .ai-gradient-border,
+[data-color-mode="dark"] .ai-gradient-border,
+body[class*="dark"] .ai-gradient-border,
+html[class*="dark"] .ai-gradient-border {
+  color: #f9fafb !important; /* Chữ trắng cho dark mode */
+}
+
+.dark .ai-gradient-border::after,
+[data-theme="dark"] .ai-gradient-border::after,
+[data-color-mode="dark"] .ai-gradient-border::after,
+body[class*="dark"] .ai-gradient-border::after,
+html[class*="dark"] .ai-gradient-border::after {
+  background: #1f2937;
+}
+
+.dark .ai-gradient-border:hover::after,
+[data-theme="dark"] .ai-gradient-border:hover::after,
+[data-color-mode="dark"] .ai-gradient-border:hover::after,
+body[class*="dark"] .ai-gradient-border:hover::after,
+html[class*="dark"] .ai-gradient-border:hover::after {
+  background: #374151;
+}
+
+/* Fallback: Tự động đổi sang Dark Mode nếu hệ điều hành/trình duyệt đang dùng Dark Mode */
+@media (prefers-color-scheme: dark) {
+  /* Loại trừ trường hợp trang web ép force light mode (.light) */
+  html:not(.light) body:not(.light) .ai-gradient-border {
+    color: #f9fafb !important;
+  }
+  html:not(.light) body:not(.light) .ai-gradient-border::after {
+    background: #1f2937;
+  }
+  html:not(.light) body:not(.light) .ai-gradient-border:hover::after {
+    background: #374151;
+  }
+}
+
 /* Fade in animation for panels */
 .animate-in {
   animation: fadeIn 0.3s ease-out;

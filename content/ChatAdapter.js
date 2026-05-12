@@ -154,17 +154,24 @@ class BaseChatAdapter {
     const buttons = this.getButtonConfigs();
 
     if (this.isCompactMode()) {
-      // --- CHẾ ĐỘ COMPACT: Hiển thị 1 nút Tools, bấm vào xổ ra menu ---
+      // --- CHẾ ĐỘ COMPACT: Hiển thị 1 nút Tools dạng bong bóng nổi ---
 
-      // 1. Tạo nút Toggle
+      // Định dạng lại container thành fixed (mặc định ở góc dưới bên phải)
+      container.className = "fixed bottom-24 right-6 flex flex-col items-end z-[2147483647]";
+      container.dataset.free = "1";
+
+      let isDragging = false;
+      let startX, startY;
+
+      // 1. Tạo nút Toggle dạng bong bóng chữ nhật bo tròn (pill shape)
       const toggleBtn = this._createButton({
         id: 'helper-toggle-button',
-        text: '🛠️ Tools',
-        className: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50',
+        text: '🛠️ Content Helper',
+        className: 'ai-gradient-border shadow-2xl hover:shadow-xl !rounded-full !px-4 !h-10 !text-xs cursor-move transition-transform active:scale-95 !flex !items-center !justify-center',
         onClick: () => {
+          if (isDragging) return; // Không mở menu nếu đang kéo thả
           const menu = document.getElementById('helper-buttons-menu');
           if (menu) {
-            // Toggle hiển thị
             if (menu.classList.contains('hidden')) {
               menu.classList.remove('hidden');
               menu.classList.add('flex');
@@ -176,22 +183,53 @@ class BaseChatAdapter {
         },
       });
 
+      // Bổ sung logic Drag & Drop tùy chỉnh cho bong bóng
+      toggleBtn.addEventListener('mousedown', (e) => {
+        isDragging = false;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        const rect = container.getBoundingClientRect();
+        const shiftX = e.clientX - rect.left;
+        const shiftY = e.clientY - rect.top;
+
+        const onMouseMove = (ev) => {
+          // Chỉ coi là drag khi chuột di chuyển > 3px
+          if (Math.abs(ev.clientX - startX) > 3 || Math.abs(ev.clientY - startY) > 3) {
+            isDragging = true;
+          }
+          if (isDragging) {
+            container.style.left = ev.clientX - shiftX + "px";
+            container.style.top = ev.clientY - shiftY + "px";
+            container.style.bottom = "auto";
+            container.style.right = "auto";
+          }
+        };
+
+        const onMouseUp = () => {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
       // 2. Tạo Menu chứa các button con
       const menu = document.createElement("div");
       menu.id = "helper-buttons-menu";
-      // Style: absolute, đẩy lên trên (bottom-full), căn giữa, nền trắng, đổ bóng
-      menu.className = "hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex-col gap-1.5 p-2 bg-white shadow-xl rounded-lg border border-gray-200 z-50 min-w-[160px]";
+      // Style: Menu hiện ở trên bong bóng, lệch phải để thẳng hàng
+      menu.className = "hidden absolute bottom-full mb-3 right-0 flex-col gap-1 p-2 bg-white shadow-2xl rounded-xl border border-gray-100 z-50 min-w-[180px] origin-bottom-right transition-all duration-200";
 
       buttons.forEach(config => {
         const btn = this._createButton(config);
-        // Trong menu thì cho button full width và canh trái text
-        btn.classList.add('w-full', '!justify-start');
+        btn.classList.add('w-full', '!justify-start', 'border-none', 'shadow-none', 'hover:bg-indigo-50', 'text-gray-600', 'font-medium', 'py-2');
         menu.appendChild(btn);
       });
 
       // 3. Xử lý click outside để đóng menu
       document.addEventListener('click', (e) => {
-        if (!container.contains(e.target)) {
+        if (!container.contains(e.target) && !isDragging) {
           menu.classList.add('hidden');
           menu.classList.remove('flex');
         }
@@ -200,15 +238,17 @@ class BaseChatAdapter {
       container.appendChild(menu);
       container.appendChild(toggleBtn);
 
+      // Nút bong bóng độc lập nên gắn trực tiếp vào body thay vì chatForm
+      document.body.appendChild(container);
+
     } else {
       // --- CHẾ ĐỘ THƯỜNG: Render hàng ngang như cũ ---
       buttons.forEach(config => {
         const btn = this._createButton(config);
         container.appendChild(btn);
       });
+      chatForm.after(container);
     }
-
-    chatForm.after(container);
   }
 
   // Helper method để tạo button
@@ -518,9 +558,9 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   insertHelperButtons() {
     if (this.isSpeechPage) {
       if (window.GoogleAIStudioSpeechPanel && window.GoogleAIStudioSpeechPanel.insertSpeechPageButton) {
-         window.GoogleAIStudioSpeechPanel.insertSpeechPageButton();
+        window.GoogleAIStudioSpeechPanel.insertSpeechPageButton();
       } else {
-         console.error("❌ [GoogleAIStudioAdapter] window.GoogleAIStudioSpeechPanel is undefined or missing insertSpeechPageButton");
+        console.error("❌ [GoogleAIStudioAdapter] window.GoogleAIStudioSpeechPanel is undefined or missing insertSpeechPageButton");
       }
     } else {
       super.insertHelperButtons();
@@ -573,6 +613,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
       BUTTONS.AI_STUDIO_SETTINGS,
       BUTTONS.COLLAPSE_CODE,
       BUTTONS.YT_STUDIO_SETTINGS,
+      BUTTONS.RUN_FLOW
     ];
   }
 
@@ -925,6 +966,7 @@ class GeminiAdapter extends BaseChatAdapter {
       BUTTONS.RUN_SCENARIO,
       BUTTONS.COPY_CONTENT,
       BUTTONS.YT_STUDIO_SETTINGS,
+      BUTTONS.RUN_FLOW
     ];
   }
 }

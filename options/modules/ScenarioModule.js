@@ -322,8 +322,11 @@ class ScenarioModule extends BaseModule {
     const questions = Array.from(items).map(div => {
       const text = div.querySelector('textarea').value.trim();
       const type = div.querySelector('select').value;
-      const loopKey = div.querySelector('.ed-loopkey')?.value.trim() || undefined;
-      return { text, type, loopKey };
+      const loopKey = div.querySelector('.ed-loopkey')?.value.trim();
+      
+      const q = { text, type };
+      if (loopKey) q.loopKey = loopKey;
+      return q;
     }).filter(q => q.text);
 
     if (!questions.length) {

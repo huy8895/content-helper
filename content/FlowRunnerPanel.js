@@ -178,7 +178,7 @@ window.FlowRunnerPanel = class {
 
     // Tạo danh sách các bước
     stepSelect.innerHTML = steps.map((s, idx) => {
-      return \`<option value="\${idx}">Bước \${idx + 1}: \${s.scenarioName}</option>\`;
+      return `<option value="${idx}">Bước ${idx + 1}: ${s.scenarioName}</option>`;
     }).join("");
     stepSelect.disabled = steps.length === 0;
 
@@ -194,7 +194,7 @@ window.FlowRunnerPanel = class {
       const q = Array.isArray(raw) ? raw[0] : (raw.questions || [])[0];
       if (!q) return;
 
-      const matches = [...q.text.matchAll(/\\$\\{([^}|]+)(?:\\|([^}]+))?\\}/g)];
+      const matches = [...q.text.matchAll(/\$\{([^}|]+)(?:\|([^}]+))?\}/g)];
       
       matches.forEach(match => {
         const varName = match[1];
@@ -204,7 +204,7 @@ window.FlowRunnerPanel = class {
         // Nhưng nếu người dùng muốn override chung thì sao? 
         // Trong spec: "Các flow là độc lập nhau", mỗi step có thể có default value riêng. 
         // Ta sẽ cho phép override dựa trên: stepIndex_varName
-        const uniqueKey = \`step\${stepIdx}_\${varName}\`;
+        const uniqueKey = `step${stepIdx}_${varName}`;
 
         if (renderedVars.has(uniqueKey)) return;
         renderedVars.add(uniqueKey);
@@ -219,14 +219,14 @@ window.FlowRunnerPanel = class {
         
         const label = document.createElement("label");
         label.className = "text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1";
-        label.textContent = \`[Bước \${stepIdx + 1}] \${varName}\`;
+        label.textContent = `[Bước ${stepIdx + 1}] ${varName}`;
 
         let inputEl;
         const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:border-indigo-500 transition-all outline-none";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = \`\${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer\`;
+          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer`;
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -237,7 +237,7 @@ window.FlowRunnerPanel = class {
           });
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = \`\${baseClasses} min-h-[40px] resize-y\`;
+          inputEl.className = `${baseClasses} min-h-[40px] resize-y`;
           inputEl.value = defaultValue;
           inputEl.placeholder = "Nhập giá trị override...";
         }
@@ -283,10 +283,10 @@ window.FlowRunnerPanel = class {
       const stepValues = {};
       
       // Tìm các biến cần thiết cho câu hỏi này
-      const matches = [...q.text.matchAll(/\\$\\{([^}|]+)(?:\\|([^}]+))?\\}/g)];
+      const matches = [...q.text.matchAll(/\$\{([^}|]+)(?:\|([^}]+))?\}/g)];
       matches.forEach(m => {
         const varName = m[1];
-        const uniqueKey = \`step\${i}_\${varName}\`;
+        const uniqueKey = `step${i}_${varName}`;
         stepValues[varName] = this.userInputs[uniqueKey] || "";
       });
 
@@ -327,30 +327,30 @@ window.FlowRunnerPanel = class {
     const result = [];
     
     // Lấy loopKey nếu có
-    const loopKey = q.loopKey || (q.text.match(/\\$\\{(\\w+)\\}/) || [])[1];
+    const loopKey = q.loopKey || (q.text.match(/\$\{(\w+)\}/) || [])[1];
 
     if (q.type === "text") {
-      result.push({ text: q.text, label: \`[Step \${stepIndex + 1}] Text\` });
+      result.push({ text: q.text, label: `[Step ${stepIndex + 1}] Text` });
     } else if (q.type === "variable" || !q.type) { // Default to variable
-      const filled = q.text.replace(/\\$\\{([^}|]+)(?:\\|[^}]*)?\\}/g, (_, k) => values[k] || "");
-      result.push({ text: filled, label: \`[Step \${stepIndex + 1}]\` });
+      const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
+      result.push({ text: filled, label: `[Step ${stepIndex + 1}]` });
     } else if (q.type === "loop") {
       const count = parseInt(values[loopKey] || "0", 10);
       for (let i = 1; i <= count; i++) {
-        const prompt = q.text.replace(/\\$\\{([^}|]+)(?:\\|[^}]*)?\\}/g, (_, k) => {
+        const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
           if (k === loopKey) return String(i);
           return values[k] || "";
         });
-        result.push({ text: prompt, label: \`[Step \${stepIndex + 1}] Lần \${i}\` });
+        result.push({ text: prompt, label: `[Step ${stepIndex + 1}] Lần ${i}` });
       }
     } else if (q.type === "list") {
       const listValues = (values[loopKey] || "").split(',').map(v => v.trim()).filter(Boolean);
       for (const itemValue of listValues) {
-        const prompt = q.text.replace(/\\$\\{([^}|]+)(?:\\|[^}]*)?\\}/g, (_, k) => {
+        const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
           if (k === loopKey) return itemValue;
           return values[k] || "";
         });
-        result.push({ text: prompt, label: \`[Step \${stepIndex + 1}] \${itemValue}\` });
+        result.push({ text: prompt, label: `[Step ${stepIndex + 1}] ${itemValue}` });
       }
     }
     return result;
@@ -367,7 +367,7 @@ window.FlowRunnerPanel = class {
     textTotal.textContent = total;
 
     const percent = total > 0 ? Math.round((idx / total) * 100) : 0;
-    bar.style.width = \`\${percent}%\`;
+    bar.style.width = `${percent}%`;
 
     if (this.sequencer && this.sequencer.steps[idx]) {
       detailsEl.textContent = this.sequencer.steps[idx].label || "";
@@ -402,7 +402,7 @@ window.FlowRunnerPanel = class {
   }
 
   _onError(idx, err) {
-    ContentHelper.showToast(\`Lỗi tại bước \${idx}: \${err.message}\`, "error");
+    ContentHelper.showToast(`Lỗi tại bước ${idx}: ${err.message}`, "error");
     // Hiện nút Retry/Skip
     this.el.querySelector("#flow-error-controls").classList.remove("hidden");
     this.el.querySelector("#flow-pause-btn").disabled = true;
