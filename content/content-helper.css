@@ -1259,7 +1259,14 @@ select option {
     color: #a5b4fc !important;
   }
 
-  /* === HELPER BUTTONS (Outside .ts-panel) === */
+  /* === HELPER BUTTONS & MENU (Outside .ts-panel) === */
+  #helper-buttons-menu {
+    background-color: #1f2937 !important;
+    /* gray-800 */
+    border-color: #374151 !important;
+    /* gray-700 */
+  }
+
   #content-helper-button-container button {
     background-color: #1f2937 !important;
     /* gray-800 */
