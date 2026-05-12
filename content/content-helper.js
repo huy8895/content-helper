@@ -322,6 +322,168 @@ class ContentHelper {
   }
 
   /**
+   * Thêm nút thu nhỏ (minimize) vào panel.
+   * Khi click, panel ẩn đi và xuất hiện bong bóng (bubble) kiểu Messenger.
+   * Click vào bubble sẽ khôi phục (restore) panel.
+   * 
+   * @param {HTMLElement} panelEl - Panel cần thêm nút minimize
+   * @param {Object} options - Tuỳ chọn hiển thị
+   * @param {string} options.icon - Emoji/icon hiển thị trên bubble (mặc định: '📤')
+   * @param {string} options.tooltip - Tooltip khi hover bubble
+   * @param {Function} [options.onMinimize] - Callback khi minimize
+   * @param {Function} [options.onRestore] - Callback khi restore
+   * @param {Function} [options.getBadgeInfo] - Hàm trả về { text, status } cho badge
+   * @returns {Object} Controller { minimize(), restore(), updateBadge(text, status), destroy() }
+   */
+  static addMinimizeButton(panelEl, options = {}) {
+    const {
+      icon = '📤',
+      tooltip = 'Panel',
+      onMinimize = null,
+      onRestore = null,
+      getBadgeInfo = null
+    } = options;
+
+    let bubbleEl = null;
+    let badgeEl = null;
+    let isMinimized = false;
+    let badgeInterval = null;
+
+    // === Tạo nút minimize ===
+    const btn = document.createElement("button");
+    btn.className = "panel-minimize";
+    btn.textContent = "−"; // Ký tự minus
+    btn.title = "Thu nhỏ";
+
+    // Ngăn sự kiện lan toả (giống addCloseButton)
+    const stopAll = (ev) => {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+    };
+    btn.addEventListener("mousedown", stopAll, true);
+    btn.addEventListener("mouseup", stopAll, true);
+
+    btn.addEventListener("click", (ev) => {
+      stopAll(ev);
+      controller.minimize();
+    });
+
+    panelEl.appendChild(btn);
+
+    // === Tạo floating bubble (bong bóng Messenger) ===
+    function _createBubble() {
+      bubbleEl = document.createElement("div");
+      bubbleEl.className = "panel-bubble";
+      bubbleEl.dataset.tooltip = tooltip;
+      bubbleEl.textContent = icon;
+
+      // Tự động offset vị trí bottom khi có nhiều bubble
+      const existingBubbles = document.querySelectorAll('.panel-bubble');
+      const offsetIndex = existingBubbles.length; // 0-based
+      bubbleEl.style.bottom = (120 + offsetIndex * 70) + 'px';
+
+      // Badge
+      badgeEl = document.createElement("span");
+      badgeEl.className = "panel-bubble-badge idle";
+      badgeEl.textContent = "−";
+      bubbleEl.appendChild(badgeEl);
+
+      // Click bubble → restore panel
+      bubbleEl.addEventListener("click", () => {
+        controller.restore();
+      });
+
+      document.body.appendChild(bubbleEl);
+
+      // Bắt đầu cập nhật badge nếu có getBadgeInfo
+      if (getBadgeInfo) {
+        _updateBadgeFromCallback();
+        badgeInterval = setInterval(_updateBadgeFromCallback, 1000);
+      }
+    }
+
+    // Cập nhật badge từ callback
+    function _updateBadgeFromCallback() {
+      if (!getBadgeInfo || !badgeEl) return;
+      const info = getBadgeInfo();
+      if (info) {
+        badgeEl.textContent = info.text || "−";
+        // Cập nhật class trạng thái
+        badgeEl.className = `panel-bubble-badge ${info.status || 'idle'}`;
+        // Thêm/bỏ class ripple khi đang chạy
+        if (info.status === 'running') {
+          bubbleEl.classList.add('is-running');
+        } else {
+          bubbleEl.classList.remove('is-running');
+        }
+      }
+    }
+
+    // Xoá bubble khỏi DOM
+    function _removeBubble() {
+      if (badgeInterval) {
+        clearInterval(badgeInterval);
+        badgeInterval = null;
+      }
+      if (bubbleEl) {
+        bubbleEl.style.animation = 'bubble-pop-out 0.25s ease-in forwards';
+        setTimeout(() => {
+          bubbleEl?.remove();
+          bubbleEl = null;
+          badgeEl = null;
+        }, 250);
+      }
+    }
+
+    // === Controller object ===
+    const controller = {
+      /** Thu nhỏ panel thành bubble */
+      minimize() {
+        if (isMinimized) return;
+        isMinimized = true;
+        panelEl.classList.add('panel-minimized');
+        _createBubble();
+        onMinimize?.();
+      },
+
+      /** Khôi phục panel từ bubble */
+      restore() {
+        if (!isMinimized) return;
+        isMinimized = false;
+        _removeBubble();
+        panelEl.classList.remove('panel-minimized');
+        onRestore?.();
+      },
+
+      /** Cập nhật badge thủ công */
+      updateBadge(text, status = 'idle') {
+        if (badgeEl) {
+          badgeEl.textContent = text;
+          badgeEl.className = `panel-bubble-badge ${status}`;
+          if (status === 'running') {
+            bubbleEl?.classList.add('is-running');
+          } else {
+            bubbleEl?.classList.remove('is-running');
+          }
+        }
+      },
+
+      /** Kiểm tra trạng thái minimized */
+      get isMinimized() {
+        return isMinimized;
+      },
+
+      /** Dọn dẹp hoàn toàn */
+      destroy() {
+        _removeBubble();
+        btn.remove();
+      }
+    };
+
+    return controller;
+  }
+
+  /**
    * Hàm tiện ích đưa panel vào bar
    * @param {T} el
    */

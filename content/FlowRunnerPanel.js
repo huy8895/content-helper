@@ -93,7 +93,32 @@ window.FlowRunnerPanel = class {
     ContentHelper.makeDraggable(this.el, ".sr-header");
     ContentHelper.addCloseButton(this.el, () => this.destroy());
 
+    // Nút thu nhỏ (minimize) — tạo bong bóng Messenger khi click
+    this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
+      icon: '🔗',
+      tooltip: 'Flow Runner',
+      getBadgeInfo: () => this._getBubbleBadgeInfo()
+    });
+
     this._attachEvents();
+  }
+
+  /**
+   * Trả về thông tin badge cho bong bóng (bubble) dựa trên trạng thái sequencer.
+   * FlowSequencer sử dụng: .currentIndex, .isPaused, .stopped, .steps
+   * @returns {{ text: string, status: string }}
+   */
+  _getBubbleBadgeInfo() {
+    if (!this.sequencer || this.sequencer.stopped) {
+      return { text: '−', status: 'idle' };
+    }
+    const idx = this.sequencer.currentIndex || 0;
+    const total = this.sequencer.steps?.length || 0;
+    if (this.sequencer.isPaused) {
+      return { text: `${idx}/${total}`, status: 'paused' };
+    }
+    // Đang chạy
+    return { text: `${idx}/${total}`, status: 'running' };
   }
 
   async _loadData() {
@@ -479,6 +504,7 @@ window.FlowRunnerPanel = class {
   }
 
   destroy() {
+    this._minimizeCtrl?.destroy();
     this.el?.remove();
     this.onClose();
     this.sequencer?.stop();

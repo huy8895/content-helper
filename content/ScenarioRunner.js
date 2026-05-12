@@ -97,6 +97,30 @@ window.ScenarioRunner = class {
 
     ContentHelper.makeDraggable(this.el, ".sr-header");
     ContentHelper.addCloseButton(this.el, () => this.destroy());
+
+    // Nút thu nhỏ (minimize) — tạo bong bóng Messenger khi click
+    this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
+      icon: '📤',
+      tooltip: 'Scenario Runner',
+      getBadgeInfo: () => this._getBubbleBadgeInfo()
+    });
+  }
+
+  /**
+   * Trả về thông tin badge cho bong bóng (bubble) dựa trên trạng thái sequencer.
+   * @returns {{ text: string, status: string }}
+   */
+  _getBubbleBadgeInfo() {
+    if (!this.sequencer || this.sequencer.stopped) {
+      return { text: '−', status: 'idle' };
+    }
+    const idx = this.sequencer.idx || 0;
+    const total = this.sequencer.prompts?.length || 0;
+    if (this.sequencer.paused) {
+      return { text: `${idx}/${total}`, status: 'paused' };
+    }
+    // Đang chạy
+    return { text: `${idx}/${total}`, status: 'running' };
   }
 
   _setupScenarioSearch() {
@@ -549,6 +573,7 @@ window.ScenarioRunner = class {
   }
 
   destroy() {
+    this._minimizeCtrl?.destroy();
     this.el?.remove();
     this.onClose();
     this.sequencer?.stop();
