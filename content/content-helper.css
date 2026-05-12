@@ -598,6 +598,18 @@ html[class*="dark"] .ts-panel::after {
   display: none !important;
 }
 
+/* Đảm bảo dropdown tìm kiếm kịch bản nổi lên trên các phần tử anh em phía dưới */
+#sr-scenario-browser,
+#scenario-browser {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+#sr-scenario-dropdown,
+#scenario-dropdown {
+  z-index: 100 !important;
+}
+
 /* Close Button style */
 .panel-close {
   position: absolute !important;
