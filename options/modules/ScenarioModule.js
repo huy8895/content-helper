@@ -10,6 +10,7 @@ class ScenarioModule extends BaseModule {
     this.currentPage = 1;
     this.perPage = 8;
     this.searchKeyword = '';
+    this.selectedGroup = '';
     this.editingName = null; // null = tạo mới, string = đang sửa
   }
 
@@ -30,9 +31,15 @@ class ScenarioModule extends BaseModule {
 
         <div class="card">
           <div class="scenario-list-header">
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="sc-search" placeholder="Tìm kịch bản...">
+            <div style="display:flex;gap:12px;flex:1;max-width:480px">
+              <div class="search-box" style="max-width:none;flex:1">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="sc-search" placeholder="Tìm kịch bản...">
+              </div>
+              <select id="sc-group-filter" class="form-select" style="width:160px;height:36px;font-size:12px;padding:0 10px;color:var(--color-text-secondary)">
+                <option value="">Tất cả các nhóm</option>
+                ${this._buildGroupOptions()}
+              </select>
             </div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-primary btn-sm" id="sc-create-btn">➕ Tạo mới</button>
@@ -59,12 +66,20 @@ class ScenarioModule extends BaseModule {
    * Render bảng danh sách scenario + phân trang.
    */
   _renderTable() {
-    // Lọc theo keyword
+    // Refresh group filter (nếu có nhóm mới được tạo/xóa)
+    this._refreshGroupFilter();
+
+    // Lọc theo keyword & group
     const keyword = this.searchKeyword.toLowerCase();
+    const filterGroup = this.selectedGroup;
+
     this.filteredNames = Object.keys(this.scenarios).filter(name => {
-      if (!keyword) return true;
       const scenario = this.scenarios[name];
       const group = (typeof scenario === 'object' && !Array.isArray(scenario)) ? (scenario.group || '') : '';
+      
+      if (filterGroup && group !== filterGroup) return false;
+      if (!keyword) return true;
+      
       return name.toLowerCase().includes(keyword) || group.toLowerCase().includes(keyword);
     });
 
@@ -410,6 +425,13 @@ class ScenarioModule extends BaseModule {
       this._renderTable();
     };
 
+    // Filter Group
+    this.containerEl.querySelector('#sc-group-filter').onchange = (e) => {
+      this.selectedGroup = e.target.value;
+      this.currentPage = 1;
+      this._renderTable();
+    };
+
     // Tạo mới
     this.containerEl.querySelector('#sc-create-btn').onclick = () => this._openEditor(null);
 
@@ -454,5 +476,33 @@ class ScenarioModule extends BaseModule {
         e.currentTarget.classList.remove('show');
       }
     };
+  }
+
+  /**
+   * Trả về HTML options cho thẻ select lọc nhóm.
+   */
+  _buildGroupOptions() {
+    const groups = new Set();
+    Object.values(this.scenarios).forEach(sc => {
+      const g = (typeof sc === 'object' && !Array.isArray(sc)) ? (sc.group || '') : '';
+      if (g) groups.add(g);
+    });
+    return Array.from(groups).sort().map(g => `<option value="${this._escapeHTML(g)}">${this._escapeHTML(g)}</option>`).join('');
+  }
+
+  /**
+   * Cập nhật danh sách nhóm trong dropdown (dùng khi vừa thêm/sửa/xóa).
+   */
+  _refreshGroupFilter() {
+    const select = this.containerEl.querySelector('#sc-group-filter');
+    if (select) {
+      const currentVal = this.selectedGroup;
+      // Tránh việc ghi đè HTML gây mất focus nếu người dùng đang thao tác
+      if (document.activeElement === select) return; 
+      
+      select.innerHTML = `<option value="">Tất cả các nhóm</option>` + this._buildGroupOptions();
+      // Phục hồi lại giá trị đang được chọn
+      select.value = currentVal;
+    }
   }
 }
