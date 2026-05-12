@@ -463,7 +463,7 @@ window.GoogleAIStudioSpeechPanel = class {
     const btn = document.createElement('button');
     btn.id = 'content-helper-aistudio-speech-settings';
     btn.textContent = '🎙️ Settings';
-    btn.className = 'scenario-btn btn-tool';
+    btn.className = 'ai-gradient-border font-bold text-xs shadow-2xl hover:shadow-xl transition-all active:scale-95';
     btn.addEventListener('click', (e) => {
       if (container.dataset.isDragging !== 'true') {
         window.__helperInjected?._toggleAIStudioSpeechSettings();
