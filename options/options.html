@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Content Helper – Settings</title>
+  <meta name="description" content="Quản lý cấu hình cho Content Helper Extension">
+  <link rel="stylesheet" href="options.css">
+</head>
+
+<body>
+  <div class="app-layout">
+    <!-- ======== SIDEBAR ======== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <h1>
+          <span class="brand-icon">📤</span>
+          Content Helper
+        </h1>
+        <div class="version">v1.0.1 – Settings</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Cấu hình</div>
+
+        <button class="nav-item active" data-section="speech">
+          <span class="nav-icon">🎙️</span>
+          Speech Profiles
+        </button>
+
+        <button class="nav-item" data-section="youtube">
+          <span class="nav-icon">🌍</span>
+          YouTube Profiles
+        </button>
+
+        <button class="nav-item" data-section="scenarios">
+          <span class="nav-icon">📝</span>
+          Scenarios
+        </button>
+
+        <div class="nav-section-label" style="margin-top:16px">Khác</div>
+
+        <button class="nav-item" data-section="about">
+          <span class="nav-icon">ℹ️</span>
+          Giới thiệu
+        </button>
+      </nav>
+
+      <!-- Thông tin user -->
+      <div class="sidebar-user" id="sidebar-user" style="display:none">
+        <img id="sidebar-avatar" src="" alt="Avatar">
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">User</div>
+          <div class="user-email" id="sidebar-email">email@example.com</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ======== MAIN CONTENT ======== -->
+    <main class="main-content" id="main-content">
+      <!-- Content sẽ được inject bởi các module -->
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scenario Editor Overlay -->
+  <div class="editor-overlay" id="scenario-editor-overlay">
+    <div class="editor-panel">
+      <div class="editor-header">
+        <h3 id="editor-title">✏️ Chỉnh sửa kịch bản</h3>
+        <button class="btn btn-ghost btn-icon" id="editor-close">✕</button>
+      </div>
+      <div class="editor-body" id="editor-body"></div>
+      <div class="editor-footer">
+        <button class="btn btn-ghost" id="editor-cancel">Hủy</button>
+        <button class="btn btn-primary" id="editor-save">💾 Lưu kịch bản</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../libs/firebase-app-compat.js"></script>
+  <script src="../libs/firebase-firestore-compat.js"></script>
+  <script src="../content/firestore-helper.js"></script>
+  <script src="shared/BaseModule.js"></script>
+  <script src="modules/SpeechProfileModule.js"></script>
+  <script src="modules/YoutubeProfileModule.js"></script>
+  <script src="modules/ScenarioModule.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -30,6 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $loginBtn.addEventListener('click', startOAuth);
   $logoutBtn.addEventListener('click', doLogout);
+
+  // Mở trang Options (Settings)
+  const $settingsBtn = document.getElementById('open-settings-btn');
+  if ($settingsBtn) {
+    $settingsBtn.addEventListener('click', () => {
+      chrome.runtime.openOptionsPage();
+    });
+  }
 });
 
 function setLoading(isLoading) {

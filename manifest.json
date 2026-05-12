@@ -77,6 +77,10 @@
       "https://www.googleapis.com/auth/userinfo.profile"
     ]
   },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none';"
   }
