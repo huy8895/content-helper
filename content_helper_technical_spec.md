@@ -27,18 +27,26 @@ content-helper/
 │   ├── firestore-helper.js    # Wrapper Firebase Firestore CRUD
 │   ├── PanelState.js          # Utility lưu/restore trạng thái panel qua chrome.storage
 │   ├── PromptSequencer.js     # Engine gửi prompt tuần tự (send → wait → next)
+│   ├── FlowSequencer.js       # Engine thực thi flow liên hoàn (retry/skip logic)
 │   ├── ScenarioBuilder.js     # UI tạo/sửa/xóa scenario templates (JSON)
 │   ├── ScenarioRunner.js      # UI chạy scenario – hàng đợi, biến, vòng lặp
+│   ├── FlowRunnerPanel.js     # UI thực thi flow trên trang chat AI
 │   ├── TextSplitter.js        # Cắt văn bản dài thành chunks, gửi tuần tự
 │   ├── AudioDownloader.js     # Download TTS audio từ ChatGPT API
 │   ├── ContentCopyPanel.js    # Copy/download nội dung trả lời (TXT/ZIP)
 │   ├── GoogleAIStudioPanel.js # Cấu hình tự động voice/speaker cho AI Studio Speech
 │   ├── SRTAutomationPanel.js  # Quét và xuất file SRT phụ đề từ AI Studio
 │   ├── YoutubeStudioPanel.js  # Tự động thêm ngôn ngữ + điền metadata trên YouTube Studio
-│   └── content-helper.css     # Style toàn bộ panels (scoped CSS + custom Tailwind utilities)
+│   └── content-helper.css     # Style toàn bộ panels (AI Gradient Border, scoped CSS)
 ├── popup/
 │   ├── popup.html             # Giao diện popup – login/logout Google
 │   └── popup.js               # Logic OAuth2, sync data khi login
+├── options/                   # Trang Options – quản lý cấu hình
+│   ├── options.html           # Layout chính của trang Options
+│   ├── options.js             # Router điều khiển các module
+│   └── modules/
+│       ├── ScenarioModule.js  # Quản lý Scenario Templates
+│       └── FlowModule.js      # Quản lý Flow (Kịch bản liên hoàn)
 ├── libs/                      # Thư viện bên thứ 3 (bundled)
 │   ├── tailwind.min.js        # Tailwind CSS runtime
 │   ├── jszip.min.js           # Nén file ZIP
@@ -55,13 +63,13 @@ content-helper/
 
 | Trang | Adapter Class | Tính năng đặc thù |
 |-------|--------------|-------------------|
-| `chatgpt.com` | `ChatGPTAdapter` | Scenario, Text Split, Audio Download, Copy Content |
-| `chat.deepseek.com` | `DeepSeekAdapter` | Scenario, Copy Content |
-| `chat.qwen.ai` | `QwenAdapter` | Scenario, Copy Content |
-| `grok.com` | `GrokAdapter` | Scenario, Copy Content |
-| `aistudio.google.com` | `GoogleAIStudioAdapter` | Scenario, SRT Automation, AI Studio Settings, Collapse Code, YT Studio |
+| `chatgpt.com` | `ChatGPTAdapter` | Scenario, Flow Runner, Text Split, Audio Download, Content Copy |
+| `chat.deepseek.com` | `DeepSeekAdapter` | Scenario, Flow Runner, Content Copy |
+| `chat.qwen.ai` | `QwenAdapter` | Scenario, Flow Runner, Content Copy |
+| `grok.com` | `GrokAdapter` | Scenario, Flow Runner, Content Copy |
+| `aistudio.google.com` | `GoogleAIStudioAdapter` | Scenario, Flow Runner, SRT Automation, AI Studio Settings, Collapse Code, YT Studio |
 | `studio.youtube.com` | `YoutubeStudioAdapter` | Thêm ngôn ngữ tự động, điền metadata |
-| `gemini.google.com` | `GeminiAdapter` | Scenario, Copy Content, YT Studio |
+| `gemini.google.com` | `GeminiAdapter` | Scenario, Flow Runner, Content Copy, YT Studio |
 
 ---
 
@@ -138,10 +146,21 @@ new PromptSequencer(prompts, sendFn, waitFn, onStepCallback, scenarioName)
   .stop()
 ```
 
-- Chạy tuần tự: `send → wait → onStep → next`
-- Hỗ trợ pause/resume qua Promise
-- Gửi Chrome notification khi hoàn thành
 - Được tái sử dụng bởi cả `ScenarioRunner` và `TextSplitter`
+
+### 4.4. FlowSequencer – Engine thực thi flow liên hoàn
+
+**Kế thừa tư duy từ PromptSequencer nhưng bổ sung cơ chế điều khiển nâng cao**:
+- `start(onDone)`: Bắt đầu chạy từ bước được chỉ định
+- `retry()`: Thực thi lại bước vừa lỗi
+- `skip()`: Bỏ qua bước lỗi và tiếp tục
+- `pause()/resume()`: Tạm dừng và tiếp tục
+- `stopped`: Flag kiểm soát trạng thái dừng hoàn toàn
+
+**Workflow**: 
+1. `FlowRunnerPanel` phân rã Flow thành danh sách các prompt đơn lẻ (đã điền biến).
+2. `FlowSequencer` quản lý việc gửi từng prompt qua `ChatAdapter`.
+3. Nếu gặp lỗi hoặc timeout, sequencer dừng lại và chờ lệnh từ user (Retry/Skip).
 
 ### 4.4. State Persistence (`PanelState`)
 
@@ -163,8 +182,9 @@ PanelState.clear(key)       // Xóa
 | `gg_access_token` | Google OAuth token | popup.js |
 | `google_user_email` | Email user (cũng là userId cho Firestore) | popup.js |
 | `google_user_name`, `google_user_avatar` | Thông tin user | popup.js |
-| `scenarioTemplates` | Object chứa tất cả scenario templates | ScenarioBuilder |
+| `scenarioTemplates` | Object chứa tất cả scenario templates | ScenarioBuilder / ScenarioModule |
 | `scenarioInputValues` | Giá trị biến đã nhập cho mỗi scenario | ScenarioRunner |
+| `flowConfigs` | Danh sách Flow và cấu hình các bước | FlowModule |
 | `google_ai_studio_profiles` | Profiles cấu hình AI Studio Speech | GoogleAIStudioPanel |
 | `youtube_language_profiles` | Profiles ngôn ngữ YouTube | YoutubeStudioPanel |
 | `youtube_translation_data` | Dữ liệu dịch (title/desc) từ JSON upload | YoutubeStudioPanel |
@@ -174,6 +194,7 @@ PanelState.clear(key)       // Xóa
 | `authorization` | Authorization header ChatGPT | background.js |
 | `panelState__TextSplitter` | State panel TextSplitter | PanelState |
 | `panelState__AudioDownloader` | State panel AudioDownloader | PanelState |
+| `panelState__FlowRunner` | State panel FlowRunner | PanelState |
 
 ---
 
@@ -186,6 +207,7 @@ PanelState.clear(key)       // Xóa
 | `configs` | Scenario templates | `google_user_email` |
 | `speech_profiles` | AI Studio voice profiles | `google_user_email` |
 | `youtube_language_profiles` | YouTube language profiles | `google_user_email` |
+| `flow_configs` | Chứa danh sách Flow liên hoàn | `google_user_email` |
 
 ### Sync Flow
 ```
@@ -244,9 +266,34 @@ const data = await helper.loadUserConfig(userId);
 | `loop` | Lặp N lần, `${loopKey}` = 1, 2, 3... |
 | `list` | Lặp qua danh sách giá trị phân cách bằng dấu phẩy |
 
-### Variable Syntax
-- `${name}` → input text tự do
 - `${topic|AI,Tech,Science}` → dropdown chọn giá trị
+
+### 8.5. Flow System (Kịch bản liên hoàn)
+
+Flow là tập hợp các Scenario chạy nối tiếp nhau, cho phép ghi đè (override) các giá trị mặc định của từng bước.
+
+**Cấu trúc dữ liệu Flow**:
+```json
+{
+  "Tên Flow": {
+    "steps": [
+      { 
+        "scenarioName": "Scenario 1",
+        "defaultValues": { "var1": "value1", "var2": "value2" }
+      },
+      { 
+        "scenarioName": "Scenario 2",
+        "defaultValues": { "topic": "Tech" }
+      }
+    ]
+  }
+}
+```
+
+**Tính năng đặc thù**:
+- Reordering: Kéo thả thay đổi thứ tự bước (Drag & Drop API).
+- Override: Cho phép chỉnh sửa biến của mọi bước trước khi chạy Flow.
+- Resume from Step N: Chọn bước bắt đầu thực thi.
 
 ---
 
@@ -269,6 +316,10 @@ const data = await helper.loadUserConfig(userId);
 7. **Custom dropdown**: `.custom-dropdown-*` – dropdown tự build thay cho native select.
 
 8. **Toggle switch**: `.ts-switch` – iOS-style toggle checkbox.
+
+9. **AI Gradient Border**: `.ai-gradient-border` – Hiệu ứng viền xoay đa sắc bằng `conic-gradient` và pseudo-elements (`::before`/`::after`). Hỗ trợ auto-dark/light mode.
+
+10. **Floating Bubble**: Chế độ Compact Mode biến Tools panel thành một bong bóng nổi có thể kéo thả tự do trên màn hình.
 
 ### Quy tắc khi viết CSS cho panel:
 - **LUÔN** dùng `!important` cho mọi property (vì inject vào trang khác, CSS host có thể override)
