@@ -146,6 +146,7 @@ class BaseChatAdapter {
     if (name === 'GrokAdapter') return 'grok';
     if (name === 'GoogleAIStudioAdapter') return 'aistudio';
     if (name === 'YoutubeStudioAdapter') return 'ytstudio';
+    if (name === 'GeminiAdapter') return 'gemini';
     return '';
   }
 

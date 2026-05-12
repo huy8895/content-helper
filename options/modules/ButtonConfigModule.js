@@ -14,6 +14,7 @@ class ButtonConfigModule extends BaseModule {
       { id: 'grok', name: 'Grok' },
       { id: 'aistudio', name: 'Google AI Studio' },
       { id: 'ytstudio', name: 'YouTube Studio' },
+      { id: 'gemini', name: 'Gemini' },
     ];
 
     this.availableButtons = [

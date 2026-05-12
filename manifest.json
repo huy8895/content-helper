@@ -30,7 +30,8 @@
     "https://studio.youtube.com/*",
     "https://chat.deepseek.com/*",
     "https://chat.qwen.ai/*",
-    "https://grok.com/*"
+    "https://grok.com/*",
+    "https://gemini.google.com/*"
   ],
   "content_scripts": [
     {
