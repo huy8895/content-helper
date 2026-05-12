@@ -159,20 +159,40 @@ class ContentHelper {
   }
 
   _toggleAIStudioSettings() {
+    let panelExists = false;
+    const existingEl = document.getElementById('google-ai-studio-panel');
+    if (existingEl) {
+      existingEl.remove();
+      panelExists = true;
+    }
+
     if (this.aiStudioSettings) {
       this.aiStudioSettings.destroy();
       this.aiStudioSettings = null;
-      return;
+      panelExists = true;
     }
+
+    if (panelExists) return;
+
     this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
   }
 
   _toggleAIStudioSpeechSettings() {
+    let panelExists = false;
+    const existingEl = document.getElementById('google-ai-studio-speech-panel');
+    if (existingEl) {
+      existingEl.remove();
+      panelExists = true;
+    }
+
     if (this.aiStudioSpeechSettings) {
       this.aiStudioSpeechSettings.destroy();
       this.aiStudioSpeechSettings = null;
-      return;
+      panelExists = true;
     }
+
+    if (panelExists) return;
+
     this.aiStudioSpeechSettings = new GoogleAIStudioSpeechPanel(() => (this.aiStudioSpeechSettings = null));
   }
 
