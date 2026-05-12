@@ -54,14 +54,41 @@
   opacity: 0.8; /* Giảm độ chói để không gây phân tâm */
 }
 
-/* Nền trắng đè lên giữa panel để lộ ra viền 2px */
+/* Nền đè lên giữa panel để lộ ra viền 2px */
 .ts-panel::after {
   content: '';
   position: absolute;
   inset: 2px;
-  background: white; /* Nền panel luôn trắng để đảm bảo chữ dễ đọc */
+  background: white; /* Nền sáng mặc định */
   border-radius: inherit;
   z-index: -1;
+  transition: background 0.2s ease;
+}
+
+/* Hỗ trợ Dark Mode cho .ts-panel */
+.dark .ts-panel,
+[data-theme="dark"] .ts-panel,
+[data-color-mode="dark"] .ts-panel,
+body[class*="dark"] .ts-panel,
+html[class*="dark"] .ts-panel {
+  color: #f9fafb !important;
+}
+
+.dark .ts-panel::after,
+[data-theme="dark"] .ts-panel::after,
+[data-color-mode="dark"] .ts-panel::after,
+body[class*="dark"] .ts-panel::after,
+html[class*="dark"] .ts-panel::after {
+  background: #1f2937;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.light) body:not(.light) .ts-panel {
+    color: #f9fafb !important;
+  }
+  html:not(.light) body:not(.light) .ts-panel::after {
+    background: #1f2937;
+  }
 }
 
 /* Đảm bảo nội dung panel nổi lên trên các lớp background */
