@@ -70,9 +70,9 @@ window.ScenarioBuilder = class {
     this.el.style.maxHeight = "640px";
     this.el.innerHTML = ScenarioBuilderInnerHTML;
 
-    ChatGPTHelper.mountPanel(this.el);
-    ChatGPTHelper.makeDraggable(this.el, ".sb-title");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.mountPanel(this.el);
+    ContentHelper.makeDraggable(this.el, ".sb-title");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
     this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
@@ -100,7 +100,7 @@ window.ScenarioBuilder = class {
 
       const scoredItems = items.map(div => {
         const text = div.querySelector('.scenario-title')?.textContent || div.textContent;
-        const score = ChatGPTHelper.fuzzySearch(k, text);
+        const score = ContentHelper.fuzzySearch(k, text);
         return { div, score };
       });
 
@@ -203,13 +203,13 @@ window.ScenarioBuilder = class {
   _save() {
     const json = this._collectDataFromDOM();
     if (!json) {
-      ChatGPTHelper.showToast("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.", "warning");
+      ContentHelper.showToast("Vui lòng nhập tên kịch bản và ít nhất một câu hỏi.", "warning");
       return;
     }
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const merged = { ...(items.scenarioTemplates || {}), ...json };
       chrome.storage.local.set({ scenarioTemplates: merged }, () => {
-        ChatGPTHelper.showToast("✅ Đã lưu kịch bản.", "success");
+        ContentHelper.showToast("✅ Đã lưu kịch bản.", "success");
         this._loadScenarioList();
         this._syncToFirestore();
       });
@@ -243,7 +243,7 @@ window.ScenarioBuilder = class {
   _deleteScenario() {
     const name = this.el.querySelector("#scenario-name").value.trim();
     if (!name) {
-      ChatGPTHelper.showToast("Vui lòng nhập tên kịch bản để xoá.", "warning");
+      ContentHelper.showToast("Vui lòng nhập tên kịch bản để xoá.", "warning");
       return;
     }
     if (!confirm(`Bạn có chắc chắn muốn xoá kịch bản "${name}"?`)) return;
@@ -251,7 +251,7 @@ window.ScenarioBuilder = class {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       const templates = items.scenarioTemplates || {};
       if (!templates[name]) {
-        ChatGPTHelper.showToast("Không tìm thấy kịch bản.", "error");
+        ContentHelper.showToast("Không tìm thấy kịch bản.", "error");
         return;
       }
       delete templates[name];

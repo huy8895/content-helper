@@ -1120,7 +1120,7 @@ select option {
   }
 
   /* === HELPER BUTTONS (Outside .ts-panel) === */
-  #chatgpt-helper-button-container button {
+  #content-helper-button-container button {
     background-color: #1f2937 !important;
     /* gray-800 */
     color: #e5e7eb !important;
@@ -1129,7 +1129,7 @@ select option {
     /* gray-700 */
   }
 
-  #chatgpt-helper-button-container button:hover {
+  #content-helper-button-container button:hover {
     background-color: #374151 !important;
     /* gray-700 */
     color: #fff !important;

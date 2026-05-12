@@ -53,7 +53,7 @@
         "content/GoogleAIStudioPanel.js",
         "content/GoogleAIStudioSpeechPanel.js",
         "content/YoutubeStudioPanel.js",
-        "content/chatgpt-helper.js",
+        "content/content-helper.js",
         "content/firestore-helper.js",
         "content/PanelState.js",
         "content/PromptSequencer.js",
@@ -65,7 +65,7 @@
         "content/ChatAdapter.js"
       ],
       "css": [
-        "content/chatgpt-helper.css"
+        "content/content-helper.css"
       ],
       "run_at": "document_idle"
     }

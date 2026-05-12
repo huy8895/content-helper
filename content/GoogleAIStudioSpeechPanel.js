@@ -100,9 +100,9 @@ window.GoogleAIStudioSpeechPanel = class {
     this.el.className = "ts-panel animate-in";
     this.el.innerHTML = SPEECH_PANEL_HTML;
 
-    ChatGPTHelper.mountPanel(this.el);
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.mountPanel(this.el);
+    ContentHelper.makeDraggable(this.el, ".ts-title");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
     this.attachEvents();
   }
 
@@ -227,7 +227,7 @@ window.GoogleAIStudioSpeechPanel = class {
     const currentData = this.collectDataFromForm();
     this.profiles[this.activeProfileName] = currentData;
     this.saveAllDataToStorage(() => {
-      ChatGPTHelper.showToast(`Profile "${this.activeProfileName}" đã được cập nhật!`, "success");
+      ContentHelper.showToast(`Profile "${this.activeProfileName}" đã được cập nhật!`, "success");
       this._syncToFirestore();
     });
   }
@@ -235,17 +235,17 @@ window.GoogleAIStudioSpeechPanel = class {
   saveAsNewProfile() {
     const newName = this.el.querySelector('#new-profile-name').value.trim();
     if (!newName) {
-      ChatGPTHelper.showToast("Vui lòng nhập tên cho profile mới.", "warning");
+      ContentHelper.showToast("Vui lòng nhập tên cho profile mới.", "warning");
       return;
     }
     if (this.profiles[newName]) {
-      ChatGPTHelper.showToast("Tên profile này đã tồn tại.", "warning");
+      ContentHelper.showToast("Tên profile này đã tồn tại.", "warning");
       return;
     }
     this.profiles[newName] = this.collectDataFromForm();
     this.activeProfileName = newName;
     this.saveAllDataToStorage(() => {
-      ChatGPTHelper.showToast(`Đã lưu profile mới: "${newName}"`, "success");
+      ContentHelper.showToast(`Đã lưu profile mới: "${newName}"`, "success");
       this.el.querySelector('#new-profile-name').value = '';
       this.updateProfileDropdown();
       this._syncToFirestore();
@@ -255,14 +255,14 @@ window.GoogleAIStudioSpeechPanel = class {
   deleteSelectedProfile() {
     const profileToDelete = this.activeProfileName;
     if (Object.keys(this.profiles).length <= 1) {
-      ChatGPTHelper.showToast("Không thể xóa profile cuối cùng.", "warning");
+      ContentHelper.showToast("Không thể xóa profile cuối cùng.", "warning");
       return;
     }
     if (confirm(`Bạn có chắc muốn xóa profile "${profileToDelete}"?`)) {
       delete this.profiles[profileToDelete];
       this.activeProfileName = Object.keys(this.profiles)[0];
       this.saveAllDataToStorage(() => {
-        ChatGPTHelper.showToast(`Đã xóa profile: "${profileToDelete}"`, "success");
+        ContentHelper.showToast(`Đã xóa profile: "${profileToDelete}"`, "success");
         this.updateProfileDropdown();
         this.fillFormWithProfile(this.activeProfileName);
         this._syncToFirestore();
@@ -454,14 +454,14 @@ window.GoogleAIStudioSpeechPanel = class {
 
   static insertSpeechPageButton() {
     console.log("🛠️ [SpeechPanel] insertSpeechPageButton called.");
-    if (document.getElementById('chatgpt-helper-aistudio-speech-settings')) {
+    if (document.getElementById('content-helper-aistudio-speech-settings')) {
       return;
     }
     console.log("🛠️ [SpeechPanel] Creating Speech Settings button...");
     const container = document.createElement("div");
-    container.id = "chatgpt-helper-button-container";
+    container.id = "content-helper-button-container";
     const btn = document.createElement('button');
-    btn.id = 'chatgpt-helper-aistudio-speech-settings';
+    btn.id = 'content-helper-aistudio-speech-settings';
     btn.textContent = '🎙️ Settings';
     btn.className = 'scenario-btn btn-tool';
     btn.addEventListener('click', (e) => {
@@ -535,7 +535,7 @@ window.GoogleAIStudioSpeechPanel = class {
         console.log("☁️ Profiles synced to Firestore successfully.");
       } catch (err) {
         console.error("❌ Firestore Sync Error:", err);
-        ChatGPTHelper.showToast("Lỗi khi đồng bộ profile lên Firestore.", "error");
+        ContentHelper.showToast("Lỗi khi đồng bộ profile lên Firestore.", "error");
       }
     });
   }

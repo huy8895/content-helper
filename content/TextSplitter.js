@@ -160,7 +160,7 @@ window.TextSplitter = class {
       });
     });
 
-    ChatGPTHelper.mountPanel(this.el);
+    ContentHelper.mountPanel(this.el);
 
     /* events */
     this.el.querySelector("#ts-split").onclick = () => this._split();
@@ -196,8 +196,8 @@ window.TextSplitter = class {
     };
     btnReset.onclick = () => this._reset();
 
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.makeDraggable(this.el, ".ts-title");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     /* Theo dõi thay đổi input + limit → update cache */
     const syncState = () => {
@@ -264,7 +264,7 @@ window.TextSplitter = class {
 
     console.log("✂️ [TextSplitter] split text", limit, "chars");
     if (!raw) {
-      ChatGPTHelper.showToast("Please paste some text first!", "warning");
+      ContentHelper.showToast("Please paste some text first!", "warning");
       return;
     }
 
@@ -391,7 +391,7 @@ window.TextSplitter = class {
 
   _startSend() {
     if (!this.chunks.length) {
-      ChatGPTHelper.showToast("No chunks – bấm Split trước đã!", "warning");
+      ContentHelper.showToast("No chunks – bấm Split trước đã!", "warning");
       return;
     }
 

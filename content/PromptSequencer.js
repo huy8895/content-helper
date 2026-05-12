@@ -43,7 +43,7 @@ window.PromptSequencer = class {
         title: "Scenario Completed",
         message: `Scenario "${this.scenarioName}" has been completed!`
       });
-      ChatGPTHelper.showToast(`Scenario "${this.scenarioName}" has been completed!`, "success");
+      ContentHelper.showToast(`Scenario "${this.scenarioName}" has been completed!`, "success");
       // QUAN TRỌNG: Đánh dấu là đã dừng để _isBusy() trả về false
       this.stopped = true;
     }

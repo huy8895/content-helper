@@ -178,9 +178,9 @@ window.YoutubeStudioPanel = class {
 
     this.el.innerHTML = YTB_PANEL_HTML;
 
-    ChatGPTHelper.mountPanel(this.el);
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.mountPanel(this.el);
+    ContentHelper.makeDraggable(this.el, ".ts-title");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     const container = this.el.querySelector('#yt-language-checkbox-container');
     AVAILABLE_LANGUAGES.forEach(lang => {
@@ -259,16 +259,16 @@ window.YoutubeStudioPanel = class {
         .map(cb => cb.value);
 
       if (selectedLangs.length === 0) {
-        ChatGPTHelper.showToast("Chưa có ngôn ngữ nào được chọn.", "warning");
+        ContentHelper.showToast("Chưa có ngôn ngữ nào được chọn.", "warning");
         return;
       }
 
       const copyText = selectedLangs.join(', ');
       navigator.clipboard.writeText(copyText).then(() => {
-        ChatGPTHelper.showToast(`Đã sao chép ${selectedLangs.length} ngôn ngữ.`, "success");
+        ContentHelper.showToast(`Đã sao chép ${selectedLangs.length} ngôn ngữ.`, "success");
       }).catch(err => {
         console.error('Copy failed:', err);
-        ChatGPTHelper.showToast('Lỗi khi sao chép.', "error");
+        ContentHelper.showToast('Lỗi khi sao chép.', "error");
       });
     });
   }
@@ -357,19 +357,19 @@ window.YoutubeStudioPanel = class {
 
   saveCurrentProfile() {
     this.profiles[this.activeProfileName] = this.collectDataFromForm();
-    this.saveAllDataToStorage(() => ChatGPTHelper.showToast(`Profile "${this.activeProfileName}" updated!`, "success"));
+    this.saveAllDataToStorage(() => ContentHelper.showToast(`Profile "${this.activeProfileName}" updated!`, "success"));
   }
 
   saveAsNewProfile() {
     const newName = this.el.querySelector('#yt-new-profile-name').value.trim();
     if (this.profiles[newName] || !newName) {
-      ChatGPTHelper.showToast(newName ? "Profile name already exists." : "Please enter a new profile name.", "warning");
+      ContentHelper.showToast(newName ? "Profile name already exists." : "Please enter a new profile name.", "warning");
       return;
     }
     this.profiles[newName] = this.collectDataFromForm();
     this.activeProfileName = newName;
     this.saveAllDataToStorage(() => {
-      ChatGPTHelper.showToast(`Saved new profile: "${newName}"`, "success");
+      ContentHelper.showToast(`Saved new profile: "${newName}"`, "success");
       const input = this.el.querySelector('#yt-new-profile-name');
       if (input) input.value = '';
       this.updateProfileDropdown();
@@ -381,14 +381,14 @@ window.YoutubeStudioPanel = class {
   deleteSelectedProfile() {
     const profileToDelete = this.activeProfileName;
     if (Object.keys(this.profiles).length <= 1) {
-      ChatGPTHelper.showToast("Cannot delete the last profile.", "warning");
+      ContentHelper.showToast("Cannot delete the last profile.", "warning");
       return;
     }
     if (confirm(`Delete profile "${profileToDelete}"?`)) {
       delete this.profiles[profileToDelete];
       this.activeProfileName = Object.keys(this.profiles)[0];
       this.saveAllDataToStorage(() => {
-        ChatGPTHelper.showToast(`Deleted profile: "${profileToDelete}"`, "success");
+        ContentHelper.showToast(`Deleted profile: "${profileToDelete}"`, "success");
         this.updateProfileDropdown();
         this.fillFormWithProfile(this.activeProfileName);
       });
@@ -442,10 +442,10 @@ window.YoutubeStudioPanel = class {
 
         await chrome.storage.local.set({ [this.storageKeyTranslations]: translationsObject });
         this.el.querySelector('#yt-json-filename').textContent = `✅ Đã tải lên: ${file.name}`;
-        ChatGPTHelper.showToast('Đã lưu dữ liệu dịch thuật thành công!', "success");
+        ContentHelper.showToast('Đã lưu dữ liệu dịch thuật thành công!', "success");
       } catch (err) {
         this.el.querySelector('#yt-json-filename').textContent = `❌ Lỗi đọc file`;
-        ChatGPTHelper.showToast('Lỗi: File JSON không hợp lệ hoặc không đúng định dạng mảng.', "error");
+        ContentHelper.showToast('Lỗi: File JSON không hợp lệ hoặc không đúng định dạng mảng.', "error");
         console.error("JSON Process Error:", err);
       }
     };
@@ -555,7 +555,7 @@ window.YoutubeStudioPanel = class {
         // === KẾT THÚC LOGIC MỚI ===
 
       } else {
-        ChatGPTHelper.showToast(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key: '${jsonKey}').`, "warning");
+        ContentHelper.showToast(`Không tìm thấy dữ liệu cho ngôn ngữ '${uiLanguageName}' (key: '${jsonKey}').`, "warning");
       }
     });
 

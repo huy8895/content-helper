@@ -79,9 +79,9 @@ window.AudioDownloader = class {
       <div id="ad-list" class="ts-results flex-1 overflow-y-auto pr-1 bg-white rounded-xl border border-gray-50 p-1.5 custom-scrollbar"></div>
     `;
 
-    ChatGPTHelper.mountPanel(this.el);
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.mountPanel(this.el);
+    ContentHelper.makeDraggable(this.el, ".ts-title");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     // Set saved voice and format
     this.el.querySelector("#ad-voice").value = this.savedState.voice || 'shade';
@@ -285,7 +285,7 @@ window.AudioDownloader = class {
       .map(r => r.dataset.mid);
 
     if (!ids.length) {
-      ChatGPTHelper.showToast('Chọn ít nhất 1 mục để zip', "warning");
+      ContentHelper.showToast('Chọn ít nhất 1 mục để zip', "warning");
       // Phục hồi UI nếu không có mục nào
       dlAllBtn.textContent = 'Download All';
       dlAllBtn.disabled = false;
@@ -311,7 +311,7 @@ window.AudioDownloader = class {
         this._syncState();
         // this._renderRows(this._lastMessages); // hoặc reload list
       } else {
-        ChatGPTHelper.showToast('Zip thất bại: ' + res.error, "error");
+        ContentHelper.showToast('Zip thất bại: ' + res.error, "error");
       }
 
       // 6) Phục hồi UI cho nút Download All

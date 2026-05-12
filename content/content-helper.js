@@ -10,11 +10,11 @@
  */
 
 /*************************
- * ChatGPTHelper (root)  *
+ * ContentHelper (root)  *
  *************************/
-class ChatGPTHelper {
+class ContentHelper {
   constructor() {
-    console.log("🚀 [ChatGPTHelper] Helper loaded");
+    console.log("🚀 [ContentHelper] Helper loaded");
     /** @type {ScenarioBuilder|null} */
     this.builder = null;
     /** @type {ScenarioRunner|null} */
@@ -48,9 +48,9 @@ class ChatGPTHelper {
       ;
     this._observer.observe(document.body, { childList: true, subtree: true });
 
-    if (!document.getElementById('chatgpt-helper-panel-bar')) {
+    if (!document.getElementById('content-helper-panel-bar')) {
       const bar = document.createElement('div');
-      bar.id = 'chatgpt-helper-panel-bar';
+      bar.id = 'content-helper-panel-bar';
       // Tailwind: fixed at bottom, centered, gap between panels, high z-index
       bar.className = 'fixed bottom-[90px] left-5 right-5 flex items-end gap-5 pointer-events-none justify-center z-[2147483647]';
       document.body.appendChild(bar);
@@ -58,11 +58,11 @@ class ChatGPTHelper {
 
     // ⌨️  ESC → đóng panel trên cùng
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') ChatGPTHelper.closeTopPanel();
+      if (e.key === 'Escape') ContentHelper.closeTopPanel();
     });
   }
 
-  /* ngay trong class ChatGPTHelper (ngoài mọi hàm) */
+  /* ngay trong class ContentHelper (ngoài mọi hàm) */
   static zTop = 2147483000;   // cao nhưng vẫn < 2^31-1 để còn ++
 
   /* UI helpers */
@@ -72,7 +72,7 @@ class ChatGPTHelper {
     btn.textContent = text;
     btn.className = className;
     btn.addEventListener("click", (e) => {
-      console.log(`🔘 [ChatGPTHelper] Click ${text}`);
+      console.log(`🔘 [ContentHelper] Click ${text}`);
       e.preventDefault();
       e.stopPropagation();
       onClick();
@@ -82,25 +82,25 @@ class ChatGPTHelper {
 
   _toggleBuilder() {
     if (this.builder) {
-      console.log("❌ [ChatGPTHelper] Closing ScenarioBuilder");
+      console.log("❌ [ContentHelper] Closing ScenarioBuilder");
       this.builder.destroy();
       this.builder = null;
       return;
     }
-    console.log("📝 [ChatGPTHelper] Opening ScenarioBuilder");
+    console.log("📝 [ContentHelper] Opening ScenarioBuilder");
     this.builder = new ScenarioBuilder(() => (this.builder = null));
   }
 
   /* ---------- toggle splitter ---------- */
   _toggleSplitter() {
     if (this.splitter) {               // đang mở → đóng
-      console.log("❌ [ChatGPTHelper] Closing TextSplitter");
+      console.log("❌ [ContentHelper] Closing TextSplitter");
       this.splitter.destroy();
       this.splitter = null;
       return;
     }
 
-    console.log("✂️  [ChatGPTHelper] Opening TextSplitter");
+    console.log("✂️  [ContentHelper] Opening TextSplitter");
     this.splitter = new TextSplitter(() => (this.splitter = null));
   }
 
@@ -111,12 +111,12 @@ class ChatGPTHelper {
           return;
         }
       }
-      console.log("❌ [ChatGPTHelper] Closing ScenarioRunner");
+      console.log("❌ [ContentHelper] Closing ScenarioRunner");
       this.runner.destroy();
       this.runner = null;
       return;
     }
-    console.log("🚀 [ChatGPTHelper] Opening ScenarioRunner");
+    console.log("🚀 [ContentHelper] Opening ScenarioRunner");
     this.runner = new ScenarioRunner(() => (this.runner = null));
   }
 
@@ -176,7 +176,7 @@ class ChatGPTHelper {
       this.youtubePanel = new YoutubeStudioPanel(
         () => (this.youtubePanel = null));
     } else {
-      ChatGPTHelper.showToast("Lỗi: Không tìm thấy YoutubeStudioPanel.", "error");
+      ContentHelper.showToast("Lỗi: Không tìm thấy YoutubeStudioPanel.", "error");
     }
   }
 
@@ -196,7 +196,7 @@ class ChatGPTHelper {
       e.preventDefault();
 
       /* 👉 luôn đưa panel lên trên cùng */
-      ChatGPTHelper.bringToFront(el);
+      ContentHelper.bringToFront(el);
 
       const rect = el.getBoundingClientRect();
       shiftX = e.clientX - rect.left;
@@ -289,10 +289,10 @@ class ChatGPTHelper {
   static mountPanel(el) {
     el.classList.add('helper-panel');
 
-    let bar = document.getElementById('chatgpt-helper-panel-bar');
+    let bar = document.getElementById('content-helper-panel-bar');
     if (!bar) {
       bar = document.createElement('div');
-      bar.id = 'chatgpt-helper-panel-bar';
+      bar.id = 'content-helper-panel-bar';
       document.body.appendChild(bar);
     }
 
@@ -301,7 +301,7 @@ class ChatGPTHelper {
     const handle = el.querySelector('.sb-title, .sr-header, .ts-title');
     if (handle) {
       handle.style.userSelect = 'none';
-      handle.addEventListener('mousedown', () => ChatGPTHelper.bringToFront(el));
+      handle.addEventListener('mousedown', () => ContentHelper.bringToFront(el));
     }
   }
 
@@ -309,9 +309,9 @@ class ChatGPTHelper {
   /* ---------- bringToFront: luôn đưa panel lên trên cùng ---------- */
   static bringToFront(el) {
     if (el.dataset.free) {                        // panel đã “floating”
-      el.style.zIndex = ++ChatGPTHelper.zTop;    // chỉ đổi z-index
+      el.style.zIndex = ++ContentHelper.zTop;    // chỉ đổi z-index
     } else {                                       // panel còn trong thanh bar
-      const bar = document.getElementById('chatgpt-helper-panel-bar');
+      const bar = document.getElementById('content-helper-panel-bar');
 
       // Nếu đã là phần tử cuối rồi thì thôi – tránh re-append gây nháy
       if (bar.lastElementChild !== el) {
@@ -323,9 +323,9 @@ class ChatGPTHelper {
 
   static closeTopPanel() {
     const barPanels = Array.from(document.querySelectorAll(
-      '#chatgpt-helper-panel-bar .helper-panel'));
+      '#content-helper-panel-bar .helper-panel'));
     const floating = Array.from(document.querySelectorAll(
-      'body > .helper-panel:not(#chatgpt-helper-panel-bar *)'));
+      'body > .helper-panel:not(#content-helper-panel-bar *)'));
 
     // panel mở sau cùng = phần tử cuối của mảng floating, nếu không có thì lấy ở bar
     const lastEl = floating.at(-1) || barPanels.at(-1);
@@ -339,11 +339,11 @@ class ChatGPTHelper {
 
   /* 👇  thêm vào cuối class */
   destroy() {
-    console.log("❌ [ChatGPTHelper] destroy");
+    console.log("❌ [ContentHelper] destroy");
     // ngắt quan sát
     this._observer?.disconnect();
     // gỡ khung nút nếu còn
-    document.getElementById('chatgpt-helper-button-container')?.remove();
+    document.getElementById('content-helper-button-container')?.remove();
   }
 
   /**
@@ -447,9 +447,9 @@ chrome.runtime.onMessage.addListener((req) => {
   }
 });
 
-// Thay thế hàm này trong file chatgpt-helper.js
+// Thay thế hàm này trong file content-helper.js
 
-// Thay thế hàm này trong file chatgpt-helper.js
+// Thay thế hàm này trong file content-helper.js
 
 async function _downloadFromFirestore() {
   console.log("☁️ [Firestore Sync] Starting download for all configs...");
@@ -503,7 +503,7 @@ chrome.storage.local.get('gg_access_token', data => {
 
 function showButtons() {
   if (window.__helperInjected) return;       // đã có → thoát
-  window.__helperInjected = new ChatGPTHelper();
+  window.__helperInjected = new ContentHelper();
 }
 
 function hideButtons() {

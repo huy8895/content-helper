@@ -23,7 +23,7 @@ content-helper/
 │   └── background.js          # Service Worker – xử lý download audio, bắt headers, notifications
 ├── content/                   # Content Scripts – inject vào các trang AI
 │   ├── ChatAdapter.js         # Adapter Pattern – abstract interface cho mỗi trang AI
-│   ├── chatgpt-helper.js      # Root class (ChatGPTHelper) – quản lý lifecycle toàn bộ panels
+│   ├── content-helper.js      # Root class (ContentHelper) – quản lý lifecycle toàn bộ panels
 │   ├── firestore-helper.js    # Wrapper Firebase Firestore CRUD
 │   ├── PanelState.js          # Utility lưu/restore trạng thái panel qua chrome.storage
 │   ├── PromptSequencer.js     # Engine gửi prompt tuần tự (send → wait → next)
@@ -35,7 +35,7 @@ content-helper/
 │   ├── GoogleAIStudioPanel.js # Cấu hình tự động voice/speaker cho AI Studio Speech
 │   ├── SRTAutomationPanel.js  # Quét và xuất file SRT phụ đề từ AI Studio
 │   ├── YoutubeStudioPanel.js  # Tự động thêm ngôn ngữ + điền metadata trên YouTube Studio
-│   └── chatgpt-helper.css     # Style toàn bộ panels (scoped CSS + custom Tailwind utilities)
+│   └── content-helper.css     # Style toàn bộ panels (scoped CSS + custom Tailwind utilities)
 ├── popup/
 │   ├── popup.html             # Giao diện popup – login/logout Google
 │   └── popup.js               # Logic OAuth2, sync data khi login
@@ -100,7 +100,7 @@ BaseChatAdapter (abstract)
 6. Thêm class vào mảng `ADAPTER_CTORS`
 7. Thêm URL pattern vào `manifest.json` → `host_permissions` + `content_scripts.matches`
 
-### 4.2. Panel System (`ChatGPTHelper` + các Panel class)
+### 4.2. Panel System (`ContentHelper` + các Panel class)
 
 **Lifecycle Pattern**:
 ```
@@ -111,12 +111,12 @@ constructor(onClose) → _render() → [user interaction] → destroy()
 - `constructor(onClose)`: nhận callback khi đóng
 - `_render()`: tạo DOM element, gán vào `this.el`
 - `destroy()`: xóa DOM, gọi `onClose()`
-- Sử dụng `ChatGPTHelper.mountPanel(el)` để đưa panel vào bar
-- Sử dụng `ChatGPTHelper.makeDraggable(el, handleSelector)` cho drag
-- Sử dụng `ChatGPTHelper.addCloseButton(el, onClose)` cho nút đóng
+- Sử dụng `ContentHelper.mountPanel(el)` để đưa panel vào bar
+- Sử dụng `ContentHelper.makeDraggable(el, handleSelector)` cho drag
+- Sử dụng `ContentHelper.addCloseButton(el, onClose)` cho nút đóng
 - `_isBusy()` (optional): trả về `true` khi đang xử lý → hiện confirm khi đóng
 
-**Toggle Pattern** (trong `ChatGPTHelper`):
+**Toggle Pattern** (trong `ContentHelper`):
 ```javascript
 _toggleXxx() {
   if (this.xxx) {
@@ -256,7 +256,7 @@ const data = await helper.loadUserConfig(userId);
 
 1. **Tailwind Runtime** (`tailwind.min.js`): Inject vào content scripts, dùng cho ChatGPT/DeepSeek/Qwen/Grok.
 
-2. **Scoped CSS utilities** (`ts-*` prefix): Cho các trang có CSS xung đột (YouTube Studio). Được define trong `chatgpt-helper.css`. Ví dụ: `ts-flex`, `ts-bg-gray-50`, `ts-text-indigo-600`.
+2. **Scoped CSS utilities** (`ts-*` prefix): Cho các trang có CSS xung đột (YouTube Studio). Được define trong `content-helper.css`. Ví dụ: `ts-flex`, `ts-bg-gray-50`, `ts-text-indigo-600`.
 
 3. **`.ts-panel`**: Base class cho mọi panel. Cưỡng chế `position: fixed`, `z-index: 2147483647`, `width: 420px`, reset font/color.
 
@@ -294,10 +294,10 @@ const data = await helper.loadUserConfig(userId);
 2. Class phải có: `constructor(onClose)`, `_render()`, `destroy()`
 3. Trong `_render()`:
    - Tạo `this.el` = div container
-   - Gọi `ChatGPTHelper.mountPanel(this.el)`
-   - Gọi `ChatGPTHelper.makeDraggable(this.el, ".ts-title")`
-   - Gọi `ChatGPTHelper.addCloseButton(this.el, () => this.destroy())`
-4. Thêm `_toggleNewPanel()` vào class `ChatGPTHelper`
+   - Gọi `ContentHelper.mountPanel(this.el)`
+   - Gọi `ContentHelper.makeDraggable(this.el, ".ts-title")`
+   - Gọi `ContentHelper.addCloseButton(this.el, () => this.destroy())`
+4. Thêm `_toggleNewPanel()` vào class `ContentHelper`
 5. Thêm button config vào `BUTTONS` trong `ChatAdapter.js`
 6. Thêm button vào `getButtonConfigs()` của adapter tương ứng
 7. Thêm file vào `manifest.json` → `content_scripts.js` (đúng thứ tự dependency)
@@ -318,10 +318,10 @@ const data = await helper.loadUserConfig(userId);
 - **KHÔNG** dùng npm/package manager – thư viện bundle thủ công vào `/libs`
 - File load order trong manifest quan trọng:
   ```
-  libs → [Panel files] → chatgpt-helper.js → ChatAdapter.js
+  libs → [Panel files] → content-helper.js → ChatAdapter.js
   ```
   - `ChatAdapter.js` phải load **SAU CÙNG** trong danh sách content scripts (vì nó khởi tạo adapter và gọi `insertHelperButtons` cần các class khác đã ready)
-  - `chatgpt-helper.js` cần load sau tất cả Panel class (vì nó `new` các panel)
+  - `content-helper.js` cần load sau tất cả Panel class (vì nó `new` các panel)
   - `firestore-helper.js` cần load trước các panel dùng Firestore
 
 ### 10.5. Giao tiếp giữa các thành phần
@@ -373,7 +373,7 @@ const data = await helper.loadUserConfig(userId);
 ```
 1. User cài extension → mở popup → login Google
 2. Popup lưu token → gửi "show_buttons" đến content scripts
-3. Content script (chatgpt-helper.js) → tạo ChatGPTHelper instance
+3. Content script (content-helper.js) → tạo ContentHelper instance
 4. ChatAdapter factory chọn đúng adapter cho trang hiện tại
 5. MutationObserver detect chat UI → insertHelperButtons()
 6. _downloadFromFirestore() → sync scenarios, speech profiles, YT profiles

@@ -16,7 +16,7 @@
 // Các button chung (dùng cho mọi adapter)
 BUTTONS = {
   MANAGE_SCENARIO: {
-    id: "chatgpt-helper-button",
+    id: "content-helper-button",
     text: "🛠 Quản lý kịch bản",
     className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
     onClick: () => window.__helperInjected?._toggleBuilder(),
@@ -132,14 +132,14 @@ class BaseChatAdapter {
 
   // Hàm chèn button (dùng chung cho mọi adapter)
   insertHelperButtons() {
-    if (document.querySelector('#chatgpt-helper-button-container')) return; // Đã tồn tại
+    if (document.querySelector('#content-helper-button-container')) return; // Đã tồn tại
     const chatForm = this.getForm();
     if (!chatForm) {
       return;
     }
 
     const container = document.createElement("div");
-    container.id = "chatgpt-helper-button-container";
+    container.id = "content-helper-button-container";
     // Thêm class relative để menu absolute định vị theo container này
     container.className = "flex flex-row gap-1.5 mt-1.5 justify-center py-1.5 relative";
 
@@ -592,7 +592,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     console.log(`Hoàn tất! Đã click vào ${clickCount} nút 'collapse'.`);
     // Có thể thêm alert nếu muốn
     if (clickCount > 0) {
-      ChatGPTHelper.showToast(`Đã thu gọn ${clickCount} khối code.`, "success");
+      ContentHelper.showToast(`Đã thu gọn ${clickCount} khối code.`, "success");
     }
   }
 }
@@ -711,13 +711,13 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     const isAutofillEnabled = activeProfile.isAutofillEnabled || false;
 
     if (LANGUAGES_TO_ADD.length === 0) {
-      ChatGPTHelper.showToast(`No languages for profile "${activeProfileName}".`, "warning");
+      ContentHelper.showToast(`No languages for profile "${activeProfileName}".`, "warning");
       return;
     }
 
     const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
     if (!addLanguageBtn) {
-      ChatGPTHelper.showToast("Cannot find 'Add language' button!", "error");
+      ContentHelper.showToast("Cannot find 'Add language' button!", "error");
       return;
     }
 
@@ -758,7 +758,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
         await this.sleep(100);
       }
     }
-    ChatGPTHelper.showToast("Finished adding all configured languages!", "success");
+    ContentHelper.showToast("Finished adding all configured languages!", "success");
   }
 
   /**
@@ -835,7 +835,7 @@ class GeminiAdapter extends BaseChatAdapter {
   }
 
   tryInject() {
-    if (document.getElementById('chatgpt-helper-button-container')) return;
+    if (document.getElementById('content-helper-button-container')) return;
     const form = this.getForm();
     if (form) {
       console.log("✅ [GeminiAdapter] Đã tìm thấy khung chat -> Inject nút.");

@@ -85,9 +85,9 @@ window.ContentCopyPanel = class {
       if (filenameInput) filenameInput.value = savedFilenames;
     }
 
-    ChatGPTHelper.mountPanel(this.el);
-    ChatGPTHelper.makeDraggable(this.el, ".ts-title");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.mountPanel(this.el);
+    ContentHelper.makeDraggable(this.el, ".ts-title");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     this._renderList();
     this._bindEvents();
@@ -298,11 +298,11 @@ window.ContentCopyPanel = class {
     navigator.clipboard.writeText(text)
       .then(() => {
         console.log(successMessage);
-        ChatGPTHelper.showToast(successMessage, "success");
+        ContentHelper.showToast(successMessage, "success");
       })
       .catch(err => {
         console.error('❌ Copy failed:', err);
-        ChatGPTHelper.showToast('❌ Failed to copy text.', "error");
+        ContentHelper.showToast('❌ Failed to copy text.', "error");
       });
   }
 
@@ -322,13 +322,13 @@ window.ContentCopyPanel = class {
   _downloadZip() {
     const checkedIndices = this._getCheckedIndices();
     if (checkedIndices.length === 0) {
-      ChatGPTHelper.showToast('⚠️ Chưa chọn item nào để download.', "warning");
+      ContentHelper.showToast('⚠️ Chưa chọn item nào để download.', "warning");
       return;
     }
 
     const LibZip = window.JSZip || (typeof JSZip !== 'undefined' ? JSZip : null);
     if (!LibZip) {
-      ChatGPTHelper.showToast('JSZip library not found.', "error");
+      ContentHelper.showToast('JSZip library not found.', "error");
       return;
     }
 
@@ -374,12 +374,12 @@ window.ContentCopyPanel = class {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        ChatGPTHelper.showToast(`✅ Downloaded ZIP with ${count} files!`, "success");
+        ContentHelper.showToast(`✅ Downloaded ZIP with ${count} files!`, "success");
       });
 
     } catch (err) {
       console.error('ZIP download error:', err);
-      ChatGPTHelper.showToast("❌ ZIP error: " + err.message, "error");
+      ContentHelper.showToast("❌ ZIP error: " + err.message, "error");
     }
   }
 

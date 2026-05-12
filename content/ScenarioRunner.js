@@ -68,7 +68,7 @@ window.ScenarioRunner = class {
   constructor(onClose) {
     console.log("▶️ [ScenarioRunner] init");
     if (!window.ChatAdapter) {
-      ChatGPTHelper.showToast("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.", "error");
+      ContentHelper.showToast("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.", "error");
       throw new Error("ChatAdapter not available");
     }
 
@@ -87,7 +87,7 @@ window.ScenarioRunner = class {
     this.el.style.maxHeight = "720px";
     this.el.innerHTML = ScenarioRunnerInnerHTML;
 
-    ChatGPTHelper.mountPanel(this.el);
+    ContentHelper.mountPanel(this.el);
 
     // Tải kịch bản và thiết lập giao diện tìm kiếm mới
     this._setupScenarioSearch();
@@ -95,8 +95,8 @@ window.ScenarioRunner = class {
     // Gắn sự kiện cho các nút điều khiển
     this._attachControlEvents();
 
-    ChatGPTHelper.makeDraggable(this.el, ".sr-header");
-    ChatGPTHelper.addCloseButton(this.el, () => this.destroy());
+    ContentHelper.makeDraggable(this.el, ".sr-header");
+    ContentHelper.addCloseButton(this.el, () => this.destroy());
   }
 
   _setupScenarioSearch() {
@@ -140,7 +140,7 @@ window.ScenarioRunner = class {
 
         const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
         const scoredItems = items.map(div => {
-          const score = ChatGPTHelper.fuzzySearch(keyword, div.textContent);
+          const score = ContentHelper.fuzzySearch(keyword, div.textContent);
           return { div, score };
         });
 
@@ -273,7 +273,7 @@ window.ScenarioRunner = class {
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
 
       if (!selectedDiv) {
-        ChatGPTHelper.showToast("Vui lòng chọn một kịch bản hợp lệ từ danh sách!", "warning");
+        ContentHelper.showToast("Vui lòng chọn một kịch bản hợp lệ từ danh sách!", "warning");
         return;
       }
       const name = selectedDiv.dataset.name;
@@ -282,7 +282,7 @@ window.ScenarioRunner = class {
       this.queue.push({ name, startAt, values });
 
       this._refreshQueueUI();
-      ChatGPTHelper.showToast(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`, "success");
+      ContentHelper.showToast(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`, "success");
       this._clearVariableInputs();
     };
   }
@@ -322,7 +322,7 @@ window.ScenarioRunner = class {
       const selectedText = this.el.querySelector("#sr-scenario-search").value;
       const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
       if (!selectedDiv) {
-        ChatGPTHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
+        ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
         return;
       }
 
@@ -352,7 +352,7 @@ window.ScenarioRunner = class {
     this._updateQueueIndicator();
 
     if (bigList.length === 0) {
-      ChatGPTHelper.showToast("Không có prompt nào.", "warning");
+      ContentHelper.showToast("Không có prompt nào.", "warning");
       this._resetControls();
       return;
     }
@@ -538,7 +538,7 @@ window.ScenarioRunner = class {
     const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
     const prompts = this._expandScenario(tplArr.slice(job.startAt), job.values);
     if (prompts.length === 0) return;
-    navigator.clipboard.writeText(prompts.map(p => p.text).join('\n\n---\n\n')).then(() => ChatGPTHelper.showToast(`✅ Copied!`, "success"));
+    navigator.clipboard.writeText(prompts.map(p => p.text).join('\n\n---\n\n')).then(() => ContentHelper.showToast(`✅ Copied!`, "success"));
   }
 
   _shortenText(text, maxLength = 60) {
