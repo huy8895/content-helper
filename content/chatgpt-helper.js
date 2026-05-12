@@ -29,6 +29,9 @@ class ChatGPTHelper {
     /** @type {GoogleAIStudioPanel|null} */
     this.aiStudioSettings = null;
 
+    /** @type {GoogleAIStudioSpeechPanel|null} */
+    this.aiStudioSpeechSettings = null;
+
     /** @type {SRTAutomationPanel|null} */
     this.srtAutomation = null; // 👈 Thêm thuộc tính mới
 
@@ -143,6 +146,15 @@ class ChatGPTHelper {
       return;
     }
     this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
+  }
+
+  _toggleAIStudioSpeechSettings() {
+    if (this.aiStudioSpeechSettings) {
+      this.aiStudioSpeechSettings.destroy();
+      this.aiStudioSpeechSettings = null;
+      return;
+    }
+    this.aiStudioSpeechSettings = new GoogleAIStudioSpeechPanel(() => (this.aiStudioSpeechSettings = null));
   }
 
   _toggleSRTAutomation() {
@@ -505,6 +517,7 @@ function hideButtons() {
   h.audioDownloader?.destroy?.();
   h.srtAutomation?.destroy?.();
   h.aiStudioSettings?.destroy?.();
+  h.aiStudioSpeechSettings?.destroy?.();
 
   // ngắt observer & xóa khung nút
   h.destroy();                               // ⬅️ gọi hàm mới

@@ -503,14 +503,18 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
     if (this.isSpeechPage) {
       setTimeout(() => {
-        window.GoogleAIStudioPanel.triggerAutoSet();
+        window.GoogleAIStudioSpeechPanel.triggerAutoSet();
       }, 1500);
     }
   }
 
   insertHelperButtons() {
     if (this.isSpeechPage) {
-      window.GoogleAIStudioPanel.insertSpeechPageButton();
+      if (window.GoogleAIStudioSpeechPanel && window.GoogleAIStudioSpeechPanel.insertSpeechPageButton) {
+         window.GoogleAIStudioSpeechPanel.insertSpeechPageButton();
+      } else {
+         console.error("❌ [GoogleAIStudioAdapter] window.GoogleAIStudioSpeechPanel is undefined or missing insertSpeechPageButton");
+      }
     } else {
       super.insertHelperButtons();
     }
