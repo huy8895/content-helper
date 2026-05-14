@@ -488,10 +488,136 @@ window.GoogleAIStudioSpeechPanel = class {
       // Bước 2: Đợi textarea xuất hiện và dán nội dung clipboard vào
       await GoogleAIStudioSpeechPanel.pasteClipboardToPromptTextarea();
 
-      console.log("✅ [SpeechPanel] Auto Paste Clipboard completed.");
+      // Bước 3: Click nút "Run" để bắt đầu generate speech
+      await GoogleAIStudioSpeechPanel.clickRunButton();
+
+      // Bước 4: Đợi quá trình generate voice hoàn tất
+      await GoogleAIStudioSpeechPanel.waitForGenerationComplete();
+
+      // Bước 5: Pause audio (nếu đang tự play) và click Download
+      await GoogleAIStudioSpeechPanel.pauseAndDownloadAudio();
+
+      console.log("✅ [SpeechPanel] Auto Paste Clipboard + Run + Download completed.");
     } catch (error) {
       console.error("❌ [SpeechPanel] Auto Paste Clipboard failed:", error);
     }
+  }
+
+  /**
+   * Tìm và click nút "Run" (type="submit", class="ctrl-enter-submits") trên giao diện AI Studio.
+   * Sử dụng polling để đợi nút xuất hiện và sẵn sàng trên DOM.
+   */
+  static clickRunButton() {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50; // Tối đa 5 giây (50 x 100ms)
+
+      const pollInterval = setInterval(() => {
+        attempts++;
+
+        // Tìm nút Run bằng nhiều selector
+        const runBtn =
+          document.querySelector('button[type="submit"].ctrl-enter-submits') ||
+          document.querySelector('button.ms-button-primary[type="submit"]');
+
+        if (runBtn && runBtn.getAttribute('aria-disabled') !== 'true') {
+          clearInterval(pollInterval);
+          console.log('✅ [SpeechPanel] Found "Run" button. Clicking...');
+          runBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          setTimeout(() => resolve(), 500);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          console.warn('⚠️ [SpeechPanel] "Run" button not found or disabled after 5s.');
+          resolve(); // Không chặn luồng
+        }
+      }, 100);
+    });
+  }
+
+  // =================================================================
+  // WAIT FOR GENERATION & AUTO DOWNLOAD LOGIC
+  // =================================================================
+
+  /**
+   * Đợi quá trình generate speech hoàn tất trên Google AI Studio.
+   * Phát hiện hoàn tất bằng 2 dấu hiệu:
+   * 1. Nút Run chuyển từ type="button" (Stop) về type="submit" (Run).
+   * 2. Audio src đổi từ URL tĩnh sang data:audio/wav;base64,...
+   * Timeout tối đa: 5 phút (300 giây).
+   */
+  static waitForGenerationComplete() {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 3000; // 5 phút (3000 x 100ms)
+      const POLL_INTERVAL_MS = 100;
+
+      console.log('⏳ [SpeechPanel] Waiting for voice generation to complete...');
+
+      const pollInterval = setInterval(() => {
+        attempts++;
+
+        // Dấu hiệu 1: Nút Run trở về trạng thái submit (không còn "Stop")
+        const runBtn = document.querySelector('ms-run-button button');
+        const isStillProcessing = runBtn && runBtn.getAttribute('type') === 'button';
+
+        // Dấu hiệu 2: Audio src đã đổi sang base64 (voice đã được generate)
+        const audioEl = document.querySelector('ms-music-player audio');
+        const hasGeneratedAudio = audioEl && audioEl.src && audioEl.src.startsWith('data:audio/');
+
+        if (!isStillProcessing && hasGeneratedAudio) {
+          clearInterval(pollInterval);
+          console.log(`✅ [SpeechPanel] Voice generation completed after ${(attempts * POLL_INTERVAL_MS / 1000).toFixed(1)}s.`);
+          // Đợi thêm 1 giây cho UI ổn định hoàn toàn
+          setTimeout(() => resolve(), 1000);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          console.warn('⚠️ [SpeechPanel] Voice generation timeout after 5 minutes. Proceeding anyway...');
+          resolve();
+        }
+
+        // Log tiến trình mỗi 10 giây
+        if (attempts % 100 === 0) {
+          console.log(`⏳ [SpeechPanel] Still waiting... (${(attempts * POLL_INTERVAL_MS / 1000).toFixed(0)}s elapsed)`);
+        }
+      }, POLL_INTERVAL_MS);
+    });
+  }
+
+  /**
+   * Pause audio đang phát (nếu có) và click nút Download.
+   * Sau khi generate xong, AI Studio tự động play audio.
+   * Method này sẽ: Pause → Đợi một chút → Click Download.
+   */
+  static pauseAndDownloadAudio() {
+    return new Promise((resolve) => {
+      // Bước 1: Pause audio nếu đang play
+      const playPauseBtn = document.querySelector('ms-music-player .play-pause-button');
+      if (playPauseBtn) {
+        const iconSpan = playPauseBtn.querySelector('.ms-button-icon-symbol');
+        const isPaused = iconSpan && iconSpan.textContent.trim() === 'play_circle';
+
+        if (!isPaused) {
+          // Đang play → click để pause
+          console.log('⏸️ [SpeechPanel] Audio is playing. Clicking pause...');
+          playPauseBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        } else {
+          console.log('ℹ️ [SpeechPanel] Audio is already paused.');
+        }
+      }
+
+      // Bước 2: Đợi UI cập nhật rồi click Download
+      setTimeout(() => {
+        const downloadBtn = document.querySelector('ms-music-player .download-button');
+        if (downloadBtn && downloadBtn.getAttribute('aria-disabled') !== 'true') {
+          console.log('⬇️ [SpeechPanel] Clicking download button...');
+          downloadBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          console.log('✅ [SpeechPanel] Download triggered successfully.');
+        } else {
+          console.warn('⚠️ [SpeechPanel] Download button not found or disabled.');
+        }
+        resolve();
+      }, 500);
+    });
   }
 
   /**
@@ -518,7 +644,7 @@ window.GoogleAIStudioSpeechPanel = class {
           // Dispatch MouseEvent đầy đủ để Angular Material Dialog nhận diện
           closeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
           // Đợi UI cập nhật sau khi đóng panel
-          setTimeout(() => resolve(), 3000);
+          setTimeout(() => resolve(), 800);
         } else if (attempts >= maxAttempts) {
           clearInterval(pollInterval);
           console.warn('⚠️ [SpeechPanel] "Close panel" button not found. Proceeding anyway...');
