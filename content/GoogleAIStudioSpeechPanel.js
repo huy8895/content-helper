@@ -71,6 +71,13 @@ const SPEECH_PANEL_HTML = `
           <input type="checkbox" id="auto-set-value" class="ts-switch">
         </label>
     </div>
+
+    <div class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 bg-white hover:border-amber-100 transition-all group">
+        <label class="flex items-center justify-between w-full cursor-pointer select-none">
+          <span class="text-xs font-bold text-gray-700 group-hover:text-amber-700 transition-colors">Tự động dán Clipboard (Auto Paste)</span>
+          <input type="checkbox" id="auto-paste-clipboard" class="ts-switch">
+        </label>
+    </div>
   </div>
 
   <button id="save-settings-btn" class="w-full h-[42px] flex-shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl text-[13px] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center shadow-sm">
@@ -195,6 +202,7 @@ window.GoogleAIStudioSpeechPanel = class {
     this.el.querySelector('#voice2').value = profileData.Voice2 || '';
     this.el.querySelector('#style-instructions').value = profileData.styleInstructions || '';
     this.el.querySelector('#auto-set-value').checked = profileData.autoSetValue || false;
+    this.el.querySelector('#auto-paste-clipboard').checked = profileData.autoPasteClipboard || false;
   }
 
   switchProfile(profileName) {
@@ -212,6 +220,7 @@ window.GoogleAIStudioSpeechPanel = class {
       Voice2: this.el.querySelector('#voice2').value,
       styleInstructions: this.el.querySelector('#style-instructions').value,
       autoSetValue: this.el.querySelector('#auto-set-value').checked,
+      autoPasteClipboard: this.el.querySelector('#auto-paste-clipboard').checked,
     };
   }
 
@@ -296,7 +305,15 @@ window.GoogleAIStudioSpeechPanel = class {
           await new Promise(r => setTimeout(r, 2000));
         }
 
-        GoogleAIStudioSpeechPanel.setValueScript(activeProfile);
+        await GoogleAIStudioSpeechPanel.setValueScript(activeProfile);
+
+        // Bước cuối: Tự động dán clipboard nếu option được bật
+        if (activeProfile.autoPasteClipboard) {
+          console.log(`📋 [SpeechPanel] Auto Paste Clipboard enabled. Running paste script...`);
+          await GoogleAIStudioSpeechPanel.autoPasteClipboardToPrompt();
+        } else {
+          console.log(`ℹ️ Auto Paste Clipboard is disabled for profile "${activeProfileName}".`);
+        }
       } else {
         console.log(`ℹ️ Auto Set is disabled for profile "${activeProfileName}".`);
       }
@@ -336,7 +353,7 @@ window.GoogleAIStudioSpeechPanel = class {
       // Cập nhật Style Instructions (Sample Context)
       GoogleAIStudioSpeechPanel.setTextareaValueByAriaLabel('Sample Context', settings.styleInstructions);
 
-      console.log("✅ [SpeechPanel] All auto-set actions completed.");
+      console.log("✅ [SpeechPanel] All auto-set configuration actions completed.");
 
     } catch (error) {
       console.error("❌ [SpeechPanel] An error occurred during auto-set script:", error);
@@ -450,6 +467,140 @@ window.GoogleAIStudioSpeechPanel = class {
         element.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }, 500);
+  }
+
+  // =================================================================
+  // AUTO PASTE CLIPBOARD LOGIC
+  // =================================================================
+
+  /**
+   * Tự động click nút "Text" và dán nội dung clipboard vào textarea prompt.
+   * Luồng: Click nút Text (data-value="TEXT") -> Đợi textarea xuất hiện -> Đọc clipboard -> Điền vào textarea.
+   */
+  static async autoPasteClipboardToPrompt() {
+    try {
+      // Bước 0: Đóng panel cài đặt (nếu đang mở) trước khi thao tác
+      await GoogleAIStudioSpeechPanel.clickClosePanel();
+
+      // Bước 1: Click nút "Text" để chuyển sang chế độ nhập text
+      await GoogleAIStudioSpeechPanel.clickTextModeButton();
+
+      // Bước 2: Đợi textarea xuất hiện và dán nội dung clipboard vào
+      await GoogleAIStudioSpeechPanel.pasteClipboardToPromptTextarea();
+
+      console.log("✅ [SpeechPanel] Auto Paste Clipboard completed.");
+    } catch (error) {
+      console.error("❌ [SpeechPanel] Auto Paste Clipboard failed:", error);
+    }
+  }
+
+  /**
+   * Tìm và click nút đóng panel (aria-label="Close panel") trên giao diện AI Studio.
+   * Dùng để đóng panel cài đặt trước khi chuyển sang chế độ nhập text.
+   */
+  static clickClosePanel() {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 30; // Tối đa 3 giây (30 x 100ms)
+
+      const pollInterval = setInterval(() => {
+        attempts++;
+
+        // Tìm nút Close panel bằng nhiều selector để tăng độ tin cậy
+        const closeBtn =
+          document.querySelector('button[data-test-close-button]') ||
+          document.querySelector('button[aria-label="Close panel"]') ||
+          document.querySelector('button[mat-dialog-close]');
+
+        if (closeBtn) {
+          clearInterval(pollInterval);
+          console.log('✅ [SpeechPanel] Found "Close panel" button. Clicking...');
+          // Dispatch MouseEvent đầy đủ để Angular Material Dialog nhận diện
+          closeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          // Đợi UI cập nhật sau khi đóng panel
+          setTimeout(() => resolve(), 3000);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          console.warn('⚠️ [SpeechPanel] "Close panel" button not found. Proceeding anyway...');
+          resolve(); // Không chặn luồng, panel có thể đã đóng sẵn
+        }
+      }, 100);
+    });
+  }
+
+  /**
+   * Tìm và click vào nút "Text" (role="radio", data-value="TEXT") trên giao diện AI Studio.
+   * Sử dụng polling để đợi nút xuất hiện trên DOM.
+   */
+  static clickTextModeButton() {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50; // Tối đa 5 giây (50 x 100ms)
+
+      const pollInterval = setInterval(() => {
+        attempts++;
+
+        // Tìm nút Text bằng thuộc tính data-value="TEXT"
+        const textButton = document.querySelector('button[data-value="TEXT"]');
+        if (textButton) {
+          clearInterval(pollInterval);
+          console.log('✅ [SpeechPanel] Found "Text" button. Clicking...');
+          textButton.click();
+          // Đợi UI cập nhật sau khi click
+          setTimeout(() => resolve(), 500);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          console.warn('⚠️ [SpeechPanel] "Text" button not found after 5s. Proceeding anyway...');
+          resolve(); // Không reject để không chặn luồng, có thể textarea đã hiện sẵn
+        }
+      }, 100);
+    });
+  }
+
+  /**
+   * Đọc nội dung clipboard và dán vào textarea có aria-label="Enter a prompt".
+   * Sử dụng Clipboard API để đọc text từ clipboard.
+   */
+  static pasteClipboardToPromptTextarea() {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50; // Tối đa 5 giây
+
+      const pollInterval = setInterval(async () => {
+        attempts++;
+
+        // Tìm textarea với aria-label="Enter a prompt"
+        const textarea = document.querySelector('textarea[aria-label="Enter a prompt"]');
+        if (textarea) {
+          clearInterval(pollInterval);
+          try {
+            // Đọc nội dung từ clipboard
+            const clipboardText = await navigator.clipboard.readText();
+            if (!clipboardText || clipboardText.trim() === '') {
+              console.warn('⚠️ [SpeechPanel] Clipboard is empty. Skipping paste.');
+              return resolve();
+            }
+
+            // Điền nội dung clipboard vào textarea
+            textarea.value = clipboardText;
+            // Dispatch events để Angular nhận diện thay đổi
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            textarea.focus();
+
+            console.log(`✅ [SpeechPanel] Pasted ${clipboardText.length} characters from clipboard.`);
+            resolve();
+          } catch (clipError) {
+            console.error('❌ [SpeechPanel] Cannot read clipboard:', clipError);
+            reject(clipError);
+          }
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          console.error('❌ [SpeechPanel] Prompt textarea not found after 5s.');
+          reject(new Error('Prompt textarea not found'));
+        }
+      }, 100);
+    });
   }
 
   static insertSpeechPageButton() {

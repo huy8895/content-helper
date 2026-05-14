@@ -69,12 +69,20 @@ class SpeechProfileModule extends BaseModule {
             <textarea class="form-textarea" id="sp-style" placeholder="Nhập hướng dẫn phong cách..."></textarea>
           </div>
 
-          <label class="toggle-wrapper" style="margin-bottom:20px">
+          <label class="toggle-wrapper" style="margin-bottom:12px">
             <div>
               <div class="toggle-label">Tự động cấu hình (Auto Set)</div>
               <div class="toggle-desc">Tự động thiết lập voice và speaker khi mở AI Studio</div>
             </div>
             <input type="checkbox" class="toggle-switch" id="sp-auto-set">
+          </label>
+
+          <label class="toggle-wrapper" style="margin-bottom:20px">
+            <div>
+              <div class="toggle-label">Tự động dán Clipboard (Auto Paste)</div>
+              <div class="toggle-desc">Tự động click nút Text và dán nội dung clipboard vào prompt</div>
+            </div>
+            <input type="checkbox" class="toggle-switch" id="sp-auto-paste">
           </label>
 
           <button class="btn btn-primary" id="sp-save-btn" style="width:100%">
@@ -101,6 +109,7 @@ class SpeechProfileModule extends BaseModule {
     this.containerEl.querySelector('#sp-voice2').value = p.Voice2 || '';
     this.containerEl.querySelector('#sp-style').value = p.styleInstructions || '';
     this.containerEl.querySelector('#sp-auto-set').checked = p.autoSetValue || false;
+    this.containerEl.querySelector('#sp-auto-paste').checked = p.autoPasteClipboard || false;
     this.containerEl.querySelector('#sp-current-name').textContent = profileName;
   }
 
@@ -116,6 +125,7 @@ class SpeechProfileModule extends BaseModule {
       Voice2: this.containerEl.querySelector('#sp-voice2').value,
       styleInstructions: this.containerEl.querySelector('#sp-style').value,
       autoSetValue: this.containerEl.querySelector('#sp-auto-set').checked,
+      autoPasteClipboard: this.containerEl.querySelector('#sp-auto-paste').checked,
     };
   }
 
