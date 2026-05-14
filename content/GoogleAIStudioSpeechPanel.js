@@ -591,23 +591,36 @@ window.GoogleAIStudioSpeechPanel = class {
   static pauseAndDownloadAudio() {
     return new Promise((resolve) => {
       // Bước 1: Pause audio nếu đang play
-      const playPauseBtn = document.querySelector('ms-music-player .play-pause-button');
-      if (playPauseBtn) {
-        const iconSpan = playPauseBtn.querySelector('.ms-button-icon-symbol');
-        const isPaused = iconSpan && iconSpan.textContent.trim() === 'play_circle';
+      // Tìm nút pause bằng nhiều selector để tăng độ tin cậy
+      const playPauseBtn =
+        document.querySelector('button[aria-label="Pause"]') ||
+        document.querySelector('.play-pause-button') ||
+        document.querySelector('ms-music-player button.play-pause-button');
 
-        if (!isPaused) {
+      console.log('🔍 [SpeechPanel] Play/Pause button found:', !!playPauseBtn);
+
+      if (playPauseBtn) {
+        const ariaLabel = playPauseBtn.getAttribute('aria-label');
+        console.log(`🔍 [SpeechPanel] Button aria-label: "${ariaLabel}"`);
+
+        if (ariaLabel === 'Pause') {
           // Đang play → click để pause
           console.log('⏸️ [SpeechPanel] Audio is playing. Clicking pause...');
           playPauseBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
         } else {
-          console.log('ℹ️ [SpeechPanel] Audio is already paused.');
+          console.log('ℹ️ [SpeechPanel] Audio is already paused or not playing.');
         }
+      } else {
+        console.warn('⚠️ [SpeechPanel] Play/Pause button not found.');
       }
 
       // Bước 2: Đợi UI cập nhật rồi click Download
       setTimeout(() => {
-        const downloadBtn = document.querySelector('ms-music-player .download-button');
+        const downloadBtn =
+          document.querySelector('button[aria-label="Download"]') ||
+          document.querySelector('.download-button') ||
+          document.querySelector('ms-music-player .download-button');
+
         if (downloadBtn && downloadBtn.getAttribute('aria-disabled') !== 'true') {
           console.log('⬇️ [SpeechPanel] Clicking download button...');
           downloadBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
