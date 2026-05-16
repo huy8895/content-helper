@@ -667,7 +667,8 @@ body {
   box-shadow: 0 16px 48px -8px rgba(0,0,0,0.18);
   width: 920px;
   max-width: 94vw;
-  max-height: 88vh;
+  height: 96vh;
+  max-height: 96vh;
   display: flex;
   flex-direction: column;
   animation: editorIn 0.2s ease-out;

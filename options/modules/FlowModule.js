@@ -179,18 +179,14 @@ class FlowModule extends BaseModule {
     }
 
     // Lọc các scenario có 1 câu hỏi
-    const singleQScenarios = [];
+    this.singleQScenarios = [];
     Object.keys(this.allScenarios).forEach(scName => {
       const raw = this.allScenarios[scName];
       const questions = Array.isArray(raw) ? raw : (raw.questions || []);
+      const group = (typeof raw === 'object' && !Array.isArray(raw)) ? (raw.group || '') : '';
       if (questions.length === 1) {
-        singleQScenarios.push(scName);
+        this.singleQScenarios.push({ name: scName, group });
       }
-    });
-
-    let scOptionsHTML = '<option value="">-- Chọn Scenario (1 câu hỏi) --</option>';
-    singleQScenarios.forEach(sc => {
-      scOptionsHTML += `<option value="${this._escapeHTML(sc)}">${this._escapeHTML(sc)}</option>`;
     });
 
     // Cấu trúc editor
@@ -219,8 +215,6 @@ class FlowModule extends BaseModule {
         <!-- Vùng chứa các steps (drag drop) -->
         <div class="editor-questions custom-scroll" id="flow-ed-steps" style="flex:1; overflow-y:auto; gap:8px; display:flex; flex-direction:column; padding-right:4px;"></div>
       </div>
-      <!-- Lưu trữ html options để dùng khi add step -->
-      <template id="sc-options-template">${scOptionsHTML}</template>
     `;
 
     const sContainer = body.querySelector('#flow-ed-steps');
@@ -255,7 +249,7 @@ class FlowModule extends BaseModule {
     const div = document.createElement('div');
     div.className = 'flow-step-item';
     div.setAttribute('draggable', 'true');
-    // Styling cơ bản cho step (có thể bổ sung ở CSS)
+    // Styling cơ bản cho step
     div.style.cssText = `
       background: var(--color-bg);
       border: 1px solid var(--color-border);
@@ -268,29 +262,141 @@ class FlowModule extends BaseModule {
       position: relative;
     `;
 
-    const optionsTemplate = document.getElementById('sc-options-template').innerHTML;
-
     div.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="cursor:grab; padding:4px; opacity:0.5;">☰</div>
-        <select class="form-select flow-sc-select" style="flex:1; height:32px; font-size:12px; font-weight:bold;">
-          ${optionsTemplate}
-        </select>
+        
+        <div class="flow-sc-dropdown-container" style="flex:1; position:relative;">
+          <div class="flow-sc-display" style="height:32px; border:1px solid var(--color-border); border-radius:4px; padding:0 8px; display:flex; align-items:center; font-size:12px; font-weight:bold; cursor:pointer; background:var(--color-bg); justify-content:space-between;">
+            <span class="flow-sc-selected-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; display:flex; align-items:center;">-- Chọn Scenario (1 câu hỏi) --</span>
+            <span style="font-size:10px; color:var(--color-text-muted);">▼</span>
+          </div>
+          <div class="flow-sc-menu" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--color-bg); border:1px solid var(--color-border); border-radius:4px; margin-top:4px; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:250px; flex-direction:column;">
+            <div style="padding:8px; border-bottom:1px solid var(--color-border);">
+               <div class="search-box" style="margin:0; padding:0; height:28px; border-radius:4px; background:var(--color-bg-secondary); position:relative; display:flex; align-items:center;">
+                 <span class="search-icon" style="font-size:12px; padding-left:8px; position:absolute;">🔍</span>
+                 <input type="text" class="flow-sc-search" placeholder="Tìm kịch bản..." style="font-size:12px; padding-left:28px; height:100%; width:100%; border:none; background:transparent; outline:none; color:var(--color-text);">
+               </div>
+            </div>
+            <div class="flow-sc-options custom-scroll" style="overflow-y:auto; flex:1; padding:4px 0;">
+            </div>
+          </div>
+          <input type="hidden" class="flow-sc-value flow-sc-select" value="">
+        </div>
+
         <button class="btn btn-ghost btn-xs flow-remove-step" style="color:var(--color-text-muted); font-size:16px;">✕</button>
       </div>
       <div class="flow-step-vars" style="display:flex; flex-direction:column; gap:6px; margin-top:4px; padding-left:24px;">
-        <!-- Vùng render input config biến -->
       </div>
     `;
 
-    const selectEl = div.querySelector('.flow-sc-select');
+    // Dropdown Logic
+    const dropdownContainer = div.querySelector('.flow-sc-dropdown-container');
+    const displayEl = div.querySelector('.flow-sc-display');
+    const textEl = div.querySelector('.flow-sc-selected-text');
+    const menuEl = div.querySelector('.flow-sc-menu');
+    const searchInput = div.querySelector('.flow-sc-search');
+    const optionsContainer = div.querySelector('.flow-sc-options');
+    const hiddenInput = div.querySelector('.flow-sc-value');
+
+    const renderOptions = (keyword = '') => {
+      optionsContainer.innerHTML = '';
+      const kw = keyword.toLowerCase();
+      this.singleQScenarios.forEach(sc => {
+        const scName = sc.name;
+        const scGroup = sc.group;
+        const searchStr = `${scGroup} ${scName}`.toLowerCase();
+        
+        if (kw && !searchStr.includes(kw)) return;
+        
+        const opt = document.createElement('div');
+        opt.className = 'flow-sc-option';
+        opt.style.cssText = 'padding:8px 12px; font-size:12px; cursor:pointer; color:var(--color-text); border-bottom: 1px solid var(--color-border); display:flex; align-items:center; gap:6px;';
+        
+        let contentHTML = '';
+        if (scGroup) {
+          contentHTML += `<span style="background:var(--color-bg-secondary); border:1px solid var(--color-border); border-radius:4px; padding:2px 6px; font-size:10px; font-weight:bold; color:var(--color-text-muted);">${this._escapeHTML(scGroup)}</span>`;
+        }
+        contentHTML += `<span>${this._escapeHTML(scName)}</span>`;
+        opt.innerHTML = contentHTML;
+        
+        opt.onmouseenter = () => opt.style.background = 'var(--color-bg-hover)';
+        opt.onmouseleave = () => opt.style.background = 'transparent';
+
+        opt.onclick = (e) => {
+          e.stopPropagation();
+          hiddenInput.value = scName;
+          
+          textEl.innerHTML = '';
+          if (scGroup) {
+            const groupSpan = document.createElement('span');
+            groupSpan.style.cssText = 'background:var(--color-bg-secondary); border:1px solid var(--color-border); border-radius:4px; padding:1px 4px; font-size:9px; font-weight:bold; margin-right:6px; color:var(--color-text-muted); flex-shrink:0;';
+            groupSpan.textContent = scGroup;
+            textEl.appendChild(groupSpan);
+          }
+          const nameSpan = document.createElement('span');
+          nameSpan.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+          nameSpan.textContent = scName;
+          textEl.appendChild(nameSpan);
+
+          menuEl.style.display = 'none';
+          hiddenInput.dispatchEvent(new Event('change'));
+        };
+        optionsContainer.appendChild(opt);
+      });
+      if (optionsContainer.children.length === 0) {
+        optionsContainer.innerHTML = '<div style="padding:8px 12px; font-size:12px; color:var(--color-text-muted); text-align:center;">Không tìm thấy</div>';
+      }
+    };
+
+    displayEl.onclick = (e) => {
+      e.stopPropagation();
+      const isVisible = menuEl.style.display === 'flex';
+      
+      document.querySelectorAll('.flow-sc-menu').forEach(menu => menu.style.display = 'none');
+      
+      if (!isVisible) {
+        menuEl.style.display = 'flex';
+        searchInput.value = '';
+        renderOptions('');
+        setTimeout(() => searchInput.focus(), 50);
+      }
+    };
+
+    searchInput.oninput = (e) => renderOptions(e.target.value);
+    searchInput.onclick = (e) => e.stopPropagation();
+
+    // Prevent drag behavior when interacting with dropdown
+    dropdownContainer.addEventListener('dragstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdownContainer.contains(e.target)) {
+        menuEl.style.display = 'none';
+      }
+    });
+
     if (stepData.scenarioName) {
-      selectEl.value = stepData.scenarioName;
+      hiddenInput.value = stepData.scenarioName;
+      const foundSc = this.singleQScenarios.find(s => s.name === stepData.scenarioName);
+      
+      textEl.innerHTML = '';
+      if (foundSc && foundSc.group) {
+        const groupSpan = document.createElement('span');
+        groupSpan.style.cssText = 'background:var(--color-bg-secondary); border:1px solid var(--color-border); border-radius:4px; padding:1px 4px; font-size:9px; font-weight:bold; margin-right:6px; color:var(--color-text-muted); flex-shrink:0;';
+        groupSpan.textContent = foundSc.group;
+        textEl.appendChild(groupSpan);
+      }
+      const nameSpan = document.createElement('span');
+      nameSpan.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+      nameSpan.textContent = stepData.scenarioName;
+      textEl.appendChild(nameSpan);
     }
 
     const varsContainer = div.querySelector('.flow-step-vars');
 
-    // Hàm render biến khi chọn scenario
     const renderVars = (scName) => {
       varsContainer.innerHTML = '';
       if (!scName || !this.allScenarios[scName]) return;
@@ -299,7 +405,6 @@ class FlowModule extends BaseModule {
       const q = Array.isArray(raw) ? raw[0] : (raw.questions || [])[0];
       if (!q) return;
 
-      // Tìm các biến (ví dụ: \${topic|A,B} hoặc \${name})
       const matches = [...q.text.matchAll(/\\$\\{([^}|]+)(?:\\|([^}]+))?\\}/g)];
       
       if (matches.length > 0) {
@@ -324,11 +429,10 @@ class FlowModule extends BaseModule {
       });
     };
 
-    renderVars(selectEl.value);
+    renderVars(hiddenInput.value);
 
-    // Khi đổi scenario, render lại input biến
-    selectEl.addEventListener('change', (e) => {
-      stepData.defaultValues = {}; // Reset vars
+    hiddenInput.addEventListener('change', (e) => {
+      stepData.defaultValues = {}; 
       renderVars(e.target.value);
     });
 
