@@ -122,9 +122,10 @@ window.FlowRunnerPanel = class {
   }
 
   async _loadData() {
-    chrome.storage.local.get(["flowConfigs", "scenarioTemplates"], (result) => {
+    chrome.storage.local.get(["flowConfigs", "scenarioTemplates", "flowRunnerCache", "flowRunnerLastFlow"], (result) => {
       this.flowConfigs = result.flowConfigs || {};
       this.allScenarios = result.scenarioTemplates || {};
+      this.cachedInputs = result.flowRunnerCache || {};
 
       const selectEl = this.el.querySelector("#flow-select");
       selectEl.innerHTML = '<option value="">-- Chọn Flow --</option>';
@@ -135,12 +136,21 @@ window.FlowRunnerPanel = class {
         option.textContent = flowName;
         selectEl.appendChild(option);
       });
+      
+      const lastFlow = result.flowRunnerLastFlow;
+      if (lastFlow && this.flowConfigs[lastFlow]) {
+        selectEl.value = lastFlow;
+        this._onFlowSelected(lastFlow);
+      }
     });
   }
 
   _attachEvents() {
     const flowSelect = this.el.querySelector("#flow-select");
-    flowSelect.addEventListener("change", (e) => this._onFlowSelected(e.target.value));
+    flowSelect.addEventListener("change", (e) => {
+      chrome.storage.local.set({ flowRunnerLastFlow: e.target.value });
+      this._onFlowSelected(e.target.value);
+    });
 
     this.el.querySelector("#flow-start-btn").onclick = () => this._startFlow();
     
@@ -174,19 +184,25 @@ window.FlowRunnerPanel = class {
       this.sequencer?.skip();
     };
     
-    // Lưu tạm các giá trị khi người dùng gõ
+    // Lưu tạm các giá trị khi người dùng gõ & Cache
     this.el.querySelector("#flow-inputs").addEventListener("input", (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
         const key = e.target.dataset.key;
         if (key) {
           this.userInputs[key] = e.target.value;
+          if (this.currentFlowName) {
+            this.cachedInputs = this.cachedInputs || {};
+            this.cachedInputs[this.currentFlowName] = this.userInputs;
+            chrome.storage.local.set({ flowRunnerCache: this.cachedInputs });
+          }
         }
       }
     });
   }
 
   _onFlowSelected(flowName) {
-    this.userInputs = {}; // Reset overrides
+    this.currentFlowName = flowName;
+    this.userInputs = (this.cachedInputs && this.cachedInputs[flowName]) ? { ...this.cachedInputs[flowName] } : {};
     
     const stepSelect = this.el.querySelector("#flow-step-select");
     const inputsContainer = this.el.querySelector("#flow-inputs");
@@ -236,8 +252,9 @@ window.FlowRunnerPanel = class {
 
         const defaultValue = step.defaultValues?.[varName] || '';
         
-        // Khởi tạo giá trị ban đầu vào userInputs
-        this.userInputs[uniqueKey] = defaultValue;
+        // Dùng giá trị đã cache nếu có, ngược lại dùng mặc định
+        const finalValue = this.userInputs.hasOwnProperty(uniqueKey) ? this.userInputs[uniqueKey] : defaultValue;
+        this.userInputs[uniqueKey] = finalValue;
 
         const wrapper = document.createElement("div");
         wrapper.className = "flex flex-col gap-1";
@@ -257,13 +274,13 @@ window.FlowRunnerPanel = class {
             const option = document.createElement("option");
             option.value = opt;
             option.textContent = opt;
-            if (opt === defaultValue) option.selected = true;
+            if (opt === finalValue) option.selected = true;
             inputEl.appendChild(option);
           });
         } else {
           inputEl = document.createElement("textarea");
           inputEl.className = `${baseClasses} min-h-[40px] resize-y`;
-          inputEl.value = defaultValue;
+          inputEl.value = finalValue;
           inputEl.placeholder = "Nhập giá trị override...";
         }
 
