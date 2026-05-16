@@ -713,6 +713,21 @@ window.GoogleAIStudioSpeechPanel = class {
         if (textarea) {
           clearInterval(pollInterval);
           try {
+            // Kiểm tra document focus để tránh lỗi "Document is not focused"
+            if (!document.hasFocus()) {
+              console.warn('⚠️ [SpeechPanel] Document is not focused. Waiting for user to click the page...');
+              if (typeof ContentHelper !== 'undefined') {
+                ContentHelper.showToast('Vui lòng click vào trang AI Studio để tiếp tục tự động dán Clipboard!', 'warning');
+              }
+              await new Promise(resolveFocus => {
+                const onFocus = () => {
+                  window.removeEventListener('focus', onFocus);
+                  resolveFocus();
+                };
+                window.addEventListener('focus', onFocus);
+              });
+            }
+
             // Đọc nội dung từ clipboard
             const clipboardText = await navigator.clipboard.readText();
             if (!clipboardText || clipboardText.trim() === '') {
