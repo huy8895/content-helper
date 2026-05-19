@@ -7,6 +7,76 @@ console.log('JSZip loaded, version:', JSZip.version);
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Background service worker installed.');
 
+  // Tạo context menu "Tạo Voice" khi bôi đen văn bản
+  chrome.contextMenus.create({
+    id: 'createVoice',
+    title: 'Tạo Voice',
+    contexts: ['selection']
+  });
+  logInfo('Context menu "Tạo Voice" đã được tạo.');
+});
+
+// Xử lý khi click vào context menu "Tạo Voice"
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'createVoice' && info.selectionText) {
+    const selectedText = info.selectionText;
+    const targetUrl = 'https://my-ytb-tool.web.app/dashboard.html#processChineseText';
+
+    logInfo('Đang mở trang tạo Voice với văn bản đã chọn:', selectedText.substring(0, 100) + '...');
+
+    // Mở tab mới với URL đích
+    chrome.tabs.create({ url: targetUrl }, (newTab) => {
+      // Lắng nghe khi tab load xong để inject text
+      const listener = (tabId, changeInfo) => {
+        if (tabId === newTab.id && changeInfo.status === 'complete') {
+          // Gỡ listener sau khi đã xử lý
+          chrome.tabs.onUpdated.removeListener(listener);
+
+          // Inject script để đợi textarea xuất hiện rồi dán text
+          chrome.scripting.executeScript({
+            target: { tabId: newTab.id },
+            func: (text) => {
+              const MAX_WAIT = 15000; // Đợi tối đa 15 giây
+              const INTERVAL = 300;  // Kiểm tra mỗi 300ms
+              let elapsed = 0;
+
+              function tryPaste() {
+                const textarea = document.getElementById('rawTextInput');
+                if (textarea) {
+                  textarea.value = text;
+                  // Trigger sự kiện input để các listener/framework nhận biết thay đổi
+                  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                  textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                  // Focus vào textarea
+                  textarea.focus();
+                  console.log('✅ Đã dán văn bản vào rawTextInput thành công!');
+                  return true;
+                }
+                return false;
+              }
+
+              // Thử ngay lập tức
+              if (tryPaste()) return;
+
+              // Nếu chưa có, dùng polling để đợi textarea xuất hiện
+              console.log('⏳ Đang đợi textarea #rawTextInput xuất hiện...');
+              const timer = setInterval(() => {
+                elapsed += INTERVAL;
+                if (tryPaste()) {
+                  clearInterval(timer);
+                } else if (elapsed >= MAX_WAIT) {
+                  clearInterval(timer);
+                  console.error('❌ Timeout: Không tìm thấy textarea #rawTextInput sau ' + MAX_WAIT + 'ms');
+                }
+              }, INTERVAL);
+            },
+            args: [selectedText]
+          });
+        }
+      };
+      chrome.tabs.onUpdated.addListener(listener);
+    });
+  }
 });
 
 // ----- Logger Utility -----
