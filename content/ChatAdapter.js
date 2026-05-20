@@ -934,26 +934,41 @@ class GeminiAdapter extends BaseChatAdapter {
     }
   }
 
+  /**
+   * Lấy ô nhập liệu (textarea/editor) của Gemini
+   */
   getTextarea() {
     return document.querySelector('.ql-editor.textarea') ||
       document.querySelector('div[contenteditable="true"][role="textbox"]');
   }
 
+  /**
+   * Lấy nút Send (Gửi tin nhắn)
+   * Thay đổi: Tìm thẻ button nằm bên trong thẻ bao ngoài có class .send-button
+   */
   getSendBtn() {
-    // Nút gửi có class "send-button"
-    return document.querySelector('button.send-button');
+    return document.querySelector('.send-button button') ||
+      document.querySelector('button[aria-label*="Gửi tin nhắn"]') ||
+      document.querySelector('button[aria-label*="Send message"]') ||
+      document.querySelector('button.send-button'); // Fallback cũ
   }
 
   isCompactMode() { return true; }
 
+  /**
+   * Lấy nút Stop (Ngừng tạo câu trả lời)
+   * Tìm kiếm dựa trên class stop hoặc aria-label phù hợp
+   */
   getStopBtn() {
-    // Dựa trên HTML bạn gửi:
-    // Khi đang chạy, button có thêm class "stop" và aria-label="Ngừng tạo câu trả lời"
-    return document.querySelector('button.send-button.stop') ||
+    return document.querySelector('.send-button.stop button') ||
       document.querySelector('button[aria-label*="Ngừng tạo"]') ||
-      document.querySelector('button[aria-label*="Stop generating"]');
+      document.querySelector('button[aria-label*="Stop generating"]') ||
+      document.querySelector('button[aria-label*="Dừng"]');
   }
 
+  /**
+   * Lấy Form bao quanh khung chat
+   */
   getForm() {
     const textarea = this.getTextarea();
     if (!textarea) return null;
@@ -962,24 +977,36 @@ class GeminiAdapter extends BaseChatAdapter {
     return textarea.parentElement?.parentElement?.parentElement?.parentElement;
   }
 
+  /**
+   * Kiểm tra xem Gemini đã hoàn thành việc tạo câu trả lời chưa
+   */
   isDone() {
-    // Nếu tìm thấy nút Stop -> Tức là đang chạy -> Trả về false
+    // Nếu tìm thấy nút Stop -> Chắc chắn đang chạy -> Trả về false
     const stopBtn = this.getStopBtn();
     if (stopBtn) return false;
 
-    // Nếu không có nút Stop, kiểm tra xem nút Gửi có tồn tại và sẵn sàng không
-    // Lưu ý: Khi Gemini đang suy nghĩ (nhưng chưa in text), nút stop có thể chưa hiện ngay
-    // nhưng nút send sẽ bị ẩn hoặc disabled.
+    // Lấy nút Send
     const sendBtn = this.getSendBtn();
+    if (!sendBtn) return false;
 
-    // Đã xong khi: Không có nút Stop VÀ Nút Send đang hiển thị (không bị hidden)
-    return !stopBtn && sendBtn && !sendBtn.classList.contains('hidden');
+    // Kiểm tra xem nút Send hoặc container của nó có hiển thị không
+    const container = sendBtn.closest('.send-button-container');
+    const isVisible = !sendBtn.classList.contains('hidden') && 
+                      (!container || container.classList.contains('visible') || !container.classList.contains('hidden'));
+
+    return isVisible;
   }
 
+  /**
+   * Lấy tất cả các phần tử chứa câu trả lời của Gemini
+   */
   getContentElements() {
     return Array.from(document.querySelectorAll('message-content'));
   }
 
+  /**
+   * Điền nội dung tin nhắn và click nút Gửi
+   */
   sendMessage(text) {
     console.log("📨 [GeminiAdapter] Gửi tin:", text);
     const el = this.getTextarea();
@@ -992,11 +1019,19 @@ class GeminiAdapter extends BaseChatAdapter {
 
     setTimeout(() => {
       const btn = this.getSendBtn();
-      if (btn && btn.getAttribute('aria-disabled') !== 'true') {
-        btn.click();
-      } else {
-        // Fallback click mạnh hơn nếu state chưa cập nhật kịp
-        btn?.click();
+      if (btn) {
+        // Kiểm tra xem nút bấm hoặc thẻ bao ngoài gem-icon-button có bị disabled/aria-disabled hay không
+        const wrapper = btn.closest('gem-icon-button') || btn;
+        const isDisabled = btn.disabled || 
+                           btn.getAttribute('aria-disabled') === 'true' || 
+                           wrapper.getAttribute('aria-disabled') === 'true';
+
+        if (!isDisabled) {
+          btn.click();
+        } else {
+          // Fallback click nếu state chưa cập nhật kịp
+          btn.click();
+        }
       }
     }, 500);
 
