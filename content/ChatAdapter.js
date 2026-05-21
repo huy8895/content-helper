@@ -175,7 +175,7 @@ class BaseChatAdapter {
     if (platformId && window.__buttonConfigs) {
       if (window.__buttonConfigs[platformId]) {
         const platformConfig = window.__buttonConfigs[platformId];
-        
+
         let allowedKeys = [];
         if (Array.isArray(platformConfig)) {
           allowedKeys = platformConfig; // Legacy array
@@ -184,7 +184,7 @@ class BaseChatAdapter {
           allowedKeys = platformConfig.buttons || [];
           isCompact = !!platformConfig.compactMode;
         }
-        
+
         buttons = allowedKeys.map(key => BUTTONS[key]).filter(Boolean);
       } else {
         // Có tồn tại config tổng nhưng platform này không có key => coi như đã bị disable hoàn toàn (với dữ liệu mới)
@@ -644,6 +644,15 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
   getContentElements() {
     if (this.isSpeechPage) return [];
+
+    // Tìm các phần tử text chunk của Model trong giao diện chat mới (chứa nội dung phản hồi của AI)
+    const newElements = Array.from(document.querySelectorAll('ms-chat-turn .model-prompt-container ms-text-chunk'));
+    if (newElements.length > 0) {
+      // Loại bỏ các text chunk nằm bên trong phần suy nghĩ (ms-thought-chunk) của AI
+      return newElements.filter(el => !el.closest('ms-thought-chunk'));
+    }
+
+    // Phương án dự phòng (fallback) cho giao diện cũ sử dụng class output-chunk
     return Array.from(document.querySelectorAll('div.output-chunk'));
   }
 
@@ -652,6 +661,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
     return [
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.COPY_CONTENT,   // Thêm nút Copy Content để người dùng có thể mở bảng copy tin nhắn
       BUTTONS.SRT_AUTOMATION, // 👈 Thêm nút mới
       BUTTONS.AI_STUDIO_SETTINGS,
       BUTTONS.COLLAPSE_CODE,
@@ -991,8 +1001,8 @@ class GeminiAdapter extends BaseChatAdapter {
 
     // Kiểm tra xem nút Send hoặc container của nó có hiển thị không
     const container = sendBtn.closest('.send-button-container');
-    const isVisible = !sendBtn.classList.contains('hidden') && 
-                      (!container || container.classList.contains('visible') || !container.classList.contains('hidden'));
+    const isVisible = !sendBtn.classList.contains('hidden') &&
+      (!container || container.classList.contains('visible') || !container.classList.contains('hidden'));
 
     return isVisible;
   }
@@ -1022,9 +1032,9 @@ class GeminiAdapter extends BaseChatAdapter {
       if (btn) {
         // Kiểm tra xem nút bấm hoặc thẻ bao ngoài gem-icon-button có bị disabled/aria-disabled hay không
         const wrapper = btn.closest('gem-icon-button') || btn;
-        const isDisabled = btn.disabled || 
-                           btn.getAttribute('aria-disabled') === 'true' || 
-                           wrapper.getAttribute('aria-disabled') === 'true';
+        const isDisabled = btn.disabled ||
+          btn.getAttribute('aria-disabled') === 'true' ||
+          wrapper.getAttribute('aria-disabled') === 'true';
 
         if (!isDisabled) {
           btn.click();
