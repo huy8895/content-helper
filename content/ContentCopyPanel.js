@@ -273,7 +273,7 @@ window.ContentCopyPanel = class {
         const partLabel = `Part ${idx + 1}\n`;
         const txt = this._getText(el);
         return addPrefix ? partLabel + txt : txt;
-      }).join('\n\n');
+      }).join('\n\n==========\n\n');
 
       this._downloadFile(content, 'content.txt');
     };
