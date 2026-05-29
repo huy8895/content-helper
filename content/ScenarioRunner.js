@@ -44,12 +44,18 @@ const ScenarioRunnerInnerHTML = `
     <div id="sr-done-list" class="flex flex-wrap gap-1 mt-2 max-h-16 overflow-y-auto custom-scrollbar"></div>
   </div>
 
-  <div class="grid grid-cols-2 gap-2 mb-4">
+  <div class="grid grid-cols-3 gap-2 mb-4">
     <button id="sr-addqueue" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
       ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full text-[9px]">0</span>
     </button>
     <button id="sr-start" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-      ▶️ Bắt đầu ngay
+      ▶️ Tuần tự
+    </button>
+    <button id="sr-parallel" class="h-9 bg-amber-50 border border-amber-200 text-amber-700 font-bold rounded-lg text-[10px] hover:bg-amber-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Mỗi giá trị list chạy trên 1 tab riêng (chỉ Gemini)">
+      ⚡ Song song
+      <input type="number" id="sr-parallel-tabs" value="5" min="1" max="10"
+        class="w-8 h-6 text-center text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded-md outline-none focus:border-amber-500"
+        title="Số tab đồng thời" onclick="event.stopPropagation()" />
     </button>
   </div>
 
@@ -280,8 +286,14 @@ window.ScenarioRunner = class {
     const btnPause = this.el.querySelector('#sr-pause');
     const btnResume = this.el.querySelector('#sr-resume');
     const btnAdd = this.el.querySelector("#sr-addqueue");
+    const btnParallel = this.el.querySelector('#sr-parallel');
 
     btnStart.onclick = () => this._start();
+    btnParallel.onclick = (e) => {
+      // Không trigger khi click vào input số tab
+      if (e.target.id === 'sr-parallel-tabs') return;
+      this._startParallel();
+    };
     btnPause.onclick = () => {
       this.sequencer?.pause();
       btnPause.disabled = true;
@@ -309,6 +321,16 @@ window.ScenarioRunner = class {
       ContentHelper.showToast(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`, "success");
       this._clearVariableInputs();
     };
+
+    // Lắng nghe message PARALLEL_PROGRESS + PARALLEL_ALL_DONE từ background
+    this._parallelMessageListener = (msg) => {
+      if (msg.type === 'PARALLEL_PROGRESS') {
+        this._onParallelProgress(msg);
+      } else if (msg.type === 'PARALLEL_ALL_DONE') {
+        this._onParallelAllDone(msg);
+      }
+    };
+    chrome.runtime.onMessage.addListener(this._parallelMessageListener);
   }
 
   _readVariableValues() {
@@ -358,6 +380,7 @@ window.ScenarioRunner = class {
 
     this.el.querySelector("#sr-start").disabled = true;
     this.el.querySelector("#sr-addqueue").disabled = true;
+    this.el.querySelector("#sr-parallel").disabled = true;
     this.el.querySelector("#sr-pause").disabled = false;
     this.el.querySelector("#sr-resume").disabled = true;
 
@@ -397,6 +420,7 @@ window.ScenarioRunner = class {
   _resetControls() {
     this.el.querySelector("#sr-start").disabled = false;
     this.el.querySelector("#sr-addqueue").disabled = false;
+    this.el.querySelector("#sr-parallel").disabled = false;
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
   }
@@ -564,7 +588,7 @@ window.ScenarioRunner = class {
   }
 
   _isBusy() {
-    return !!this.sequencer && !this.sequencer.stopped;
+    return (!!this.sequencer && !this.sequencer.stopped) || this._parallelRunning;
   }
 
   _clearVariableInputs() {
@@ -572,10 +596,177 @@ window.ScenarioRunner = class {
     this.el.querySelector('#scenario-inputs [data-key]')?.focus();
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Parallel Execution – Chạy song song trên nhiều tab
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Bắt đầu chạy song song: phân tách list thành các task riêng biệt,
+   * gửi cho background tạo tab và điều phối.
+   * Chỉ áp dụng cho question type "list".
+   */
+  _startParallel() {
+    // 1. Lấy scenario đang chọn
+    const selectedText = this.el.querySelector("#sr-scenario-search").value;
+    const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item'))
+      .find(d => d.textContent === selectedText);
+
+    if (!selectedDiv) {
+      ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
+      return;
+    }
+
+    const name = selectedDiv.dataset.name;
+    const raw = this.templates[name];
+    if (!raw) return;
+
+    const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
+    const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
+    const values = this._readVariableValues();
+
+    // 2. Tìm question type "list" để lấy loopKey và danh sách giá trị
+    const slice = tplArr.slice(startAt);
+    const listQuestion = slice.find(q => q.type === 'list');
+
+    if (!listQuestion) {
+      ContentHelper.showToast("⚠️ Kịch bản không có bước dạng 'list'. Chỉ dạng list mới hỗ trợ chạy song song.", "warning");
+      return;
+    }
+
+    const loopKey = this._getLoopKey(listQuestion);
+    const listValuesStr = values[loopKey] || '';
+    const listValues = listValuesStr.split(',').map(v => v.trim()).filter(Boolean);
+
+    if (listValues.length === 0) {
+      ContentHelper.showToast("⚠️ Danh sách giá trị rỗng. Hãy nhập các giá trị cách nhau bằng dấu phẩy.", "warning");
+      return;
+    }
+
+    // 3. Lấy số tab đồng thời từ input
+    const maxConcurrent = parseInt(this.el.querySelector('#sr-parallel-tabs').value || '5', 10);
+
+    // 4. Xác định base URL (hiện chỉ hỗ trợ Gemini)
+    const baseUrl = 'https://gemini.google.com/app';
+
+    // 5. Tạo danh sách tasks – mỗi giá trị trong list = 1 task
+    const sessionId = `parallel_${Date.now()}`;
+    const tasks = listValues.map((itemValue, idx) => {
+      // Clone values và set loopKey = giá trị đơn (thay vì danh sách phẩy)
+      const taskValues = { ...values, [loopKey]: itemValue };
+      return {
+        taskId: `${sessionId}_${idx}_${itemValue}`,
+        scenarioName: name,
+        values: taskValues,
+        startAt: startAt
+      };
+    });
+
+    console.log(`⚡ [ScenarioRunner] Parallel: ${tasks.length} tasks, max ${maxConcurrent} tabs`);
+    console.log(`📋 [ScenarioRunner] Tasks:`, tasks);
+
+    // 6. Disable controls
+    this.el.querySelector('#sr-start').disabled = true;
+    this.el.querySelector('#sr-parallel').disabled = true;
+    this.el.querySelector('#sr-addqueue').disabled = true;
+    this._parallelRunning = true;
+
+    // 7. Hiển thị progress
+    this._showProgress(true);
+    this._updateProgress(0, tasks.length);
+    this._clearDoneList();
+
+    // 8. Gửi PARALLEL_START đến background
+    chrome.runtime.sendMessage({
+      type: 'PARALLEL_START',
+      sessionId: sessionId,
+      tasks: tasks,
+      baseUrl: baseUrl,
+      maxConcurrent: maxConcurrent
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('❌ [ScenarioRunner] Lỗi gửi PARALLEL_START:', chrome.runtime.lastError);
+        ContentHelper.showToast('❌ Lỗi khởi tạo chạy song song.', 'error');
+        this._resetControls();
+        this._parallelRunning = false;
+      } else {
+        ContentHelper.showToast(
+          `⚡ Đã bắt đầu chạy song song ${tasks.length} tasks trên tối đa ${maxConcurrent} tab!`,
+          'success'
+        );
+      }
+    });
+  }
+
+  /**
+   * Xử lý message PARALLEL_PROGRESS từ background.
+   * Cập nhật thanh tiến trình và danh sách đã xong.
+   * @param {object} msg - {completed, failed, total, lastLabel}
+   */
+  _onParallelProgress(msg) {
+    const { completed, failed, total, lastLabel } = msg;
+    const done = completed + failed;
+
+    // Cập nhật progress bar
+    this._updateParallelProgress(done, total);
+
+    // Thêm label vào danh sách đã xong
+    if (lastLabel) {
+      this._addDoneItem(lastLabel);
+    }
+  }
+
+  /**
+   * Xử lý message PARALLEL_ALL_DONE từ background.
+   * Reset controls và hiển thị kết quả tổng kết.
+   * @param {object} msg - {completed, failed, total}
+   */
+  _onParallelAllDone(msg) {
+    const { completed, failed, total } = msg;
+
+    this._updateParallelProgress(total, total);
+    this._resetControls();
+    this._parallelRunning = false;
+
+    const successCount = completed?.length || 0;
+    const failCount = failed?.length || 0;
+
+    let resultMsg = `🎉 Hoàn thành chạy song song: ${successCount}/${total} thành công`;
+    if (failCount > 0) {
+      resultMsg += `, ${failCount} lỗi`;
+    }
+    ContentHelper.showToast(resultMsg, failCount > 0 ? 'warning' : 'success');
+  }
+
+  /**
+   * Cập nhật progress bar cho chế độ parallel.
+   * (Tái sử dụng UI elements của progress bar hiện tại)
+   * @param {number} done - Số task đã xong
+   * @param {number} total - Tổng số task
+   */
+  _updateParallelProgress(done, total) {
+    const bar = this.el.querySelector("#sr-progress-bar");
+    const textStep = this.el.querySelector("#sr-progress-step");
+    const textTotal = this.el.querySelector("#sr-progress-total");
+    const textPercent = this.el.querySelector("#sr-progress-percent");
+
+    if (!bar || !textStep || !textTotal || !textPercent) return;
+
+    textStep.textContent = done;
+    textTotal.textContent = total;
+
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+    textPercent.textContent = `${percent}%`;
+    bar.style.width = `${percent}%`;
+  }
+
   destroy() {
     this._minimizeCtrl?.destroy();
     this.el?.remove();
     this.onClose();
     this.sequencer?.stop();
+    // Gỡ message listener parallel
+    if (this._parallelMessageListener) {
+      chrome.runtime.onMessage.removeListener(this._parallelMessageListener);
+    }
   }
 };

@@ -395,3 +395,265 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 logInfo("Service worker đang chạy!");
+
+// ═══════════════════════════════════════════════════════════════════
+// TabOrchestrator – Điều phối chạy song song cho ScenarioRunner
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Lưu trữ trạng thái của mỗi phiên parallel execution.
+ * Key: sessionId (timestamp), Value: session object
+ */
+const parallelSessions = new Map();
+
+/**
+ * Xử lý message PARALLEL_START từ tab gốc (ScenarioRunner).
+ * 
+ * Payload:
+ *   - sessionId: ID phiên chạy (dùng để track)
+ *   - tasks: [{taskId, scenarioName, values, startAt}]
+ *   - baseUrl: URL mở tab mới (vd: https://gemini.google.com/app)
+ *   - maxConcurrent: Số tab chạy đồng thời tối đa
+ */
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'PARALLEL_START') return;
+
+  const { sessionId, tasks, baseUrl, maxConcurrent = 5 } = message;
+  const sourceTabId = sender.tab?.id;
+
+  logInfo(`🚀 [TabOrchestrator] Bắt đầu phiên "${sessionId}": ${tasks.length} tasks, max ${maxConcurrent} tabs`);
+
+  // Khởi tạo session
+  const session = {
+    sessionId,
+    sourceTabId,           // Tab gốc để gửi progress về
+    baseUrl,
+    maxConcurrent,
+    tasks: [...tasks],     // Tất cả tasks
+    pending: [...tasks],   // Tasks chưa được gán cho tab
+    running: new Map(),    // taskId → tabId (đang chạy)
+    completed: [],         // Tasks đã xong
+    failed: [],            // Tasks bị lỗi
+  };
+
+  parallelSessions.set(sessionId, session);
+
+  // Bắt đầu mở tabs cho batch đầu tiên
+  _launchNextBatch(session);
+
+  sendResponse({ received: true, sessionId });
+  return true;
+});
+
+/**
+ * Mở tabs cho batch tiếp theo (giới hạn bởi maxConcurrent).
+ * @param {object} session - Session object
+ */
+function _launchNextBatch(session) {
+  const slotsAvailable = session.maxConcurrent - session.running.size;
+  const tasksToLaunch = session.pending.splice(0, slotsAvailable);
+
+  logInfo(`📦 [TabOrchestrator] Mở ${tasksToLaunch.length} tab mới (${session.running.size} đang chạy, ${session.pending.length} chờ)`);
+
+  tasksToLaunch.forEach(task => {
+    _createTabAndSendTask(session, task);
+  });
+}
+
+/**
+ * Tạo 1 tab mới và gửi task cho nó khi load xong.
+ * @param {object} session - Session object
+ * @param {object} task - Task data {taskId, scenarioName, values, startAt}
+ */
+function _createTabAndSendTask(session, task) {
+  chrome.tabs.create({ url: session.baseUrl, active: false }, (newTab) => {
+    if (chrome.runtime.lastError) {
+      logError(`❌ [TabOrchestrator] Không thể tạo tab cho task "${task.taskId}":`, chrome.runtime.lastError);
+      _handleTaskFailure(session, task.taskId, 'Không thể tạo tab', task.taskId);
+      return;
+    }
+
+    logInfo(`📂 [TabOrchestrator] Đã tạo tab #${newTab.id} cho task "${task.taskId}"`);
+    session.running.set(task.taskId, newTab.id);
+
+    // Lắng nghe khi tab load xong
+    const listener = (tabId, changeInfo) => {
+      if (tabId !== newTab.id || changeInfo.status !== 'complete') return;
+
+      // Gỡ listener sau khi xử lý
+      chrome.tabs.onUpdated.removeListener(listener);
+
+      logInfo(`✅ [TabOrchestrator] Tab #${newTab.id} đã load xong. Chờ 3s rồi gửi task...`);
+
+      // Delay 3s để content scripts inject xong (ChatAdapter, PromptSequencer, ParallelWorker)
+      setTimeout(() => {
+        chrome.tabs.sendMessage(newTab.id, {
+          type: 'PARALLEL_EXEC_TASK',
+          taskId: task.taskId,
+          scenarioName: task.scenarioName,
+          values: task.values,
+          startAt: task.startAt
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            logError(`❌ [TabOrchestrator] Không gửi được task cho tab #${newTab.id}:`, chrome.runtime.lastError.message);
+            _handleTaskFailure(session, task.taskId, chrome.runtime.lastError.message, task.taskId);
+          } else {
+            logInfo(`📨 [TabOrchestrator] Task "${task.taskId}" đã gửi thành công cho tab #${newTab.id}`);
+          }
+        });
+      }, 3000);
+    };
+
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+}
+
+/**
+ * Xử lý message PARALLEL_TASK_DONE từ tab con (ParallelWorker).
+ * 
+ * Payload:
+ *   - taskId: ID của task đã hoàn thành
+ *   - status: 'completed' hoặc 'failed'
+ *   - label: Nhãn hiển thị (vd: tên ngôn ngữ)
+ *   - error: Thông báo lỗi (nếu failed)
+ */
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.type !== 'PARALLEL_TASK_DONE') return;
+
+  const { taskId, status, label, error } = message;
+
+  // Tìm session chứa task này
+  let targetSession = null;
+  for (const [, session] of parallelSessions) {
+    if (session.running.has(taskId)) {
+      targetSession = session;
+      break;
+    }
+  }
+
+  if (!targetSession) {
+    logWarn(`⚠️ [TabOrchestrator] Nhận PARALLEL_TASK_DONE cho task "${taskId}" nhưng không tìm thấy session`);
+    return;
+  }
+
+  if (status === 'completed') {
+    _handleTaskComplete(targetSession, taskId, label);
+  } else {
+    _handleTaskFailure(targetSession, taskId, error, label);
+  }
+});
+
+/**
+ * Xử lý khi 1 task hoàn thành thành công.
+ */
+function _handleTaskComplete(session, taskId, label) {
+  logInfo(`✅ [TabOrchestrator] Task "${taskId}" (${label}) hoàn thành!`);
+
+  // Chuyển từ running → completed
+  session.running.delete(taskId);
+  session.completed.push({ taskId, label });
+
+  // Gửi notification cho task này
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('assets/icon.png'),
+    title: '⚡ Parallel Task hoàn thành',
+    message: `Task "${label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
+  });
+
+  // Gửi progress về tab gốc
+  _sendProgressToSource(session);
+
+  // Kiểm tra nếu còn pending → mở tab mới
+  if (session.pending.length > 0) {
+    _launchNextBatch(session);
+  }
+
+  // Kiểm tra nếu tất cả đã xong
+  _checkAllDone(session);
+}
+
+/**
+ * Xử lý khi 1 task bị lỗi.
+ */
+function _handleTaskFailure(session, taskId, errorMsg, label) {
+  logError(`❌ [TabOrchestrator] Task "${taskId}" (${label}) lỗi: ${errorMsg}`);
+
+  // Chuyển từ running → failed
+  session.running.delete(taskId);
+  session.failed.push({ taskId, label, error: errorMsg });
+
+  // Gửi progress về tab gốc
+  _sendProgressToSource(session);
+
+  // Kiểm tra nếu còn pending → mở tab mới
+  if (session.pending.length > 0) {
+    _launchNextBatch(session);
+  }
+
+  // Kiểm tra nếu tất cả đã xong
+  _checkAllDone(session);
+}
+
+/**
+ * Gửi progress cập nhật về tab gốc.
+ */
+function _sendProgressToSource(session) {
+  const total = session.tasks.length;
+  const done = session.completed.length + session.failed.length;
+
+  if (session.sourceTabId) {
+    chrome.tabs.sendMessage(session.sourceTabId, {
+      type: 'PARALLEL_PROGRESS',
+      sessionId: session.sessionId,
+      completed: session.completed.length,
+      failed: session.failed.length,
+      total: total,
+      lastLabel: session.completed.at(-1)?.label || session.failed.at(-1)?.label || ''
+    }, () => {
+      // Bỏ qua lỗi nếu tab gốc đã đóng
+      if (chrome.runtime.lastError) {
+        logWarn('[TabOrchestrator] Không gửi được progress về tab gốc:', chrome.runtime.lastError.message);
+      }
+    });
+  }
+}
+
+/**
+ * Kiểm tra xem tất cả tasks đã hoàn thành chưa.
+ */
+function _checkAllDone(session) {
+  const total = session.tasks.length;
+  const done = session.completed.length + session.failed.length;
+
+  if (done < total) return; // Chưa xong hết
+
+  logInfo(`🎉 [TabOrchestrator] Phiên "${session.sessionId}" hoàn thành! ` +
+    `${session.completed.length} thành công, ${session.failed.length} lỗi`);
+
+  // Gửi PARALLEL_ALL_DONE về tab gốc
+  if (session.sourceTabId) {
+    chrome.tabs.sendMessage(session.sourceTabId, {
+      type: 'PARALLEL_ALL_DONE',
+      sessionId: session.sessionId,
+      completed: session.completed,
+      failed: session.failed,
+      total: total
+    }, () => {
+      if (chrome.runtime.lastError) {
+        logWarn('[TabOrchestrator] Không gửi được ALL_DONE về tab gốc');
+      }
+    });
+  }
+
+  // Gửi notification tổng kết
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('assets/icon.png'),
+    title: '🎉 Parallel Execution hoàn thành!',
+    message: `Tất cả ${total} tasks đã xong! (${session.completed.length} OK, ${session.failed.length} lỗi)`
+  });
+
+  // Dọn dẹp session
+  parallelSessions.delete(session.sessionId);
+}
