@@ -106,6 +106,7 @@ class BaseChatAdapter {
   getForm() { return this.getTextarea() }
   getStopBtn() { return null; }
   getVoiceBtn() { return null; }
+  enableTemporaryChat() { return Promise.resolve(false); }
 
   /* ---- Convenience helpers (shared across all adapters) ---- */
   sendMessage(text) {
@@ -1012,6 +1013,38 @@ class GeminiAdapter extends BaseChatAdapter {
    */
   getContentElements() {
     return Array.from(document.querySelectorAll('message-content'));
+  }
+
+  /**
+   * Kích hoạt cuộc trò chuyện tạm thời (Temporary Chat) trên Gemini
+   */
+  async enableTemporaryChat() {
+    console.log("🔒 [GeminiAdapter] Đang kiểm tra để bật cuộc trò chuyện tạm thời...");
+    try {
+      // 1. Tìm icon gemini_chat_temp dựa theo thông tin người dùng cung cấp
+      const icon = document.querySelector('mat-icon[data-mat-icon-name="gemini_chat_temp"]') || 
+                   document.querySelector('mat-icon[fonticon="gemini_chat_temp"]') ||
+                   document.querySelector('gem-icon[icon="gemini_chat_temp"]');
+      
+      if (!icon) {
+        console.warn("⚠️ [GeminiAdapter] Không tìm thấy icon trò chuyện tạm thời. Có thể giao diện đã thay đổi hoặc đang ở trạng thái trò chuyện tạm thời sẵn.");
+        return false;
+      }
+
+      // 2. Trèo lên thẻ cha có thể click được (thường là button hoặc gem-icon-button)
+      const clickableBtn = icon.closest('button') || icon.closest('gem-icon-button') || icon;
+      
+      console.log("🖱️ [GeminiAdapter] Đã tìm thấy nút trò chuyện tạm thời. Tiến hành click...");
+      clickableBtn.click();
+      
+      // 3. Đợi 1.5 giây để Gemini chuyển trạng thái trò chuyện tạm thời
+      await new Promise(r => setTimeout(r, 1500));
+      console.log("🔒 [GeminiAdapter] Đã kích hoạt trò chuyện tạm thời thành công!");
+      return true;
+    } catch (e) {
+      console.error("❌ [GeminiAdapter] Lỗi khi bật trò chuyện tạm thời:", e);
+      return false;
+    }
   }
 
   /**

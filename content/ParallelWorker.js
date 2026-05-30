@@ -254,6 +254,15 @@ window.ParallelWorker = (() => {
       // 2. Delay để đảm bảo trang ổn định
       await new Promise(r => setTimeout(r, CONFIG.delayBeforeStart));
 
+      // 2b. Kích hoạt cuộc trò chuyện tạm thời để tránh làm rác lịch sử Gemini của người dùng
+      if (window.ChatAdapter && typeof window.ChatAdapter.enableTemporaryChat === 'function') {
+        try {
+          await window.ChatAdapter.enableTemporaryChat();
+        } catch (e) {
+          console.warn("⚠️ [ParallelWorker] Không thể bật trò chuyện tạm thời:", e);
+        }
+      }
+
       // 3. Load scenario template
       const templates = await _loadTemplates();
       const raw = templates[scenarioName];
