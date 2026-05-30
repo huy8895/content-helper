@@ -36,7 +36,12 @@ const ScenarioRunnerInnerHTML = `
       <div class="text-[10px] font-bold text-gray-500 uppercase">
         <span id="sr-progress-step" class="text-indigo-600">0</span> / <span id="sr-progress-total">0</span> Prompts
       </div>
-      <div id="sr-progress-percent" class="text-sm font-black text-indigo-600">0%</div>
+      <div class="flex items-center gap-2">
+        <button id="sr-download-zip" class="h-6 px-2.5 flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-bold rounded-lg text-[10px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm hidden" title="Tải kết quả đã xong dưới dạng ZIP">
+          📦 <span id="sr-zip-count">0</span>/<span id="sr-zip-total">0</span>
+        </button>
+        <div id="sr-progress-percent" class="text-sm font-black text-indigo-600">0%</div>
+      </div>
     </div>
     <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
       <div id="sr-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out"></div>
@@ -331,6 +336,12 @@ window.ScenarioRunner = class {
       }
     };
     chrome.runtime.onMessage.addListener(this._parallelMessageListener);
+
+    // Nút Download ZIP
+    const btnDownloadZip = this.el.querySelector('#sr-download-zip');
+    if (btnDownloadZip) {
+      btnDownloadZip.onclick = () => this._downloadParallelZip();
+    }
   }
 
   _readVariableValues() {
@@ -669,11 +680,15 @@ window.ScenarioRunner = class {
     this.el.querySelector('#sr-parallel').disabled = true;
     this.el.querySelector('#sr-addqueue').disabled = true;
     this._parallelRunning = true;
+    this._parallelSessionId = sessionId;
+    this._parallelTotal = tasks.length;
+    this._parallelDoneCount = 0;
 
-    // 7. Hiển thị progress
+    // 7. Hiển thị progress + nút download ZIP
     this._showProgress(true);
     this._updateProgress(0, tasks.length);
     this._clearDoneList();
+    this._showDownloadZipBtn(true, 0, tasks.length);
 
     // 8. Gửi PARALLEL_START đến background
     chrome.runtime.sendMessage({
@@ -708,6 +723,10 @@ window.ScenarioRunner = class {
 
     // Cập nhật progress bar
     this._updateParallelProgress(done, total);
+
+    // Cập nhật nút Download ZIP (chỉ đếm completed, không đếm failed)
+    this._parallelDoneCount = completed;
+    this._showDownloadZipBtn(true, completed, total);
 
     // Thêm label vào danh sách đã xong
     if (lastLabel) {
@@ -759,6 +778,65 @@ window.ScenarioRunner = class {
     bar.style.width = `${percent}%`;
   }
 
+  /**
+   * Hiển/ẩn nút Download ZIP và cập nhật số lượng.
+   * @param {boolean} show - Hiển hay ẩn nút
+   * @param {number} doneCount - Số kết quả đã sẵn sàng
+   * @param {number} total - Tổng số task
+   */
+  _showDownloadZipBtn(show, doneCount = 0, total = 0) {
+    const btn = this.el.querySelector('#sr-download-zip');
+    if (!btn) return;
+
+    if (show) {
+      btn.classList.remove('hidden');
+      const countEl = this.el.querySelector('#sr-zip-count');
+      const totalEl = this.el.querySelector('#sr-zip-total');
+      if (countEl) countEl.textContent = doneCount;
+      if (totalEl) totalEl.textContent = total;
+
+      // Disable nếu chưa có kết quả nào
+      btn.disabled = doneCount === 0;
+      btn.style.opacity = doneCount === 0 ? '0.4' : '1';
+    } else {
+      btn.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Gửi yêu cầu tạo ZIP và tải xuống từ background.
+   */
+  _downloadParallelZip() {
+    if (!this._parallelSessionId) {
+      ContentHelper.showToast('⚠️ Không có phiên parallel nào để tải.', 'warning');
+      return;
+    }
+
+    if (this._parallelDoneCount === 0) {
+      ContentHelper.showToast('⚠️ Chưa có kết quả nào hoàn thành.', 'warning');
+      return;
+    }
+
+    ContentHelper.showToast(`📦 Đang tạo ZIP với ${this._parallelDoneCount} file...`, 'info');
+
+    chrome.runtime.sendMessage({
+      type: 'PARALLEL_DOWNLOAD_ZIP',
+      sessionId: this._parallelSessionId
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('❌ [ScenarioRunner] Lỗi gửi PARALLEL_DOWNLOAD_ZIP:', chrome.runtime.lastError);
+        ContentHelper.showToast('❌ Lỗi tải ZIP.', 'error');
+        return;
+      }
+
+      if (response?.status === 'completed') {
+        ContentHelper.showToast(`✅ Đã tải ZIP với ${response.count} file!`, 'success');
+      } else if (response?.status === 'error') {
+        ContentHelper.showToast(`❌ Lỗi: ${response.message}`, 'error');
+      }
+    });
+  }
+
   destroy() {
     this._minimizeCtrl?.destroy();
     this.el?.remove();
@@ -767,6 +845,13 @@ window.ScenarioRunner = class {
     // Gỡ message listener parallel
     if (this._parallelMessageListener) {
       chrome.runtime.onMessage.removeListener(this._parallelMessageListener);
+    }
+    // Dọn session parallel từ background
+    if (this._parallelSessionId) {
+      chrome.runtime.sendMessage({
+        type: 'PARALLEL_CLEANUP_SESSION',
+        sessionId: this._parallelSessionId
+      });
     }
   }
 };

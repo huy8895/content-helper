@@ -64,6 +64,59 @@ window.ParallelWorker = (() => {
   }
 
   /**
+   * Trích xuất text sạch từ một DOM element (logic tương tự ContentCopyPanel._getText).
+   * Loại bỏ button, script, style và chuẩn hóa whitespace.
+   * @param {HTMLElement} el - DOM element chứa nội dung
+   * @returns {string} Text đã được làm sạch
+   */
+  function _getText(el) {
+    if (!el) return '';
+    const wrapper = document.createElement('div');
+    const clone = el.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    // Loại bỏ UI elements không cần thiết
+    wrapper.querySelectorAll('button, .sr-only, script, style').forEach(x => x.remove());
+
+    // Thay <br> thành newline
+    wrapper.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+
+    // Block elements → thêm \n\n
+    wrapper.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(b => b.after('\n\n'));
+
+    // Div, Li, Tr → \n
+    wrapper.querySelectorAll('div, li, tr').forEach(b => b.after('\n'));
+
+    let text = wrapper.textContent;
+    return text.replace(/\n\s*\n\s*\n/g, '\n\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /**
+   * Thu thập toàn bộ nội dung AI response từ tab hiện tại.
+   * Dùng ChatAdapter.getContentElements() để lấy các phần tử nội dung,
+   * rồi extract text sạch từ mỗi phần tử.
+   * @returns {string} Toàn bộ nội dung AI đã ghép lại
+   */
+  function _collectContent() {
+    const chat = window.ChatAdapter;
+    if (!chat || typeof chat.getContentElements !== 'function') {
+      console.warn('⚠️ [ParallelWorker] ChatAdapter.getContentElements không khả dụng');
+      return '';
+    }
+
+    const elements = chat.getContentElements();
+    if (!elements || elements.length === 0) {
+      console.warn('⚠️ [ParallelWorker] Không tìm thấy content elements');
+      return '';
+    }
+
+    console.log(`📄 [ParallelWorker] Thu thập ${elements.length} content blocks`);
+    return elements.map(el => _getText(el)).join('\n\n==========\n\n');
+  }
+
+  /**
    * Lấy loopKey từ question definition.
    * (Copy logic từ ScenarioRunner._getLoopKey)
    * @param {object} q - Question object
@@ -244,8 +297,9 @@ window.ParallelWorker = (() => {
         sequencer.start(() => resolve());
       });
 
-      // 8. Thông báo hoàn thành
-      console.log(`✅ [ParallelWorker] Task "${taskId}" hoàn thành!`);
+      // 8. Thu thập nội dung AI response từ tab
+      const collectedContent = _collectContent();
+      console.log(`✅ [ParallelWorker] Task "${taskId}" hoàn thành! Content: ${collectedContent.length} ký tự`);
 
       if (window.ContentHelper) {
         ContentHelper.showToast(
@@ -254,12 +308,13 @@ window.ParallelWorker = (() => {
         );
       }
 
-      // 9. Gửi kết quả về background
+      // 9. Gửi kết quả + content về background
       chrome.runtime.sendMessage({
         type: 'PARALLEL_TASK_DONE',
         taskId: taskId,
         status: 'completed',
-        label: prompts[0]?.label || taskId
+        label: prompts[0]?.label || taskId,
+        content: collectedContent
       });
 
     } catch (error) {

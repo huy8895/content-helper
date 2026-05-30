@@ -434,6 +434,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     running: new Map(),    // taskId → tabId (đang chạy)
     completed: [],         // Tasks đã xong
     failed: [],            // Tasks bị lỗi
+    results: [],           // Kết quả content từ mỗi tab {label, content, taskId}
   };
 
   parallelSessions.set(sessionId, session);
@@ -520,7 +521,7 @@ function _createTabAndSendTask(session, task) {
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.type !== 'PARALLEL_TASK_DONE') return;
 
-  const { taskId, status, label, error } = message;
+  const { taskId, status, label, error, content } = message;
 
   // Tìm session chứa task này
   let targetSession = null;
@@ -537,7 +538,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   }
 
   if (status === 'completed') {
-    _handleTaskComplete(targetSession, taskId, label);
+    _handleTaskComplete(targetSession, taskId, label, content);
   } else {
     _handleTaskFailure(targetSession, taskId, error, label);
   }
@@ -545,13 +546,23 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
 /**
  * Xử lý khi 1 task hoàn thành thành công.
+ * @param {object} session - Session object
+ * @param {string} taskId - ID task
+ * @param {string} label - Nhãn hiển thị (vd: giá trị list)
+ * @param {string} content - Nội dung AI response đã thu thập từ tab con
  */
-function _handleTaskComplete(session, taskId, label) {
-  logInfo(`✅ [TabOrchestrator] Task "${taskId}" (${label}) hoàn thành!`);
+function _handleTaskComplete(session, taskId, label, content) {
+  logInfo(`✅ [TabOrchestrator] Task "${taskId}" (${label}) hoàn thành! Content: ${(content || '').length} ký tự`);
 
   // Chuyển từ running → completed
   session.running.delete(taskId);
   session.completed.push({ taskId, label });
+
+  // Lưu content vào results để tạo ZIP sau
+  if (content) {
+    session.results.push({ taskId, label, content });
+    logInfo(`📦 [TabOrchestrator] Đã lưu kết quả cho "${label}". Tổng: ${session.results.length} files`);
+  }
 
   // Gửi notification cho task này
   chrome.notifications.create({
@@ -654,6 +665,101 @@ function _checkAllDone(session) {
     message: `Tất cả ${total} tasks đã xong! (${session.completed.length} OK, ${session.failed.length} lỗi)`
   });
 
-  // Dọn dẹp session
-  parallelSessions.delete(session.sessionId);
+  // GIỮ session để user có thể download ZIP sau
+  // Session sẽ bị xóa khi user bấm PARALLEL_CLEANUP_SESSION hoặc bắt đầu phiên mới
+  logInfo(`📦 [TabOrchestrator] Giữ session "${session.sessionId}" với ${session.results.length} kết quả cho download ZIP`);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// PARALLEL_DOWNLOAD_ZIP – Tạo ZIP từ kết quả đã thu thập và tải xuống
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'PARALLEL_DOWNLOAD_ZIP') return;
+
+  const { sessionId } = message;
+
+  // Tìm session (ưu tiên sessionId cụ thể, nếu không thì lấy session gần nhất)
+  let session = null;
+  if (sessionId) {
+    session = parallelSessions.get(sessionId);
+  } else {
+    // Lấy session mới nhất (cuối cùng trong Map)
+    for (const [, s] of parallelSessions) {
+      session = s;
+    }
+  }
+
+  if (!session || session.results.length === 0) {
+    logWarn('[TabOrchestrator] Không có kết quả nào để tạo ZIP');
+    sendResponse({ status: 'error', message: 'Không có kết quả nào để tải' });
+    return true;
+  }
+
+  logInfo(`📦 [TabOrchestrator] Tạo ZIP từ ${session.results.length} kết quả...`);
+
+  try {
+    const zip = new JSZip();
+
+    session.results.forEach((result, idx) => {
+      // Dùng label làm tên file, fallback sang index
+      let filename = result.label ? `${result.label}.txt` : `${idx + 1}.txt`;
+      // Loại bỏ ký tự không hợp lệ trong tên file
+      filename = filename.replace(/[<>:"/\\|?*]/g, '_');
+      zip.file(filename, result.content || '');
+    });
+
+    const count = session.results.length;
+    const total = session.tasks.length;
+
+    zip.generateAsync({ type: 'blob' })
+      .then(blob => blob.arrayBuffer())
+      .then(buffer => {
+        const b64 = btoa(new Uint8Array(buffer).reduce((s, c) => s + String.fromCharCode(c), ''));
+        const dataUrl = 'data:application/zip;base64,' + b64;
+        chrome.downloads.download({
+          url: dataUrl,
+          filename: `parallel_results_${count}of${total}_${Date.now()}.zip`,
+          conflictAction: 'uniquify'
+        }, (downloadId) => {
+          if (chrome.runtime.lastError) {
+            logError('[TabOrchestrator] Download ZIP lỗi:', chrome.runtime.lastError);
+            sendResponse({ status: 'error', message: chrome.runtime.lastError.message });
+          } else {
+            logInfo(`✅ [TabOrchestrator] ZIP đã tải xuống! downloadId: ${downloadId}`);
+            sendResponse({ status: 'completed', downloadId, count });
+          }
+        });
+      })
+      .catch(err => {
+        logError('[TabOrchestrator] Lỗi tạo ZIP:', err);
+        sendResponse({ status: 'error', message: err.message });
+      });
+
+  } catch (err) {
+    logError('[TabOrchestrator] Lỗi tạo ZIP:', err);
+    sendResponse({ status: 'error', message: err.message });
+  }
+
+  return true; // Giữ channel cho sendResponse async
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// PARALLEL_CLEANUP_SESSION – Dọn dẹp session khi ScenarioRunner đóng
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type !== 'PARALLEL_CLEANUP_SESSION') return;
+
+  const { sessionId } = message;
+
+  if (sessionId && parallelSessions.has(sessionId)) {
+    parallelSessions.delete(sessionId);
+    logInfo(`🧹 [TabOrchestrator] Đã dọn session "${sessionId}"`);
+  } else {
+    // Dọn tất cả sessions
+    const count = parallelSessions.size;
+    parallelSessions.clear();
+    logInfo(`🧹 [TabOrchestrator] Đã dọn tất cả ${count} sessions`);
+  }
+});
