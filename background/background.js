@@ -456,8 +456,15 @@ function _launchNextBatch(session) {
 
   logInfo(`📦 [TabOrchestrator] Mở ${tasksToLaunch.length} tab mới (${session.running.size} đang chạy, ${session.pending.length} chờ)`);
 
-  tasksToLaunch.forEach(task => {
-    _createTabAndSendTask(session, task);
+  tasksToLaunch.forEach((task, idx) => {
+    // Thêm Stagger Delay: cách nhau 2 giây mỗi tab để tránh bị nhận diện robot
+    const delay = idx * 2000;
+    setTimeout(() => {
+      // Đảm bảo session vẫn hoạt động (phòng trường hợp user đóng panel đột ngột)
+      if (parallelSessions.has(session.sessionId)) {
+        _createTabAndSendTask(session, task);
+      }
+    }, delay);
   });
 }
 
