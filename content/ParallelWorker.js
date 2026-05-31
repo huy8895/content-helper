@@ -127,6 +127,32 @@ window.ParallelWorker = (() => {
   }
 
   /**
+   * Cập nhật trạng thái task trong chrome.storage.local.
+   * @param {string} sessionId - ID phiên parallel
+   * @param {string} taskId - ID task cần cập nhật
+   * @param {object} updates - Dữ liệu cập nhật {status, content, error, label}
+   * @returns {Promise<boolean>}
+   */
+  function _updateTaskInStorage(sessionId, taskId, updates) {
+    const key = `parallel_session_${sessionId}`;
+    return new Promise((resolve) => {
+      chrome.storage.local.get(key, (result) => {
+        const session = result[key];
+        if (!session || !session.tasks[taskId]) {
+          console.warn(`⚠️ [ParallelWorker] Không tìm thấy task ${taskId} trong storage`);
+          resolve(false);
+          return;
+        }
+        session.tasks[taskId] = { ...session.tasks[taskId], ...updates, updatedAt: Date.now() };
+        chrome.storage.local.set({ [key]: session }, () => {
+          console.log(`💾 [ParallelWorker] Đã ghi task "${taskId}" → ${updates.status} vào storage`);
+          resolve(true);
+        });
+      });
+    });
+  }
+
+  /**
    * Mở rộng (expand) scenario thành danh sách prompt.
    * Xử lý đặc biệt: với question type "list", chỉ thay thế loopKey = singleValue
    * (thay vì lặp qua tất cả giá trị).
@@ -317,10 +343,8 @@ window.ParallelWorker = (() => {
         );
       }
 
-      // 9. Gửi kết quả + content về background
-      chrome.runtime.sendMessage({
-        type: 'PARALLEL_TASK_DONE',
-        taskId: taskId,
+      // 9. Ghi kết quả vào chrome.storage.local
+      await _updateTaskInStorage(taskData.sessionId, taskId, {
         status: 'completed',
         label: prompts[0]?.label || taskId,
         content: collectedContent
@@ -333,13 +357,10 @@ window.ParallelWorker = (() => {
         ContentHelper.showToast(`❌ Lỗi: ${error.message}`, 'error');
       }
 
-      // Gửi lỗi về background
-      chrome.runtime.sendMessage({
-        type: 'PARALLEL_TASK_DONE',
-        taskId: taskId,
+      // Ghi lỗi vào chrome.storage.local
+      await _updateTaskInStorage(taskData.sessionId, taskId, {
         status: 'failed',
-        error: error.message,
-        label: taskId
+        error: error.message
       });
     }
   }

@@ -423,10 +423,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   logInfo(`🚀 [TabOrchestrator] Bắt đầu phiên "${sessionId}": ${tasks.length} tasks, max ${maxConcurrent} tabs`);
 
-  // Khởi tạo session
+  // Khởi tạo session (chỉ giữ thông tin điều phối trong RAM)
   const session = {
     sessionId,
-    sourceTabId,           // Tab gốc để gửi progress về
     baseUrl,
     maxConcurrent,
     tasks: [...tasks],     // Tất cả tasks
@@ -434,10 +433,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     running: new Map(),    // taskId → tabId (đang chạy)
     completed: [],         // Tasks đã xong
     failed: [],            // Tasks bị lỗi
-    results: [],           // Kết quả content từ mỗi tab {label, content, taskId}
   };
 
   parallelSessions.set(sessionId, session);
+
+  // Ghi trạng thái ban đầu vào chrome.storage.local
+  const storageKey = `parallel_session_${sessionId}`;
+  const storageData = { sessionId, total: tasks.length, tasks: {} };
+  tasks.forEach(t => {
+    storageData.tasks[t.taskId] = {
+      taskId: t.taskId, label: t.label || t.taskId,
+      status: 'pending', content: '', error: '', updatedAt: Date.now()
+    };
+  });
+  chrome.storage.local.set({ [storageKey]: storageData }, () => {
+    logInfo(`💾 [TabOrchestrator] Đã ghi session vào storage: ${storageKey}`);
+  });
 
   // Bắt đầu mở tabs cho batch đầu tiên
   _launchNextBatch(session);
@@ -495,8 +506,20 @@ function _createTabAndSendTask(session, task) {
 
       // Delay 3s để content scripts inject xong (ChatAdapter, PromptSequencer, ParallelWorker)
       setTimeout(() => {
+        // Cập nhật storage: task → running
+        const sKey = `parallel_session_${session.sessionId}`;
+        chrome.storage.local.get(sKey, (r) => {
+          const sd = r[sKey];
+          if (sd && sd.tasks[task.taskId]) {
+            sd.tasks[task.taskId].status = 'running';
+            sd.tasks[task.taskId].updatedAt = Date.now();
+            chrome.storage.local.set({ [sKey]: sd });
+          }
+        });
+
         chrome.tabs.sendMessage(newTab.id, {
           type: 'PARALLEL_EXEC_TASK',
+          sessionId: session.sessionId,
           taskId: task.taskId,
           scenarioName: task.scenarioName,
           values: task.values,
@@ -504,7 +527,17 @@ function _createTabAndSendTask(session, task) {
         }, (response) => {
           if (chrome.runtime.lastError) {
             logError(`❌ [TabOrchestrator] Không gửi được task cho tab #${newTab.id}:`, chrome.runtime.lastError.message);
-            _handleTaskFailure(session, task.taskId, chrome.runtime.lastError.message, task.taskId);
+            // Cập nhật storage: task → failed
+            const sk = `parallel_session_${session.sessionId}`;
+            chrome.storage.local.get(sk, (r2) => {
+              const sd2 = r2[sk];
+              if (sd2 && sd2.tasks[task.taskId]) {
+                sd2.tasks[task.taskId].status = 'failed';
+                sd2.tasks[task.taskId].error = chrome.runtime.lastError.message;
+                sd2.tasks[task.taskId].updatedAt = Date.now();
+                chrome.storage.local.set({ [sk]: sd2 });
+              }
+            });
           } else {
             logInfo(`📨 [TabOrchestrator] Task "${task.taskId}" đã gửi thành công cho tab #${newTab.id}`);
           }
@@ -517,125 +550,54 @@ function _createTabAndSendTask(session, task) {
 }
 
 /**
- * Xử lý message PARALLEL_TASK_DONE từ tab con (ParallelWorker).
- * 
- * Payload:
- *   - taskId: ID của task đã hoàn thành
- *   - status: 'completed' hoặc 'failed'
- *   - label: Nhãn hiển thị (vd: tên ngôn ngữ)
- *   - error: Thông báo lỗi (nếu failed)
+ * Lắng nghe thay đổi trong chrome.storage.local.
+ * Khi ParallelWorker ghi kết quả vào storage → phát hiện task hoàn thành/lỗi → điều phối batch tiếp.
  */
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message.type !== 'PARALLEL_TASK_DONE') return;
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
 
-  const { taskId, status, label, error, content } = message;
+  for (const [key, { newValue, oldValue }] of Object.entries(changes)) {
+    if (!key.startsWith('parallel_session_')) continue;
 
-  // Tìm session chứa task này
-  let targetSession = null;
-  for (const [, session] of parallelSessions) {
-    if (session.running.has(taskId)) {
-      targetSession = session;
-      break;
+    const sessionId = newValue?.sessionId;
+    if (!sessionId) continue;
+
+    const session = parallelSessions.get(sessionId);
+    if (!session) continue;
+
+    for (const [taskId, taskData] of Object.entries(newValue.tasks || {})) {
+      const oldStatus = oldValue?.tasks?.[taskId]?.status;
+      const newStatus = taskData.status;
+      if (oldStatus === newStatus) continue;
+
+      if (newStatus === 'completed' && oldStatus !== 'completed') {
+        logInfo(`✅ [Storage] Task "${taskId}" (${taskData.label}) hoàn thành!`);
+        session.running.delete(taskId);
+        if (!session.completed.find(c => c.taskId === taskId)) {
+          session.completed.push({ taskId, label: taskData.label });
+        }
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: chrome.runtime.getURL('assets/icon.png'),
+          title: '⚡ Parallel Task hoàn thành',
+          message: `"${taskData.label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
+        });
+        if (session.pending.length > 0) _launchNextBatch(session);
+        _checkAllDone(session);
+      }
+
+      if (newStatus === 'failed' && oldStatus !== 'failed') {
+        logError(`❌ [Storage] Task "${taskId}" (${taskData.label}) lỗi: ${taskData.error}`);
+        session.running.delete(taskId);
+        if (!session.failed.find(f => f.taskId === taskId)) {
+          session.failed.push({ taskId, label: taskData.label, error: taskData.error });
+        }
+        if (session.pending.length > 0) _launchNextBatch(session);
+        _checkAllDone(session);
+      }
     }
   }
-
-  if (!targetSession) {
-    logWarn(`⚠️ [TabOrchestrator] Nhận PARALLEL_TASK_DONE cho task "${taskId}" nhưng không tìm thấy session`);
-    return;
-  }
-
-  if (status === 'completed') {
-    _handleTaskComplete(targetSession, taskId, label, content);
-  } else {
-    _handleTaskFailure(targetSession, taskId, error, label);
-  }
 });
-
-/**
- * Xử lý khi 1 task hoàn thành thành công.
- * @param {object} session - Session object
- * @param {string} taskId - ID task
- * @param {string} label - Nhãn hiển thị (vd: giá trị list)
- * @param {string} content - Nội dung AI response đã thu thập từ tab con
- */
-function _handleTaskComplete(session, taskId, label, content) {
-  logInfo(`✅ [TabOrchestrator] Task "${taskId}" (${label}) hoàn thành! Content: ${(content || '').length} ký tự`);
-
-  // Chuyển từ running → completed
-  session.running.delete(taskId);
-  session.completed.push({ taskId, label });
-
-  // Lưu content vào results để tạo ZIP sau
-  if (content) {
-    session.results.push({ taskId, label, content });
-    logInfo(`📦 [TabOrchestrator] Đã lưu kết quả cho "${label}". Tổng: ${session.results.length} files`);
-  }
-
-  // Gửi notification cho task này
-  chrome.notifications.create({
-    type: 'basic',
-    iconUrl: chrome.runtime.getURL('assets/icon.png'),
-    title: '⚡ Parallel Task hoàn thành',
-    message: `Task "${label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
-  });
-
-  // Gửi progress về tab gốc
-  _sendProgressToSource(session);
-
-  // Kiểm tra nếu còn pending → mở tab mới
-  if (session.pending.length > 0) {
-    _launchNextBatch(session);
-  }
-
-  // Kiểm tra nếu tất cả đã xong
-  _checkAllDone(session);
-}
-
-/**
- * Xử lý khi 1 task bị lỗi.
- */
-function _handleTaskFailure(session, taskId, errorMsg, label) {
-  logError(`❌ [TabOrchestrator] Task "${taskId}" (${label}) lỗi: ${errorMsg}`);
-
-  // Chuyển từ running → failed
-  session.running.delete(taskId);
-  session.failed.push({ taskId, label, error: errorMsg });
-
-  // Gửi progress về tab gốc
-  _sendProgressToSource(session);
-
-  // Kiểm tra nếu còn pending → mở tab mới
-  if (session.pending.length > 0) {
-    _launchNextBatch(session);
-  }
-
-  // Kiểm tra nếu tất cả đã xong
-  _checkAllDone(session);
-}
-
-/**
- * Gửi progress cập nhật về tab gốc.
- */
-function _sendProgressToSource(session) {
-  const total = session.tasks.length;
-  const done = session.completed.length + session.failed.length;
-
-  if (session.sourceTabId) {
-    chrome.tabs.sendMessage(session.sourceTabId, {
-      type: 'PARALLEL_PROGRESS',
-      sessionId: session.sessionId,
-      completed: session.completed.length,
-      failed: session.failed.length,
-      total: total,
-      lastLabel: session.completed.at(-1)?.label || session.failed.at(-1)?.label || ''
-    }, () => {
-      // Bỏ qua lỗi nếu tab gốc đã đóng
-      if (chrome.runtime.lastError) {
-        logWarn('[TabOrchestrator] Không gửi được progress về tab gốc:', chrome.runtime.lastError.message);
-      }
-    });
-  }
-}
 
 /**
  * Kiểm tra xem tất cả tasks đã hoàn thành chưa.
@@ -643,28 +605,11 @@ function _sendProgressToSource(session) {
 function _checkAllDone(session) {
   const total = session.tasks.length;
   const done = session.completed.length + session.failed.length;
-
-  if (done < total) return; // Chưa xong hết
+  if (done < total) return;
 
   logInfo(`🎉 [TabOrchestrator] Phiên "${session.sessionId}" hoàn thành! ` +
     `${session.completed.length} thành công, ${session.failed.length} lỗi`);
 
-  // Gửi PARALLEL_ALL_DONE về tab gốc
-  if (session.sourceTabId) {
-    chrome.tabs.sendMessage(session.sourceTabId, {
-      type: 'PARALLEL_ALL_DONE',
-      sessionId: session.sessionId,
-      completed: session.completed,
-      failed: session.failed,
-      total: total
-    }, () => {
-      if (chrome.runtime.lastError) {
-        logWarn('[TabOrchestrator] Không gửi được ALL_DONE về tab gốc');
-      }
-    });
-  }
-
-  // Gửi notification tổng kết
   chrome.notifications.create({
     type: 'basic',
     iconUrl: chrome.runtime.getURL('assets/icon.png'),
@@ -672,101 +617,79 @@ function _checkAllDone(session) {
     message: `Tất cả ${total} tasks đã xong! (${session.completed.length} OK, ${session.failed.length} lỗi)`
   });
 
-  // GIỮ session để user có thể download ZIP sau
-  // Session sẽ bị xóa khi user bấm PARALLEL_CLEANUP_SESSION hoặc bắt đầu phiên mới
-  logInfo(`📦 [TabOrchestrator] Giữ session "${session.sessionId}" với ${session.results.length} kết quả cho download ZIP`);
+  logInfo(`📦 [TabOrchestrator] Giữ session "${session.sessionId}" cho download ZIP`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// PARALLEL_DOWNLOAD_ZIP – Tạo ZIP từ kết quả đã thu thập và tải xuống
+// PARALLEL_DOWNLOAD_ZIP – Đọc kết quả từ storage → tạo ZIP → tải xuống
 // ═══════════════════════════════════════════════════════════════════
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== 'PARALLEL_DOWNLOAD_ZIP') return;
 
-  const { sessionId } = message;
+  const storageKey = `parallel_session_${message.sessionId}`;
 
-  // Tìm session (ưu tiên sessionId cụ thể, nếu không thì lấy session gần nhất)
-  let session = null;
-  if (sessionId) {
-    session = parallelSessions.get(sessionId);
-  } else {
-    // Lấy session mới nhất (cuối cùng trong Map)
-    for (const [, s] of parallelSessions) {
-      session = s;
+  chrome.storage.local.get(storageKey, (result) => {
+    const sessionData = result[storageKey];
+    if (!sessionData) {
+      sendResponse({ status: 'error', message: 'Không tìm thấy session trong storage' });
+      return;
     }
-  }
 
-  if (!session || session.results.length === 0) {
-    logWarn('[TabOrchestrator] Không có kết quả nào để tạo ZIP');
-    sendResponse({ status: 'error', message: 'Không có kết quả nào để tải' });
-    return true;
-  }
+    const completedTasks = Object.values(sessionData.tasks)
+      .filter(t => t.status === 'completed' && t.content);
 
-  logInfo(`📦 [TabOrchestrator] Tạo ZIP từ ${session.results.length} kết quả...`);
+    if (completedTasks.length === 0) {
+      sendResponse({ status: 'error', message: 'Không có kết quả nào để tải' });
+      return;
+    }
 
-  try {
+    logInfo(`📦 [TabOrchestrator] Tạo ZIP từ ${completedTasks.length} kết quả...`);
     const zip = new JSZip();
-
-    session.results.forEach((result, idx) => {
-      // Dùng label làm tên file, fallback sang index
-      let filename = result.label ? `${result.label}.txt` : `${idx + 1}.txt`;
-      // Loại bỏ ký tự không hợp lệ trong tên file
+    completedTasks.forEach((task, idx) => {
+      let filename = task.label ? `${task.label}.txt` : `${idx + 1}.txt`;
       filename = filename.replace(/[<>:"/\\|?*]/g, '_');
-      zip.file(filename, result.content || '');
+      zip.file(filename, task.content || '');
     });
-
-    const count = session.results.length;
-    const total = session.tasks.length;
 
     zip.generateAsync({ type: 'blob' })
       .then(blob => blob.arrayBuffer())
       .then(buffer => {
         const b64 = btoa(new Uint8Array(buffer).reduce((s, c) => s + String.fromCharCode(c), ''));
-        const dataUrl = 'data:application/zip;base64,' + b64;
         chrome.downloads.download({
-          url: dataUrl,
-          filename: `parallel_results_${count}of${total}_${Date.now()}.zip`,
+          url: 'data:application/zip;base64,' + b64,
+          filename: `parallel_results_${completedTasks.length}of${sessionData.total}_${Date.now()}.zip`,
           conflictAction: 'uniquify'
         }, (downloadId) => {
           if (chrome.runtime.lastError) {
-            logError('[TabOrchestrator] Download ZIP lỗi:', chrome.runtime.lastError);
             sendResponse({ status: 'error', message: chrome.runtime.lastError.message });
           } else {
-            logInfo(`✅ [TabOrchestrator] ZIP đã tải xuống! downloadId: ${downloadId}`);
-            sendResponse({ status: 'completed', downloadId, count });
+            sendResponse({ status: 'completed', downloadId, count: completedTasks.length });
           }
         });
       })
-      .catch(err => {
-        logError('[TabOrchestrator] Lỗi tạo ZIP:', err);
-        sendResponse({ status: 'error', message: err.message });
-      });
+      .catch(err => sendResponse({ status: 'error', message: err.message }));
+  });
 
-  } catch (err) {
-    logError('[TabOrchestrator] Lỗi tạo ZIP:', err);
-    sendResponse({ status: 'error', message: err.message });
-  }
-
-  return true; // Giữ channel cho sendResponse async
+  return true;
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// PARALLEL_CLEANUP_SESSION – Dọn dẹp session khi ScenarioRunner đóng
+// PARALLEL_CLEANUP_SESSION – Dọn dẹp session + storage
 // ═══════════════════════════════════════════════════════════════════
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== 'PARALLEL_CLEANUP_SESSION') return;
-
   const { sessionId } = message;
-
-  if (sessionId && parallelSessions.has(sessionId)) {
+  if (sessionId) {
     parallelSessions.delete(sessionId);
-    logInfo(`🧹 [TabOrchestrator] Đã dọn session "${sessionId}"`);
+    chrome.storage.local.remove(`parallel_session_${sessionId}`);
+    logInfo(`🧹 [TabOrchestrator] Đã dọn session + storage "${sessionId}"`);
   } else {
-    // Dọn tất cả sessions
-    const count = parallelSessions.size;
+    const keys = [];
+    for (const [id] of parallelSessions) keys.push(`parallel_session_${id}`);
     parallelSessions.clear();
-    logInfo(`🧹 [TabOrchestrator] Đã dọn tất cả ${count} sessions`);
+    if (keys.length > 0) chrome.storage.local.remove(keys);
+    logInfo(`🧹 [TabOrchestrator] Đã dọn tất cả sessions`);
   }
 });

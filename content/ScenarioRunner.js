@@ -37,6 +37,7 @@ const ScenarioRunnerInnerHTML = `
         <span id="sr-progress-step" class="text-indigo-600">0</span> / <span id="sr-progress-total">0</span> Prompts
       </div>
       <div class="flex items-center gap-2">
+        <span id="sr-polling-dot" class="w-2 h-2 rounded-full bg-green-400 hidden" style="animation:pulse 1s ease-in-out infinite"></span>
         <button id="sr-download-zip" class="h-6 px-2.5 flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-bold rounded-lg text-[10px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm hidden" title="Tải kết quả đã xong dưới dạng ZIP">
           📦 <span id="sr-zip-count">0</span>/<span id="sr-zip-total">0</span>
         </button>
@@ -326,16 +327,6 @@ window.ScenarioRunner = class {
       ContentHelper.showToast(`✅ Đã thêm(#${this.queue.length}) vào hàng đợi.`, "success");
       this._clearVariableInputs();
     };
-
-    // Lắng nghe message PARALLEL_PROGRESS + PARALLEL_ALL_DONE từ background
-    this._parallelMessageListener = (msg) => {
-      if (msg.type === 'PARALLEL_PROGRESS') {
-        this._onParallelProgress(msg);
-      } else if (msg.type === 'PARALLEL_ALL_DONE') {
-        this._onParallelAllDone(msg);
-      }
-    };
-    chrome.runtime.onMessage.addListener(this._parallelMessageListener);
 
     // Nút Download ZIP
     const btnDownloadZip = this.el.querySelector('#sr-download-zip');
@@ -662,10 +653,10 @@ window.ScenarioRunner = class {
     // 5. Tạo danh sách tasks – mỗi giá trị trong list = 1 task
     const sessionId = `parallel_${Date.now()}`;
     const tasks = listValues.map((itemValue, idx) => {
-      // Clone values và set loopKey = giá trị đơn (thay vì danh sách phẩy)
       const taskValues = { ...values, [loopKey]: itemValue };
       return {
         taskId: `${sessionId}_${idx}_${itemValue}`,
+        label: itemValue,
         scenarioName: name,
         values: taskValues,
         startAt: startAt
@@ -708,52 +699,84 @@ window.ScenarioRunner = class {
           `⚡ Đã bắt đầu chạy song song ${tasks.length} tasks trên tối đa ${maxConcurrent} tab!`,
           'success'
         );
+        // Bắt đầu polling storage mỗi 3 giây
+        this._startParallelPolling();
       }
     });
   }
 
   /**
-   * Xử lý message PARALLEL_PROGRESS từ background.
-   * Cập nhật thanh tiến trình và danh sách đã xong.
-   * @param {object} msg - {completed, failed, total, lastLabel}
+   * Bắt đầu polling chrome.storage.local mỗi 3 giây.
    */
-  _onParallelProgress(msg) {
-    const { completed, failed, total, lastLabel } = msg;
-    const done = completed + failed;
-
-    // Cập nhật progress bar
-    this._updateParallelProgress(done, total);
-
-    // Cập nhật nút Download ZIP (chỉ đếm completed, không đếm failed)
-    this._parallelDoneCount = completed;
-    this._showDownloadZipBtn(true, completed, total);
-
-    // Thêm label vào danh sách đã xong
-    if (lastLabel) {
-      this._addDoneItem(lastLabel);
-    }
+  _startParallelPolling() {
+    this._stopParallelPolling();
+    this._polledLabels = new Set();
+    this._parallelPollTimer = setInterval(() => this._pollParallelStatus(), 3000);
+    console.log('🔄 [ScenarioRunner] Bắt đầu polling storage mỗi 3s');
   }
 
   /**
-   * Xử lý message PARALLEL_ALL_DONE từ background.
-   * Reset controls và hiển thị kết quả tổng kết.
-   * @param {object} msg - {completed, failed, total}
+   * Dừng polling.
    */
-  _onParallelAllDone(msg) {
-    const { completed, failed, total } = msg;
-
-    this._updateParallelProgress(total, total);
-    this._resetControls();
-    this._parallelRunning = false;
-
-    const successCount = completed?.length || 0;
-    const failCount = failed?.length || 0;
-
-    let resultMsg = `🎉 Hoàn thành chạy song song: ${successCount}/${total} thành công`;
-    if (failCount > 0) {
-      resultMsg += `, ${failCount} lỗi`;
+  _stopParallelPolling() {
+    if (this._parallelPollTimer) {
+      clearInterval(this._parallelPollTimer);
+      this._parallelPollTimer = null;
     }
-    ContentHelper.showToast(resultMsg, failCount > 0 ? 'warning' : 'success');
+    const dot = this.el?.querySelector('#sr-polling-dot');
+    if (dot) dot.classList.add('hidden');
+  }
+
+  /**
+   * Đọc trạng thái session từ chrome.storage.local và cập nhật UI.
+   */
+  _pollParallelStatus() {
+    if (!this._parallelSessionId) return;
+
+    // Hiệu ứng polling: hiện dot xanh nhấp nháy
+    const dot = this.el.querySelector('#sr-polling-dot');
+    if (dot) {
+      dot.classList.remove('hidden');
+      setTimeout(() => dot.classList.add('hidden'), 1500);
+    }
+
+    const key = `parallel_session_${this._parallelSessionId}`;
+    chrome.storage.local.get(key, (result) => {
+      const session = result[key];
+      if (!session) return;
+
+      const tasks = Object.values(session.tasks);
+      const completed = tasks.filter(t => t.status === 'completed');
+      const failed = tasks.filter(t => t.status === 'failed');
+      const total = session.total;
+      const done = completed.length + failed.length;
+
+      // Cập nhật progress bar
+      this._updateParallelProgress(done, total);
+
+      // Cập nhật nút Download ZIP
+      this._parallelDoneCount = completed.length;
+      this._showDownloadZipBtn(true, completed.length, total);
+
+      // Thêm labels mới vào danh sách đã xong
+      [...completed, ...failed].forEach(t => {
+        if (!this._polledLabels.has(t.taskId)) {
+          this._polledLabels.add(t.taskId);
+          this._addDoneItem(t.label || t.taskId);
+        }
+      });
+
+      // Kiểm tra hoàn thành
+      if (done >= total && this._parallelRunning) {
+        this._stopParallelPolling();
+        this._resetControls();
+        this._parallelRunning = false;
+
+        let msg = `🎉 Hoàn thành: ${completed.length}/${total} thành công`;
+        if (failed.length > 0) msg += `, ${failed.length} lỗi`;
+        ContentHelper.showToast(msg, failed.length > 0 ? 'warning' : 'success');
+      }
+    });
   }
 
   /**
@@ -842,11 +865,9 @@ window.ScenarioRunner = class {
     this.el?.remove();
     this.onClose();
     this.sequencer?.stop();
-    // Gỡ message listener parallel
-    if (this._parallelMessageListener) {
-      chrome.runtime.onMessage.removeListener(this._parallelMessageListener);
-    }
-    // Dọn session parallel từ background
+    // Dừng polling
+    this._stopParallelPolling();
+    // Dọn session parallel từ background + storage
     if (this._parallelSessionId) {
       chrome.runtime.sendMessage({
         type: 'PARALLEL_CLEANUP_SESSION',
