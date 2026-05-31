@@ -572,6 +572,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
       if (newStatus === 'completed' && oldStatus !== 'completed') {
         logInfo(`✅ [Storage] Task "${taskId}" (${taskData.label}) hoàn thành!`);
+        const tabId = session.running.get(taskId);
         session.running.delete(taskId);
         if (!session.completed.find(c => c.taskId === taskId)) {
           session.completed.push({ taskId, label: taskData.label });
@@ -582,15 +583,40 @@ chrome.storage.onChanged.addListener((changes, area) => {
           title: '⚡ Parallel Task hoàn thành',
           message: `"${taskData.label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
         });
+        // Tự động đóng tab phụ sau 2s (kết quả đã lưu an toàn trong storage)
+        if (tabId) {
+          setTimeout(() => {
+            chrome.tabs.remove(tabId, () => {
+              if (chrome.runtime.lastError) {
+                logWarn(`[TabOrchestrator] Không đóng được tab #${tabId}: ${chrome.runtime.lastError.message}`);
+              } else {
+                logInfo(`🗑️ [TabOrchestrator] Đã đóng tab #${tabId} (${taskData.label})`);
+              }
+            });
+          }, 2000);
+        }
         if (session.pending.length > 0) _launchNextBatch(session);
         _checkAllDone(session);
       }
 
       if (newStatus === 'failed' && oldStatus !== 'failed') {
         logError(`❌ [Storage] Task "${taskId}" (${taskData.label}) lỗi: ${taskData.error}`);
+        const tabId = session.running.get(taskId);
         session.running.delete(taskId);
         if (!session.failed.find(f => f.taskId === taskId)) {
           session.failed.push({ taskId, label: taskData.label, error: taskData.error });
+        }
+        // Tự động đóng tab lỗi sau 2s
+        if (tabId) {
+          setTimeout(() => {
+            chrome.tabs.remove(tabId, () => {
+              if (chrome.runtime.lastError) {
+                logWarn(`[TabOrchestrator] Không đóng được tab #${tabId}`);
+              } else {
+                logInfo(`🗑️ [TabOrchestrator] Đã đóng tab lỗi #${tabId} (${taskData.label})`);
+              }
+            });
+          }, 2000);
         }
         if (session.pending.length > 0) _launchNextBatch(session);
         _checkAllDone(session);
