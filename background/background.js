@@ -439,11 +439,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Ghi trạng thái ban đầu vào chrome.storage.local
   const storageKey = `parallel_session_${sessionId}`;
-  const storageData = { sessionId, total: tasks.length, tasks: {} };
+  const storageData = { sessionId, total: tasks.length, baseUrl, maxConcurrent, tasks: {} };
   tasks.forEach(t => {
     storageData.tasks[t.taskId] = {
-      taskId: t.taskId, label: t.label || t.taskId,
-      status: 'pending', content: '', error: '', updatedAt: Date.now()
+      taskId: t.taskId, 
+      label: t.label || t.taskId,
+      scenarioName: t.scenarioName, 
+      values: t.values, 
+      startAt: t.startAt,
+      status: 'pending', 
+      content: '', 
+      error: '', 
+      updatedAt: Date.now()
     };
   });
   chrome.storage.local.set({ [storageKey]: storageData }, () => {
@@ -563,8 +570,36 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const sessionId = newValue?.sessionId;
     if (!sessionId) continue;
 
-    const session = parallelSessions.get(sessionId);
-    if (!session) continue;
+    let session = parallelSessions.get(sessionId);
+    
+    // Nếu service worker bị ngủ, biến RAM session sẽ mất. Ta cần khôi phục từ storage:
+    if (!session) {
+      logInfo(`🔄 [TabOrchestrator] Khôi phục session từ storage do service worker khởi động lại: ${sessionId}`);
+      session = {
+        sessionId,
+        baseUrl: newValue.baseUrl,
+        maxConcurrent: newValue.maxConcurrent || 5,
+        tasks: [],
+        pending: [],
+        running: new Map(),
+        completed: [],
+        failed: []
+      };
+      
+      for (const [tId, tData] of Object.entries(newValue.tasks)) {
+         session.tasks.push(tData);
+         if (tData.status === 'pending') {
+            session.pending.push(tData);
+         } else if (tData.status === 'running') {
+            session.running.set(tId, tData.tabId);
+         } else if (tData.status === 'completed') {
+            session.completed.push({ taskId: tId, label: tData.label });
+         } else if (tData.status === 'failed') {
+            session.failed.push({ taskId: tId, label: tData.label, error: tData.error });
+         }
+      }
+      parallelSessions.set(sessionId, session);
+    }
 
     for (const [taskId, taskData] of Object.entries(newValue.tasks || {})) {
       const oldStatus = oldValue?.tasks?.[taskId]?.status;
