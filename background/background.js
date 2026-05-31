@@ -510,8 +510,9 @@ function _createTabAndSendTask(session, task) {
         const sKey = `parallel_session_${session.sessionId}`;
         chrome.storage.local.get(sKey, (r) => {
           const sd = r[sKey];
-          if (sd && sd.tasks[task.taskId]) {
+           if (sd && sd.tasks[task.taskId]) {
             sd.tasks[task.taskId].status = 'running';
+            sd.tasks[task.taskId].tabId = newTab.id;
             sd.tasks[task.taskId].updatedAt = Date.now();
             chrome.storage.local.set({ [sKey]: sd });
           }
@@ -572,7 +573,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
       if (newStatus === 'completed' && oldStatus !== 'completed') {
         logInfo(`✅ [Storage] Task "${taskId}" (${taskData.label}) hoàn thành!`);
-        const tabId = session.running.get(taskId);
+        const tabId = taskData.tabId;
         session.running.delete(taskId);
         if (!session.completed.find(c => c.taskId === taskId)) {
           session.completed.push({ taskId, label: taskData.label });
@@ -601,7 +602,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
       if (newStatus === 'failed' && oldStatus !== 'failed') {
         logError(`❌ [Storage] Task "${taskId}" (${taskData.label}) lỗi: ${taskData.error}`);
-        const tabId = session.running.get(taskId);
+        const tabId = taskData.tabId;
         session.running.delete(taskId);
         if (!session.failed.find(f => f.taskId === taskId)) {
           session.failed.push({ taskId, label: taskData.label, error: taskData.error });
