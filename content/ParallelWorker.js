@@ -308,14 +308,6 @@ window.ParallelWorker = (() => {
 
       console.log(`📝 [ParallelWorker] Sẽ gửi ${prompts.length} prompt(s)`);
 
-      // 5. Hiển thị toast thông báo bắt đầu
-      if (window.ContentHelper) {
-        ContentHelper.showToast(
-          `⚡ Bắt đầu chạy parallel: ${scenarioName} (${prompts[0]?.label || 'N/A'})`,
-          'info'
-        );
-      }
-
       // 6. Tạo PromptSequencer và chạy
       const sequencer = new PromptSequencer(
         prompts,
@@ -324,7 +316,8 @@ window.ParallelWorker = (() => {
         (idx, total) => {
           console.log(`📊 [ParallelWorker] Tiến trình: ${idx}/${total}`);
         },
-        `Parallel: ${scenarioName}`
+        `Parallel: ${scenarioName}`,
+        true // Silent mode
       );
 
       // 7. Chạy sequencer và đợi hoàn thành
@@ -336,13 +329,6 @@ window.ParallelWorker = (() => {
       const collectedContent = _collectContent();
       console.log(`✅ [ParallelWorker] Task "${taskId}" hoàn thành! Content: ${collectedContent.length} ký tự`);
 
-      if (window.ContentHelper) {
-        ContentHelper.showToast(
-          `✅ Hoàn thành: ${scenarioName} (${prompts[0]?.label || 'N/A'})`,
-          'success'
-        );
-      }
-
       // 9. Ghi kết quả vào chrome.storage.local (label giữ nguyên từ ScenarioRunner)
       await _updateTaskInStorage(taskData.sessionId, taskId, {
         status: 'completed',
@@ -351,10 +337,6 @@ window.ParallelWorker = (() => {
 
     } catch (error) {
       console.error(`❌ [ParallelWorker] Task "${taskId}" lỗi:`, error);
-
-      if (window.ContentHelper) {
-        ContentHelper.showToast(`❌ Lỗi: ${error.message}`, 'error');
-      }
 
       // Ghi lỗi vào chrome.storage.local
       await _updateTaskInStorage(taskData.sessionId, taskId, {

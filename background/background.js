@@ -613,12 +613,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
         if (!session.completed.find(c => c.taskId === taskId)) {
           session.completed.push({ taskId, label: taskData.label });
         }
-        chrome.notifications.create({
-          type: 'basic',
-          iconUrl: chrome.runtime.getURL('assets/icon.png'),
-          title: '⚡ Parallel Task hoàn thành',
-          message: `"${taskData.label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
-        });
         // Tự động đóng tab phụ sau 2s (kết quả đã lưu an toàn trong storage)
         if (tabId) {
           setTimeout(() => {

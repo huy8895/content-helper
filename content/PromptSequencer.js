@@ -6,12 +6,13 @@
  ****************************************/
 window.PromptSequencer = class {
   constructor(prompts, send, wait, onStep = () => {
-  }, scenarioName = "Unknown Scenario") {
+  }, scenarioName = "Unknown Scenario", silent = false) {
     this.prompts = prompts;
     this.send = send;
     this.wait = wait;
     this.onStep = onStep;
     this.scenarioName = scenarioName;  // 👈 lưu tên kịch bản
+    this.silent = silent;
 
     this.idx = 0;
     this.paused = false;
@@ -36,14 +37,16 @@ window.PromptSequencer = class {
     }
 
     if (!wasStoppedManually) {
-      console.log("🔔start Gửi thông báo")
-      // Gửi thông báo kèm tên kịch bản/action
-      chrome.runtime.sendMessage({
-        type: "SHOW_NOTIFICATION",
-        title: "Scenario Completed",
-        message: `Scenario "${this.scenarioName}" has been completed!`
-      });
-      ContentHelper.showToast(`Scenario "${this.scenarioName}" has been completed!`, "success");
+      if (!this.silent) {
+        console.log("🔔start Gửi thông báo")
+        // Gửi thông báo kèm tên kịch bản/action
+        chrome.runtime.sendMessage({
+          type: "SHOW_NOTIFICATION",
+          title: "Scenario Completed",
+          message: `Scenario "${this.scenarioName}" has been completed!`
+        });
+        ContentHelper.showToast(`Scenario "${this.scenarioName}" has been completed!`, "success");
+      }
       // QUAN TRỌNG: Đánh dấu là đã dừng để _isBusy() trả về false
       this.stopped = true;
     }
