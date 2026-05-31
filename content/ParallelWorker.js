@@ -343,10 +343,9 @@ window.ParallelWorker = (() => {
         );
       }
 
-      // 9. Ghi kết quả vào chrome.storage.local
+      // 9. Ghi kết quả vào chrome.storage.local (label giữ nguyên từ ScenarioRunner)
       await _updateTaskInStorage(taskData.sessionId, taskId, {
         status: 'completed',
-        label: prompts[0]?.label || taskId,
         content: collectedContent
       });
 
