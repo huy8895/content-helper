@@ -65,6 +65,14 @@ const ScenarioRunnerInnerHTML = `
     </button>
   </div>
 
+  <!-- Lựa chọn chuyển tab khi chạy song song -->
+  <div class="flex items-center gap-2 mb-4 px-1">
+    <label class="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
+      <input type="checkbox" id="sr-parallel-active" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+      <span>Tự động chuyển sang tab mới mở</span>
+    </label>
+  </div>
+
   <div class="flex gap-2 mb-4">
     <button id="sr-pause" class="flex-1 h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
     <button id="sr-resume" class="flex-1 h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
@@ -332,6 +340,19 @@ window.ScenarioRunner = class {
     const btnDownloadZip = this.el.querySelector('#sr-download-zip');
     if (btnDownloadZip) {
       btnDownloadZip.onclick = () => this._downloadParallelZip();
+    }
+
+    // Checkbox Tự động chuyển sang tab mới mở
+    const checkboxActive = this.el.querySelector('#sr-parallel-active');
+    if (checkboxActive) {
+      chrome.storage.local.get('srParallelActive', (result) => {
+        if (result.srParallelActive !== undefined) {
+          checkboxActive.checked = result.srParallelActive;
+        }
+      });
+      checkboxActive.addEventListener('change', () => {
+        chrome.storage.local.set({ srParallelActive: checkboxActive.checked });
+      });
     }
   }
 
@@ -646,6 +667,7 @@ window.ScenarioRunner = class {
 
     // 3. Lấy số tab đồng thời từ input
     const maxConcurrent = parseInt(this.el.querySelector('#sr-parallel-tabs').value || '5', 10);
+    const activeTab = this.el.querySelector('#sr-parallel-active')?.checked ?? true;
 
     // 4. Xác định base URL (hiện chỉ hỗ trợ Gemini)
     const baseUrl = 'https://gemini.google.com/app';
@@ -687,7 +709,8 @@ window.ScenarioRunner = class {
       sessionId: sessionId,
       tasks: tasks,
       baseUrl: baseUrl,
-      maxConcurrent: maxConcurrent
+      maxConcurrent: maxConcurrent,
+      activeTab: activeTab
     }, (response) => {
       if (chrome.runtime.lastError) {
         console.error('❌ [ScenarioRunner] Lỗi gửi PARALLEL_START:', chrome.runtime.lastError);

@@ -418,7 +418,7 @@ const parallelSessions = new Map();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== 'PARALLEL_START') return;
 
-  const { sessionId, tasks, baseUrl, maxConcurrent = 5 } = message;
+  const { sessionId, tasks, baseUrl, maxConcurrent = 5, activeTab = false } = message;
   const sourceTabId = sender.tab?.id;
 
   logInfo(`🚀 [TabOrchestrator] Bắt đầu phiên "${sessionId}": ${tasks.length} tasks, max ${maxConcurrent} tabs`);
@@ -428,6 +428,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sessionId,
     baseUrl,
     maxConcurrent,
+    activeTab,
     tasks: [...tasks],     // Tất cả tasks
     pending: [...tasks],   // Tasks chưa được gán cho tab
     running: new Map(),    // taskId → tabId (đang chạy)
@@ -439,7 +440,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Ghi trạng thái ban đầu vào chrome.storage.local
   const storageKey = `parallel_session_${sessionId}`;
-  const storageData = { sessionId, total: tasks.length, baseUrl, maxConcurrent, tasks: {} };
+  const storageData = { sessionId, total: tasks.length, baseUrl, maxConcurrent, activeTab, tasks: {} };
   tasks.forEach(t => {
     storageData.tasks[t.taskId] = {
       taskId: t.taskId, 
@@ -492,7 +493,7 @@ function _launchNextBatch(session) {
  * @param {object} task - Task data {taskId, scenarioName, values, startAt}
  */
 function _createTabAndSendTask(session, task) {
-  chrome.tabs.create({ url: session.baseUrl, active: false }, (newTab) => {
+  chrome.tabs.create({ url: session.baseUrl, active: !!session.activeTab }, (newTab) => {
     if (chrome.runtime.lastError) {
       logError(`❌ [TabOrchestrator] Không thể tạo tab cho task "${task.taskId}":`, chrome.runtime.lastError);
       _handleTaskFailure(session, task.taskId, 'Không thể tạo tab', task.taskId);
@@ -579,6 +580,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
         sessionId,
         baseUrl: newValue.baseUrl,
         maxConcurrent: newValue.maxConcurrent || 5,
+        activeTab: newValue.activeTab || false,
         tasks: [],
         pending: [],
         running: new Map(),
