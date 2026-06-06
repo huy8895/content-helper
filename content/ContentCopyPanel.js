@@ -123,9 +123,9 @@ window.ContentCopyPanel = class {
 
       // Button Download
       const btnDownload = document.createElement("button");
-      btnDownload.className = "flex-shrink-0 h-6 px-1.5 flex items-center gap-1 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded text-[9px] hover:bg-emerald-100 transition-all active:scale-95 opacity-0 group-hover:opacity-100";
+      btnDownload.className = "flex-shrink-0 h-6 w-6 flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded text-[11px] hover:bg-emerald-100 transition-all active:scale-95 opacity-50 group-hover:opacity-100";
       btnDownload.title = `Download item #${idx + 1}`;
-      btnDownload.innerHTML = "📄";
+      btnDownload.innerHTML = "📥";
       btnDownload.onclick = (e) => {
         e.stopPropagation();
         const filenamesInput = this.el.querySelector('#ccp-filenames')?.value || '';
@@ -141,7 +141,7 @@ window.ContentCopyPanel = class {
 
       // Button Copy
       const btnCopy = document.createElement("button");
-      btnCopy.className = "flex-shrink-0 h-6 px-1.5 flex items-center gap-1 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded text-[9px] hover:bg-indigo-100 transition-all active:scale-95 opacity-0 group-hover:opacity-100";
+      btnCopy.className = "flex-shrink-0 h-6 w-6 flex items-center justify-center bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded text-[11px] hover:bg-indigo-100 transition-all active:scale-95 opacity-50 group-hover:opacity-100";
       btnCopy.title = `Copy item #${idx + 1}`;
       btnCopy.innerHTML = "📋";
       btnCopy.onclick = (e) => {
