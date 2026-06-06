@@ -49,6 +49,9 @@ window.ContentCopyPanel = class {
           
           <!-- Download buttons group -->
           <div class="flex gap-1.5 ml-auto">
+            <button id="ccp-copy-txt" class="h-8 px-2.5 flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm" title="Copy toàn bộ nội dung TXT (bao gồm phân tách và Part)">
+              <span>📋</span> Copy TXT
+            </button>
             <button id="ccp-download-txt" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] hover:bg-emerald-100 transition-all active:scale-95 shadow-sm">
               <span>📄</span> TXT
             </button>
@@ -254,28 +257,20 @@ window.ContentCopyPanel = class {
       this._copyToClipboard(text, `✅ Copied from index ${index}`);
     };
 
+    // Copy TXT
+    this.el.querySelector("#ccp-copy-txt").onclick = () => {
+      const content = this._getTxtContent();
+      if (content !== null) {
+        this._copyToClipboard(content, '✅ Copied TXT content!');
+      }
+    };
+
     // Download TXT
     this.el.querySelector("#ccp-download-txt").onclick = () => {
-      const indexInput = this.el.querySelector("#ccp-index");
-      const prefixCheckbox = this.el.querySelector("#ccp-prefix-part");
-
-      const index = parseInt(indexInput.value || "0", 10);
-
-      if (indexInput.value && (!Number.isInteger(index) || index < 0 || index > this.elements.length)) {
-        alert("Invalid index");
-        return;
+      const content = this._getTxtContent();
+      if (content !== null) {
+        this._downloadFile(content, 'content.txt');
       }
-
-      const fromIndex = indexInput.value ? index - 1 : 0;
-      const addPrefix = prefixCheckbox?.checked;
-
-      const content = this.elements.slice(fromIndex).map((el, idx) => {
-        const partLabel = `Part ${idx + 1}\n`;
-        const txt = this._getText(el);
-        return addPrefix ? partLabel + txt : txt;
-      }).join('\n\n==========\n\n');
-
-      this._downloadFile(content, 'content.txt');
     };
 
     // Select All checkbox
@@ -292,6 +287,27 @@ window.ContentCopyPanel = class {
     this.el.querySelector("#ccp-download-zip").onclick = () => {
       this._downloadZip();
     };
+  }
+
+  _getTxtContent() {
+    const indexInput = this.el.querySelector("#ccp-index");
+    const prefixCheckbox = this.el.querySelector("#ccp-prefix-part");
+
+    const index = parseInt(indexInput.value || "0", 10);
+
+    if (indexInput.value && (!Number.isInteger(index) || index < 0 || index > this.elements.length)) {
+      alert("Invalid index");
+      return null;
+    }
+
+    const fromIndex = indexInput.value ? index - 1 : 0;
+    const addPrefix = prefixCheckbox?.checked;
+
+    return this.elements.slice(fromIndex).map((el, idx) => {
+      const partLabel = `Part ${idx + 1}\n`;
+      const txt = this._getText(el);
+      return addPrefix ? partLabel + txt : txt;
+    }).join('\n\n==========\n\n');
   }
 
   _copyToClipboard(text, successMessage) {
