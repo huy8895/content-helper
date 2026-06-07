@@ -458,33 +458,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     logInfo(`💾 [TabOrchestrator] Đã ghi session vào storage: ${storageKey}`);
   });
 
-  // Bắt đầu mở tabs cho batch đầu tiên
-  _launchNextBatch(session);
+  // Bắt đầu mở tab đầu tiên
+  _launchNextTask(session);
 
   sendResponse({ received: true, sessionId });
   return true;
 });
 
 /**
- * Mở tabs cho batch tiếp theo (giới hạn bởi maxConcurrent).
+ * Mở 1 tab mới cho task tiếp theo nếu chưa vượt quá giới hạn maxConcurrent.
  * @param {object} session - Session object
  */
-function _launchNextBatch(session) {
-  const slotsAvailable = session.maxConcurrent - session.running.size;
-  const tasksToLaunch = session.pending.splice(0, slotsAvailable);
+function _launchNextTask(session) {
+  if (!session || session.pending.length === 0) return;
 
-  logInfo(`📦 [TabOrchestrator] Mở ${tasksToLaunch.length} tab mới (${session.running.size} đang chạy, ${session.pending.length} chờ)`);
+  // Kiểm tra giới hạn maxConcurrent
+  if (session.running.size >= session.maxConcurrent) {
+    logInfo(`⏳ [TabOrchestrator] Đạt giới hạn đồng thời (${session.running.size}/${session.maxConcurrent}). Chờ tab khác hoàn thành.`);
+    return;
+  }
 
-  tasksToLaunch.forEach((task, idx) => {
-    // Thêm Stagger Delay: cách nhau 2 giây mỗi tab để tránh bị nhận diện robot
-    const delay = idx * 2000;
-    setTimeout(() => {
-      // Đảm bảo session vẫn hoạt động (phòng trường hợp user đóng panel đột ngột)
-      if (parallelSessions.has(session.sessionId)) {
-        _createTabAndSendTask(session, task);
-      }
-    }, delay);
-  });
+  const nextTask = session.pending.shift(); // Lấy task tiếp theo
+  if (nextTask) {
+    logInfo(`📦 [TabOrchestrator] Mở tab mới cho task: "${nextTask.taskId}" (${session.running.size} đang chạy, ${session.pending.length} chờ)`);
+    _createTabAndSendTask(session, nextTask);
+  }
 }
 
 /**
@@ -621,19 +619,21 @@ chrome.storage.onChanged.addListener((changes, area) => {
           title: '⚡ Parallel Task hoàn thành',
           message: `"${taskData.label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
         });
-        // Tự động đóng tab phụ sau 2s (kết quả đã lưu an toàn trong storage)
-        if (tabId) {
-          setTimeout(() => {
-            chrome.tabs.remove(tabId, () => {
-              if (chrome.runtime.lastError) {
-                logWarn(`[TabOrchestrator] Không đóng được tab #${tabId}: ${chrome.runtime.lastError.message}`);
-              } else {
-                logInfo(`🗑️ [TabOrchestrator] Đã đóng tab #${tabId} (${taskData.label})`);
-              }
-            });
-          }, 2000);
+        
+        // Chỉ tự động đóng tab phụ nếu người dùng đồng ý (shouldCloseTab === true)
+        const shouldClose = taskData.shouldCloseTab ?? true;
+        if (tabId && shouldClose) {
+          chrome.tabs.remove(tabId, () => {
+            if (chrome.runtime.lastError) {
+              logWarn(`[TabOrchestrator] Không đóng được tab #${tabId}: ${chrome.runtime.lastError.message}`);
+            } else {
+              logInfo(`🗑️ [TabOrchestrator] Đã đóng tab #${tabId} (${taskData.label})`);
+            }
+          });
+        } else {
+          logInfo(`📌 [TabOrchestrator] Giữ lại tab #${tabId} (${taskData.label}) theo yêu cầu người dùng`);
         }
-        if (session.pending.length > 0) _launchNextBatch(session);
+        if (session.pending.length > 0) _launchNextTask(session);
         _checkAllDone(session);
       }
 
@@ -644,19 +644,21 @@ chrome.storage.onChanged.addListener((changes, area) => {
         if (!session.failed.find(f => f.taskId === taskId)) {
           session.failed.push({ taskId, label: taskData.label, error: taskData.error });
         }
-        // Tự động đóng tab lỗi sau 2s
-        if (tabId) {
-          setTimeout(() => {
-            chrome.tabs.remove(tabId, () => {
-              if (chrome.runtime.lastError) {
-                logWarn(`[TabOrchestrator] Không đóng được tab #${tabId}`);
-              } else {
-                logInfo(`🗑️ [TabOrchestrator] Đã đóng tab lỗi #${tabId} (${taskData.label})`);
-              }
-            });
-          }, 2000);
+        
+        // Chỉ tự động đóng tab lỗi nếu người dùng đồng ý (shouldCloseTab === true)
+        const shouldClose = taskData.shouldCloseTab ?? true;
+        if (tabId && shouldClose) {
+          chrome.tabs.remove(tabId, () => {
+            if (chrome.runtime.lastError) {
+              logWarn(`[TabOrchestrator] Không đóng được tab #${tabId}`);
+            } else {
+              logInfo(`🗑️ [TabOrchestrator] Đã đóng tab lỗi #${tabId} (${taskData.label})`);
+            }
+          });
+        } else {
+          logInfo(`📌 [TabOrchestrator] Giữ lại tab lỗi #${tabId} (${taskData.label}) theo yêu cầu người dùng`);
         }
-        if (session.pending.length > 0) _launchNextBatch(session);
+        if (session.pending.length > 0) _launchNextTask(session);
         _checkAllDone(session);
       }
     }
@@ -756,4 +758,56 @@ chrome.runtime.onMessage.addListener((message) => {
     if (keys.length > 0) chrome.storage.local.remove(keys);
     logInfo(`🧹 [TabOrchestrator] Đã dọn tất cả sessions`);
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// PARALLEL_ACTIVE_TAB – Kích hoạt (active) tab phụ lên màn hình chính
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'PARALLEL_ACTIVE_TAB') return;
+
+  const tabId = sender.tab?.id;
+  const windowId = sender.tab?.windowId;
+
+  if (tabId) {
+    logInfo(`🖱️ [TabOrchestrator] Nhận yêu cầu active tab #${tabId}`);
+    chrome.tabs.update(tabId, { active: true }, () => {
+      if (chrome.runtime.lastError) {
+        logError(`❌ [TabOrchestrator] Lỗi khi active tab #${tabId}:`, chrome.runtime.lastError.message);
+        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+      } else {
+        if (windowId) {
+          chrome.windows.update(windowId, { focused: true }, () => {
+            sendResponse({ success: true });
+          });
+        } else {
+          sendResponse({ success: true });
+        }
+      }
+    });
+  } else {
+    sendResponse({ success: false, error: 'Không tìm thấy tab ID nguồn' });
+  }
+
+  return true;
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// PARALLEL_TASK_FIRST_PROMPT_SENT – Mở tab tiếp theo khi tab trước đã gửi prompt đầu tiên
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'PARALLEL_TASK_FIRST_PROMPT_SENT') return;
+
+  const { sessionId, taskId } = message;
+  logInfo(`📨 [TabOrchestrator] Task "${taskId}" đã gửi đi câu hỏi đầu tiên. Mở tab tiếp theo nếu có...`);
+
+  const session = parallelSessions.get(sessionId);
+  if (session) {
+    _launchNextTask(session);
+  }
+
+  sendResponse({ received: true });
+  return true;
 });

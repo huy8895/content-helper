@@ -24,6 +24,11 @@ window.ParallelWorker = (() => {
     delayBeforeStart: 2000,     // ms - delay sau khi adapter sẵn sàng trước khi bắt đầu
   };
 
+  // ── Biến trạng thái của task hiện tại ───────────────────────────
+  let _currentSessionId = null;
+  let _currentTaskId = null;
+  let _hasSentFirstPrompt = false;
+
   /**
    * Đợi ChatAdapter sẵn sàng trên tab hiện tại.
    * @returns {Promise<object>} ChatAdapter instance
@@ -114,6 +119,32 @@ window.ParallelWorker = (() => {
 
     console.log(`📄 [ParallelWorker] Thu thập ${elements.length} content blocks`);
     return elements.map(el => _getText(el)).join('\n\n==========\n\n');
+  }
+
+  /**
+   * Thu thập nội dung AI response có retry và delay.
+   * Rất hữu ích khi tab con chạy ẩn (background) và trình duyệt trì hoãn việc render DOM.
+   * 
+   * @param {number} maxWaitMs - Thời gian tối đa chờ DOM render (ms)
+   * @param {number} pollIntervalMs - Tần suất kiểm tra (ms)
+   * @returns {Promise<string>} Nội dung thu thập được
+   */
+  async function _collectContentWithRetry(maxWaitMs = 5000, pollIntervalMs = 500) {
+    const startTime = Date.now();
+    console.log("🔍 [ParallelWorker] Bắt đầu thu thập dữ liệu (có cơ chế kiểm tra blank)...");
+    
+    while (Date.now() - startTime < maxWaitMs) {
+      const content = _collectContent();
+      if (content && content.trim().length > 0) {
+        console.log(`✨ [ParallelWorker] Đã thu thập thành công sau ${Date.now() - startTime}ms!`);
+        return content;
+      }
+      console.log(`⏳ [ParallelWorker] Nội dung trống, đang đợi DOM render... (chờ thêm tối đa ${Math.max(0, maxWaitMs - (Date.now() - startTime))}ms)`);
+      await new Promise(r => setTimeout(r, pollIntervalMs));
+    }
+    
+    // Fallback trả về kết quả kiểm tra cuối cùng
+    return _collectContent();
   }
 
   /**
@@ -227,6 +258,21 @@ window.ParallelWorker = (() => {
     // Đợi nút gửi sẵn sàng rồi click
     const sendBtn = await _waitForElement(() => chat.getSendBtn(), 25, 300);
     sendBtn?.click();
+
+    // Thông báo cho background biết câu hỏi đầu tiên đã được gửi đi
+    if (!_hasSentFirstPrompt) {
+      _hasSentFirstPrompt = true;
+      try {
+        chrome.runtime.sendMessage({
+          type: 'PARALLEL_TASK_FIRST_PROMPT_SENT',
+          sessionId: _currentSessionId,
+          taskId: _currentTaskId
+        });
+        console.log('📨 [ParallelWorker] Đã báo gửi prompt đầu tiên cho background');
+      } catch (e) {
+        console.warn('⚠️ [ParallelWorker] Không gửi được tin nhắn báo gửi prompt đầu tiên:', e);
+      }
+    }
   }
 
   /**
@@ -269,6 +315,10 @@ window.ParallelWorker = (() => {
    */
   async function _executeTask(taskData) {
     const { taskId, scenarioName, values, startAt } = taskData;
+
+    _currentSessionId = taskData.sessionId;
+    _currentTaskId = taskId;
+    _hasSentFirstPrompt = false;
 
     console.log(`🚀 [ParallelWorker] Bắt đầu task "${taskId}" cho scenario "${scenarioName}"`);
     console.log(`📋 [ParallelWorker] Giá trị biến:`, values);
@@ -325,23 +375,67 @@ window.ParallelWorker = (() => {
         sequencer.start(() => resolve());
       });
 
-      // 8. Thu thập nội dung AI response từ tab
-      const collectedContent = _collectContent();
+      // 7b. Kích hoạt (active) tab phụ lên màn hình chính để browser kích hoạt render DOM
+      console.log("🖱️ [ParallelWorker] Yêu cầu active tab...");
+      try {
+        await new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: 'PARALLEL_ACTIVE_TAB' }, (res) => {
+            resolve(res);
+          });
+        });
+      } catch (e) {
+        console.warn("⚠️ [ParallelWorker] Không thể active tab:", e);
+      }
+
+      // Đợi 1 giây để trang web render lại DOM
+      await new Promise(r => setTimeout(r, 1000));
+
+      // 8. Thu thập nội dung AI response từ tab (có retry nếu trống)
+      const collectedContent = await _collectContentWithRetry(5000, 500);
       console.log(`✅ [ParallelWorker] Task "${taskId}" hoàn thành! Content: ${collectedContent.length} ký tự`);
+
+      // 8b. Hiển thị hộp thoại hỏi người dùng có muốn đóng tab không
+      const label = taskData.label || taskId;
+      const contentPreview = collectedContent.trim().length > 0 
+        ? `Đã thu thập thành công (${collectedContent.length} ký tự).` 
+        : "⚠️ CẢNH BÁO: Dữ liệu thu thập bị TRỐNG (blank)!";
+
+      const shouldClose = confirm(
+        `[Content Helper] Kịch bản song song cho: "${label}" đã HOÀN THÀNH!\n\n` +
+        `${contentPreview}\n\n` +
+        `Bạn có muốn ĐÓNG tab này không?\n` +
+        `(Chọn OK để đóng tab ngay, chọn Cancel để giữ lại tab xem chi tiết)`
+      );
 
       // 9. Ghi kết quả vào chrome.storage.local (label giữ nguyên từ ScenarioRunner)
       await _updateTaskInStorage(taskData.sessionId, taskId, {
         status: 'completed',
-        content: collectedContent
+        content: collectedContent,
+        shouldCloseTab: shouldClose
       });
 
     } catch (error) {
       console.error(`❌ [ParallelWorker] Task "${taskId}" lỗi:`, error);
 
+      // Chủ động active tab lỗi lên
+      try {
+        await new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: 'PARALLEL_ACTIVE_TAB' }, () => resolve());
+        });
+      } catch (e) {}
+
+      const label = taskData.label || taskId;
+      const shouldClose = confirm(
+        `❌ [Content Helper] Kịch bản song song cho: "${label}" bị LỖI!\n\n` +
+        `Lỗi: ${error.message}\n\n` +
+        `Bạn có muốn ĐÓNG tab này không?`
+      );
+
       // Ghi lỗi vào chrome.storage.local
       await _updateTaskInStorage(taskData.sessionId, taskId, {
         status: 'failed',
-        error: error.message
+        error: error.message,
+        shouldCloseTab: shouldClose
       });
     }
   }

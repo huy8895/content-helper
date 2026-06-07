@@ -24,6 +24,7 @@ window.ResponseWaiter = (() => {
     hiddenInterval: 3000,   // 3 giây khi tab ẩn
     autoScroll: true,       // Tự cuộn xuống khi có nội dung mới
     debounceMs: 800,        // Debounce sau khi DOM ngừng thay đổi mới kiểm tra isDone
+    lockoutMs: 2500,        // Trì hoãn khóa kiểm tra isDone ban đầu (ms) để tránh độ trễ UI/Server
   };
 
   /**
@@ -60,6 +61,11 @@ window.ResponseWaiter = (() => {
       // ── Kiểm tra trạng thái isDone() ──────────────────────────────
       const checkDone = (source) => {
         if (isSettled) return;
+
+        // Tránh kiểm tra quá sớm ngay sau khi gửi (tránh độ trễ UI/Server phản hồi ban đầu)
+        if (Date.now() - startTime < config.lockoutMs) {
+          return;
+        }
 
         // Kiểm tra timeout trước
         if (Date.now() - startTime > config.timeout) {
