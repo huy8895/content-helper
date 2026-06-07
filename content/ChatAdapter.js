@@ -361,6 +361,7 @@ class DeepSeekAdapter extends BaseChatAdapter {
 
   constructor() {
     super();
+    this._lastContinueClickTime = 0;
   }
   getTextarea() {
     // Thử tìm theo placeholder đặc trưng của DeepSeek, fallback về tag textarea hoặc id cũ
@@ -431,16 +432,41 @@ class DeepSeekAdapter extends BaseChatAdapter {
     return btn;
   }
 
+  getContinueBtn() {
+    const elements = [...document.querySelectorAll('.ds-button, [role="button"], button')];
+    for (const el of elements) {
+      const text = el.textContent.trim();
+      if (/^(continue|continue generating|tiếp tục)$/i.test(text)) {
+        if (el.offsetWidth > 0 && el.offsetHeight > 0) {
+          return el;
+        }
+      }
+    }
+    return null;
+  }
+
   isDone() {
     // 1. Nếu tìm thấy nút Stop -> Chắc chắn đang chạy -> Chưa xong
     const stopBtn = this.getStopBtn();
     if (stopBtn) return false;
 
-    // 2. Kiểm tra nút Send
+    // 2. Kiểm tra nút Continue
+    const continueBtn = this.getContinueBtn();
+    if (continueBtn) {
+      const now = Date.now();
+      if (now - this._lastContinueClickTime > 3000) {
+        this._lastContinueClickTime = now;
+        console.log("🖱️ [DeepSeekAdapter] Phát hiện nút Continue. Tự động click để sinh tiếp...");
+        continueBtn.click();
+      }
+      return false; // Chưa xong
+    }
+
+    // 3. Kiểm tra nút Send
     const sendBtn = this.getSendBtn();
     if (!sendBtn) return false;
 
-    // 3. Nếu không có nút Stop và có nút Send -> Đã xong
+    // 4. Nếu không có nút Stop, không có Continue và có nút Send -> Đã xong
     return true;
   }
 
