@@ -366,22 +366,27 @@ class DeepSeekAdapter extends BaseChatAdapter {
     this.countDivContent = elementHTMLCollectionOf.length;
   }
   getTextarea() {
-    // phần tử nhập chat duy nhất của DeepSeek
-    return this._q('textarea#chat-input');
+    // Thử tìm theo placeholder đặc trưng của DeepSeek, fallback về tag textarea hoặc id cũ
+    return this._q('textarea[placeholder*="DeepSeek"]') || 
+           this._q('textarea#chat-input') || 
+           this._q('textarea');
   }
   getSendBtn() {
     const root = this.getForm();
     if (!root) return null;
 
-    /* trong root có nhiều [role="button"]; send-btn luôn là PHẦN TỬ CUỐI
-       có thuộc tính aria-disabled (true/false).  Chọn nút đó để click. */
-    const btns = [...root.querySelectorAll('[role="button"][aria-disabled]')];
-    const btn = btns.at(-1) || null;     // nút cuối là Send
+    // Nút Send luôn là nút cuối cùng trong khu vực chat
+    const btns = [...root.querySelectorAll('[role="button"], button')];
+    const btn = btns.at(-1) || null;
 
     // Bọc thuộc tính disabled để ScenarioRunner đọc được
     if (btn && btn.disabled === undefined) {
       Object.defineProperty(btn, 'disabled', {
-        get() { return btn.getAttribute('aria-disabled') === 'true'; },
+        get() {
+          return btn.getAttribute('aria-disabled') === 'true' || 
+                 btn.classList.contains('ds-button--disabled') || 
+                 btn.hasAttribute('disabled');
+        },
         configurable: true
       });
     }
@@ -394,7 +399,19 @@ class DeepSeekAdapter extends BaseChatAdapter {
       return null;
     }
 
-    // tìm phần tử có icon _480132b rồi leo lên button
+    const btns = [...root.querySelectorAll('[role="button"], button')];
+    for (const btn of btns) {
+      const svg = btn.querySelector('svg');
+      if (svg) {
+        const html = svg.innerHTML.toLowerCase();
+        // Nút Stop thường chứa thẻ <rect> (hình vuông) hoặc các từ khóa stop/square
+        if (html.includes('rect') || html.includes('square') || html.includes('stop')) {
+          return btn;
+        }
+      }
+    }
+
+    // tìm phần tử có icon _480132b rồi leo lên button (fallback cũ)
     const icon = root.querySelector('div._480132b');
     const btn = icon ? icon.closest('[role="button"]') : null;
 
@@ -408,7 +425,7 @@ class DeepSeekAdapter extends BaseChatAdapter {
       });
     }
     return btn;
-  }  // DeepSeek places everything inside a <form>; inherit default getForm()
+  }
 
   isDone() {
     const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
@@ -420,14 +437,25 @@ class DeepSeekAdapter extends BaseChatAdapter {
     return false;
   }
 
-  /** Trả về DIV cách textare 3 tầng – KHÔNG dùng class cố định */
   getForm() {
-    let el = this.getTextarea();
+    const textarea = this.getTextarea();
+    if (!textarea) return null;
+
+    // 1. Thử tìm form gần nhất
+    const form = textarea.closest('form');
+    if (form) return form;
+
+    // 2. Đi lên tìm DIV cha gần nhất chứa các nút bấm hành động (role="button")
+    let el = textarea.parentElement;
     for (let i = 0; i < 3 && el; i++) {
-      // nhảy tới DIV cha liền kề
-      do { el = el.parentElement; } while (el && el.tagName !== 'DIV');
+      if (el.tagName === 'DIV' && el.querySelector('[role="button"]')) {
+        return el;
+      }
+      el = el.parentElement;
     }
-    return el ?? null;                       // null nếu không tìm được
+
+    // 3. Fallback cuối cùng nếu không tìm thấy cấu trúc trên
+    return textarea.parentElement?.parentElement ?? textarea.parentElement;
   }
 }
 
