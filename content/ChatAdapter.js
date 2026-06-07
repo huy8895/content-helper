@@ -457,6 +457,11 @@ class DeepSeekAdapter extends BaseChatAdapter {
     // 3. Fallback cuối cùng nếu không tìm thấy cấu trúc trên
     return textarea.parentElement?.parentElement ?? textarea.parentElement;
   }
+
+  getContentElements() {
+    // Lấy các thẻ chứa markdown câu trả lời của DeepSeek
+    return Array.from(document.querySelectorAll('.ds-markdown, .ds-markdown--block'));
+  }
 }
 
 /* ----------------------------  qwen.ai  ----------------------------- */

@@ -1,7 +1,7 @@
 window.ContentCopyPanel = class {
   constructor(onClose) {
     this.onClose = onClose;
-    this.elements = window.ChatAdapter.getContentElements();
+    this.elements = window.ChatAdapter.getContentElements() || [];
     console.log("ContentCopyPanel elements:", this.elements);
     this._render();
   }
