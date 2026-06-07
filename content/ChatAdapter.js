@@ -401,8 +401,15 @@ class DeepSeekAdapter extends BaseChatAdapter {
       const svg = btn.querySelector('svg');
       if (svg) {
         const html = svg.innerHTML.toLowerCase();
-        // Nút Stop thường chứa thẻ <rect> (hình vuông) hoặc các từ khóa stop/square
-        if (html.includes('rect') || html.includes('square') || html.includes('stop')) {
+        // Kiểm tra xem SVG có path vẽ hình vuông đặc trưng của DeepSeek Stop hay không
+        const paths = [...svg.querySelectorAll('path')];
+        const hasSquarePath = paths.some(p => {
+          const d = p.getAttribute('d') || '';
+          return d.includes('M2 4.88') || d.includes('H11.12') || d.includes('V11.12');
+        });
+
+        // Nút Stop chứa <rect> (hình vuông), stop/square hoặc path vẽ hình vuông
+        if (html.includes('rect') || html.includes('square') || html.includes('stop') || hasSquarePath) {
           return btn;
         }
       }
