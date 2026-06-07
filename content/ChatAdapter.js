@@ -462,6 +462,42 @@ class DeepSeekAdapter extends BaseChatAdapter {
     // Lấy các thẻ chứa markdown câu trả lời của DeepSeek
     return Array.from(document.querySelectorAll('.ds-markdown, .ds-markdown--block'));
   }
+
+  /**
+   * Kích hoạt cuộc trò chuyện tạm thời hoặc cấu hình mặc định cho DeepSeek.
+   * Do DeepSeek không có chế độ trò chuyện tạm thời, ta tận dụng hàm này để
+   * tự động chuyển đổi mô hình mặc định thành 'expert'.
+   */
+  async enableTemporaryChat() {
+    console.log("🔒 [DeepSeekAdapter] Đang kiểm tra để bật model Expert mặc định...");
+    try {
+      // Tìm nút chọn model Expert
+      const expertBtn = document.querySelector('[data-model-type="expert"]');
+      if (!expertBtn) {
+        console.warn("⚠️ [DeepSeekAdapter] Không tìm thấy nút chọn model Expert. Có thể giao diện đã thay đổi hoặc đang ở phiên bản di động.");
+        return false;
+      }
+
+      // Kiểm tra xem model Expert đã được chọn chưa
+      const isChecked = expertBtn.getAttribute('aria-checked') === 'true';
+      if (isChecked) {
+        console.log("💎 [DeepSeekAdapter] Model Expert đã được chọn sẵn.");
+        return true;
+      }
+
+      // Click chọn model Expert
+      console.log("🖱️ [DeepSeekAdapter] Tiến hành click chọn model Expert...");
+      expertBtn.click();
+
+      // Đợi 500ms để UI cập nhật
+      await new Promise(r => setTimeout(r, 500));
+      console.log("💎 [DeepSeekAdapter] Đã kích hoạt model Expert thành công!");
+      return true;
+    } catch (e) {
+      console.error("❌ [DeepSeekAdapter] Lỗi khi chọn model Expert:", e);
+      return false;
+    }
+  }
 }
 
 /* ----------------------------  qwen.ai  ----------------------------- */

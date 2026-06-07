@@ -57,7 +57,7 @@ const ScenarioRunnerInnerHTML = `
     <button id="sr-start" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
       ▶️ Tuần tự
     </button>
-    <button id="sr-parallel" class="h-9 bg-amber-50 border border-amber-200 text-amber-700 font-bold rounded-lg text-[10px] hover:bg-amber-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Mỗi giá trị list chạy trên 1 tab riêng (chỉ Gemini)">
+    <button id="sr-parallel" class="h-9 bg-amber-50 border border-amber-200 text-amber-700 font-bold rounded-lg text-[10px] hover:bg-amber-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Mỗi giá trị list chạy trên 1 tab riêng (Gemini, DeepSeek, v.v.)">
       ⚡ Song song
       <input type="number" id="sr-parallel-tabs" value="5" min="1" max="10"
         class="w-8 h-6 text-center text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded-md outline-none focus:border-amber-500"
@@ -669,8 +669,19 @@ window.ScenarioRunner = class {
     const maxConcurrent = parseInt(this.el.querySelector('#sr-parallel-tabs').value || '5', 10);
     const activeTab = this.el.querySelector('#sr-parallel-active')?.checked ?? true;
 
-    // 4. Xác định base URL (hiện chỉ hỗ trợ Gemini)
-    const baseUrl = 'https://gemini.google.com/app';
+    // 4. Xác định base URL động dựa trên trang AI đang sử dụng
+    let baseUrl = window.location.origin + '/';
+    if (window.location.hostname.includes('gemini.google.com')) {
+      baseUrl = 'https://gemini.google.com/app';
+    } else if (window.location.hostname.includes('chatgpt.com')) {
+      baseUrl = 'https://chatgpt.com/';
+    } else if (window.location.hostname.includes('deepseek.com')) {
+      baseUrl = 'https://chat.deepseek.com/';
+    } else if (window.location.hostname.includes('qwen.ai')) {
+      baseUrl = 'https://chat.qwen.ai/';
+    } else if (window.location.hostname.includes('grok.com')) {
+      baseUrl = 'https://grok.com/';
+    }
 
     // 5. Tạo danh sách tasks – mỗi giá trị trong list = 1 task
     const sessionId = `parallel_${Date.now()}`;
