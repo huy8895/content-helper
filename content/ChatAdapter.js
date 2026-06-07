@@ -357,13 +357,10 @@ class ChatGPTAdapter extends BaseChatAdapter {
 
 /* ----------------------------  DeepSeek.com  ----------------------------- */
 class DeepSeekAdapter extends BaseChatAdapter {
-  countDivContent = 0;
   static matches(host) { return /deepseek\.com$/i.test(host); }
 
   constructor() {
     super();
-    const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
-    this.countDivContent = elementHTMLCollectionOf.length;
   }
   getTextarea() {
     // Thử tìm theo placeholder đặc trưng của DeepSeek, fallback về tag textarea hoặc id cũ
@@ -428,13 +425,16 @@ class DeepSeekAdapter extends BaseChatAdapter {
   }
 
   isDone() {
-    const elementHTMLCollectionOf = document.getElementsByClassName('ds-markdown ds-markdown--block');
-    if (this.countDivContent + 1 === elementHTMLCollectionOf.length) {
-      this.countDivContent++;
-      console.log('✅ [DeepSeek] isDone: true, tổng tin nhắn:', this.countDivContent);
-      return true;
-    }
-    return false;
+    // 1. Nếu tìm thấy nút Stop -> Chắc chắn đang chạy -> Chưa xong
+    const stopBtn = this.getStopBtn();
+    if (stopBtn) return false;
+
+    // 2. Kiểm tra nút Send
+    const sendBtn = this.getSendBtn();
+    if (!sendBtn) return false;
+
+    // 3. Nếu không có nút Stop và có nút Send -> Đã xong
+    return true;
   }
 
   getForm() {
