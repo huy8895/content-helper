@@ -323,17 +323,31 @@ class ChatGPTAdapter extends BaseChatAdapter {
   getTextarea() {
     return this._q("#prompt-textarea")
   }
-  getSendBtn() { return this._q('button[aria-label="Send prompt"]'); }
-  getStopBtn() { return this._q('button[aria-label="Stop generating"]'); }
-  getVoiceBtn() { return this._q('button[aria-label="Start voice mode"]'); }
+  getSendBtn() {
+    return this._q('button[data-testid="send-button"]') ||
+      this._q('#composer-submit-button') ||
+      this._q('button[aria-label="Send prompt"]') ||
+      this._q('button[aria-label="Gửi lời nhắc"]');
+  }
+  getStopBtn() {
+    return this._q('button[data-testid="stop-button"]') ||
+      this._q('button[aria-label="Stop generating"]') ||
+      this._q('button[aria-label="Dừng tạo"]') ||
+      this._q('button[aria-label*="Dừng"]');
+  }
+  getVoiceBtn() {
+    return this._q('button[aria-label="Start voice mode"]') ||
+      this._q('button[aria-label="Bắt đầu Chế độ thoại"]') ||
+      this._q('button[aria-label*="thoại"]');
+  }
 
   isDone() {
+    // Nếu tìm thấy nút Stop -> Chắc chắn đang chạy -> Trả về false
     const stopBtn = this.getStopBtn();
-    const sendBtn = this.getSendBtn();
-    const voiceBtn = this.getVoiceBtn();
-    const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn
-      && voiceBtn);
-    return done;
+    if (stopBtn) return false;
+
+    // Nếu không thấy nút Stop -> AI không chạy -> Đã hoàn thành (true)
+    return true;
   }
   getForm() {
     return this.getTextarea()?.closest("form") ?? null;
@@ -996,16 +1010,8 @@ class GeminiAdapter extends BaseChatAdapter {
     const stopBtn = this.getStopBtn();
     if (stopBtn) return false;
 
-    // Lấy nút Send
-    const sendBtn = this.getSendBtn();
-    if (!sendBtn) return false;
-
-    // Kiểm tra xem nút Send hoặc container của nó có hiển thị không
-    const container = sendBtn.closest('.send-button-container');
-    const isVisible = !sendBtn.classList.contains('hidden') &&
-      (!container || container.classList.contains('visible') || !container.classList.contains('hidden'));
-
-    return isVisible;
+    // Nếu không thấy nút Stop -> AI không chạy -> Đã hoàn thành (true)
+    return true;
   }
 
   /**
