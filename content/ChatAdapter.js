@@ -1098,11 +1098,19 @@ class GeminiAdapter extends BaseChatAdapter {
     const stopBtn = this.getStopBtn();
     if (stopBtn) return false;
 
-    // Lấy nút Send
+    // Kiểm tra xem ô nhập liệu (textarea) của Gemini có trống không
+    const textarea = this.getTextarea();
+    const isEmpty = !textarea || !textarea.textContent.trim();
+
+    // Nếu không có nút Stop và ô nhập liệu trống -> Đã trả lời xong hoàn toàn
+    if (isEmpty) {
+      return true;
+    }
+
+    // Nếu ô nhập liệu có chữ, ta cần nút Send xuất hiện và hiển thị
     const sendBtn = this.getSendBtn();
     if (!sendBtn) return false;
 
-    // Kiểm tra xem nút Send hoặc container của nó có hiển thị không
     const container = sendBtn.closest('.send-button-container');
     const isVisible = !sendBtn.classList.contains('hidden') &&
       (!container || container.classList.contains('visible') || !container.classList.contains('hidden'));
