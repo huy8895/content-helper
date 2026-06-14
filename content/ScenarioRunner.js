@@ -9,6 +9,27 @@ const ScenarioRunnerInnerHTML = `
     </div>
   </div>
 
+  <!-- Banner khôi phục phiên song song bị gián đoạn -->
+  <div id="sr-restore-banner" class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex flex-col gap-1.5 hidden animate-in">
+    <div class="flex items-center justify-between">
+      <div class="text-xs font-bold text-amber-800 flex items-center gap-1 select-none">
+        <span>⚡</span> Khôi phục phiên chạy song song
+      </div>
+      <span class="text-[10px] text-amber-600 animate-pulse select-none">⏳ Gián đoạn</span>
+    </div>
+    <div class="text-[10px] text-amber-700 font-medium leading-relaxed" id="sr-restore-desc">
+      Đang tải thông tin...
+    </div>
+    <div class="flex gap-2 justify-end mt-1">
+      <button id="sr-restore-cancel" class="px-2.5 py-1 text-[9px] font-bold text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
+        Bỏ qua & Xóa
+      </button>
+      <button id="sr-restore-confirm" class="px-3 py-1 text-[9px] font-bold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-all shadow-sm active:scale-95">
+        Tiếp tục chạy
+      </button>
+    </div>
+  </div>
+
   <div id="sr-scenario-browser" class="mb-4 relative">
     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
     <div class="relative">
@@ -62,6 +83,9 @@ const ScenarioRunnerInnerHTML = `
       <input type="number" id="sr-parallel-tabs" value="5" min="1" max="10"
         class="w-8 h-6 text-center text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded-md outline-none focus:border-amber-500"
         title="Số tab đồng thời" onclick="event.stopPropagation()" />
+    </button>
+    <button id="sr-parallel-stop" class="h-9 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chạy song song và đóng các tab con">
+      🛑 Dừng chạy
     </button>
   </div>
 
@@ -124,6 +148,9 @@ window.ScenarioRunner = class {
       tooltip: 'Scenario Runner',
       getBadgeInfo: () => this._getBubbleBadgeInfo()
     });
+
+    // Kiểm tra xem có phiên parallel nào bị gián đoạn trước đó không
+    this._checkInterruptedParallelSession();
   }
 
   /**
@@ -141,6 +168,115 @@ window.ScenarioRunner = class {
     }
     // Đang chạy
     return { text: `${idx}/${total}`, status: 'running' };
+  }
+
+  /**
+   * Kiểm tra storage để phát hiện và khôi phục phiên song song bị gián đoạn dở dang
+   */
+  _checkInterruptedParallelSession() {
+    chrome.storage.local.get(null, (items) => {
+      // Tìm key parallel_session_*
+      const sessionKeys = Object.keys(items).filter(k => k.startsWith('parallel_session_'));
+      if (sessionKeys.length === 0) return;
+
+      // Tìm session gần nhất bị gián đoạn (done < total)
+      let interruptedSession = null;
+      let interruptedKey = null;
+
+      for (const key of sessionKeys) {
+        const session = items[key];
+        if (!session || !session.tasks) continue;
+
+        const tasks = Object.values(session.tasks);
+        const total = session.total || tasks.length;
+        const completed = tasks.filter(t => t.status === 'completed').length;
+        const failed = tasks.filter(t => t.status === 'failed').length;
+        const done = completed + failed;
+
+        if (done < total) {
+          interruptedSession = session;
+          interruptedKey = key;
+          break;
+        }
+      }
+
+      if (!interruptedSession) return;
+
+      const sessionId = interruptedSession.sessionId;
+      const tasks = Object.values(interruptedSession.tasks);
+      const total = interruptedSession.total || tasks.length;
+      const completed = tasks.filter(t => t.status === 'completed').length;
+      const failed = tasks.filter(t => t.status === 'failed').length;
+      const done = completed + failed;
+
+      // Lấy tên kịch bản từ task đầu tiên
+      const firstTask = tasks[0];
+      const scenarioName = firstTask?.scenarioName || "Không rõ";
+
+      const banner = this.el.querySelector('#sr-restore-banner');
+      const desc = this.el.querySelector('#sr-restore-desc');
+      const btnConfirm = this.el.querySelector('#sr-restore-confirm');
+      const btnCancel = this.el.querySelector('#sr-restore-cancel');
+
+      if (!banner || !desc || !btnConfirm || !btnCancel) return;
+
+      desc.innerHTML = `Phát hiện kịch bản <b>"${scenarioName}"</b> chạy song song bị dừng dở dang.<br/>Tiến độ: <b>${done}/${total}</b> prompts đã hoàn thành.`;
+      banner.classList.remove('hidden');
+
+      btnConfirm.onclick = () => {
+        // Disable controls + Thay đổi nút bấm
+        this.el.querySelector('#sr-start').disabled = true;
+        this.el.querySelector('#sr-parallel').classList.add('hidden');
+        this.el.querySelector('#sr-parallel-stop').classList.remove('hidden');
+        this.el.querySelector('#sr-addqueue').disabled = true;
+
+        // Thiết lập trạng thái song song để polling
+        this._parallelRunning = true;
+        this._parallelSessionId = sessionId;
+        this._parallelTotal = total;
+        this._parallelDoneCount = completed;
+
+        // Hiển thị progress bar + nút download ZIP
+        this._showProgress(true);
+        this._updateParallelProgress(completed, total);
+        this._clearDoneList();
+        this._showDownloadZipBtn(true, completed, total);
+
+        // Đưa các task đã hoàn thành hoặc lỗi trước đó vào danh sách hiển thị
+        tasks.forEach(t => {
+          if (t.status === 'completed' || t.status === 'failed') {
+            this._addDoneItem(t.label || t.taskId);
+          }
+        });
+
+        // Gửi tin nhắn khôi phục lên background
+        chrome.runtime.sendMessage({
+          type: 'PARALLEL_RESUME',
+          sessionId: sessionId
+        }, (response) => {
+          if (chrome.runtime.lastError || !response?.success) {
+            console.error('❌ [ScenarioRunner] Lỗi khôi phục parallel:', chrome.runtime.lastError || response?.error);
+            ContentHelper.showToast('❌ Lỗi khôi phục phiên chạy song song.', 'error');
+            this._resetControls();
+            this._parallelRunning = false;
+          } else {
+            ContentHelper.showToast('⚡ Đã khôi phục và tiếp tục chạy phiên song song!', 'success');
+            banner.classList.add('hidden');
+            this._startParallelPolling();
+          }
+        });
+      };
+
+      btnCancel.onclick = () => {
+        chrome.runtime.sendMessage({
+          type: 'PARALLEL_CLEANUP_SESSION',
+          sessionId: sessionId
+        }, () => {
+          banner.classList.add('hidden');
+          ContentHelper.showToast('🗑️ Đã bỏ qua và xóa phiên song song bị gián đoạn.', 'info');
+        });
+      };
+    });
   }
 
   _setupScenarioSearch() {
@@ -301,6 +437,7 @@ window.ScenarioRunner = class {
     const btnResume = this.el.querySelector('#sr-resume');
     const btnAdd = this.el.querySelector("#sr-addqueue");
     const btnParallel = this.el.querySelector('#sr-parallel');
+    const btnParallelStop = this.el.querySelector('#sr-parallel-stop');
 
     btnStart.onclick = () => this._start();
     btnParallel.onclick = (e) => {
@@ -308,6 +445,9 @@ window.ScenarioRunner = class {
       if (e.target.id === 'sr-parallel-tabs') return;
       this._startParallel();
     };
+    if (btnParallelStop) {
+      btnParallelStop.onclick = () => this._stopParallelSession();
+    }
     btnPause.onclick = () => {
       this.sequencer?.pause();
       btnPause.disabled = true;
@@ -444,6 +584,8 @@ window.ScenarioRunner = class {
     this.el.querySelector("#sr-start").disabled = false;
     this.el.querySelector("#sr-addqueue").disabled = false;
     this.el.querySelector("#sr-parallel").disabled = false;
+    this.el.querySelector("#sr-parallel").classList.remove('hidden');
+    this.el.querySelector("#sr-parallel-stop").classList.add('hidden');
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
   }
@@ -699,9 +841,10 @@ window.ScenarioRunner = class {
     console.log(`⚡ [ScenarioRunner] Parallel: ${tasks.length} tasks, max ${maxConcurrent} tabs`);
     console.log(`📋 [ScenarioRunner] Tasks:`, tasks);
 
-    // 6. Disable controls
+    // 6. Disable controls + Thay đổi nút bấm
     this.el.querySelector('#sr-start').disabled = true;
-    this.el.querySelector('#sr-parallel').disabled = true;
+    this.el.querySelector('#sr-parallel').classList.add('hidden');
+    this.el.querySelector('#sr-parallel-stop').classList.remove('hidden');
     this.el.querySelector('#sr-addqueue').disabled = true;
     this._parallelRunning = true;
     this._parallelSessionId = sessionId;
@@ -891,6 +1034,28 @@ window.ScenarioRunner = class {
       } else if (response?.status === 'error') {
         ContentHelper.showToast(`❌ Lỗi: ${response.message}`, 'error');
       }
+    });
+  }
+
+  /**
+   * Dừng chạy phiên song song hiện tại, đóng các tab con và reset UI.
+   */
+  _stopParallelSession() {
+    if (!this._parallelSessionId) return;
+
+    const sessionId = this._parallelSessionId;
+    this._stopParallelPolling();
+
+    chrome.runtime.sendMessage({
+      type: 'PARALLEL_STOP',
+      sessionId: sessionId
+    }, (response) => {
+      this._parallelRunning = false;
+      this._parallelSessionId = null;
+      this._resetControls();
+      this._showProgress(false);
+      this._showDownloadZipBtn(false);
+      ContentHelper.showToast('🛑 Đã dừng phiên chạy song song và đóng các tab con.', 'info');
     });
   }
 

@@ -811,3 +811,93 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   sendResponse({ received: true });
   return true;
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// PARALLEL_RESUME – Khôi phục phiên chạy song song bị gián đoạn
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'PARALLEL_RESUME') return;
+
+  const { sessionId } = message;
+  logInfo(`🔄 [TabOrchestrator] Nhận yêu cầu khôi phục session "${sessionId}"`);
+
+  const storageKey = `parallel_session_${sessionId}`;
+  chrome.storage.local.get(storageKey, (result) => {
+    const sessionData = result[storageKey];
+    if (!sessionData) {
+      logError(`❌ [TabOrchestrator] Không tìm thấy dữ liệu session "${sessionId}" trong storage để khôi phục.`);
+      sendResponse({ success: false, error: 'Không tìm thấy session trong storage' });
+      return;
+    }
+
+    // 1. Khôi phục hoặc khởi tạo session RAM
+    let session = parallelSessions.get(sessionId);
+    if (session) {
+      // Đóng các tab cũ đang chạy (nếu có)
+      for (const [taskId, tabId] of session.running.entries()) {
+        chrome.tabs.remove(tabId, () => {
+          if (chrome.runtime.lastError) {
+             // Bỏ qua lỗi đóng tab
+          }
+        });
+      }
+    }
+
+    session = {
+      sessionId,
+      baseUrl: sessionData.baseUrl,
+      maxConcurrent: sessionData.maxConcurrent || 5,
+      activeTab: sessionData.activeTab || false,
+      tasks: [],
+      pending: [],
+      running: new Map(),
+      completed: [],
+      failed: []
+    };
+
+    // 2. Chuyển các task 'running' hoặc 'pending' về lại 'pending'
+    const updatedTasksStorage = { ...sessionData.tasks };
+
+    for (const [tId, tData] of Object.entries(sessionData.tasks)) {
+      if (tData.status === 'completed') {
+        session.completed.push({ taskId: tId, label: tData.label });
+        session.tasks.push(tData);
+      } else if (tData.status === 'failed') {
+        session.failed.push({ taskId: tId, label: tData.label, error: tData.error });
+        session.tasks.push(tData);
+      } else {
+        // status là 'running' hoặc 'pending' -> chuyển thành 'pending' để chạy lại
+        const updatedTask = {
+          ...tData,
+          status: 'pending',
+          tabId: null,
+          error: '',
+          updatedAt: Date.now()
+        };
+        updatedTasksStorage[tId] = updatedTask;
+        session.tasks.push(updatedTask);
+        session.pending.push(updatedTask);
+      }
+    }
+
+    parallelSessions.set(sessionId, session);
+
+    // 3. Cập nhật lại storage với trạng thái task mới
+    const newStorageData = {
+      ...sessionData,
+      tasks: updatedTasksStorage
+    };
+
+    chrome.storage.local.set({ [storageKey]: newStorageData }, () => {
+      logInfo(`💾 [TabOrchestrator] Đã cập nhật lại storage cho phiên khôi phục: ${sessionId}`);
+      
+      // 4. Bắt đầu chạy task đầu tiên của hàng đợi
+      _launchNextTask(session);
+      
+      sendResponse({ success: true });
+    });
+  });
+
+  return true;
+});
