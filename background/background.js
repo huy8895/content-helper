@@ -901,3 +901,302 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true;
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Split Tabs – Chia đều items vào N tab, mỗi tab chạy nhiều items tuần tự
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Lưu trữ trạng thái của mỗi phiên split tabs.
+ * Key: sessionId, Value: session object
+ */
+const splitTabsSessions = new Map();
+
+/**
+ * Xử lý message SPLIT_TABS_START từ tab gốc (ScenarioRunner).
+ * 
+ * Payload:
+ *   - sessionId: ID phiên chạy
+ *   - tasks: [{taskId, scenarioName, values, items, loopKey, startAt, label}]
+ *   - baseUrl: URL mở tab mới
+ *   - activeTab: Có chuyển focus sang tab mới không
+ */
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'SPLIT_TABS_START') return;
+
+  const { sessionId, tasks, baseUrl, activeTab = false } = message;
+
+  logInfo(`🔀 [SplitTabs] Bắt đầu phiên "${sessionId}": ${tasks.length} tab(s)`);
+
+  // Khởi tạo session trong RAM
+  const session = {
+    sessionId,
+    baseUrl,
+    activeTab,
+    tasks: [...tasks],
+    running: new Map(),    // taskId → tabId
+    completed: [],
+    failed: [],
+  };
+
+  splitTabsSessions.set(sessionId, session);
+
+  // Ghi trạng thái ban đầu vào chrome.storage.local
+  const storageKey = `split_tabs_session_${sessionId}`;
+  const storageData = { sessionId, total: tasks.length, baseUrl, activeTab, tasks: {} };
+  tasks.forEach(t => {
+    storageData.tasks[t.taskId] = {
+      taskId: t.taskId,
+      label: t.label || t.taskId,
+      scenarioName: t.scenarioName,
+      values: t.values,
+      items: t.items,
+      loopKey: t.loopKey,
+      startAt: t.startAt,
+      status: 'pending',
+      error: '',
+      completedItems: [],
+      updatedAt: Date.now()
+    };
+  });
+  chrome.storage.local.set({ [storageKey]: storageData }, () => {
+    logInfo(`💾 [SplitTabs] Đã ghi session vào storage: ${storageKey}`);
+  });
+
+  // Mở tất cả tab cùng lúc (vì số tab = số user nhập vào, đã giới hạn sẵn)
+  for (const task of tasks) {
+    _createSplitTab(session, task);
+  }
+
+  sendResponse({ received: true, sessionId });
+  return true;
+});
+
+/**
+ * Tạo 1 tab mới cho split task và gửi task khi load xong.
+ * @param {object} session - Session object
+ * @param {object} task - Task data
+ */
+function _createSplitTab(session, task) {
+  chrome.tabs.create({ url: session.baseUrl, active: !!session.activeTab }, (newTab) => {
+    if (chrome.runtime.lastError) {
+      logError(`❌ [SplitTabs] Không thể tạo tab cho task "${task.taskId}":`, chrome.runtime.lastError);
+      // Cập nhật storage: failed
+      const sk = `split_tabs_session_${session.sessionId}`;
+      chrome.storage.local.get(sk, (r) => {
+        const sd = r[sk];
+        if (sd && sd.tasks[task.taskId]) {
+          sd.tasks[task.taskId].status = 'failed';
+          sd.tasks[task.taskId].error = 'Không thể tạo tab';
+          sd.tasks[task.taskId].updatedAt = Date.now();
+          chrome.storage.local.set({ [sk]: sd });
+        }
+      });
+      return;
+    }
+
+    logInfo(`📂 [SplitTabs] Đã tạo tab #${newTab.id} cho task "${task.taskId}" (${task.items.length} items)`);
+    session.running.set(task.taskId, newTab.id);
+
+    // Lắng nghe khi tab load xong
+    const listener = (tabId, changeInfo) => {
+      if (tabId !== newTab.id || changeInfo.status !== 'complete') return;
+
+      chrome.tabs.onUpdated.removeListener(listener);
+
+      logInfo(`✅ [SplitTabs] Tab #${newTab.id} đã load xong. Chờ 3s rồi gửi task...`);
+
+      // Delay 3s để content scripts inject xong
+      setTimeout(() => {
+        // Cập nhật storage: task → running
+        const sKey = `split_tabs_session_${session.sessionId}`;
+        chrome.storage.local.get(sKey, (r) => {
+          const sd = r[sKey];
+          if (sd && sd.tasks[task.taskId]) {
+            sd.tasks[task.taskId].status = 'running';
+            sd.tasks[task.taskId].tabId = newTab.id;
+            sd.tasks[task.taskId].updatedAt = Date.now();
+            chrome.storage.local.set({ [sKey]: sd });
+          }
+        });
+
+        chrome.tabs.sendMessage(newTab.id, {
+          type: 'SPLIT_TABS_EXEC_TASK',
+          sessionId: session.sessionId,
+          taskId: task.taskId,
+          scenarioName: task.scenarioName,
+          values: task.values,
+          items: task.items,
+          loopKey: task.loopKey,
+          startAt: task.startAt
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            logError(`❌ [SplitTabs] Không gửi được task cho tab #${newTab.id}:`, chrome.runtime.lastError.message);
+            const sk = `split_tabs_session_${session.sessionId}`;
+            chrome.storage.local.get(sk, (r2) => {
+              const sd2 = r2[sk];
+              if (sd2 && sd2.tasks[task.taskId]) {
+                sd2.tasks[task.taskId].status = 'failed';
+                sd2.tasks[task.taskId].error = chrome.runtime.lastError.message;
+                sd2.tasks[task.taskId].updatedAt = Date.now();
+                chrome.storage.local.set({ [sk]: sd2 });
+              }
+            });
+          } else {
+            logInfo(`📨 [SplitTabs] Task "${task.taskId}" đã gửi thành công cho tab #${newTab.id}`);
+          }
+        });
+      }, 3000);
+    };
+
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+}
+
+/**
+ * Lắng nghe thay đổi trong chrome.storage.local cho split_tabs_session_*.
+ * Khi task hoàn thành → KHÔNG đóng tab. Chỉ cập nhật trạng thái.
+ */
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+
+  for (const [key, { newValue, oldValue }] of Object.entries(changes)) {
+    if (!key.startsWith('split_tabs_session_')) continue;
+
+    const sessionId = newValue?.sessionId;
+    if (!sessionId) continue;
+
+    let session = splitTabsSessions.get(sessionId);
+
+    // Khôi phục session từ storage nếu service worker bị restart
+    if (!session) {
+      logInfo(`🔄 [SplitTabs] Khôi phục session từ storage: ${sessionId}`);
+      session = {
+        sessionId,
+        baseUrl: newValue.baseUrl,
+        activeTab: newValue.activeTab || false,
+        tasks: [],
+        running: new Map(),
+        completed: [],
+        failed: []
+      };
+
+      for (const [tId, tData] of Object.entries(newValue.tasks)) {
+        session.tasks.push(tData);
+        if (tData.status === 'running') {
+          session.running.set(tId, tData.tabId);
+        } else if (tData.status === 'completed') {
+          session.completed.push({ taskId: tId, label: tData.label });
+        } else if (tData.status === 'failed') {
+          session.failed.push({ taskId: tId, label: tData.label, error: tData.error });
+        }
+      }
+      splitTabsSessions.set(sessionId, session);
+    }
+
+    for (const [taskId, taskData] of Object.entries(newValue.tasks || {})) {
+      const oldStatus = oldValue?.tasks?.[taskId]?.status;
+      const newStatus = taskData.status;
+      if (oldStatus === newStatus) continue;
+
+      if (newStatus === 'completed' && oldStatus !== 'completed') {
+        logInfo(`✅ [SplitTabs] Task "${taskId}" (${taskData.label}) hoàn thành!`);
+        session.running.delete(taskId);
+        if (!session.completed.find(c => c.taskId === taskId)) {
+          session.completed.push({ taskId, label: taskData.label });
+        }
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: chrome.runtime.getURL('assets/icon.png'),
+          title: '🔀 Split Tab hoàn thành',
+          message: `"${taskData.label}" đã xong! (${session.completed.length + session.failed.length}/${session.tasks.length})`
+        });
+        // KHÔNG đóng tab
+        logInfo(`📌 [SplitTabs] Giữ lại tab (${taskData.label})`);
+        _checkSplitTabsAllDone(session);
+      }
+
+      if (newStatus === 'failed' && oldStatus !== 'failed') {
+        logError(`❌ [SplitTabs] Task "${taskId}" (${taskData.label}) lỗi: ${taskData.error}`);
+        session.running.delete(taskId);
+        if (!session.failed.find(f => f.taskId === taskId)) {
+          session.failed.push({ taskId, label: taskData.label, error: taskData.error });
+        }
+        // KHÔNG đóng tab
+        logInfo(`📌 [SplitTabs] Giữ lại tab lỗi (${taskData.label})`);
+        _checkSplitTabsAllDone(session);
+      }
+    }
+  }
+});
+
+/**
+ * Kiểm tra xem tất cả split tabs tasks đã hoàn thành chưa.
+ */
+function _checkSplitTabsAllDone(session) {
+  const total = session.tasks.length;
+  const done = session.completed.length + session.failed.length;
+  if (done < total) return;
+
+  logInfo(`🎉 [SplitTabs] Phiên "${session.sessionId}" hoàn thành! ` +
+    `${session.completed.length} thành công, ${session.failed.length} lỗi`);
+
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('assets/icon.png'),
+    title: '🎉 Chia tab hoàn thành!',
+    message: `Tất cả ${total} tab đã xong! (${session.completed.length} OK, ${session.failed.length} lỗi)`
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SPLIT_TABS_STOP – Dừng phiên chia tab và đóng các tab con
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'SPLIT_TABS_STOP') return;
+
+  const { sessionId } = message;
+  logInfo(`🛑 [SplitTabs] Nhận yêu cầu dừng phiên "${sessionId}"`);
+
+  const session = splitTabsSessions.get(sessionId);
+  if (session) {
+    // Đóng tất cả tab đang chạy
+    for (const [taskId, tabId] of session.running.entries()) {
+      chrome.tabs.remove(tabId, () => {
+        if (chrome.runtime.lastError) {
+          logWarn(`[SplitTabs] Không đóng được tab #${tabId}: ${chrome.runtime.lastError.message}`);
+        } else {
+          logInfo(`🗑️ [SplitTabs] Đã đóng tab #${tabId}`);
+        }
+      });
+    }
+    splitTabsSessions.delete(sessionId);
+  }
+
+  // Dọn storage
+  chrome.storage.local.remove(`split_tabs_session_${sessionId}`);
+
+  sendResponse({ success: true });
+  return true;
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// SPLIT_TABS_CLEANUP_SESSION – Dọn dẹp session split tabs + storage
+// ═══════════════════════════════════════════════════════════════════
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type !== 'SPLIT_TABS_CLEANUP_SESSION') return;
+  const { sessionId } = message;
+  if (sessionId) {
+    splitTabsSessions.delete(sessionId);
+    chrome.storage.local.remove(`split_tabs_session_${sessionId}`);
+    logInfo(`🧹 [SplitTabs] Đã dọn session + storage "${sessionId}"`);
+  } else {
+    const keys = [];
+    for (const [id] of splitTabsSessions) keys.push(`split_tabs_session_${id}`);
+    splitTabsSessions.clear();
+    if (keys.length > 0) chrome.storage.local.remove(keys);
+    logInfo(`🧹 [SplitTabs] Đã dọn tất cả sessions`);
+  }
+});

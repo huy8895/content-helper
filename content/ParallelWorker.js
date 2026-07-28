@@ -440,12 +440,161 @@ window.ParallelWorker = (() => {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Split Tabs – Xử lý nhiều items tuần tự trên 1 tab
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Cập nhật trạng thái task trong split_tabs_session storage.
+   * @param {string} sessionId - ID phiên split tabs
+   * @param {string} taskId - ID task cần cập nhật
+   * @param {object} updates - Dữ liệu cập nhật {status, error, currentItem, completedItems}
+   * @returns {Promise<boolean>}
+   */
+  function _updateSplitTaskInStorage(sessionId, taskId, updates) {
+    const key = `split_tabs_session_${sessionId}`;
+    return new Promise((resolve) => {
+      chrome.storage.local.get(key, (result) => {
+        const session = result[key];
+        if (!session || !session.tasks[taskId]) {
+          console.warn(`⚠️ [ParallelWorker] Không tìm thấy split task ${taskId} trong storage`);
+          resolve(false);
+          return;
+        }
+        session.tasks[taskId] = { ...session.tasks[taskId], ...updates, updatedAt: Date.now() };
+        chrome.storage.local.set({ [key]: session }, () => {
+          console.log(`💾 [ParallelWorker] Đã ghi split task "${taskId}" → ${updates.status || 'update'} vào storage`);
+          resolve(true);
+        });
+      });
+    });
+  }
+
+  /**
+   * Xử lý chính cho Split Tabs: nhận task chứa nhiều items và chạy tuần tự.
+   * Không thu thập content, không đóng tab khi xong.
+   * @param {object} taskData - Dữ liệu task
+   * @param {string} taskData.taskId - ID duy nhất của task
+   * @param {string} taskData.scenarioName - Tên scenario template
+   * @param {object} taskData.values - Giá trị các biến
+   * @param {Array<string>} taskData.items - Mảng các giá trị cần xử lý tuần tự
+   * @param {string} taskData.loopKey - Key của biến list
+   * @param {number} taskData.startAt - Bắt đầu từ bước nào
+   */
+  async function _executeSplitTask(taskData) {
+    const { taskId, scenarioName, values, items, loopKey, startAt } = taskData;
+    const sessionId = taskData.sessionId;
+
+    console.log(`🔀 [ParallelWorker] Bắt đầu split task "${taskId}" với ${items.length} items`);
+    console.log(`📋 [ParallelWorker] Items:`, items);
+
+    try {
+      // 1. Đợi ChatAdapter sẵn sàng
+      await _waitForAdapter();
+
+      // 2. Delay để đảm bảo trang ổn định
+      await new Promise(r => setTimeout(r, CONFIG.delayBeforeStart));
+
+      // 2b. Kích hoạt cuộc trò chuyện tạm thời
+      if (window.ChatAdapter && typeof window.ChatAdapter.enableTemporaryChat === 'function') {
+        try {
+          await window.ChatAdapter.enableTemporaryChat();
+        } catch (e) {
+          console.warn("⚠️ [ParallelWorker] Không thể bật trò chuyện tạm thời:", e);
+        }
+      }
+
+      // 3. Load scenario template
+      const templates = await _loadTemplates();
+      const raw = templates[scenarioName];
+
+      if (!raw) {
+        throw new Error(`Không tìm thấy scenario "${scenarioName}"`);
+      }
+
+      const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
+      const slice = tplArr.slice(startAt);
+
+      // 4. Lặp qua từng item trong mảng
+      const completedItems = [];
+
+      for (let i = 0; i < items.length; i++) {
+        const currentItem = items[i];
+        console.log(`🔀 [ParallelWorker] === Item ${i + 1}/${items.length}: "${currentItem}" ===`);
+
+        // Cập nhật storage: đang xử lý item nào
+        await _updateSplitTaskInStorage(sessionId, taskId, {
+          status: 'running',
+          currentItem: currentItem,
+          currentIndex: i,
+          completedItems: completedItems.slice()
+        });
+
+        // Expand scenario với item hiện tại
+        const itemValues = { ...values, [loopKey]: currentItem };
+        const prompts = _expandScenario(slice, itemValues);
+
+        if (prompts.length === 0) {
+          console.warn(`⚠️ [ParallelWorker] Không có prompt cho item "${currentItem}", bỏ qua`);
+          completedItems.push(currentItem);
+          continue;
+        }
+
+        console.log(`📝 [ParallelWorker] Sẽ gửi ${prompts.length} prompt(s) cho item "${currentItem}"`);
+
+        // Tạo PromptSequencer và chạy
+        const sequencer = new PromptSequencer(
+          prompts,
+          _sendPrompt,
+          _waitForResponse,
+          (idx, total) => {
+            console.log(`📊 [ParallelWorker] Item "${currentItem}": ${idx}/${total}`);
+          },
+          `Split: ${scenarioName} - ${currentItem}`,
+          true // Silent mode
+        );
+
+        // Chạy sequencer và đợi hoàn thành
+        await new Promise((resolve) => {
+          sequencer.start(() => resolve());
+        });
+
+        completedItems.push(currentItem);
+        console.log(`✅ [ParallelWorker] Item "${currentItem}" hoàn thành (${completedItems.length}/${items.length})`);
+      }
+
+      // 5. Tất cả items xong → cập nhật storage
+      console.log(`🎉 [ParallelWorker] Split task "${taskId}" hoàn thành! ${completedItems.length}/${items.length} items`);
+
+      await _updateSplitTaskInStorage(sessionId, taskId, {
+        status: 'completed',
+        completedItems: completedItems,
+        shouldCloseTab: false
+      });
+
+    } catch (error) {
+      console.error(`❌ [ParallelWorker] Split task "${taskId}" lỗi:`, error);
+
+      await _updateSplitTaskInStorage(sessionId, taskId, {
+        status: 'failed',
+        error: error.message,
+        shouldCloseTab: false
+      });
+    }
+  }
+
   // ── Lắng nghe message từ background ──────────────────────────────
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'PARALLEL_EXEC_TASK') {
       console.log('📨 [ParallelWorker] Nhận task:', msg);
       _executeTask(msg);
       // Trả lời ngay để background biết đã nhận
+      sendResponse({ received: true });
+    }
+
+    if (msg.type === 'SPLIT_TABS_EXEC_TASK') {
+      console.log('📨 [ParallelWorker] Nhận split task:', msg);
+      _executeSplitTask(msg);
       sendResponse({ received: true });
     }
   });
@@ -458,3 +607,4 @@ window.ParallelWorker = (() => {
   };
 
 })();
+

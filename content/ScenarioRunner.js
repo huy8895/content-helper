@@ -71,7 +71,7 @@ const ScenarioRunnerInnerHTML = `
     <div id="sr-done-list" class="flex flex-wrap gap-1 mt-2 max-h-16 overflow-y-auto custom-scrollbar"></div>
   </div>
 
-  <div class="grid grid-cols-3 gap-2 mb-4">
+  <div class="grid grid-cols-4 gap-2 mb-4">
     <button id="sr-addqueue" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
       ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full text-[9px]">0</span>
     </button>
@@ -84,8 +84,17 @@ const ScenarioRunnerInnerHTML = `
         class="w-8 h-6 text-center text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded-md outline-none focus:border-amber-500"
         title="Số tab đồng thời" onclick="event.stopPropagation()" />
     </button>
+    <button id="sr-split-tabs" class="h-9 bg-teal-50 border border-teal-200 text-teal-700 font-bold rounded-lg text-[10px] hover:bg-teal-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Chia đều items vào N tab, mỗi tab chạy nhiều items tuần tự">
+      🔀 Chia tab
+      <input type="number" id="sr-split-tabs-count" value="3" min="1" max="10"
+        class="w-8 h-6 text-center text-[10px] font-bold text-teal-700 bg-teal-100 border border-teal-300 rounded-md outline-none focus:border-teal-500"
+        title="Số tab sẽ mở" onclick="event.stopPropagation()" />
+    </button>
     <button id="sr-parallel-stop" class="h-9 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chạy song song và đóng các tab con">
       🛑 Dừng chạy
+    </button>
+    <button id="sr-split-tabs-stop" class="h-9 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chia tab và đóng các tab con">
+      🛑 Dừng chia tab
     </button>
   </div>
 
@@ -438,6 +447,8 @@ window.ScenarioRunner = class {
     const btnAdd = this.el.querySelector("#sr-addqueue");
     const btnParallel = this.el.querySelector('#sr-parallel');
     const btnParallelStop = this.el.querySelector('#sr-parallel-stop');
+    const btnSplitTabs = this.el.querySelector('#sr-split-tabs');
+    const btnSplitTabsStop = this.el.querySelector('#sr-split-tabs-stop');
 
     btnStart.onclick = () => this._start();
     btnParallel.onclick = (e) => {
@@ -447,6 +458,13 @@ window.ScenarioRunner = class {
     };
     if (btnParallelStop) {
       btnParallelStop.onclick = () => this._stopParallelSession();
+    }
+    btnSplitTabs.onclick = (e) => {
+      if (e.target.id === 'sr-split-tabs-count') return;
+      this._startSplitTabs();
+    };
+    if (btnSplitTabsStop) {
+      btnSplitTabsStop.onclick = () => this._stopSplitTabsSession();
     }
     btnPause.onclick = () => {
       this.sequencer?.pause();
@@ -586,6 +604,9 @@ window.ScenarioRunner = class {
     this.el.querySelector("#sr-parallel").disabled = false;
     this.el.querySelector("#sr-parallel").classList.remove('hidden');
     this.el.querySelector("#sr-parallel-stop").classList.add('hidden');
+    this.el.querySelector("#sr-split-tabs").disabled = false;
+    this.el.querySelector("#sr-split-tabs").classList.remove('hidden');
+    this.el.querySelector("#sr-split-tabs-stop").classList.add('hidden');
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
   }
@@ -753,7 +774,7 @@ window.ScenarioRunner = class {
   }
 
   _isBusy() {
-    return (!!this.sequencer && !this.sequencer.stopped) || this._parallelRunning;
+    return (!!this.sequencer && !this.sequencer.stopped) || this._parallelRunning || this._splitTabsRunning;
   }
 
   _clearVariableInputs() {
@@ -1066,6 +1087,7 @@ window.ScenarioRunner = class {
     this.sequencer?.stop();
     // Dừng polling
     this._stopParallelPolling();
+    this._stopSplitTabsPolling();
     // Dọn session parallel từ background + storage
     if (this._parallelSessionId) {
       chrome.runtime.sendMessage({
@@ -1073,5 +1095,229 @@ window.ScenarioRunner = class {
         sessionId: this._parallelSessionId
       });
     }
+    // Dọn session split tabs từ background + storage
+    if (this._splitTabsSessionId) {
+      chrome.runtime.sendMessage({
+        type: 'SPLIT_TABS_CLEANUP_SESSION',
+        sessionId: this._splitTabsSessionId
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Split Tabs – Chia đều items vào N tab
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Bắt đầu chia tab: phân chia list items đều vào N tab,
+   * mỗi tab chạy nhiều items tuần tự.
+   */
+  _startSplitTabs() {
+    // 1. Lấy scenario đang chọn
+    const selectedText = this.el.querySelector("#sr-scenario-search").value;
+    const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item'))
+      .find(d => d.textContent === selectedText);
+
+    if (!selectedDiv) {
+      ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
+      return;
+    }
+
+    const name = selectedDiv.dataset.name;
+    const raw = this.templates[name];
+    if (!raw) return;
+
+    const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
+    const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
+    const values = this._readVariableValues();
+
+    // 2. Tìm question type "list" để lấy loopKey và danh sách giá trị
+    const slice = tplArr.slice(startAt);
+    const listQuestion = slice.find(q => q.type === 'list');
+
+    if (!listQuestion) {
+      ContentHelper.showToast("⚠️ Kịch bản không có bước dạng 'list'. Chỉ dạng list mới hỗ trợ chia tab.", "warning");
+      return;
+    }
+
+    const loopKey = this._getLoopKey(listQuestion);
+    const listValuesStr = values[loopKey] || '';
+    const listValues = listValuesStr.split(',').map(v => v.trim()).filter(Boolean);
+
+    if (listValues.length === 0) {
+      ContentHelper.showToast("⚠️ Danh sách giá trị rỗng. Hãy nhập các giá trị cách nhau bằng dấu phẩy.", "warning");
+      return;
+    }
+
+    // 3. Lấy số tab từ input
+    let numTabs = parseInt(this.el.querySelector('#sr-split-tabs-count').value || '3', 10);
+    numTabs = Math.min(numTabs, listValues.length); // Không mở nhiều tab hơn số items
+    const activeTab = this.el.querySelector('#sr-parallel-active')?.checked ?? true;
+
+    // 4. Chia đều items vào N tab
+    const chunkSize = Math.ceil(listValues.length / numTabs);
+    const chunks = [];
+    for (let i = 0; i < listValues.length; i += chunkSize) {
+      chunks.push(listValues.slice(i, i + chunkSize));
+    }
+
+    // 5. Xác định base URL động
+    let baseUrl = window.location.origin + '/';
+    if (window.location.hostname.includes('gemini.google.com')) {
+      baseUrl = 'https://gemini.google.com/app';
+    } else if (window.location.hostname.includes('chatgpt.com')) {
+      baseUrl = 'https://chatgpt.com/';
+    } else if (window.location.hostname.includes('deepseek.com')) {
+      baseUrl = 'https://chat.deepseek.com/';
+    } else if (window.location.hostname.includes('qwen.ai')) {
+      baseUrl = 'https://chat.qwen.ai/';
+    } else if (window.location.hostname.includes('grok.com')) {
+      baseUrl = 'https://grok.com/';
+    }
+
+    // 6. Tạo danh sách tasks – mỗi task chứa nhiều items
+    const sessionId = `split_tabs_${Date.now()}`;
+    const tasks = chunks.map((itemGroup, idx) => {
+      const taskValues = { ...values };
+      return {
+        taskId: `${sessionId}_tab${idx}`,
+        label: `Tab ${idx + 1} (${itemGroup.length} items)`,
+        scenarioName: name,
+        values: taskValues,
+        items: itemGroup,
+        loopKey: loopKey,
+        startAt: startAt
+      };
+    });
+
+    console.log(`🔀 [ScenarioRunner] Split Tabs: ${listValues.length} items → ${tasks.length} tabs`);
+    console.log(`📋 [ScenarioRunner] Chunks:`, chunks);
+
+    // 7. Disable controls + thay đổi nút bấm
+    this.el.querySelector('#sr-start').disabled = true;
+    this.el.querySelector('#sr-parallel').classList.add('hidden');
+    this.el.querySelector('#sr-split-tabs').classList.add('hidden');
+    this.el.querySelector('#sr-split-tabs-stop').classList.remove('hidden');
+    this.el.querySelector('#sr-addqueue').disabled = true;
+    this._splitTabsRunning = true;
+    this._splitTabsSessionId = sessionId;
+    this._splitTabsTotal = tasks.length;
+    this._splitTabsDoneCount = 0;
+
+    // 8. Hiển thị progress
+    this._showProgress(true);
+    this._updateParallelProgress(0, tasks.length);
+    this._clearDoneList();
+
+    // 9. Gửi SPLIT_TABS_START đến background
+    chrome.runtime.sendMessage({
+      type: 'SPLIT_TABS_START',
+      sessionId: sessionId,
+      tasks: tasks,
+      baseUrl: baseUrl,
+      activeTab: activeTab
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('❌ [ScenarioRunner] Lỗi gửi SPLIT_TABS_START:', chrome.runtime.lastError);
+        ContentHelper.showToast('❌ Lỗi khởi tạo chia tab.', 'error');
+        this._resetControls();
+        this._splitTabsRunning = false;
+      } else {
+        ContentHelper.showToast(
+          `🔀 Đã bắt đầu chia ${listValues.length} items vào ${tasks.length} tab!`,
+          'success'
+        );
+        this._startSplitTabsPolling();
+      }
+    });
+  }
+
+  /**
+   * Bắt đầu polling chrome.storage.local mỗi 3 giây cho split tabs.
+   */
+  _startSplitTabsPolling() {
+    this._stopSplitTabsPolling();
+    this._splitTabsPolledLabels = new Set();
+    this._splitTabsPollTimer = setInterval(() => this._pollSplitTabsStatus(), 3000);
+    console.log('🔄 [ScenarioRunner] Bắt đầu polling split tabs storage mỗi 3s');
+  }
+
+  /**
+   * Dừng polling split tabs.
+   */
+  _stopSplitTabsPolling() {
+    if (this._splitTabsPollTimer) {
+      clearInterval(this._splitTabsPollTimer);
+      this._splitTabsPollTimer = null;
+    }
+  }
+
+  /**
+   * Đọc trạng thái session split tabs từ chrome.storage.local và cập nhật UI.
+   */
+  _pollSplitTabsStatus() {
+    if (!this._splitTabsSessionId) return;
+
+    // Hiệu ứng polling: hiện dot xanh nhấp nháy
+    const dot = this.el.querySelector('#sr-polling-dot');
+    if (dot) {
+      dot.classList.remove('hidden');
+      setTimeout(() => dot.classList.add('hidden'), 1500);
+    }
+
+    const key = `split_tabs_session_${this._splitTabsSessionId}`;
+    chrome.storage.local.get(key, (result) => {
+      const session = result[key];
+      if (!session) return;
+
+      const tasks = Object.values(session.tasks);
+      const completed = tasks.filter(t => t.status === 'completed');
+      const failed = tasks.filter(t => t.status === 'failed');
+      const total = session.total;
+      const done = completed.length + failed.length;
+
+      // Cập nhật progress bar
+      this._updateParallelProgress(done, total);
+
+      // Thêm labels mới vào danh sách đã xong
+      [...completed, ...failed].forEach(t => {
+        if (!this._splitTabsPolledLabels.has(t.taskId)) {
+          this._splitTabsPolledLabels.add(t.taskId);
+          this._addDoneItem(t.label || t.taskId);
+        }
+      });
+
+      // Kiểm tra hoàn thành
+      if (done >= total && this._splitTabsRunning) {
+        this._stopSplitTabsPolling();
+        this._resetControls();
+        this._splitTabsRunning = false;
+
+        let msg = `🎉 Chia tab hoàn thành: ${completed.length}/${total} tab thành công`;
+        if (failed.length > 0) msg += `, ${failed.length} lỗi`;
+        ContentHelper.showToast(msg, failed.length > 0 ? 'warning' : 'success');
+      }
+    });
+  }
+
+  /**
+   * Dừng chạy phiên chia tab hiện tại, đóng các tab con và reset UI.
+   */
+  _stopSplitTabsSession() {
+    if (!this._splitTabsSessionId) return;
+
+    const sessionId = this._splitTabsSessionId;
+    this._stopSplitTabsPolling();
+
+    chrome.runtime.sendMessage({
+      type: 'SPLIT_TABS_STOP',
+      sessionId: sessionId
+    }, (response) => {
+      this._splitTabsRunning = false;
+      this._splitTabsSessionId = null;
+      this._resetControls();
+      this._showProgress(false);
+      ContentHelper.showToast('🛑 Đã dừng phiên chia tab và đóng các tab con.', 'info');
+    });
   }
 };
