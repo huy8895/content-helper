@@ -71,7 +71,7 @@ const ScenarioRunnerInnerHTML = `
     <div id="sr-done-list" class="flex flex-wrap gap-1 mt-2 max-h-16 overflow-y-auto custom-scrollbar"></div>
   </div>
 
-  <div class="grid grid-cols-4 gap-2 mb-4">
+  <div class="grid grid-cols-3 gap-2 mb-2">
     <button id="sr-addqueue" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
       ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full text-[9px]">0</span>
     </button>
@@ -84,6 +84,8 @@ const ScenarioRunnerInnerHTML = `
         class="w-8 h-6 text-center text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded-md outline-none focus:border-amber-500"
         title="Số tab đồng thời" onclick="event.stopPropagation()" />
     </button>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mb-4">
     <button id="sr-split-tabs" class="h-9 bg-teal-50 border border-teal-200 text-teal-700 font-bold rounded-lg text-[10px] hover:bg-teal-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Chia đều items vào N tab, mỗi tab chạy nhiều items tuần tự">
       🔀 Chia tab
       <input type="number" id="sr-split-tabs-count" value="3" min="1" max="10"
