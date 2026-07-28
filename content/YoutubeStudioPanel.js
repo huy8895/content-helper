@@ -525,7 +525,7 @@ window.YoutubeStudioPanel = class {
       const uiLanguageName = targetHeader.textContent.trim();
       const jsonKey = YoutubeStudioPanel._normalizeLangKey(uiLanguageName);
       const { [this.storageKeyTranslations]: translations } = await chrome.storage.local.get(this.storageKeyTranslations);
-      const translationData = translations ? translations[jsonKey] : null;
+      const translationData = YoutubeStudioPanel.getTranslation(translations, jsonKey);
 
       if (translationData) {
         const titleInput = dialog.querySelector(titleSelector);
@@ -580,6 +580,27 @@ window.YoutubeStudioPanel = class {
   static _normalizeLangKey(langName) {
     if (typeof langName !== 'string') return '';
     return langName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  static getTranslation(translations, langKey) {
+    if (!translations) return null;
+    if (translations[langKey]) return translations[langKey];
+
+    // Fallback: Tìm key trong translations là tiền tố của langKey
+    // Ví dụ: translations có "chinese", langKey là "chinesesimplified" -> khớp "chinese"
+    let fallbackKey = null;
+    for (const key of Object.keys(translations)) {
+      if (langKey.startsWith(key) && key.length > 0) {
+        if (!fallbackKey || key.length > fallbackKey.length) {
+          fallbackKey = key;
+        }
+      }
+    }
+    if (fallbackKey) {
+      console.log(`[YoutubeStudioPanel] Fallback: Lấy dữ liệu từ key "${fallbackKey}" cho "${langKey}"`);
+      return translations[fallbackKey];
+    }
+    return null;
   }
 
   // Thêm hàm mới này vào class YoutubeStudioPanel

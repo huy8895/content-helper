@@ -981,7 +981,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     console.log('[Aloud Autofill] Dialog found. Filling data...');
 
     const jsonKey = YoutubeStudioPanel._normalizeLangKey(langName);
-    const translationData = translations ? translations[jsonKey] : null;
+    const translationData = YoutubeStudioPanel.getTranslation(translations, jsonKey);
 
     if (translationData) {
       const titleInput = dialog.querySelector('#metadata-title #textbox');
