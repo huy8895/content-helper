@@ -69,6 +69,7 @@ const ScenarioRunnerInnerHTML = `
       <div id="sr-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out"></div>
     </div>
     <div id="sr-done-list" class="flex flex-wrap gap-1 mt-2 max-h-16 overflow-y-auto custom-scrollbar"></div>
+    <div id="sr-split-detail" class="mt-2 space-y-1 max-h-32 overflow-y-auto custom-scrollbar hidden"></div>
   </div>
 
   <div class="grid grid-cols-3 gap-2 mb-2">
@@ -1256,6 +1257,7 @@ window.ScenarioRunner = class {
 
   /**
    * Đọc trạng thái session split tabs từ chrome.storage.local và cập nhật UI.
+   * Đọc meta key và các per-task keys.
    */
   _pollSplitTabsStatus() {
     if (!this._splitTabsSessionId) return;
@@ -1267,39 +1269,75 @@ window.ScenarioRunner = class {
       setTimeout(() => dot.classList.add('hidden'), 1500);
     }
 
-    const key = `split_tabs_session_${this._splitTabsSessionId}`;
-    chrome.storage.local.get(key, (result) => {
-      const session = result[key];
-      if (!session) return;
+    const metaKey = `split_tabs_meta_${this._splitTabsSessionId}`;
+    chrome.storage.local.get(metaKey, (metaResult) => {
+      const meta = metaResult[metaKey];
+      if (!meta) return;
 
-      const tasks = Object.values(session.tasks);
-      const completed = tasks.filter(t => t.status === 'completed');
-      const failed = tasks.filter(t => t.status === 'failed');
-      const total = session.total;
-      const done = completed.length + failed.length;
+      const taskKeys = meta.taskIds.map(id => `split_task_${id}`);
+      chrome.storage.local.get(taskKeys, (taskResult) => {
+        const tasks = Object.values(taskResult);
+        const completed = tasks.filter(t => t.status === 'completed');
+        const failed = tasks.filter(t => t.status === 'failed');
+        const total = meta.total;
+        const done = completed.length + failed.length;
 
-      // Cập nhật progress bar
-      this._updateParallelProgress(done, total);
+        // Cập nhật progress bar
+        this._updateParallelProgress(done, total);
 
-      // Thêm labels mới vào danh sách đã xong
-      [...completed, ...failed].forEach(t => {
-        if (!this._splitTabsPolledLabels.has(t.taskId)) {
-          this._splitTabsPolledLabels.add(t.taskId);
-          this._addDoneItem(t.label || t.taskId);
+        // Hiển thị panel chi tiết
+        this._updateSplitTabsDetailUI(tasks);
+
+        // Thêm labels mới vào danh sách đã xong
+        [...completed, ...failed].forEach(t => {
+          if (!this._splitTabsPolledLabels.has(t.taskId)) {
+            this._splitTabsPolledLabels.add(t.taskId);
+            this._addDoneItem(t.label || t.taskId);
+          }
+        });
+
+        // Kiểm tra hoàn thành
+        if (done >= total && this._splitTabsRunning) {
+          this._stopSplitTabsPolling();
+          this._resetControls();
+          this._splitTabsRunning = false;
+
+          let msg = `🎉 Chia tab hoàn thành: ${completed.length}/${total} tab thành công`;
+          if (failed.length > 0) msg += `, ${failed.length} lỗi`;
+          ContentHelper.showToast(msg, failed.length > 0 ? 'warning' : 'success');
         }
       });
-
-      // Kiểm tra hoàn thành
-      if (done >= total && this._splitTabsRunning) {
-        this._stopSplitTabsPolling();
-        this._resetControls();
-        this._splitTabsRunning = false;
-
-        let msg = `🎉 Chia tab hoàn thành: ${completed.length}/${total} tab thành công`;
-        if (failed.length > 0) msg += `, ${failed.length} lỗi`;
-        ContentHelper.showToast(msg, failed.length > 0 ? 'warning' : 'success');
-      }
     });
+  }
+
+  /**
+   * Render chi tiết từng tab lên UI (items done, running, waiting).
+   */
+  _updateSplitTabsDetailUI(tasks) {
+    const detailContainer = this.el.querySelector('#sr-split-detail');
+    if (!detailContainer) return;
+
+    detailContainer.classList.remove('hidden');
+    detailContainer.innerHTML = tasks.map(task => {
+      const itemsHtml = task.items.map((item, idx) => {
+        if (task.completedItems.includes(item)) return `<span class="text-green-500 font-bold" title="Done">✅ ${item}</span>`;
+        if (task.status === 'running' && task.currentItem === item) return `<span class="text-teal-500 font-bold animate-pulse" title="Running">🔄 ${item}</span>`;
+        if (task.status === 'failed') return `<span class="text-red-500 font-bold" title="Failed">❌ ${item}</span>`;
+        return `<span class="text-gray-400 font-medium" title="Waiting">⏳ ${item}</span>`;
+      }).join('<span class="text-gray-300 mx-1">|</span>');
+
+      return `
+        <div class="bg-white border border-gray-100 rounded p-1.5 text-[9px] flex flex-col gap-1">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-gray-700">🔀 ${task.label || task.taskId}</span>
+            <span class="${task.status === 'completed' ? 'text-green-600' : task.status === 'running' ? 'text-teal-600 animate-pulse' : 'text-gray-500'} font-bold">
+              ${task.status === 'completed' ? 'Done' : task.status === 'running' ? 'Running' : task.status === 'failed' ? 'Failed' : 'Pending'}
+            </span>
+          </div>
+          <div class="flex flex-wrap gap-x-1">${itemsHtml}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   /**
@@ -1319,6 +1357,8 @@ window.ScenarioRunner = class {
       this._splitTabsSessionId = null;
       this._resetControls();
       this._showProgress(false);
+      const detail = this.el.querySelector('#sr-split-detail');
+      if (detail) detail.innerHTML = '';
       ContentHelper.showToast('🛑 Đã dừng phiên chia tab và đóng các tab con.', 'info');
     });
   }

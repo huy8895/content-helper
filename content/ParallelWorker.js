@@ -441,61 +441,201 @@ window.ParallelWorker = (() => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // Split Tabs – Xử lý nhiều items tuần tự trên 1 tab
+  // Split Tabs – Xử lý nhiều items tuần tự trên 1 tab (v2)
   // ═══════════════════════════════════════════════════════════════
 
   /**
-   * Cập nhật trạng thái task trong split_tabs_session storage.
-   * @param {string} sessionId - ID phiên split tabs
-   * @param {string} taskId - ID task cần cập nhật
-   * @param {object} updates - Dữ liệu cập nhật {status, error, currentItem, completedItems}
-   * @returns {Promise<boolean>}
+   * Cập nhật trạng thái task vào storage key riêng (KHÔNG race condition).
+   * Mỗi task ghi thẳng vào `split_task_{taskId}` — không đọc/ghi session chung.
+   * @param {string} taskId - ID task
+   * @param {object} updates - Dữ liệu cập nhật
+   * @returns {Promise<void>}
    */
-  function _updateSplitTaskInStorage(sessionId, taskId, updates) {
-    const key = `split_tabs_session_${sessionId}`;
+  function _updateSplitTaskInStorage(taskId, updates) {
+    const key = `split_task_${taskId}`;
     return new Promise((resolve) => {
       chrome.storage.local.get(key, (result) => {
-        const session = result[key];
-        if (!session || !session.tasks[taskId]) {
-          console.warn(`⚠️ [ParallelWorker] Không tìm thấy split task ${taskId} trong storage`);
-          resolve(false);
-          return;
-        }
-        session.tasks[taskId] = { ...session.tasks[taskId], ...updates, updatedAt: Date.now() };
-        chrome.storage.local.set({ [key]: session }, () => {
-          console.log(`💾 [ParallelWorker] Đã ghi split task "${taskId}" → ${updates.status || 'update'} vào storage`);
-          resolve(true);
+        const existing = result[key] || {};
+        const merged = { ...existing, ...updates, updatedAt: Date.now() };
+        chrome.storage.local.set({ [key]: merged }, () => {
+          console.log(`💾 [ParallelWorker] split_task "${taskId}" → ${updates.status || 'update'}`);
+          resolve();
         });
       });
     });
   }
 
   /**
+   * Yêu cầu background tạm activate tab hiện tại.
+   * Giúp tránh Chrome throttle setTimeout/setInterval khi tab ẩn.
+   * @returns {Promise<void>}
+   */
+  function _activateCurrentTab() {
+    return new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ type: 'SPLIT_TABS_ACTIVATE_TAB' }, () => {
+          resolve();
+        });
+      } catch (e) {
+        console.warn('⚠️ [ParallelWorker] Không thể activate tab:', e);
+        resolve();
+      }
+    });
+  }
+
+  // ── Mini Panel UI cho worker tab ──────────────────────────────
+
+  let _splitPanel = null;
+
+  /**
+   * Tạo mini panel hiển thị trạng thái trên worker tab.
+   * @param {string} label - Label của task (ví dụ: "Tab 1 (3 items)")
+   * @param {Array<string>} items - Danh sách items
+   * @param {string} scenarioName - Tên scenario
+   */
+  function _createSplitPanel(label, items, scenarioName) {
+    if (_splitPanel) _splitPanel.remove();
+
+    const el = document.createElement('div');
+    el.id = 'split-worker-panel';
+    el.style.cssText = `
+      position: fixed; bottom: 20px; right: 20px; z-index: 2147483647;
+      width: 360px; max-height: 400px; overflow-y: auto;
+      background: #1a1a2e; color: #e0e0e0; border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px; padding: 16px;
+    `;
+
+    const itemsHtml = items.map((item, i) => 
+      `<span id="split-item-${i}" style="
+        display: inline-block; padding: 2px 8px; margin: 2px;
+        border-radius: 12px; font-size: 10px; font-weight: 600;
+        background: rgba(255,255,255,0.08); color: #888;
+      ">⏳ ${item}</span>`
+    ).join('');
+
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+          <div style="font-weight:700; font-size:13px; color:#5eead4;">🔀 ${label}</div>
+          <div style="font-size:10px; color:#888; margin-top:2px;">${scenarioName}</div>
+        </div>
+        <button id="split-panel-minimize" style="
+          background: none; border: none; color: #888; cursor: pointer; font-size: 16px;
+          padding: 4px; line-height: 1;
+        " title="Thu nhỏ">−</button>
+      </div>
+      <div id="split-panel-body">
+        <div style="margin-bottom:8px;">
+          <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px;">Items</div>
+          <div id="split-items-list" style="line-height:1.8;">${itemsHtml}</div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px;">Prompt</div>
+          <div id="split-prompt-progress" style="
+            display:flex; align-items:center; gap:8px;
+          ">
+            <div style="flex:1; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
+              <div id="split-prompt-bar" style="height:100%; width:0%; background:#5eead4; border-radius:2px; transition:width 0.3s;"></div>
+            </div>
+            <span id="split-prompt-text" style="font-size:10px; color:#5eead4; font-weight:700;">0/0</span>
+          </div>
+        </div>
+        <div id="split-current-prompt" style="
+          font-size:10px; color:#aaa; background:rgba(255,255,255,0.05);
+          padding:8px; border-radius:8px; max-height:60px; overflow-y:auto;
+          word-break:break-word; line-height:1.4;
+        ">Đang chuẩn bị...</div>
+      </div>
+    `;
+
+    document.body.appendChild(el);
+    _splitPanel = el;
+
+    // Nút minimize
+    let minimized = false;
+    el.querySelector('#split-panel-minimize').onclick = () => {
+      minimized = !minimized;
+      el.querySelector('#split-panel-body').style.display = minimized ? 'none' : 'block';
+      el.querySelector('#split-panel-minimize').textContent = minimized ? '+' : '−';
+    };
+  }
+
+  /**
+   * Cập nhật trạng thái item trên panel.
+   * @param {number} index - Index của item
+   * @param {'waiting'|'running'|'done'|'error'} status
+   */
+  function _updatePanelItem(index, status) {
+    if (!_splitPanel) return;
+    const el = _splitPanel.querySelector(`#split-item-${index}`);
+    if (!el) return;
+
+    const styles = {
+      waiting: { bg: 'rgba(255,255,255,0.08)', color: '#888', icon: '⏳' },
+      running: { bg: 'rgba(94,234,212,0.15)', color: '#5eead4', icon: '🔄' },
+      done:    { bg: 'rgba(74,222,128,0.15)', color: '#4ade80', icon: '✅' },
+      error:   { bg: 'rgba(248,113,113,0.15)', color: '#f87171', icon: '❌' },
+    };
+    const s = styles[status] || styles.waiting;
+    el.style.background = s.bg;
+    el.style.color = s.color;
+    el.textContent = `${s.icon} ${el.textContent.replace(/^[^\s]+\s/, '')}`;
+  }
+
+  /**
+   * Cập nhật progress prompt trên panel.
+   * @param {number} current - Prompt hiện tại
+   * @param {number} total - Tổng số prompts
+   * @param {string} promptText - Nội dung prompt đang gửi
+   */
+  function _updatePanelPrompt(current, total, promptText) {
+    if (!_splitPanel) return;
+    const bar = _splitPanel.querySelector('#split-prompt-bar');
+    const text = _splitPanel.querySelector('#split-prompt-text');
+    const content = _splitPanel.querySelector('#split-current-prompt');
+
+    if (bar) bar.style.width = `${total > 0 ? Math.round((current / total) * 100) : 0}%`;
+    if (text) text.textContent = `${current}/${total}`;
+    if (content) content.textContent = promptText || '';
+  }
+
+  /**
+   * Hiện trạng thái hoàn thành trên panel.
+   * @param {boolean} success
+   * @param {string} message
+   */
+  function _showPanelDone(success, message) {
+    if (!_splitPanel) return;
+    const content = _splitPanel.querySelector('#split-current-prompt');
+    if (content) {
+      content.style.background = success ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)';
+      content.style.color = success ? '#4ade80' : '#f87171';
+      content.textContent = message;
+    }
+  }
+
+  /**
    * Xử lý chính cho Split Tabs: nhận task chứa nhiều items và chạy tuần tự.
-   * Không thu thập content, không đóng tab khi xong.
-   * @param {object} taskData - Dữ liệu task
-   * @param {string} taskData.taskId - ID duy nhất của task
-   * @param {string} taskData.scenarioName - Tên scenario template
-   * @param {object} taskData.values - Giá trị các biến
-   * @param {Array<string>} taskData.items - Mảng các giá trị cần xử lý tuần tự
-   * @param {string} taskData.loopKey - Key của biến list
-   * @param {number} taskData.startAt - Bắt đầu từ bước nào
+   * Hiển thị mini panel, ghi per-task storage, activate tab trước gửi prompt.
    */
   async function _executeSplitTask(taskData) {
     const { taskId, scenarioName, values, items, loopKey, startAt } = taskData;
     const sessionId = taskData.sessionId;
+    const label = taskData.label || taskId;
 
     console.log(`🔀 [ParallelWorker] Bắt đầu split task "${taskId}" với ${items.length} items`);
-    console.log(`📋 [ParallelWorker] Items:`, items);
+
+    // Tạo mini panel UI
+    _createSplitPanel(label, items, scenarioName);
 
     try {
       // 1. Đợi ChatAdapter sẵn sàng
       await _waitForAdapter();
-
-      // 2. Delay để đảm bảo trang ổn định
       await new Promise(r => setTimeout(r, CONFIG.delayBeforeStart));
 
-      // 2b. Kích hoạt cuộc trò chuyện tạm thời
+      // 1b. Kích hoạt cuộc trò chuyện tạm thời
       if (window.ChatAdapter && typeof window.ChatAdapter.enableTemporaryChat === 'function') {
         try {
           await window.ChatAdapter.enableTemporaryChat();
@@ -504,81 +644,100 @@ window.ParallelWorker = (() => {
         }
       }
 
-      // 3. Load scenario template
+      // 2. Load scenario template
       const templates = await _loadTemplates();
       const raw = templates[scenarioName];
-
-      if (!raw) {
-        throw new Error(`Không tìm thấy scenario "${scenarioName}"`);
-      }
+      if (!raw) throw new Error(`Không tìm thấy scenario "${scenarioName}"`);
 
       const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
       const slice = tplArr.slice(startAt);
 
-      // 4. Lặp qua từng item trong mảng
+      // 3. Lặp qua từng item
       const completedItems = [];
 
       for (let i = 0; i < items.length; i++) {
         const currentItem = items[i];
         console.log(`🔀 [ParallelWorker] === Item ${i + 1}/${items.length}: "${currentItem}" ===`);
 
-        // Cập nhật storage: đang xử lý item nào
-        await _updateSplitTaskInStorage(sessionId, taskId, {
+        // Cập nhật UI + storage
+        _updatePanelItem(i, 'running');
+        await _updateSplitTaskInStorage(taskId, {
           status: 'running',
           currentItem: currentItem,
           currentIndex: i,
           completedItems: completedItems.slice()
         });
 
-        // Expand scenario với item hiện tại
+        // Expand scenario
         const itemValues = { ...values, [loopKey]: currentItem };
         const prompts = _expandScenario(slice, itemValues);
 
         if (prompts.length === 0) {
-          console.warn(`⚠️ [ParallelWorker] Không có prompt cho item "${currentItem}", bỏ qua`);
+          console.warn(`⚠️ Không có prompt cho item "${currentItem}", bỏ qua`);
           completedItems.push(currentItem);
+          _updatePanelItem(i, 'done');
           continue;
         }
 
-        console.log(`📝 [ParallelWorker] Sẽ gửi ${prompts.length} prompt(s) cho item "${currentItem}"`);
+        _updatePanelPrompt(0, prompts.length, prompts[0]?.text || '');
 
-        // Tạo PromptSequencer và chạy
+        // Tạo PromptSequencer — dùng wrapper sendPrompt có activate tab
+        const sendPromptWithActivate = async (prompt) => {
+          // Activate tab trước khi gửi prompt để tránh throttle
+          await _activateCurrentTab();
+          await new Promise(r => setTimeout(r, 300));
+          await _sendPrompt(prompt);
+        };
+
         const sequencer = new PromptSequencer(
           prompts,
-          _sendPrompt,
+          sendPromptWithActivate,
           _waitForResponse,
           (idx, total) => {
             console.log(`📊 [ParallelWorker] Item "${currentItem}": ${idx}/${total}`);
+            _updatePanelPrompt(idx, total, idx < prompts.length ? (prompts[idx]?.text || '') : 'Hoàn thành');
           },
           `Split: ${scenarioName} - ${currentItem}`,
-          true // Silent mode
+          true
         );
 
-        // Chạy sequencer và đợi hoàn thành
         await new Promise((resolve) => {
           sequencer.start(() => resolve());
         });
 
         completedItems.push(currentItem);
-        console.log(`✅ [ParallelWorker] Item "${currentItem}" hoàn thành (${completedItems.length}/${items.length})`);
+        _updatePanelItem(i, 'done');
+        _updatePanelPrompt(prompts.length, prompts.length, '✅ Done');
+
+        // Cập nhật storage sau mỗi item
+        await _updateSplitTaskInStorage(taskId, {
+          status: 'running',
+          currentItem: currentItem,
+          currentIndex: i,
+          completedItems: completedItems.slice()
+        });
+
+        console.log(`✅ Item "${currentItem}" hoàn thành (${completedItems.length}/${items.length})`);
       }
 
-      // 5. Tất cả items xong → cập nhật storage
-      console.log(`🎉 [ParallelWorker] Split task "${taskId}" hoàn thành! ${completedItems.length}/${items.length} items`);
+      // 4. Tất cả items xong
+      console.log(`🎉 Split task "${taskId}" hoàn thành! ${completedItems.length}/${items.length} items`);
+      _showPanelDone(true, `🎉 Hoàn thành ${completedItems.length}/${items.length} items!`);
 
-      await _updateSplitTaskInStorage(sessionId, taskId, {
+      await _updateSplitTaskInStorage(taskId, {
         status: 'completed',
         completedItems: completedItems,
-        shouldCloseTab: false
+        currentItem: null,
+        currentIndex: items.length
       });
 
     } catch (error) {
-      console.error(`❌ [ParallelWorker] Split task "${taskId}" lỗi:`, error);
+      console.error(`❌ Split task "${taskId}" lỗi:`, error);
+      _showPanelDone(false, `❌ Lỗi: ${error.message}`);
 
-      await _updateSplitTaskInStorage(sessionId, taskId, {
+      await _updateSplitTaskInStorage(taskId, {
         status: 'failed',
-        error: error.message,
-        shouldCloseTab: false
+        error: error.message
       });
     }
   }
@@ -588,7 +747,6 @@ window.ParallelWorker = (() => {
     if (msg.type === 'PARALLEL_EXEC_TASK') {
       console.log('📨 [ParallelWorker] Nhận task:', msg);
       _executeTask(msg);
-      // Trả lời ngay để background biết đã nhận
       sendResponse({ received: true });
     }
 
@@ -601,7 +759,6 @@ window.ParallelWorker = (() => {
 
   // ── Public API ──────────────────────────────────────────────────
   return {
-    // Expose cho testing/debugging
     _expandScenario,
     _getLoopKey,
   };
