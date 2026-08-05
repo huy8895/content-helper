@@ -107,10 +107,16 @@ const ScenarioRunnerInnerHTML = `
       <input type="checkbox" id="sr-parallel-active" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
       <span>Tự động chuyển sang tab mới mở</span>
     </label>
-    <label class="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
-      <input type="checkbox" id="sr-auto-switch-tabs" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-      <span>Tự động xoay vòng tab (Chống ngủ đông)</span>
-    </label>
+    <div class="flex items-center gap-1.5 text-[11px] text-gray-600 select-none">
+      <label class="flex items-center gap-1.5 cursor-pointer">
+        <input type="checkbox" id="sr-auto-switch-tabs" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+        <span>Tự động xoay vòng tab mỗi</span>
+      </label>
+      <input type="number" id="sr-auto-switch-interval" value="5" min="1" max="60"
+        class="w-10 h-6 text-center text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200 rounded-md outline-none focus:border-teal-500"
+        title="Số giây mỗi lần xoay vòng" />
+      <span>giây (Chống ngủ đông)</span>
+    </div>
   </div>
 
   <div class="flex gap-2 mb-4">
@@ -534,10 +540,36 @@ window.ScenarioRunner = class {
         
         // Nếu đang chạy Chia tab, gửi thông báo ngay cho background
         if (this._splitTabsRunning && this._splitTabsSessionId) {
+          const autoSwitchInterval = parseInt(this.el.querySelector('#sr-auto-switch-interval')?.value || '5', 10);
           chrome.runtime.sendMessage({
             type: 'SPLIT_TABS_TOGGLE_AUTO_SWITCH',
             sessionId: this._splitTabsSessionId,
-            autoSwitchTabs: isChecked
+            autoSwitchTabs: isChecked,
+            autoSwitchInterval: autoSwitchInterval
+          });
+        }
+      });
+    }
+
+    // Input số giây Tự động xoay vòng tab
+    const inputAutoSwitchInterval = this.el.querySelector('#sr-auto-switch-interval');
+    if (inputAutoSwitchInterval) {
+      chrome.storage.local.get('srAutoSwitchInterval', (result) => {
+        if (result.srAutoSwitchInterval !== undefined) {
+          inputAutoSwitchInterval.value = result.srAutoSwitchInterval;
+        }
+      });
+      inputAutoSwitchInterval.addEventListener('change', () => {
+        const val = parseInt(inputAutoSwitchInterval.value || '5', 10);
+        chrome.storage.local.set({ srAutoSwitchInterval: val });
+        
+        // Cập nhật ngay nếu đang bật và đang chạy
+        if (this._splitTabsRunning && this._splitTabsSessionId && checkboxAutoSwitch?.checked) {
+          chrome.runtime.sendMessage({
+            type: 'SPLIT_TABS_TOGGLE_AUTO_SWITCH',
+            sessionId: this._splitTabsSessionId,
+            autoSwitchTabs: true,
+            autoSwitchInterval: val
           });
         }
       });
@@ -1184,6 +1216,7 @@ window.ScenarioRunner = class {
     numTabs = Math.min(numTabs, listValues.length); // Không mở nhiều tab hơn số items
     const activeTab = this.el.querySelector('#sr-parallel-active')?.checked ?? true;
     const autoSwitchTabs = this.el.querySelector('#sr-auto-switch-tabs')?.checked ?? false;
+    const autoSwitchInterval = parseInt(this.el.querySelector('#sr-auto-switch-interval')?.value || '5', 10);
 
     // 4. Chia đều items vào N tab
     const chunkSize = Math.ceil(listValues.length / numTabs);
@@ -1247,7 +1280,8 @@ window.ScenarioRunner = class {
       tasks: tasks,
       baseUrl: baseUrl,
       activeTab: activeTab,
-      autoSwitchTabs: autoSwitchTabs
+      autoSwitchTabs: autoSwitchTabs,
+      autoSwitchInterval: autoSwitchInterval
     }, (response) => {
       if (chrome.runtime.lastError) {
         console.error('❌ [ScenarioRunner] Lỗi gửi SPLIT_TABS_START:', chrome.runtime.lastError);

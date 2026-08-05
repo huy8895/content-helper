@@ -920,7 +920,7 @@ const splitTabsSessions = new Map();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== 'SPLIT_TABS_START') return;
 
-  const { sessionId, tasks, baseUrl, activeTab = false, autoSwitchTabs = false } = message;
+  const { sessionId, tasks, baseUrl, activeTab = false, autoSwitchTabs = false, autoSwitchInterval = 5 } = message;
   const originTabId = sender.tab?.id;
 
   logInfo(`🔀 [SplitTabs] Bắt đầu phiên "${sessionId}": ${tasks.length} tab(s)`);
@@ -934,6 +934,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     taskIds: tasks.map(t => t.taskId),
     running: new Map(),    // taskId → tabId
     autoSwitchTabs,
+    autoSwitchInterval,
     switchIndex: 0,
     switchInterval: null
   };
@@ -994,7 +995,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function _startAutoSwitchInterval(session) {
   if (session.switchInterval) clearInterval(session.switchInterval);
   
-  logInfo(`🔄 [SplitTabs] Bắt đầu tự động xoay vòng tab cho phiên "${session.sessionId}"`);
+  const ms = (session.autoSwitchInterval || 5) * 1000;
+  logInfo(`🔄 [SplitTabs] Bắt đầu tự động xoay vòng tab cho phiên "${session.sessionId}" (mỗi ${ms}ms)`);
+  
   session.switchInterval = setInterval(() => {
     const runningTabs = Array.from(session.running.values());
     if (runningTabs.length === 0) return;
@@ -1008,7 +1011,7 @@ function _startAutoSwitchInterval(session) {
         logWarn(`[SplitTabs] Không thể xoay vòng đến tab #${tabIdToActivate}: ${chrome.runtime.lastError.message}`);
       }
     });
-  }, 15000); // 15 giây / lần
+  }, ms);
 }
 
 function _stopAutoSwitchInterval(session) {
@@ -1023,11 +1026,15 @@ function _stopAutoSwitchInterval(session) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== 'SPLIT_TABS_TOGGLE_AUTO_SWITCH') return;
   
-  const { sessionId, autoSwitchTabs } = message;
+  const { sessionId, autoSwitchTabs, autoSwitchInterval } = message;
   const session = splitTabsSessions.get(sessionId);
   if (session) {
     session.autoSwitchTabs = autoSwitchTabs;
-    if (autoSwitchTabs) {
+    if (autoSwitchInterval !== undefined) {
+      session.autoSwitchInterval = autoSwitchInterval;
+    }
+    
+    if (session.autoSwitchTabs) {
       _startAutoSwitchInterval(session);
     } else {
       _stopAutoSwitchInterval(session);
