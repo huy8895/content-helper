@@ -102,10 +102,14 @@ const ScenarioRunnerInnerHTML = `
   </div>
 
   <!-- Lựa chọn chuyển tab khi chạy song song -->
-  <div class="flex items-center gap-2 mb-4 px-1">
+  <div class="flex flex-col gap-2 mb-4 px-1">
     <label class="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
       <input type="checkbox" id="sr-parallel-active" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
       <span>Tự động chuyển sang tab mới mở</span>
+    </label>
+    <label class="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
+      <input type="checkbox" id="sr-auto-switch-tabs" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+      <span>Tự động xoay vòng tab (Chống ngủ đông)</span>
     </label>
   </div>
 
@@ -513,6 +517,29 @@ window.ScenarioRunner = class {
       });
       checkboxActive.addEventListener('change', () => {
         chrome.storage.local.set({ srParallelActive: checkboxActive.checked });
+      });
+    }
+
+    // Checkbox Tự động xoay vòng tab
+    const checkboxAutoSwitch = this.el.querySelector('#sr-auto-switch-tabs');
+    if (checkboxAutoSwitch) {
+      chrome.storage.local.get('srAutoSwitchTabs', (result) => {
+        if (result.srAutoSwitchTabs !== undefined) {
+          checkboxAutoSwitch.checked = result.srAutoSwitchTabs;
+        }
+      });
+      checkboxAutoSwitch.addEventListener('change', () => {
+        const isChecked = checkboxAutoSwitch.checked;
+        chrome.storage.local.set({ srAutoSwitchTabs: isChecked });
+        
+        // Nếu đang chạy Chia tab, gửi thông báo ngay cho background
+        if (this._splitTabsRunning && this._splitTabsSessionId) {
+          chrome.runtime.sendMessage({
+            type: 'SPLIT_TABS_TOGGLE_AUTO_SWITCH',
+            sessionId: this._splitTabsSessionId,
+            autoSwitchTabs: isChecked
+          });
+        }
       });
     }
   }
@@ -1156,6 +1183,7 @@ window.ScenarioRunner = class {
     let numTabs = parseInt(this.el.querySelector('#sr-split-tabs-count').value || '3', 10);
     numTabs = Math.min(numTabs, listValues.length); // Không mở nhiều tab hơn số items
     const activeTab = this.el.querySelector('#sr-parallel-active')?.checked ?? true;
+    const autoSwitchTabs = this.el.querySelector('#sr-auto-switch-tabs')?.checked ?? false;
 
     // 4. Chia đều items vào N tab
     const chunkSize = Math.ceil(listValues.length / numTabs);
@@ -1218,7 +1246,8 @@ window.ScenarioRunner = class {
       sessionId: sessionId,
       tasks: tasks,
       baseUrl: baseUrl,
-      activeTab: activeTab
+      activeTab: activeTab,
+      autoSwitchTabs: autoSwitchTabs
     }, (response) => {
       if (chrome.runtime.lastError) {
         console.error('❌ [ScenarioRunner] Lỗi gửi SPLIT_TABS_START:', chrome.runtime.lastError);

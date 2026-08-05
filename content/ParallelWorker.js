@@ -528,7 +528,15 @@ window.ParallelWorker = (() => {
       </div>
       <div id="split-panel-body">
         <div style="margin-bottom:8px;">
-          <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px;">Items</div>
+          <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Items</span>
+            <button onclick="navigator.clipboard.writeText('${items.join(', ')}').then(()=>this.textContent='Copied!').catch(()=>this.textContent='Error'); setTimeout(()=>this.textContent='Copy', 2000);" style="background:none; border:none; color:#5eead4; cursor:pointer; font-size:9px; padding:0; line-height:1;">Copy</button>
+          </div>
+          <textarea readonly style="
+            width: 100%; height: 28px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 6px; color: #888; font-size: 9px; padding: 4px 6px; margin-bottom: 6px; 
+            resize: none; outline: none; font-family: monospace; white-space: nowrap; overflow-x: auto;
+          ">${items.join(', ')}</textarea>
           <div id="split-items-list" style="line-height:1.8;">${itemsHtml}</div>
         </div>
         <div style="margin-bottom:8px;">

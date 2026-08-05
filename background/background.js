@@ -920,7 +920,7 @@ const splitTabsSessions = new Map();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== 'SPLIT_TABS_START') return;
 
-  const { sessionId, tasks, baseUrl, activeTab = false } = message;
+  const { sessionId, tasks, baseUrl, activeTab = false, autoSwitchTabs = false } = message;
   const originTabId = sender.tab?.id;
 
   logInfo(`🔀 [SplitTabs] Bắt đầu phiên "${sessionId}": ${tasks.length} tab(s)`);
@@ -933,8 +933,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     originTabId,
     taskIds: tasks.map(t => t.taskId),
     running: new Map(),    // taskId → tabId
+    autoSwitchTabs,
+    switchIndex: 0,
+    switchInterval: null
   };
   splitTabsSessions.set(sessionId, session);
+
+  // Khởi động auto-switch nếu bật
+  if (session.autoSwitchTabs) {
+    _startAutoSwitchInterval(session);
+  }
 
   // Ghi session metadata (chỉ chứa danh sách taskIds, không chứa status)
   const metaKey = `split_tabs_meta_${sessionId}`;
@@ -978,6 +986,55 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   sendResponse({ received: true, sessionId });
+  return true;
+});
+
+// ── Auto-Switch Helper Functions ─────────────────────────────────
+
+function _startAutoSwitchInterval(session) {
+  if (session.switchInterval) clearInterval(session.switchInterval);
+  
+  logInfo(`🔄 [SplitTabs] Bắt đầu tự động xoay vòng tab cho phiên "${session.sessionId}"`);
+  session.switchInterval = setInterval(() => {
+    const runningTabs = Array.from(session.running.values());
+    if (runningTabs.length === 0) return;
+    
+    // Tăng index và chọn tab tiếp theo
+    session.switchIndex = (session.switchIndex + 1) % runningTabs.length;
+    const tabIdToActivate = runningTabs[session.switchIndex];
+    
+    chrome.tabs.update(tabIdToActivate, { active: true }, () => {
+      if (chrome.runtime.lastError) {
+        logWarn(`[SplitTabs] Không thể xoay vòng đến tab #${tabIdToActivate}: ${chrome.runtime.lastError.message}`);
+      }
+    });
+  }, 15000); // 15 giây / lần
+}
+
+function _stopAutoSwitchInterval(session) {
+  if (session.switchInterval) {
+    clearInterval(session.switchInterval);
+    session.switchInterval = null;
+    logInfo(`⏹️ [SplitTabs] Đã dừng tự động xoay vòng tab cho phiên "${session.sessionId}"`);
+  }
+}
+
+// ── Bật/Tắt Auto-Switch khi đang chạy ─────────────────────────────
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'SPLIT_TABS_TOGGLE_AUTO_SWITCH') return;
+  
+  const { sessionId, autoSwitchTabs } = message;
+  const session = splitTabsSessions.get(sessionId);
+  if (session) {
+    session.autoSwitchTabs = autoSwitchTabs;
+    if (autoSwitchTabs) {
+      _startAutoSwitchInterval(session);
+    } else {
+      _stopAutoSwitchInterval(session);
+    }
+  }
+  
+  sendResponse({ success: true });
   return true;
 });
 
@@ -1129,6 +1186,10 @@ function _checkSplitTabsAllDone(sessionId) {
       logInfo(`🎉 [SplitTabs] Phiên "${sessionId}" hoàn thành! ` +
         `${completed.length} thành công, ${failed.length} lỗi`);
 
+      // Dừng auto switch
+      const session = splitTabsSessions.get(sessionId);
+      if (session) _stopAutoSwitchInterval(session);
+
       chrome.notifications.create({
         type: 'basic',
         iconUrl: chrome.runtime.getURL('assets/icon.png'),
@@ -1174,6 +1235,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const session = splitTabsSessions.get(sessionId);
   if (session) {
+    _stopAutoSwitchInterval(session);
     for (const [taskId, tabId] of session.running.entries()) {
       chrome.tabs.remove(tabId, () => {
         if (chrome.runtime.lastError) {
@@ -1201,11 +1263,14 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== 'SPLIT_TABS_CLEANUP_SESSION') return;
   const { sessionId } = message;
   if (sessionId) {
+    const session = splitTabsSessions.get(sessionId);
+    if (session) _stopAutoSwitchInterval(session);
     splitTabsSessions.delete(sessionId);
     _cleanupSplitTabsStorage(sessionId);
     logInfo(`🧹 [SplitTabs] Đã dọn session "${sessionId}"`);
   } else {
-    for (const [id] of splitTabsSessions) {
+    for (const [id, session] of splitTabsSessions) {
+      _stopAutoSwitchInterval(session);
       _cleanupSplitTabsStorage(id);
     }
     splitTabsSessions.clear();
