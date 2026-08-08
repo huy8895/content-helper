@@ -49,6 +49,10 @@ const ScenarioRunnerInnerHTML = `
   </div>
   </div>
 
+  <div class="flex items-center justify-between mb-1.5 pl-1">
+    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">THÔNG TIN ĐẦU VÀO</label>
+    <button id="sr-clear-inputs" class="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition-all active:scale-95" title="Xóa toàn bộ nội dung đã nhập">🧹 Xóa Form</button>
+  </div>
   <div id="scenario-inputs" class="space-y-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar"></div>
 
   <!-- Thanh tiến trình -->
@@ -462,6 +466,11 @@ window.ScenarioRunner = class {
     const btnParallelStop = this.el.querySelector('#sr-parallel-stop');
     const btnSplitTabs = this.el.querySelector('#sr-split-tabs');
     const btnSplitTabsStop = this.el.querySelector('#sr-split-tabs-stop');
+    const btnClearInputs = this.el.querySelector('#sr-clear-inputs');
+
+    if (btnClearInputs) {
+      btnClearInputs.onclick = () => this._clearVariableInputs();
+    }
 
     btnStart.onclick = () => this._start();
     btnParallel.onclick = (e) => {
