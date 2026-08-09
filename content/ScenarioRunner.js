@@ -695,6 +695,10 @@ window.ScenarioRunner = class {
     this._updateProgress(0, bigList.length);
     this._clearDoneList();
     this.sequencer.start(() => this._resetControls());
+    
+    if (this._minimizeCtrl) {
+      this._minimizeCtrl.minimize();
+    }
   }
 
   _resetControls() {
