@@ -259,9 +259,13 @@ window.FlowRunnerPanel = class {
         const wrapper = document.createElement("div");
         wrapper.className = "flex flex-col gap-1";
         
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "flex justify-between items-center";
+
         const label = document.createElement("label");
         label.className = "text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1";
         label.textContent = `[Bước ${stepIdx + 1}] ${varName}`;
+        headerDiv.appendChild(label);
 
         let inputEl;
         const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:border-indigo-500 transition-all outline-none";
@@ -282,11 +286,32 @@ window.FlowRunnerPanel = class {
           inputEl.className = `${baseClasses} min-h-[40px] resize-y`;
           inputEl.value = finalValue;
           inputEl.placeholder = "Nhập giá trị override...";
+          
+          const fileBtn = document.createElement('button');
+          fileBtn.className = "text-[9px] font-bold text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95";
+          fileBtn.textContent = "📂 Chọn file";
+          fileBtn.onclick = () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = ".txt,.json,.srt,.csv,.md";
+            fileInput.onchange = e => {
+              const file = e.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                inputEl.value = e.target.result;
+                inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+              };
+              reader.readAsText(file);
+            };
+            fileInput.click();
+          };
+          headerDiv.appendChild(fileBtn);
         }
 
         inputEl.dataset.key = uniqueKey;
         
-        wrapper.appendChild(label);
+        wrapper.appendChild(headerDiv);
         wrapper.appendChild(inputEl);
         inputsContainer.appendChild(wrapper);
       });
