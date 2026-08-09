@@ -61,6 +61,11 @@ const SPEECH_PANEL_HTML = `
     </div>
 
     <div class="form-group">
+      <label for="scene-instructions" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Scene</label>
+      <textarea id="scene-instructions" class="w-full h-12 p-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-y shadow-sm" placeholder="Nhập bối cảnh (Scene)..."></textarea>
+    </div>
+
+    <div class="form-group">
       <label for="style-instructions" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Style instructions (Sample Context)</label>
       <textarea id="style-instructions" class="w-full h-20 p-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-y shadow-sm" placeholder="Nhập hướng dẫn phong cách..."></textarea>
     </div>
@@ -200,6 +205,7 @@ window.GoogleAIStudioSpeechPanel = class {
     this.el.querySelector('#input-value2').value = profileData.InputValue2 || '';
     this.el.querySelector('#voice1').value = profileData.Voice1 || '';
     this.el.querySelector('#voice2').value = profileData.Voice2 || '';
+    this.el.querySelector('#scene-instructions').value = profileData.sceneInstructions || '';
     this.el.querySelector('#style-instructions').value = profileData.styleInstructions || '';
     this.el.querySelector('#auto-set-value').checked = profileData.autoSetValue || false;
     this.el.querySelector('#auto-paste-clipboard').checked = profileData.autoPasteClipboard || false;
@@ -218,6 +224,7 @@ window.GoogleAIStudioSpeechPanel = class {
       InputValue2: this.el.querySelector('#input-value2').value,
       Voice1: this.el.querySelector('#voice1').value,
       Voice2: this.el.querySelector('#voice2').value,
+      sceneInstructions: this.el.querySelector('#scene-instructions').value,
       styleInstructions: this.el.querySelector('#style-instructions').value,
       autoSetValue: this.el.querySelector('#auto-set-value').checked,
       autoPasteClipboard: this.el.querySelector('#auto-paste-clipboard').checked,
@@ -349,6 +356,9 @@ window.GoogleAIStudioSpeechPanel = class {
       // Cập nhật tên Speaker
       GoogleAIStudioSpeechPanel.setSpeakerName(0, settings.InputValue1);
       GoogleAIStudioSpeechPanel.setSpeakerName(1, settings.InputValue2);
+
+      // Cập nhật Scene
+      GoogleAIStudioSpeechPanel.setTextareaValueByAriaLabel('Scene', settings.sceneInstructions);
 
       // Cập nhật Style Instructions (Sample Context)
       GoogleAIStudioSpeechPanel.setTextareaValueByAriaLabel('Sample Context', settings.styleInstructions);
