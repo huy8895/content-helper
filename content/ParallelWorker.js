@@ -530,7 +530,10 @@ window.ParallelWorker = (() => {
         <div style="margin-bottom:8px;">
           <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
             <span>Items</span>
-            <button id="split-panel-copy-btn" style="background:none; border:none; color:#5eead4; cursor:pointer; font-size:9px; padding:0; line-height:1;">Copy</button>
+            <div style="display:flex; gap:8px;">
+              <button id="split-panel-sync-btn" style="background:none; border:none; color:#facc15; cursor:pointer; font-size:9px; padding:0; line-height:1;" title="Đồng bộ tên lên trò chuyện">Đồng bộ tên</button>
+              <button id="split-panel-copy-btn" style="background:none; border:none; color:#5eead4; cursor:pointer; font-size:9px; padding:0; line-height:1;">Copy</button>
+            </div>
           </div>
           <textarea id="split-panel-copy-text" readonly style="
             width: 100%; height: 28px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); 
@@ -583,6 +586,56 @@ window.ParallelWorker = (() => {
             if (copyBtn) copyBtn.textContent = 'Copy';
           }, 2000);
         });
+      });
+    }
+
+    // Nút đồng bộ tên
+    const syncBtn = el.querySelector('#split-panel-sync-btn');
+    if (syncBtn) {
+      syncBtn.addEventListener('click', () => {
+        const text = el.querySelector('#split-panel-copy-text')?.value || '';
+        if (!text) return;
+        
+        syncBtn.textContent = 'Đang sync...';
+        
+        // Tìm nút edit
+        const editBtn = document.querySelector('button[aria-label="Edit prompt title and description"]');
+        if (!editBtn) {
+          syncBtn.textContent = 'Lỗi: Không tìm thấy nút edit';
+          setTimeout(() => { syncBtn.textContent = 'Đồng bộ tên'; }, 2000);
+          return;
+        }
+
+        editBtn.click();
+
+        // Chờ popup mở lên
+        let retries = 0;
+        const waitPopup = setInterval(() => {
+          retries++;
+          const popup = document.querySelector('ms-save-prompt-dialog');
+          if (popup) {
+            clearInterval(waitPopup);
+            const nameInput = popup.querySelector('input[aria-label="Prompt name text field"]');
+            const saveBtn = popup.querySelector('button.ms-button-primary[aria-label="Save title and description"]');
+            
+            if (nameInput) {
+              nameInput.value = text;
+              nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            
+            if (saveBtn) {
+              setTimeout(() => {
+                saveBtn.click();
+                syncBtn.textContent = 'Thành công!';
+                setTimeout(() => { syncBtn.textContent = 'Đồng bộ tên'; }, 2000);
+              }, 100);
+            }
+          } else if (retries > 20) { // Chờ tối đa 4s (20 * 200ms)
+            clearInterval(waitPopup);
+            syncBtn.textContent = 'Lỗi: Không mở được popup';
+            setTimeout(() => { syncBtn.textContent = 'Đồng bộ tên'; }, 2000);
+          }
+        }, 200);
       });
     }
   }
