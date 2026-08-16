@@ -1,16 +1,18 @@
 // --- STAGE: ScenarioRunner.js (CLEANED & COMPACT) ---
 
 const ScenarioRunnerInnerHTML = `
-  <div class="sr-header flex items-center mb-4 cursor-move select-none">
-    <span class="text-xl mr-2">📤</span>
-    <div>
-      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Scenario Runner</h3>
-      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Execute automation sequences</div>
+  <div class="sr-header flex items-center justify-between mb-2.5 cursor-move select-none pr-12">
+    <div class="flex items-center gap-2">
+      <span class="text-lg">📤</span>
+      <div>
+        <h3 class="m-0 text-sm font-bold text-gray-900 leading-tight">Scenario Runner</h3>
+        <div class="text-[9px] text-gray-400 font-medium">Execute automation sequences</div>
+      </div>
     </div>
   </div>
 
   <!-- Banner khôi phục phiên song song bị gián đoạn -->
-  <div id="sr-restore-banner" class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex flex-col gap-1.5 hidden animate-in">
+  <div id="sr-restore-banner" class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-2.5 flex flex-col gap-1 hidden animate-in">
     <div class="flex items-center justify-between">
       <div class="text-xs font-bold text-amber-800 flex items-center gap-1 select-none">
         <span>⚡</span> Khôi phục phiên chạy song song
@@ -30,107 +32,118 @@ const ScenarioRunnerInnerHTML = `
     </div>
   </div>
 
-  <div id="sr-scenario-browser" class="mb-4 relative">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
-    <div class="relative">
-      <input type="text" id="sr-scenario-search" 
-        class="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 transition-all outline-none" 
-        placeholder="Tìm kịch bản nhanh...">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+  <!-- Hàng chọn kịch bản & bước bắt đầu (gọn gàng 2 cột) -->
+  <div class="grid grid-cols-12 gap-2 mb-2.5 relative z-30">
+    <div id="sr-scenario-browser" class="col-span-7 relative z-40">
+      <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block tracking-wider pl-0.5" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
+      <div class="relative">
+        <input type="text" id="sr-scenario-search" 
+          class="w-full h-8 pl-7 pr-2 text-xs border border-gray-200 rounded-lg bg-gray-50/80 focus:bg-white focus:border-indigo-500 transition-all outline-none" 
+          placeholder="Tìm kịch bản...">
+        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">🔍</span>
+      </div>
+      <div id="sr-scenario-dropdown" class="absolute left-0 top-full mt-1 w-[320px] max-w-[380px] bg-white border border-gray-200 rounded-lg shadow-2xl z-[150] max-h-56 overflow-y-auto hidden-dropdown custom-scrollbar p-1 flex flex-col"></div>
     </div>
-    <div id="sr-scenario-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto hidden-dropdown custom-scrollbar p-1 flex flex-col"></div>
+
+    <div class="col-span-5 relative">
+      <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block tracking-wider pl-0.5" for="step-select">BẮT ĐẦU TỪ</label>
+      <select id="step-select" class="w-full h-8 px-2 text-xs font-semibold text-indigo-600 bg-white border border-gray-200 rounded-lg outline-none focus:border-indigo-500 transition-all cursor-pointer truncate" disabled>
+        <option value="0">Bước 1...</option>
+      </select>
+    </div>
   </div>
 
-  <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100 mb-4">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1" for="step-select">BẮT ĐẦU TỪ BƯỚC</label>
-    <select id="step-select" class="w-full h-9 px-3 text-sm font-bold text-indigo-600 bg-white border border-gray-300 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all cursor-pointer" disabled>
-      <option value="0">Vui lòng chọn kịch bản...</option>
-    </select>
-  </div>
-  </div>
-
-  <div class="flex items-center justify-between mb-1.5 pl-1">
-    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">THÔNG TIN ĐẦU VÀO</label>
+  <!-- Phần nhập thông tin đầu vào (rộng rãi, thoải mái) -->
+  <div class="flex items-center justify-between mb-1 pl-0.5">
+    <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">THÔNG TIN ĐẦU VÀO</label>
     <button id="sr-clear-inputs" class="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition-all active:scale-95" title="Xóa toàn bộ nội dung đã nhập">🧹 Xóa Form</button>
   </div>
-  <div id="scenario-inputs" class="space-y-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar"></div>
+  <div id="scenario-inputs" class="space-y-2.5 mb-2.5 bg-gray-50/60 p-2.5 rounded-xl border border-gray-100 max-h-[320px] overflow-y-auto custom-scrollbar flex-1 min-h-[130px]"></div>
 
   <!-- Thanh tiến trình -->
-  <div id="sr-progress-box" class="mb-4 hidden">
-    <div class="flex justify-between items-end mb-1.5 px-1">
-      <div class="text-[10px] font-bold text-gray-500 uppercase">
+  <div id="sr-progress-box" class="mb-2.5 hidden">
+    <div class="flex justify-between items-end mb-1 px-0.5">
+      <div class="text-[9px] font-bold text-gray-500 uppercase">
         <span id="sr-progress-step" class="text-indigo-600">0</span> / <span id="sr-progress-total">0</span> Prompts
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5">
         <span id="sr-polling-dot" class="w-2 h-2 rounded-full bg-green-400 hidden" style="animation:pulse 1s ease-in-out infinite"></span>
-        <button id="sr-download-zip" class="h-6 px-2.5 flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-bold rounded-lg text-[10px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm hidden" title="Tải kết quả đã xong dưới dạng ZIP">
+        <button id="sr-download-zip" class="h-5 px-2 flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-bold rounded-md text-[9px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm hidden" title="Tải kết quả đã xong dưới dạng ZIP">
           📦 <span id="sr-zip-count">0</span>/<span id="sr-zip-total">0</span>
         </button>
-        <div id="sr-progress-percent" class="text-sm font-black text-indigo-600">0%</div>
+        <div id="sr-progress-percent" class="text-xs font-black text-indigo-600">0%</div>
       </div>
     </div>
     <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
       <div id="sr-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out"></div>
     </div>
-    <div id="sr-done-list" class="flex flex-wrap gap-1 mt-2 max-h-16 overflow-y-auto custom-scrollbar"></div>
-    <div id="sr-split-detail" class="mt-2 space-y-1 max-h-32 overflow-y-auto custom-scrollbar hidden"></div>
+    <div id="sr-done-list" class="flex flex-wrap gap-1 mt-1.5 max-h-16 overflow-y-auto custom-scrollbar"></div>
+    <div id="sr-split-detail" class="mt-1.5 space-y-1 max-h-28 overflow-y-auto custom-scrollbar hidden"></div>
   </div>
 
-  <div class="grid grid-cols-3 gap-2 mb-2">
-    <button id="sr-addqueue" class="h-9 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
-      ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full text-[9px]">0</span>
-    </button>
-    <button id="sr-start" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
+  <!-- Nút điều khiển thực thi (Grid 2x2 gọn gàng) -->
+  <div class="grid grid-cols-2 gap-1.5 mb-2">
+    <button id="sr-start" class="h-8 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1">
       ▶️ Tuần tự
     </button>
-    <button id="sr-parallel" class="h-9 bg-amber-50 border border-amber-200 text-amber-700 font-bold rounded-lg text-[10px] hover:bg-amber-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Mỗi giá trị list chạy trên 1 tab riêng (Gemini, DeepSeek, v.v.)">
-      ⚡ Song song
-      <input type="number" id="sr-parallel-tabs" value="5" min="1" max="10"
-        class="w-8 h-6 text-center text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded-md outline-none focus:border-amber-500"
-        title="Số tab đồng thời" onclick="event.stopPropagation()" />
-    </button>
-  </div>
-  <div class="grid grid-cols-2 gap-2 mb-4">
-    <button id="sr-split-tabs" class="h-9 bg-teal-50 border border-teal-200 text-teal-700 font-bold rounded-lg text-[10px] hover:bg-teal-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Chia đều items vào N tab, mỗi tab chạy nhiều items tuần tự">
-      🔀 Chia tab
-      <input type="number" id="sr-split-tabs-count" value="3" min="1" max="10"
-        class="w-8 h-6 text-center text-[10px] font-bold text-teal-700 bg-teal-100 border border-teal-300 rounded-md outline-none focus:border-teal-500"
-        title="Số tab sẽ mở" onclick="event.stopPropagation()" />
-    </button>
-    <button id="sr-parallel-stop" class="h-9 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chạy song song và đóng các tab con">
-      🛑 Dừng chạy
-    </button>
-    <button id="sr-split-tabs-stop" class="h-9 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chia tab và đóng các tab con">
-      🛑 Dừng chia tab
+    
+    <div class="relative flex">
+      <button id="sr-parallel" class="w-full h-8 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-lg text-[10px] hover:bg-amber-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Mỗi giá trị list chạy trên 1 tab riêng">
+        ⚡ Song song
+        <input type="number" id="sr-parallel-tabs" value="5" min="1" max="10"
+          class="w-7 h-5 text-center text-[10px] font-bold text-amber-700 bg-amber-100/80 border border-amber-300 rounded outline-none focus:border-amber-500"
+          title="Số tab đồng thời" onclick="event.stopPropagation()" />
+      </button>
+      <button id="sr-parallel-stop" class="w-full h-8 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chạy song song">
+        🛑 Dừng song song
+      </button>
+    </div>
+
+    <div class="relative flex">
+      <button id="sr-split-tabs" class="w-full h-8 bg-teal-50 border border-teal-200 text-teal-800 font-bold rounded-lg text-[10px] hover:bg-teal-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Chia đều items vào N tab">
+        🔀 Chia tab
+        <input type="number" id="sr-split-tabs-count" value="3" min="1" max="10"
+          class="w-7 h-5 text-center text-[10px] font-bold text-teal-700 bg-teal-100/80 border border-teal-300 rounded outline-none focus:border-teal-500"
+          title="Số tab sẽ mở" onclick="event.stopPropagation()" />
+      </button>
+      <button id="sr-split-tabs-stop" class="w-full h-8 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chia tab">
+        🛑 Dừng chia tab
+      </button>
+    </div>
+
+    <button id="sr-addqueue" class="h-8 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-800 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
+      ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.2 rounded-full text-[9px]">0</span>
     </button>
   </div>
 
-  <!-- Lựa chọn chuyển tab khi chạy song song -->
-  <div class="flex flex-col gap-2 mb-4 px-1">
-    <label class="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
-      <input type="checkbox" id="sr-parallel-active" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+  <!-- Nút Tạm dừng / Tiếp tục (Hiển thị khi cần) -->
+  <div id="sr-pause-resume-bar" class="flex gap-1.5 mb-2 hidden">
+    <button id="sr-pause" class="flex-1 h-7 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-[10px] hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-40" disabled>⏸ Tạm dừng</button>
+    <button id="sr-resume" class="flex-1 h-7 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-lg text-[10px] hover:bg-indigo-50 transition-all active:scale-95 disabled:opacity-40" disabled>▶️ Tiếp tục</button>
+  </div>
+
+  <!-- Tùy chọn chuyển tab / chống ngủ đông (gọn gàng) -->
+  <div class="bg-gray-50/50 p-2 rounded-lg border border-gray-100/80 flex flex-col gap-1 mb-2">
+    <label class="flex items-center gap-1.5 text-[10px] text-gray-500 cursor-pointer select-none">
+      <input type="checkbox" id="sr-parallel-active" class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
       <span>Tự động chuyển sang tab mới mở</span>
     </label>
-    <div class="flex items-center gap-1.5 text-[11px] text-gray-600 select-none">
+    <div class="flex items-center gap-1.5 text-[10px] text-gray-500 select-none">
       <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="checkbox" id="sr-auto-switch-tabs" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+        <input type="checkbox" id="sr-auto-switch-tabs" class="w-3.5 h-3.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
         <span>Tự động xoay vòng tab mỗi</span>
       </label>
       <input type="number" id="sr-auto-switch-interval" value="5" min="1" max="60"
-        class="w-10 h-6 text-center text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200 rounded-md outline-none focus:border-teal-500"
+        class="w-8 h-5 text-center text-[9px] font-bold text-teal-700 bg-white border border-teal-200 rounded outline-none focus:border-teal-500"
         title="Số giây mỗi lần xoay vòng" />
       <span>giây (Chống ngủ đông)</span>
     </div>
   </div>
-
-  <div class="flex gap-2 mb-4">
-    <button id="sr-pause" class="flex-1 h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
-    <button id="sr-resume" class="flex-1 h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
-  </div>
   
-  <div class="sr-queue-box flex-1 overflow-hidden flex flex-col">
-    <label class="text-[9px] font-black text-gray-400 uppercase mb-1.5 tracking-[0.15em] block pl-1">DỰ KIẾN HÀNG ĐỢI</label>
-    <ul id="sr-queue-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar"></ul>
+  <!-- Hàng đợi dự kiến (chỉ hiện khi có item) -->
+  <div class="sr-queue-box flex flex-col hidden mt-1">
+    <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 tracking-wider block pl-0.5">DỰ KIẾN HÀNG ĐỢI</label>
+    <ul id="sr-queue-list" class="max-h-28 overflow-y-auto space-y-1 pr-1 custom-scrollbar"></ul>
   </div>
 `;
 
@@ -153,8 +166,8 @@ window.ScenarioRunner = class {
     console.log("🎛 [ScenarioRunner] render UI");
     this.el = document.createElement("div");
     this.el.id = "scenario-runner";
-    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.style.maxHeight = "720px";
+    this.el.className = "panel-box ts-panel w-[430px] p-3.5 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
+    this.el.style.maxHeight = "780px";
     this.el.innerHTML = ScenarioRunnerInnerHTML;
 
     ContentHelper.mountPanel(this.el);
@@ -410,16 +423,16 @@ window.ScenarioRunner = class {
         headerDiv.className = "flex justify-between items-center";
 
         const label = document.createElement("label");
-        label.className = "text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1";
+        label.className = "text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-0.5";
         label.textContent = varName;
         headerDiv.appendChild(label);
 
         let inputEl;
-        const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none";
+        const baseClasses = "w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none leading-relaxed";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer border-gray-300`;
+          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer border-gray-200`;
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -434,17 +447,17 @@ window.ScenarioRunner = class {
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[50px] font-mono text-[10px] text-indigo-600 resize-y`;
-          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy...";
+          inputEl.className = `${baseClasses} min-h-[90px] font-mono text-xs text-indigo-600 resize-y`;
+          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: item1, item2, item3)...";
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[60px] resize-y`;
-          inputEl.placeholder = "Nhập nội dung cho " + varName;
+          inputEl.className = `${baseClasses} min-h-[120px] resize-y`;
+          inputEl.placeholder = "Nhập nội dung cho " + varName + "...";
         }
         
         if (inputEl.tagName === 'TEXTAREA' || (inputEl.tagName === 'INPUT' && inputEl.type === 'text')) {
           const fileBtn = document.createElement('button');
-          fileBtn.className = "text-[9px] font-bold text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95";
+          fileBtn.className = "text-[9px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95 flex items-center gap-1";
           fileBtn.textContent = "📂 Chọn file";
           fileBtn.onclick = () => {
             const fileInput = document.createElement('input');
@@ -663,6 +676,7 @@ window.ScenarioRunner = class {
     this.el.querySelector("#sr-parallel").disabled = true;
     this.el.querySelector("#sr-pause").disabled = false;
     this.el.querySelector("#sr-resume").disabled = true;
+    this.el.querySelector("#sr-pause-resume-bar")?.classList.remove("hidden");
 
     const bigList = [];
     for (const job of this.queue) {
@@ -712,6 +726,7 @@ window.ScenarioRunner = class {
     this.el.querySelector("#sr-split-tabs-stop").classList.add('hidden');
     this.el.querySelector("#sr-pause").disabled = true;
     this.el.querySelector("#sr-resume").disabled = true;
+    this.el.querySelector("#sr-pause-resume-bar")?.classList.add("hidden");
   }
 
   _showProgress(show) {
@@ -836,12 +851,20 @@ window.ScenarioRunner = class {
 
   _refreshQueueUI() {
     this._updateQueueIndicator();
+    const queueBox = this.el.querySelector(".sr-queue-box");
+    if (queueBox) {
+      if (this.queue.length > 0) {
+        queueBox.classList.remove("hidden");
+      } else {
+        queueBox.classList.add("hidden");
+      }
+    }
     const listEl = this.el.querySelector("#sr-queue-list");
     listEl.innerHTML = this.queue.map((job, i) => {
       const fullVars = Object.entries(job.values).map(([k, v]) => `${k}=${v}`).join(', ');
       const shortenedVars = this._shortenText(fullVars);
       return `
-        <li class="bg-gray-50 border border-gray-100 rounded-xl p-2.5 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
+        <li class="bg-gray-50 border border-gray-100 rounded-xl p-2 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
           <div class="flex-1 min-w-0 pr-2">
              <div class="flex items-center gap-1.5 mb-0.5">
                 <span class="text-[9px] font-black text-gray-300">#${i + 1}</span>
@@ -849,7 +872,7 @@ window.ScenarioRunner = class {
              </div>
              <div class="text-[10px] text-gray-400 italic truncate" title="${fullVars}">${shortenedVars}</div>
           </div>
-          <button class="sr-queue-copy w-6 h-6 flex items-center justify-center bg-white border border-gray-100 rounded-md text-[10px] hover:bg-indigo-600 hover:text-white transition-all active:scale-90" data-idx="${i}">
+          <button class="sr-queue-copy w-5 h-5 flex items-center justify-center bg-white border border-gray-100 rounded text-[9px] hover:bg-indigo-600 hover:text-white transition-all active:scale-90" data-idx="${i}">
              📋
           </button>
         </li>

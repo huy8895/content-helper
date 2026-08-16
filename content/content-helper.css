@@ -605,14 +605,16 @@ html[class*="dark"] .ts-panel::after {
 
 /* Đảm bảo dropdown tìm kiếm kịch bản nổi lên trên các phần tử anh em phía dưới */
 #sr-scenario-browser,
-#scenario-browser {
+#scenario-browser,
+.grid:has(#sr-scenario-browser) {
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 50 !important;
 }
 
 #sr-scenario-dropdown,
 #scenario-dropdown {
-  z-index: 100 !important;
+  position: absolute !important;
+  z-index: 1000 !important;
 }
 
 /* Close Button style */
