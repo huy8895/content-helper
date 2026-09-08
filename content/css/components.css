@@ -946,6 +946,118 @@
   gap: 4px;
 }
 
+/* Scenario Runner Input Groups & Controls */
+.sr-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.sr-input-group:last-child {
+  margin-bottom: 0;
+}
+.sr-input-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+.sr-input-group__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: var(--ch-font-mono);
+  color: var(--ch-text-secondary);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+.sr-input-group__label-tag {
+  color: var(--ch-accent);
+  font-weight: 800;
+}
+.sr-input-group__file-btn {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 9.5px;
+  font-weight: 600;
+  border-radius: 5px;
+}
+
+/* Scenario Runner Textarea Sizing */
+.sr-textarea {
+  min-height: 72px;
+  height: 72px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+/* Scenario Runner Empty State */
+.sr-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--ch-text-muted);
+  gap: 8px;
+  min-height: 140px;
+  user-select: none;
+}
+.sr-empty-state__icon {
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0.7;
+}
+.sr-empty-state__text {
+  font-size: 11px;
+  line-height: 1.5;
+  max-width: 260px;
+  color: var(--ch-text-muted);
+}
+
+/* Dropdown Group Tag & Empty State */
+.ts-group-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 4px;
+  background-color: var(--ch-surface-alt);
+  border: 1px solid var(--ch-border-subtle);
+  color: var(--ch-text-muted);
+  margin-right: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+.ts-dropdown-empty {
+  padding: 12px 8px;
+  font-size: 11px;
+  color: var(--ch-text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Checkbox Calm Tech */
+.ts-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--ch-accent);
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ts-btn > .ts-badge-input {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 /* ── 12. BEM SEMANTIC COMPONENTS MỞ RỘNG (Calm Tech & Scoped) ──────────────── */
 
 /* Search Box với icon ⚲ tích hợp */

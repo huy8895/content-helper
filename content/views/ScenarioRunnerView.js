@@ -11,8 +11,8 @@ window.ScenarioRunnerView = {
     <div class="ts-header__main">
       <span class="ts-header__icon">▶</span>
       <div>
-        <h3 class="ts-header__title">Scenario Runner</h3>
-        <div class="ts-header__subtitle">Execute automation sequences</div>
+        <h3 class="ts-header__title">Trình chạy Kịch bản</h3>
+        <div class="ts-header__subtitle">Thực thi chuỗi prompt tự động</div>
       </div>
     </div>
   </div>
@@ -45,7 +45,8 @@ window.ScenarioRunnerView = {
       <div class="ts-search-box">
         <input type="text" id="sr-scenario-search" 
           class="ts-search-box__input"
-          placeholder="Tìm kịch bản...">
+          placeholder="Tìm kiếm kịch bản..."
+          autocomplete="off">
         <span class="ts-search-box__icon">⚲</span>
       </div>
       <div id="sr-scenario-dropdown" class="custom-dropdown-menu custom-scrollbar ts-dropdown-menu--search hidden-dropdown"></div>
@@ -64,7 +65,12 @@ window.ScenarioRunnerView = {
     <label class="ts-label ts-mb-0">THÔNG TIN ĐẦU VÀO</label>
     <button id="sr-clear-inputs" class="ts-btn ts-btn--ghost ts-btn--xs ts-text-danger" title="Xóa toàn bộ nội dung đã nhập">✕ Xóa Form</button>
   </div>
-  <div id="scenario-inputs" class="ts-card ts-p-2-5 ts-overflow-y-auto custom-scrollbar ts-scroll-h-2xl ts-flex-1"></div>
+  <div id="scenario-inputs" class="ts-card ts-p-2-5 ts-overflow-y-auto custom-scrollbar ts-scroll-h-2xl ts-flex-1">
+    <div class="sr-empty-state">
+      <span class="sr-empty-state__icon">⚙</span>
+      <div class="sr-empty-state__text">Vui lòng chọn một kịch bản ở trên để nạp các thông tin đầu vào.</div>
+    </div>
+  </div>
 
   <!-- Thanh tiến trình -->
   <div id="sr-progress-box" class="ts-progress hidden">
@@ -89,7 +95,7 @@ window.ScenarioRunnerView = {
 
   <!-- Nút điều khiển thực thi (Calm Tech Controls) -->
   <div class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2">
-    <button id="sr-start" class="ts-btn ts-btn--primary">
+    <button id="sr-start" class="ts-btn ts-btn--accent" title="Thực thi tuần tự từng prompt">
       ▶ Tuần tự
     </button>
     
@@ -115,7 +121,7 @@ window.ScenarioRunnerView = {
       </button>
     </div>
 
-    <button id="sr-addqueue" class="ts-btn ts-btn--secondary">
+    <button id="sr-addqueue" class="ts-btn ts-btn--secondary" title="Thêm phiên chạy này vào hàng đợi">
       + Hàng đợi <span id="sr-queue-count" class="ts-badge ts-badge--secondary ts-tabular">0</span>
     </button>
   </div>
@@ -129,12 +135,12 @@ window.ScenarioRunnerView = {
   <!-- Tùy chọn chuyển tab / chống ngủ đông -->
   <div class="ts-card ts-p-2 ts-mb-2 ts-flex ts-flex-col ts-gap-1">
     <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer ts-select-none ts-sublabel">
-      <input type="checkbox" id="sr-parallel-active" class="ts-cursor-pointer" checked>
+      <input type="checkbox" id="sr-parallel-active" class="ts-checkbox" checked>
       <span>Tự động chuyển sang tab mới mở</span>
     </label>
     <div class="ts-flex ts-items-center ts-gap-1-5 ts-select-none ts-sublabel">
       <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer">
-        <input type="checkbox" id="sr-auto-switch-tabs" class="ts-cursor-pointer">
+        <input type="checkbox" id="sr-auto-switch-tabs" class="ts-checkbox">
         <span>Tự động xoay vòng tab mỗi</span>
       </label>
       <input type="number" id="sr-auto-switch-interval" value="5" min="1" max="60"
@@ -152,3 +158,4 @@ window.ScenarioRunnerView = {
     `;
   }
 };
+

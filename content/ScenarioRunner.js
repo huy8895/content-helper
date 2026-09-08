@@ -19,6 +19,8 @@ window.ScenarioRunner = class extends window.BasePanel {
     this.sequencer = null;
     this.templates = {};
     this.queue = [];
+    this.selectedScenarioName = null;
+    this._onDocClick = null;
 
     // Tải kịch bản và thiết lập giao diện tìm kiếm mới
     this._setupScenarioSearch();
@@ -156,6 +158,57 @@ window.ScenarioRunner = class extends window.BasePanel {
     });
   }
 
+  /**
+   * Chọn kịch bản và cập nhật toàn bộ trạng thái giao diện
+   * @param {string} name - Tên kịch bản trong template store
+   * @param {string} [displayText] - Chuỗi hiển thị trên ô tìm kiếm
+   */
+  _selectScenario(name, displayText) {
+    const searchBox = this.el.querySelector("#sr-scenario-search");
+    const dropdown = this.el.querySelector("#sr-scenario-dropdown");
+    this.selectedScenarioName = name;
+    if (searchBox) {
+      searchBox.value = displayText || name;
+      searchBox.dataset.selectedName = name;
+      searchBox.blur();
+    }
+    if (dropdown) {
+      dropdown.classList.add("hidden-dropdown");
+    }
+    this._onScenarioSelected(name);
+  }
+
+  /**
+   * Lấy thông tin kịch bản hiện tại đang được chọn (an toàn, không phụ thuộc textContent thô)
+   * @returns {{ name: string, template: any } | null}
+   */
+  _getSelectedScenario() {
+    const searchBox = this.el.querySelector("#sr-scenario-search");
+    let name = this.selectedScenarioName || searchBox?.dataset?.selectedName;
+    if (name && this.templates[name]) {
+      return { name, template: this.templates[name] };
+    }
+
+    const text = (searchBox?.value || "").trim().toLowerCase();
+    if (!text) return null;
+
+    // Fallback: Tìm theo tên chính xác hoặc định dạng [Nhóm] Tên
+    const foundKey = Object.keys(this.templates).find(k => {
+      const raw = this.templates[k];
+      const group = Array.isArray(raw) ? "" : (raw.group || "");
+      const full = group ? `[${group}] ${k}` : k;
+      return k.toLowerCase() === text || full.toLowerCase() === text;
+    });
+
+    if (foundKey) {
+      this.selectedScenarioName = foundKey;
+      if (searchBox) searchBox.dataset.selectedName = foundKey;
+      return { name: foundKey, template: this.templates[foundKey] };
+    }
+
+    return null;
+  }
+
   _setupScenarioSearch() {
     chrome.storage.local.get("scenarioTemplates", (items) => {
       this.templates = items.scenarioTemplates || {};
@@ -163,67 +216,115 @@ window.ScenarioRunner = class extends window.BasePanel {
       const dropdown = this.el.querySelector("#sr-scenario-dropdown");
       const browserWrapper = this.el.querySelector("#sr-scenario-browser");
 
-      // Tạo các item trong danh sách thả xuống
+      if (!searchBox || !dropdown || !browserWrapper) return;
+
+      dropdown.innerHTML = "";
+
+      // 1. Tạo các item trong danh sách thả xuống với class BEM đầy đủ
       Object.keys(this.templates).forEach((name) => {
         const raw = this.templates[name];
         const group = Array.isArray(raw) ? "" : (raw.group || "");
 
         const item = document.createElement("div");
-        item.className = "custom-dropdown-item ts-item-row";
+        item.className = "scenario-dropdown-item custom-dropdown-item ts-item-row";
+
+        if (group) {
+          const groupTag = document.createElement("span");
+          groupTag.className = "ts-group-tag";
+          groupTag.textContent = group;
+          item.appendChild(groupTag);
+        }
 
         const titleSpan = document.createElement("span");
         titleSpan.className = "ts-item-row__text font-bold";
-        titleSpan.textContent = group ? `[${group}] ${name}` : name;
-
+        titleSpan.textContent = name;
         item.appendChild(titleSpan);
+
         item.dataset.name = name;
         item.dataset.group = group.toLowerCase();
 
-        // Sử dụng 'mousedown' để đảm bảo sự kiện được xử lý trước 'blur'
+        // Sử dụng 'mousedown' để kích hoạt trước khi searchBox mất focus
         item.addEventListener("mousedown", (e) => {
           e.preventDefault();
-          searchBox.value = item.textContent;
-          dropdown.classList.add("hidden-dropdown");
-          this._onScenarioSelected(name);
-          searchBox.blur();
+          const displayLabel = group ? `[${group}] ${name}` : name;
+          this._selectScenario(name, displayLabel);
         });
 
         dropdown.appendChild(item);
       });
 
+      // 2. Logic lọc danh sách khi người dùng gõ tìm kiếm (Fuzzy Search)
       searchBox.addEventListener("input", () => {
         dropdown.classList.remove("hidden-dropdown");
         const keyword = searchBox.value.trim();
-
         const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
-        const scoredItems = items.map(div => {
-          const score = ContentHelper.fuzzySearch(keyword, div.textContent);
-          return { div, score };
-        });
 
-        scoredItems.forEach(item => {
-          if (item.score > 0) {
-            item.div.style.setProperty('display', 'flex', 'important');
-            item.div.style.order = -item.score;
+        if (!keyword) {
+          items.forEach(item => {
+            item.style.removeProperty('display');
+            item.style.removeProperty('order');
+          });
+          dropdown.querySelector(".ts-dropdown-empty")?.remove();
+          return;
+        }
+
+        let matchCount = 0;
+        items.forEach(item => {
+          const score = ContentHelper.fuzzySearch(keyword, item.textContent);
+          if (score > 0) {
+            item.style.display = 'flex';
+            item.style.order = -score;
+            matchCount++;
           } else {
-            item.div.style.setProperty('display', 'none', 'important');
+            item.style.display = 'none';
           }
         });
+
+        let emptyMsg = dropdown.querySelector(".ts-dropdown-empty");
+        if (matchCount === 0) {
+          if (!emptyMsg) {
+            emptyMsg = document.createElement("div");
+            emptyMsg.className = "ts-dropdown-empty";
+            emptyMsg.textContent = "Không tìm thấy kịch bản phù hợp";
+            dropdown.appendChild(emptyMsg);
+          }
+        } else if (emptyMsg) {
+          emptyMsg.remove();
+        }
       });
 
-      // Cần đảm bảo dropdown là flex column để 'order' hoạt động
+      // Đảm bảo dropdown hiển thị dạng flex column để 'order' hoạt động mượt mà
       dropdown.style.display = "flex";
       dropdown.style.flexDirection = "column";
 
-      searchBox.addEventListener("focus", () => {
+      const showDropdown = () => {
         dropdown.classList.remove("hidden-dropdown");
-      });
+        if (!searchBox.value.trim()) {
+          dropdown.querySelectorAll(".scenario-dropdown-item").forEach(i => {
+            i.style.removeProperty('display');
+            i.style.removeProperty('order');
+          });
+          dropdown.querySelector(".ts-dropdown-empty")?.remove();
+        }
+      };
 
-      document.addEventListener('click', (event) => {
-        if (!browserWrapper.contains(event.target)) {
-          dropdown.classList.add('hidden-dropdown');
+      searchBox.addEventListener("focus", showDropdown);
+      searchBox.addEventListener("click", showDropdown);
+
+      searchBox.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          dropdown.classList.add("hidden-dropdown");
         }
       });
+
+      // Tự động đóng khi click ra ngoài (tương thích Shadow DOM với composedPath)
+      this._onDocClick = (event) => {
+        const path = event.composedPath ? event.composedPath() : [];
+        if (!path.includes(browserWrapper)) {
+          dropdown.classList.add('hidden-dropdown');
+        }
+      };
+      document.addEventListener('click', this._onDocClick);
     });
   }
 
@@ -233,13 +334,17 @@ window.ScenarioRunner = class extends window.BasePanel {
     console.log("📋 Đã chọn kịch bản:", name);
 
     const stepSelect = this.el.querySelector("#step-select");
-    stepSelect.innerHTML = list.map((q, idx) => {
-      const preview = q.text?.slice(0, 40) || "";
-      return `<option value="${idx}" title="${q.text}">#${idx + 1}: ${preview}...</option>`;
-    }).join("");
-    stepSelect.disabled = list.length === 0;
+    if (stepSelect) {
+      stepSelect.innerHTML = list.map((q, idx) => {
+        const preview = q.text?.slice(0, 40) || "";
+        return `<option value="${idx}" title="${q.text}">#${idx + 1}: ${preview}...</option>`;
+      }).join("");
+      stepSelect.disabled = list.length === 0;
+    }
 
     const inputPanel = this.el.querySelector("#scenario-inputs");
+    if (!inputPanel) return;
+
     inputPanel.innerHTML = "";
     const shown = new Set();
 
@@ -255,21 +360,21 @@ window.ScenarioRunner = class extends window.BasePanel {
         shown.add(varName);
 
         const wrapper = document.createElement("div");
-        wrapper.className = "sr-input-group flex flex-col gap-1";
+        wrapper.className = "sr-input-group";
         
         const headerDiv = document.createElement("div");
-        headerDiv.className = "flex justify-between items-center";
+        headerDiv.className = "sr-input-group__header";
 
         const label = document.createElement("label");
-        label.className = "text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-0.5";
-        label.textContent = varName;
+        label.className = "sr-input-group__label";
+        label.innerHTML = `<span class="sr-input-group__label-tag">$</span>{${varName}}`;
         headerDiv.appendChild(label);
 
         let inputEl;
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = "ts-select w-full";
+          inputEl.className = "ts-select ts-w-full";
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -280,22 +385,24 @@ window.ScenarioRunner = class extends window.BasePanel {
         } else if (q.type === "loop" && varName === loopKey) {
           inputEl = document.createElement("input");
           inputEl.type = "number";
-          inputEl.className = "ts-input w-full font-bold";
+          inputEl.className = "ts-input ts-w-full font-bold";
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
           inputEl = document.createElement("textarea");
-          inputEl.className = "ts-textarea ts-textarea--mono w-full min-h-[90px]";
-          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: item1, item2, item3)...";
+          inputEl.className = "ts-textarea sr-textarea sr-textarea--mono ts-w-full";
+          inputEl.placeholder = "Các giá trị cách nhau bằng dấu phẩy (vd: mục 1, mục 2, mục 3)...";
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = "ts-textarea w-full min-h-[120px]";
-          inputEl.placeholder = "Nhập nội dung cho " + varName + "...";
+          inputEl.className = "ts-textarea sr-textarea ts-w-full";
+          inputEl.placeholder = `Nhập nội dung cho \${${varName}}...`;
         }
         
         if (inputEl.tagName === 'TEXTAREA' || (inputEl.tagName === 'INPUT' && inputEl.type === 'text')) {
           const fileBtn = document.createElement('button');
-          fileBtn.className = "ts-btn ts-btn--secondary text-[9.5px] py-0.5 px-2";
-          fileBtn.textContent = "📂 Chọn file";
+          fileBtn.type = 'button';
+          fileBtn.className = "ts-btn ts-btn--secondary sr-input-group__file-btn";
+          fileBtn.innerHTML = "📄 Tải file";
+          fileBtn.title = `Nạp dữ liệu từ file văn bản cho \${${varName}}`;
           fileBtn.onclick = () => {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -304,8 +411,8 @@ window.ScenarioRunner = class extends window.BasePanel {
               const file = e.target.files[0];
               if (!file) return;
               const reader = new FileReader();
-              reader.onload = (e) => {
-                inputEl.value = e.target.result;
+              reader.onload = (readEvent) => {
+                inputEl.value = readEvent.target.result;
                 inputEl.dispatchEvent(new Event("input", { bubbles: true }));
               };
               reader.readAsText(file);
@@ -322,6 +429,16 @@ window.ScenarioRunner = class extends window.BasePanel {
         inputPanel.appendChild(wrapper);
       });
     });
+
+    // Nếu kịch bản không có biến nào, hiển thị thông báo hướng dẫn nhã nhặn
+    if (shown.size === 0) {
+      inputPanel.innerHTML = `
+        <div class="sr-empty-state">
+          <span class="sr-empty-state__icon">✓</span>
+          <div class="sr-empty-state__text">Kịch bản này không yêu cầu biến đầu vào.<br/>Bấm <b>▶ Tuần tự</b> hoặc <b>⚡ Song song</b> để thực thi ngay.</div>
+        </div>
+      `;
+    }
 
     chrome.storage.local.get("scenarioInputValues", (result) => {
       const saved = result.scenarioInputValues?.[name] || {};
@@ -394,14 +511,13 @@ window.ScenarioRunner = class extends window.BasePanel {
     };
     btnAdd.onclick = () => {
       ContentHelper.playMechanicalClick();
-      const selectedText = this.el.querySelector("#sr-scenario-search").value;
-      const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
+      const selected = this._getSelectedScenario();
 
-      if (!selectedDiv) {
+      if (!selected) {
         ContentHelper.showToast("Vui lòng chọn một kịch bản hợp lệ từ danh sách!", "warning");
         return;
       }
-      const name = selectedDiv.dataset.name;
+      const name = selected.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
       this.queue.push({ name, startAt, values });
@@ -512,14 +628,13 @@ window.ScenarioRunner = class extends window.BasePanel {
 
   async _start() {
     if (this.queue.length === 0) {
-      const selectedText = this.el.querySelector("#sr-scenario-search").value;
-      const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
-      if (!selectedDiv) {
+      const selected = this._getSelectedScenario();
+      if (!selected) {
         ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
         return;
       }
 
-      const name = selectedDiv.dataset.name;
+      const name = selected.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
       this.queue.push({ name, startAt, values });
@@ -777,17 +892,15 @@ window.ScenarioRunner = class extends window.BasePanel {
    */
   _startParallel() {
     // 1. Lấy scenario đang chọn
-    const selectedText = this.el.querySelector("#sr-scenario-search").value;
-    const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item'))
-      .find(d => d.textContent === selectedText);
+    const selected = this._getSelectedScenario();
 
-    if (!selectedDiv) {
+    if (!selected) {
       ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
       return;
     }
 
-    const name = selectedDiv.dataset.name;
-    const raw = this.templates[name];
+    const name = selected.name;
+    const raw = selected.template;
     if (!raw) return;
 
     const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
@@ -1065,30 +1178,6 @@ window.ScenarioRunner = class extends window.BasePanel {
     });
   }
 
-  destroy() {
-    this._minimizeCtrl?.destroy();
-    this.el?.remove();
-    this.onClose();
-    this.sequencer?.stop();
-    // Dừng polling
-    this._stopParallelPolling();
-    this._stopSplitTabsPolling();
-    // Dọn session parallel từ background + storage
-    if (this._parallelSessionId) {
-      chrome.runtime.sendMessage({
-        type: 'PARALLEL_CLEANUP_SESSION',
-        sessionId: this._parallelSessionId
-      });
-    }
-    // Dọn session split tabs từ background + storage
-    if (this._splitTabsSessionId) {
-      chrome.runtime.sendMessage({
-        type: 'SPLIT_TABS_CLEANUP_SESSION',
-        sessionId: this._splitTabsSessionId
-      });
-    }
-  }
-
   // ═══════════════════════════════════════════════════════════════
   // Split Tabs – Chia đều items vào N tab
   // ═══════════════════════════════════════════════════════════════
@@ -1099,17 +1188,15 @@ window.ScenarioRunner = class extends window.BasePanel {
    */
   _startSplitTabs() {
     // 1. Lấy scenario đang chọn
-    const selectedText = this.el.querySelector("#sr-scenario-search").value;
-    const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item'))
-      .find(d => d.textContent === selectedText);
+    const selected = this._getSelectedScenario();
 
-    if (!selectedDiv) {
+    if (!selected) {
       ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
       return;
     }
 
-    const name = selectedDiv.dataset.name;
-    const raw = this.templates[name];
+    const name = selected.name;
+    const raw = selected.template;
     if (!raw) return;
 
     const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
@@ -1355,9 +1442,32 @@ window.ScenarioRunner = class extends window.BasePanel {
   }
 
   destroy() {
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+      this._onDocClick = null;
+    }
     this.sequencer?.stop();
-    if (this._parallelRunning) this._stopParallelSession();
-    if (this._splitTabsRunning) this._stopSplitTabsSession();
+    this._stopParallelPolling();
+    this._stopSplitTabsPolling();
+
+    if (this._parallelRunning) {
+      this._stopParallelSession();
+    } else if (this._parallelSessionId) {
+      chrome.runtime.sendMessage({
+        type: 'PARALLEL_CLEANUP_SESSION',
+        sessionId: this._parallelSessionId
+      });
+    }
+
+    if (this._splitTabsRunning) {
+      this._stopSplitTabsSession();
+    } else if (this._splitTabsSessionId) {
+      chrome.runtime.sendMessage({
+        type: 'SPLIT_TABS_CLEANUP_SESSION',
+        sessionId: this._splitTabsSessionId
+      });
+    }
+
     super.destroy();
   }
 };
