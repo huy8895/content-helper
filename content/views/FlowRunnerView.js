@@ -42,7 +42,7 @@ window.FlowRunnerView = {
   </div>
 
   <!-- Cấu hình biến đầu vào -->
-  <div id="flow-inputs" class="ts-card ts-p-3 ts-mb-3 ts-overflow-y-auto ts-scroll-h-xl custom-scrollbar">
+  <div id="flow-inputs" class="ts-card ts-p-3 ts-mb-3 ts-overflow-y-auto custom-scrollbar ts-scroll-h-xl ts-flex-1">
     <div class="ts-hint ts-text-center">Các biến cấu hình sẽ hiển thị ở đây.</div>
   </div>
 
@@ -66,17 +66,17 @@ window.FlowRunnerView = {
     </div>
   </div>
 
-  <!-- Nút thực thi chính -->
-  <div class="ts-mb-2-5">
-    <button id="flow-start-btn" class="ts-btn ts-btn--primary ts-w-full">
-      ▶ Bắt đầu Flow
-    </button>
-  </div>
-
-  <!-- Nút Tạm dừng / Tiếp tục -->
-  <div class="ts-grid ts-grid-2 ts-gap-2">
-    <button id="flow-pause-btn" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
-    <button id="flow-resume-btn" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
+  <!-- Cụm Footer Buttons: Ghim cố định ở đáy panel -->
+  <div class="ts-sheet-footer">
+    <div class="ts-mb-2">
+      <button id="flow-start-btn" class="ts-btn ts-btn--primary ts-w-full">
+        ▶ Bắt đầu Flow
+      </button>
+    </div>
+    <div class="ts-grid ts-grid-2 ts-gap-2">
+      <button id="flow-pause-btn" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
+      <button id="flow-resume-btn" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
+    </div>
   </div>
     `;
   }

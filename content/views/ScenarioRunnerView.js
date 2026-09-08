@@ -93,67 +93,70 @@ window.ScenarioRunnerView = {
     <div id="sr-split-detail" class="ts-flex-col ts-gap-1 ts-overflow-y-auto custom-scrollbar ts-scroll-h-md ts-mt-1-5 hidden"></div>
   </div>
 
-  <!-- Nút điều khiển thực thi (Calm Tech Controls) -->
-  <div class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2">
-    <button id="sr-start" class="ts-btn ts-btn--accent" title="Thực thi tuần tự từng prompt">
-      ▶ Tuần tự
-    </button>
-    
-    <div class="ts-relative ts-flex">
-      <button id="sr-parallel" class="ts-btn ts-btn--warning ts-w-full" title="Mỗi giá trị list chạy trên 1 tab riêng">
-        ⚡ Song song
-        <input type="number" id="sr-parallel-tabs" class="ts-badge-input ts-badge-input--amber ts-badge-input--sm" value="5" min="1" max="10"
-          title="Số tab đồng thời" onclick="event.stopPropagation()" />
+  <!-- Cụm Footer Controls: Ghim cố định ở đáy panel -->
+  <div class="ts-sheet-footer">
+    <!-- Nút điều khiển thực thi (Calm Tech Controls) -->
+    <div class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2">
+      <button id="sr-start" class="ts-btn ts-btn--accent" title="Thực thi tuần tự từng prompt">
+        ▶ Tuần tự
       </button>
-      <button id="sr-parallel-stop" class="ts-btn ts-btn--danger ts-w-full hidden" title="Hủy bỏ toàn bộ phiên chạy song song">
-        ■ Dừng song song
+      
+      <div class="ts-relative ts-flex">
+        <button id="sr-parallel" class="ts-btn ts-btn--warning ts-w-full" title="Mỗi giá trị list chạy trên 1 tab riêng">
+          ⚡ Song song
+          <input type="number" id="sr-parallel-tabs" class="ts-badge-input ts-badge-input--amber ts-badge-input--sm" value="5" min="1" max="10"
+            title="Số tab đồng thời" onclick="event.stopPropagation()" />
+        </button>
+        <button id="sr-parallel-stop" class="ts-btn ts-btn--danger ts-w-full hidden" title="Hủy bỏ toàn bộ phiên chạy song song">
+          ■ Dừng song song
+        </button>
+      </div>
+
+      <div class="ts-relative ts-flex">
+        <button id="sr-split-tabs" class="ts-btn ts-btn--secondary ts-w-full" title="Chia đều items vào N tab">
+          🔀 Chia tab
+          <input type="number" id="sr-split-tabs-count" class="ts-badge-input ts-badge-input--sm" value="3" min="1" max="10"
+            title="Số tab sẽ mở" onclick="event.stopPropagation()" />
+        </button>
+        <button id="sr-split-tabs-stop" class="ts-btn ts-btn--danger ts-w-full hidden" title="Hủy bỏ toàn bộ phiên chia tab">
+          ■ Dừng chia tab
+        </button>
+      </div>
+
+      <button id="sr-addqueue" class="ts-btn ts-btn--secondary" title="Thêm phiên chạy này vào hàng đợi">
+        + Hàng đợi <span id="sr-queue-count" class="ts-badge ts-badge--secondary ts-tabular">0</span>
       </button>
     </div>
 
-    <div class="ts-relative ts-flex">
-      <button id="sr-split-tabs" class="ts-btn ts-btn--secondary ts-w-full" title="Chia đều items vào N tab">
-        🔀 Chia tab
-        <input type="number" id="sr-split-tabs-count" class="ts-badge-input ts-badge-input--sm" value="3" min="1" max="10"
-          title="Số tab sẽ mở" onclick="event.stopPropagation()" />
-      </button>
-      <button id="sr-split-tabs-stop" class="ts-btn ts-btn--danger ts-w-full hidden" title="Hủy bỏ toàn bộ phiên chia tab">
-        ■ Dừng chia tab
-      </button>
+    <!-- Nút Tạm dừng / Tiếp tục -->
+    <div id="sr-pause-resume-bar" class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2 hidden">
+      <button id="sr-pause" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
+      <button id="sr-resume" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
     </div>
 
-    <button id="sr-addqueue" class="ts-btn ts-btn--secondary" title="Thêm phiên chạy này vào hàng đợi">
-      + Hàng đợi <span id="sr-queue-count" class="ts-badge ts-badge--secondary ts-tabular">0</span>
-    </button>
-  </div>
-
-  <!-- Nút Tạm dừng / Tiếp tục -->
-  <div id="sr-pause-resume-bar" class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2 hidden">
-    <button id="sr-pause" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
-    <button id="sr-resume" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
-  </div>
-
-  <!-- Tùy chọn chuyển tab / chống ngủ đông -->
-  <div class="ts-card ts-p-2 ts-mb-2 ts-flex ts-flex-col ts-gap-1">
-    <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer ts-select-none ts-sublabel">
-      <input type="checkbox" id="sr-parallel-active" class="ts-checkbox" checked>
-      <span>Tự động chuyển sang tab mới mở</span>
-    </label>
-    <div class="ts-flex ts-items-center ts-gap-1-5 ts-select-none ts-sublabel">
-      <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer">
-        <input type="checkbox" id="sr-auto-switch-tabs" class="ts-checkbox">
-        <span>Tự động xoay vòng tab mỗi</span>
+    <!-- Tùy chọn chuyển tab / chống ngủ đông -->
+    <div class="ts-card ts-p-2 ts-flex ts-flex-col ts-gap-1">
+      <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer ts-select-none ts-sublabel">
+        <input type="checkbox" id="sr-parallel-active" class="ts-checkbox" checked>
+        <span>Tự động chuyển sang tab mới mở</span>
       </label>
-      <input type="number" id="sr-auto-switch-interval" value="5" min="1" max="60"
-        class="ts-badge-input ts-badge-input--teal ts-badge-input--sm"
-        title="Số giây mỗi lần xoay vòng" />
-      <span>giây (Chống ngủ đông)</span>
+      <div class="ts-flex ts-items-center ts-gap-1-5 ts-select-none ts-sublabel">
+        <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer">
+          <input type="checkbox" id="sr-auto-switch-tabs" class="ts-checkbox">
+          <span>Tự động xoay vòng tab mỗi</span>
+        </label>
+        <input type="number" id="sr-auto-switch-interval" value="5" min="1" max="60"
+          class="ts-badge-input ts-badge-input--teal ts-badge-input--sm"
+          title="Số giây mỗi lần xoay vòng" />
+        <span>giây (Chống ngủ đông)</span>
+      </div>
     </div>
-  </div>
-  
-  <!-- Hàng đợi dự kiến (chỉ hiện khi có item) -->
-  <div class="sr-queue-box ts-flex-col ts-mt-1 hidden">
-    <label class="ts-label">DỰ KIẾN HÀNG ĐỢI</label>
-    <ul id="sr-queue-list" class="ts-list-container custom-scrollbar ts-scroll-h-md"></ul>
+    
+    <!-- Hàng đợi dự kiến (chỉ hiện khi có item) -->
+    <div class="sr-queue-box ts-flex-col ts-mt-1 hidden">
+      <label class="ts-label">DỰ KIẾN HÀNG ĐỢI</label>
+      <ul id="sr-queue-list" class="ts-list-container custom-scrollbar ts-scroll-h-md"></ul>
+    </div>
   </div>
     `;
   }

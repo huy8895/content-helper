@@ -1408,3 +1408,15 @@
   transform: scale(0.98);
 }
 
+/* ── 28. BOTTOM SHEET PINNED FOOTER (.ts-sheet-footer) ─────────────────────── */
+.ts-sheet-footer {
+  margin-top: auto !important;
+  flex-shrink: 0;
+  padding-top: 8px;
+  width: 100%;
+}
+
+.ts-mt-auto {
+  margin-top: auto !important;
+}
+

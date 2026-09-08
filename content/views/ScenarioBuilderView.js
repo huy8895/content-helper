@@ -55,7 +55,7 @@ window.ScenarioBuilderView = {
   </div>
 
   <!-- Các nút hành động chính -->
-  <div id="scenario-buttons" class="ts-grid ts-grid-3 ts-gap-2">
+  <div id="scenario-buttons" class="ts-grid ts-grid-3 ts-gap-2 ts-sheet-footer">
     <button id="new-scenario-btn" class="ts-btn ts-btn--secondary">
       + Tạo mới
     </button>

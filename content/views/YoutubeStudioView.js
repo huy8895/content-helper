@@ -102,9 +102,11 @@ window.YoutubeStudioView = {
     </div>
   </div>
   
-  <button id="yt-save-languages-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
-    Cập nhật Profile
-  </button>
+  <div class="ts-sheet-footer">
+    <button id="yt-save-languages-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
+      Cập nhật Profile
+    </button>
+  </div>
     `;
   }
 };

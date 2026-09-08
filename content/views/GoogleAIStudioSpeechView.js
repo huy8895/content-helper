@@ -89,9 +89,11 @@ window.GoogleAIStudioSpeechView = {
     </label>
   </div>
 
-  <button id="save-settings-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
-    Cập nhật Profile
-  </button>
+  <div class="ts-sheet-footer">
+    <button id="save-settings-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
+      Cập nhật Profile
+    </button>
+  </div>
     `;
   }
 };
