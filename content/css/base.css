@@ -176,6 +176,8 @@
 .ts-relative { position: relative; }
 .ts-absolute { position: absolute; }
 .ts-hidden,
+.panel-minimized,
+.ts-panel.panel-minimized,
 .ts-panel .hidden { display: none !important; }
 
 /* Overflow & Text */

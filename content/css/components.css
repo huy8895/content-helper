@@ -639,6 +639,13 @@
   transform: scale(0.92);
 }
 
+/* Panel khi bị thu nhỏ (Ẩn hoàn toàn khỏi màn hình) */
+.panel-minimized,
+.ts-panel.panel-minimized,
+.panel-box.panel-minimized {
+  display: none !important;
+}
+
 /* Floating Messenger Bubble khi Panel bị thu nhỏ */
 .panel-bubble {
   position: fixed;
@@ -653,7 +660,8 @@
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  cursor: pointer;
+  cursor: pointer !important;
+  pointer-events: auto !important;
   z-index: 2147483646;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   user-select: none;
@@ -681,6 +689,7 @@
   background-color: var(--ch-accent);
   color: #ffffff;
   box-sizing: border-box;
+  pointer-events: none !important;
 }
 
 .panel-bubble-badge.idle {
@@ -693,6 +702,61 @@
 
 .panel-bubble-badge.error {
   background-color: var(--ch-danger);
+}
+
+/* Tooltip hiển thị khi hover Bubble */
+.panel-bubble::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+  background-color: var(--ch-surface);
+  color: var(--ch-text-primary);
+  border: 1px solid var(--ch-border);
+  box-shadow: var(--ch-shadow-popover);
+  border-radius: var(--ch-radius-control);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 2147483647;
+}
+
+.panel-bubble:hover::before {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Trạng thái đang chạy */
+.panel-bubble.is-running {
+  border-color: var(--ch-accent);
+  box-shadow: 0 0 0 4px var(--ch-accent-border), var(--ch-shadow-panel);
+}
+
+@keyframes bubble-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bubble-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.4) translateY(20px);
+  }
 }
 
 /* ── 11. MASTER FLOATING BUTTON & POPUP MENU ──────────────────────────────── */

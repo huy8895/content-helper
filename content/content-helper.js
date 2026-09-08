@@ -107,6 +107,11 @@ class ContentHelper {
 
   _toggleBuilder() {
     if (this.builder) {
+      if (this.builder._minimizeCtrl?.isMinimized) {
+        this.builder._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.builder.el);
+        return;
+      }
       console.log("❌ [ContentHelper] Closing ScenarioBuilder");
       this.builder.destroy();
       this.builder = null;
@@ -118,7 +123,12 @@ class ContentHelper {
 
   /* ---------- toggle splitter ---------- */
   _toggleSplitter() {
-    if (this.splitter) {               // đang mở → đóng
+    if (this.splitter) {
+      if (this.splitter._minimizeCtrl?.isMinimized) {
+        this.splitter._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.splitter.el);
+        return;
+      }
       console.log("❌ [ContentHelper] Closing TextSplitter");
       this.splitter.destroy();
       this.splitter = null;
@@ -131,6 +141,11 @@ class ContentHelper {
 
   _toggleRunner() {
     if (this.runner) {
+      if (this.runner._minimizeCtrl?.isMinimized) {
+        this.runner._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.runner.el);
+        return;
+      }
       if (this.runner._isBusy && this.runner._isBusy()) {
         if (!confirm("Kịch bản đang chạy. Bạn có chắc chắn muốn đóng và dừng kịch bản không?")) {
           return;
@@ -147,6 +162,11 @@ class ContentHelper {
 
   _toggleFlowRunner() {
     if (this.flowRunner) {
+      if (this.flowRunner._minimizeCtrl?.isMinimized) {
+        this.flowRunner._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.flowRunner.el);
+        return;
+      }
       if (this.flowRunner._isBusy && this.flowRunner._isBusy()) {
         if (!confirm("Flow đang chạy. Bạn có chắc chắn muốn đóng và dừng flow không?")) {
           return;
@@ -163,6 +183,11 @@ class ContentHelper {
 
   _toggleAudioDownloader() {
     if (this.audioDownloader) {
+      if (this.audioDownloader._minimizeCtrl?.isMinimized) {
+        this.audioDownloader._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.audioDownloader.el);
+        return;
+      }
       this.audioDownloader.destroy();
       this.audioDownloader = null;
       return;
@@ -172,6 +197,11 @@ class ContentHelper {
 
   _toggleContentCopyPanel() {
     if (this.contentCopyPanel) {
+      if (this.contentCopyPanel._minimizeCtrl?.isMinimized) {
+        this.contentCopyPanel._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.contentCopyPanel.el);
+        return;
+      }
       this.contentCopyPanel.destroy();
       this.contentCopyPanel = null;
       return;
@@ -181,47 +211,40 @@ class ContentHelper {
   }
 
   _toggleAIStudioSettings() {
-    let panelExists = false;
-    const shadow = ContentHelper.getShadowRoot();
-    const existingEl = shadow.getElementById('google-ai-studio-panel');
-    if (existingEl) {
-      existingEl.remove();
-      panelExists = true;
-    }
-
     if (this.aiStudioSettings) {
+      if (this.aiStudioSettings._minimizeCtrl?.isMinimized) {
+        this.aiStudioSettings._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.aiStudioSettings.el);
+        return;
+      }
       this.aiStudioSettings.destroy();
       this.aiStudioSettings = null;
-      panelExists = true;
+      return;
     }
-
-    if (panelExists) return;
-
     this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
   }
 
   _toggleAIStudioSpeechSettings() {
-    let panelExists = false;
-    const shadow = ContentHelper.getShadowRoot();
-    const existingEl = shadow.getElementById('google-ai-studio-speech-panel');
-    if (existingEl) {
-      existingEl.remove();
-      panelExists = true;
-    }
-
     if (this.aiStudioSpeechSettings) {
+      if (this.aiStudioSpeechSettings._minimizeCtrl?.isMinimized) {
+        this.aiStudioSpeechSettings._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.aiStudioSpeechSettings.el);
+        return;
+      }
       this.aiStudioSpeechSettings.destroy();
       this.aiStudioSpeechSettings = null;
-      panelExists = true;
+      return;
     }
-
-    if (panelExists) return;
-
     this.aiStudioSpeechSettings = new GoogleAIStudioSpeechPanel(() => (this.aiStudioSpeechSettings = null));
   }
 
   _toggleSRTAutomation() {
     if (this.srtAutomation) {
+      if (this.srtAutomation._minimizeCtrl?.isMinimized) {
+        this.srtAutomation._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.srtAutomation.el);
+        return;
+      }
       this.srtAutomation.destroy();
       this.srtAutomation = null;
       return;
@@ -231,6 +254,11 @@ class ContentHelper {
 
   _toggleYoutubePanel() {
     if (this.youtubePanel) {
+      if (this.youtubePanel._minimizeCtrl?.isMinimized) {
+        this.youtubePanel._minimizeCtrl.restore();
+        ContentHelper.bringToFront(this.youtubePanel.el);
+        return;
+      }
       this.youtubePanel.destroy();
       this.youtubePanel = null;
       return;
@@ -401,24 +429,34 @@ class ContentHelper {
       bubbleEl.className = "panel-bubble";
       bubbleEl.dataset.tooltip = tooltip;
       bubbleEl.textContent = icon;
+      bubbleEl.style.setProperty('pointer-events', 'auto', 'important');
+      bubbleEl.style.cursor = 'pointer';
+      bubbleEl.style.animation = 'bubble-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards';
 
-      // Tự động offset vị trí bottom khi có nhiều bubble
-      const existingBubbles = document.querySelectorAll('.panel-bubble');
+      // Tự động offset vị trí bottom khi có nhiều bubble trong Shadow Root
+      const shadow = ContentHelper.getShadowRoot();
+      const existingBubbles = shadow.querySelectorAll('.panel-bubble');
       const offsetIndex = existingBubbles.length; // 0-based
-      bubbleEl.style.bottom = (120 + offsetIndex * 70) + 'px';
+      bubbleEl.style.bottom = (120 + offsetIndex * 60) + 'px';
 
       // Badge
       badgeEl = document.createElement("span");
       badgeEl.className = "panel-bubble-badge idle";
+      badgeEl.style.setProperty('pointer-events', 'none', 'important');
       badgeEl.textContent = "−";
       bubbleEl.appendChild(badgeEl);
 
       // Click bubble → restore panel
-      bubbleEl.addEventListener("click", () => {
+      const handleRestore = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         controller.restore();
-      });
+      };
+      bubbleEl.addEventListener("click", handleRestore);
 
-      ContentHelper.getShadowRoot().appendChild(bubbleEl);
+      shadow.appendChild(bubbleEl);
 
       // Bắt đầu cập nhật badge nếu có getBadgeInfo
       if (getBadgeInfo) {
@@ -437,9 +475,9 @@ class ContentHelper {
         badgeEl.className = `panel-bubble-badge ${info.status || 'idle'}`;
         // Thêm/bỏ class ripple khi đang chạy
         if (info.status === 'running') {
-          bubbleEl.classList.add('is-running');
+          bubbleEl?.classList.add('is-running');
         } else {
-          bubbleEl.classList.remove('is-running');
+          bubbleEl?.classList.remove('is-running');
         }
       }
     }
@@ -451,12 +489,14 @@ class ContentHelper {
         badgeInterval = null;
       }
       if (bubbleEl) {
+        bubbleEl.style.setProperty('pointer-events', 'none', 'important');
         bubbleEl.style.animation = 'bubble-pop-out 0.25s ease-in forwards';
+        const elToRemove = bubbleEl;
         setTimeout(() => {
-          bubbleEl?.remove();
-          bubbleEl = null;
-          badgeEl = null;
+          elToRemove?.remove();
         }, 250);
+        bubbleEl = null;
+        badgeEl = null;
       }
     }
 
@@ -466,7 +506,9 @@ class ContentHelper {
       minimize() {
         if (isMinimized) return;
         isMinimized = true;
+        panelEl._origDisplay = panelEl.style.display || '';
         panelEl.classList.add('panel-minimized');
+        panelEl.style.setProperty('display', 'none', 'important');
         _createBubble();
         onMinimize?.();
       },
@@ -477,6 +519,13 @@ class ContentHelper {
         isMinimized = false;
         _removeBubble();
         panelEl.classList.remove('panel-minimized');
+        panelEl.style.removeProperty('display');
+        if (panelEl._origDisplay) {
+          panelEl.style.display = panelEl._origDisplay;
+        } else {
+          panelEl.style.display = 'flex';
+        }
+        ContentHelper.bringToFront(panelEl);
         onRestore?.();
       },
 
@@ -593,6 +642,9 @@ class ContentHelper {
 
   /* ---------- bringToFront: luôn đưa panel lên trên cùng ---------- */
   static bringToFront(el) {
+    if (!ContentHelper.zTop || isNaN(ContentHelper.zTop)) {
+      ContentHelper.zTop = 2147483640;
+    }
     if (el.dataset.free) {                        // panel đã “floating”
       el.style.zIndex = ++ContentHelper.zTop;    // chỉ đổi z-index
     } else {                                       // panel còn trong thanh bar
