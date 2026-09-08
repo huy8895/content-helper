@@ -79,7 +79,7 @@ window.ScenarioBuilder = class extends window.BasePanel {
 
   _addQuestion(q = { text: "", type: "text" }) {
     const container = document.createElement("div");
-    container.className = "ts-question-card mb-2";
+    container.className = "question-item ts-question-card mb-2";
 
     const textarea = document.createElement("textarea");
     textarea.placeholder = "Câu hỏi... (VD: ${topic|AI,Tech} hoặc ${name})";
@@ -149,7 +149,7 @@ window.ScenarioBuilder = class extends window.BasePanel {
   _collectDataFromDOM() {
     const name = this.el.querySelector("#scenario-name").value.trim();
     const group = this.el.querySelector("#scenario-group").value.trim();
-    const items = this.el.querySelectorAll(".question-item");
+    const items = this.el.querySelectorAll(".question-item, .ts-question-card");
 
     const questions = Array.from(items).map(div => ({
       text: div.querySelector(".question-input")?.value.trim() || "",

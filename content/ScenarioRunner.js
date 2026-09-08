@@ -657,6 +657,8 @@ window.ScenarioRunner = class extends window.BasePanel {
       bigList.push(...prompts);
     }
 
+    console.log(`🚀 [ScenarioRunner] Bắt đầu chạy kịch bản. Tổng số prompts: ${bigList.length}`, bigList);
+
     this.queue = [];
     this._refreshQueueUI();
     this._updateQueueIndicator();
@@ -753,37 +755,43 @@ window.ScenarioRunner = class extends window.BasePanel {
   _expandScenario(questions, values) {
     const result = [];
     for (const q of questions) {
-      if (q.type === "text") {
-        result.push({ text: q.text, label: null });
-      } else if (q.type === "variable") {
-        const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
-        result.push({ text: filled, label: null });
-      } else if (q.type === "loop") {
+      if (!q) continue;
+      const text = typeof q === 'string' ? q : (q.text || '');
+      const type = q.type || 'text';
+
+      if (type === "loop") {
         const loopKey = this._getLoopKey(q);
         const count = parseInt(values[loopKey] || "0", 10);
         for (let i = 1; i <= count; i++) {
-          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
+          const prompt = text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
             if (k === loopKey) return String(i);
             return values[k] || "";
           });
           result.push({ text: prompt, label: `Lần ${i}` });
         }
-      } else if (q.type === "list") {
+      } else if (type === "list") {
         const loopKey = this._getLoopKey(q);
         const listValues = (values[loopKey] || "").split(',').map(v => v.trim()).filter(Boolean);
         for (const itemValue of listValues) {
-          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
+          const prompt = text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
             if (k === loopKey) return itemValue;
             return values[k] || "";
           });
           result.push({ text: prompt, label: itemValue });
         }
+      } else {
+        // Áp dụng cho "text", "variable" và bất kỳ type nào khác (fallback an toàn tránh drop câu hỏi)
+        const filled = text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
+        result.push({ text: filled, label: null });
       }
     }
     return result;
   }
 
   async _sendPrompt(prompt) {
+    // Khoảng đệm 600ms để trang AI (ChatGPT/Gemini/Google AI Studio) hoàn tất reset DOM sau câu trả lời trước
+    await new Promise(r => setTimeout(r, 600));
+
     const text = typeof prompt === 'string' ? prompt : prompt.text;
     const chat = window.ChatAdapter;
     const textarea = chat.getTextarea();
@@ -796,7 +804,11 @@ window.ScenarioRunner = class extends window.BasePanel {
     }
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     const sendBtn = await this._waitForAdapterBtn(() => chat.getSendBtn());
-    sendBtn?.click();
+    if (!sendBtn) {
+      console.error("❌ [ScenarioRunner] Không tìm thấy nút gửi trên trang AI!");
+      throw new Error("Không tìm thấy nút gửi (Send button)");
+    }
+    sendBtn.click();
   }
 
   /**
