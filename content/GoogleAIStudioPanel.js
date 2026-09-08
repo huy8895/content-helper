@@ -35,15 +35,22 @@ window.GoogleAIStudioPanel = class extends window.BasePanel {
     // Custom Dropdown Logic
     const trigger = this.el.querySelector('#profile-dropdown-trigger');
     const menu = this.el.querySelector('#profile-dropdown-menu');
+    const container = this.el.querySelector('#profile-dropdown-container');
 
-    trigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menu.classList.toggle('show');
-    });
+    if (trigger && menu) {
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('hidden-dropdown');
+      });
 
-    document.addEventListener('click', () => {
-      menu.classList.remove('show');
-    });
+      this._onDocClick = (event) => {
+        const path = event.composedPath ? event.composedPath() : [];
+        if (!path.includes(container)) {
+          menu.classList.add('hidden-dropdown');
+        }
+      };
+      document.addEventListener('click', this._onDocClick);
+    }
   }
 
   // Tải tất cả profile từ storage
@@ -85,19 +92,22 @@ window.GoogleAIStudioPanel = class extends window.BasePanel {
     const trigger = this.el.querySelector('#profile-selected-text');
     const menu = this.el.querySelector('#profile-dropdown-menu');
 
+    if (!trigger || !menu) return;
+
     trigger.textContent = this.activeProfileName;
     menu.innerHTML = '';
 
     Object.keys(this.profiles).forEach(name => {
       const item = document.createElement('div');
-      item.className = `custom-dropdown-item ${name === this.activeProfileName ? 'selected' : ''}`;
+      item.className = `custom-dropdown-item scenario-dropdown-item ts-item-row ${name === this.activeProfileName ? 'selected' : ''}`;
       item.innerHTML = `
-        <span>${name}</span>
-        ${name === this.activeProfileName ? '<span style="color: var(--ch-accent); font-weight: bold;">✓</span>' : ''}
+        <span class="ts-group-tag">PROFILE</span>
+        <span class="ts-item-row__text font-bold">${name}</span>
+        ${name === this.activeProfileName ? '<span class="ts-selected-check font-bold">✓</span>' : ''}
       `;
       item.onclick = () => {
         this.switchProfile(name);
-        menu.classList.remove('show');
+        menu.classList.add('hidden-dropdown');
       };
       menu.appendChild(item);
     });
@@ -197,8 +207,11 @@ window.GoogleAIStudioPanel = class extends window.BasePanel {
     }
   }
   destroy() {
-    this.el?.remove();
-    this.onClose?.();
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+      this._onDocClick = null;
+    }
+    super.destroy();
   }
 
   // =================================================================

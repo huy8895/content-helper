@@ -56,29 +56,163 @@ window.FlowRunnerPanel = class extends window.BasePanel {
       this.cachedInputs = result.flowRunnerCache || {};
 
       const selectEl = this.el.querySelector("#flow-select");
-      selectEl.innerHTML = '<option value="">-- Chọn Flow --</option>';
+      const dropdown = this.el.querySelector("#flow-dropdown");
+      if (selectEl) selectEl.innerHTML = '<option value="">-- Chọn Flow --</option>';
+      if (dropdown) dropdown.innerHTML = '';
 
       Object.keys(this.flowConfigs).forEach(flowName => {
-        const option = document.createElement('option');
-        option.value = flowName;
-        option.textContent = flowName;
-        selectEl.appendChild(option);
+        if (selectEl) {
+          const option = document.createElement('option');
+          option.value = flowName;
+          option.textContent = flowName;
+          selectEl.appendChild(option);
+        }
+
+        if (dropdown) {
+          const item = document.createElement("div");
+          item.className = "scenario-dropdown-item custom-dropdown-item ts-item-row";
+
+          const groupTag = document.createElement("span");
+          groupTag.className = "ts-group-tag";
+          groupTag.textContent = "FLOW";
+          item.appendChild(groupTag);
+
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "ts-item-row__text font-bold";
+          titleSpan.textContent = flowName;
+          item.appendChild(titleSpan);
+
+          item.dataset.name = flowName;
+
+          item.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            this._selectFlow(flowName, flowName);
+          });
+
+          dropdown.appendChild(item);
+        }
       });
       
+      this._setupFlowSearch();
+
       const lastFlow = result.flowRunnerLastFlow;
       if (lastFlow && this.flowConfigs[lastFlow]) {
-        selectEl.value = lastFlow;
-        this._onFlowSelected(lastFlow);
+        this._selectFlow(lastFlow, lastFlow);
       }
     });
   }
 
+  _selectFlow(name, displayText) {
+    const searchBox = this.el.querySelector("#flow-search");
+    const dropdown = this.el.querySelector("#flow-dropdown");
+    const selectEl = this.el.querySelector("#flow-select");
+
+    if (searchBox) {
+      searchBox.value = displayText || name;
+      searchBox.dataset.selectedName = name;
+      searchBox.blur();
+    }
+    if (selectEl) {
+      selectEl.value = name;
+    }
+    if (dropdown) {
+      dropdown.classList.add("hidden-dropdown");
+    }
+
+    chrome.storage.local.set({ flowRunnerLastFlow: name });
+    this._onFlowSelected(name);
+  }
+
+  _setupFlowSearch() {
+    const searchBox = this.el.querySelector("#flow-search");
+    const dropdown = this.el.querySelector("#flow-dropdown");
+    const browserWrapper = this.el.querySelector("#flow-browser");
+
+    if (!searchBox || !dropdown || !browserWrapper) return;
+
+    dropdown.style.display = "flex";
+    dropdown.style.flexDirection = "column";
+
+    // Tìm kiếm fuzzy khi người dùng gõ
+    searchBox.oninput = () => {
+      dropdown.classList.remove("hidden-dropdown");
+      const keyword = searchBox.value.trim();
+      const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
+
+      if (!keyword) {
+        items.forEach(item => {
+          item.style.removeProperty('display');
+          item.style.removeProperty('order');
+        });
+        dropdown.querySelector(".ts-dropdown-empty")?.remove();
+        return;
+      }
+
+      let matchCount = 0;
+      items.forEach(item => {
+        const score = ContentHelper.fuzzySearch(keyword, item.textContent);
+        if (score > 0) {
+          item.style.display = 'flex';
+          item.style.order = -score;
+          matchCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      let emptyMsg = dropdown.querySelector(".ts-dropdown-empty");
+      if (matchCount === 0) {
+        if (!emptyMsg) {
+          emptyMsg = document.createElement("div");
+          emptyMsg.className = "ts-dropdown-empty";
+          emptyMsg.textContent = "Không tìm thấy Flow phù hợp";
+          dropdown.appendChild(emptyMsg);
+        }
+      } else if (emptyMsg) {
+        emptyMsg.remove();
+      }
+    };
+
+    const showDropdown = () => {
+      dropdown.classList.remove("hidden-dropdown");
+      if (!searchBox.value.trim()) {
+        dropdown.querySelectorAll(".scenario-dropdown-item").forEach(i => {
+          i.style.removeProperty('display');
+          i.style.removeProperty('order');
+        });
+        dropdown.querySelector(".ts-dropdown-empty")?.remove();
+      }
+    };
+
+    searchBox.onfocus = showDropdown;
+    searchBox.onclick = showDropdown;
+
+    searchBox.onkeydown = (e) => {
+      if (e.key === "Escape") {
+        dropdown.classList.add("hidden-dropdown");
+      }
+    };
+
+    // Đóng khi click ngoài
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+    }
+    this._onDocClick = (event) => {
+      const path = event.composedPath ? event.composedPath() : [];
+      if (!path.includes(browserWrapper)) {
+        dropdown.classList.add('hidden-dropdown');
+      }
+    };
+    document.addEventListener('click', this._onDocClick);
+  }
+
   _attachEvents() {
     const flowSelect = this.el.querySelector("#flow-select");
-    flowSelect.addEventListener("change", (e) => {
-      chrome.storage.local.set({ flowRunnerLastFlow: e.target.value });
-      this._onFlowSelected(e.target.value);
-    });
+    if (flowSelect) {
+      flowSelect.addEventListener("change", (e) => {
+        this._selectFlow(e.target.value, e.target.value);
+      });
+    }
 
     this.el.querySelector("#flow-start-btn").onclick = () => this._startFlow();
     
@@ -299,6 +433,8 @@ window.FlowRunnerPanel = class extends window.BasePanel {
     this.el.querySelector("#flow-pause-btn").disabled = false;
     this.el.querySelector("#flow-resume-btn").disabled = true;
     this.el.querySelector("#flow-select").disabled = true;
+    const flowSearch = this.el.querySelector("#flow-search");
+    if (flowSearch) flowSearch.disabled = true;
     this.el.querySelector("#flow-step-select").disabled = true;
     
     this._showProgress(true);
@@ -419,6 +555,8 @@ window.FlowRunnerPanel = class extends window.BasePanel {
     this.el.querySelector("#flow-pause-btn").disabled = true;
     this.el.querySelector("#flow-resume-btn").disabled = true;
     this.el.querySelector("#flow-select").disabled = false;
+    const flowSearch = this.el.querySelector("#flow-search");
+    if (flowSearch) flowSearch.disabled = false;
     this.el.querySelector("#flow-step-select").disabled = false;
   }
 
@@ -473,6 +611,9 @@ window.FlowRunnerPanel = class extends window.BasePanel {
   }
 
   destroy() {
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+    }
     this.sequencer?.stop();
     super.destroy();
   }

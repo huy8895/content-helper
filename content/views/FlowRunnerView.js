@@ -18,9 +18,17 @@ window.FlowRunnerView = {
   </div>
 
   <!-- Chọn Flow -->
-  <div id="flow-browser" class="ts-relative ts-mb-3">
-    <label class="ts-label" for="flow-select">CHỌN FLOW</label>
-    <select id="flow-select" class="ts-select">
+  <div id="flow-browser" class="ts-relative ts-mb-3 ts-layer-dropdown">
+    <label class="ts-label" for="flow-search">CHỌN FLOW</label>
+    <div class="ts-search-box">
+      <input type="text" id="flow-search" 
+        class="ts-search-box__input"
+        placeholder="Tìm kiếm Flow..."
+        autocomplete="off">
+      <span class="ts-search-box__icon">⚲</span>
+    </div>
+    <div id="flow-dropdown" class="custom-dropdown-menu custom-scrollbar ts-scroll-h-xl hidden-dropdown"></div>
+    <select id="flow-select" class="hidden">
       <option value="">-- Đang tải dữ liệu... --</option>
     </select>
   </div>

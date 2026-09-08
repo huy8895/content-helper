@@ -18,12 +18,13 @@ window.ScenarioBuilderView = {
   </div>
 
   <!-- Bộ chọn danh sách kịch bản -->
-  <div id="scenario-browser" class="ts-relative ts-mb-3">
-    <label class="ts-label" for="scenario-search">Danh sách kịch bản</label>
+  <div id="scenario-browser" class="ts-relative ts-mb-3 ts-layer-dropdown">
+    <label class="ts-label" for="scenario-search">CHỌN KỊCH BẢN</label>
     <div class="ts-search-box">
       <input type="text" id="scenario-search" 
         class="ts-search-box__input"
-        placeholder="Tìm kịch bản nhanh...">
+        placeholder="Tìm kiếm kịch bản..."
+        autocomplete="off">
       <span class="ts-search-box__icon">⚲</span>
     </div>
     <div id="scenario-dropdown" class="custom-dropdown-menu custom-scrollbar ts-scroll-h-xl hidden-dropdown"></div>
