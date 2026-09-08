@@ -124,11 +124,45 @@ window.ScenarioBuilder = class extends window.BasePanel {
     const container = document.createElement("div");
     container.className = "question-item ts-question-card mb-2";
 
+    // 1. Khung Code Editor với Syntax Highlighting kiểu IDE
+    const editorWrap = document.createElement("div");
+    editorWrap.className = "ts-code-editor";
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "ts-code-editor__backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+
+    const highlightEl = document.createElement("div");
+    highlightEl.className = "ts-code-editor__highlight";
+    backdrop.appendChild(highlightEl);
+
     const textarea = document.createElement("textarea");
     textarea.placeholder = "Câu hỏi... (VD: ${topic|AI,Tech} hoặc ${name})";
-    textarea.className = "question-input ts-textarea ts-question-card__textarea";
+    textarea.className = "question-input ts-code-editor__textarea custom-scrollbar";
+    textarea.spellcheck = false;
     textarea.value = q.text || "";
 
+    const updateHighlight = () => {
+      highlightEl.innerHTML = ContentHelper.highlightPromptSyntax(textarea.value);
+    };
+    updateHighlight();
+
+    textarea.addEventListener("input", () => {
+      updateHighlight();
+      backdrop.scrollTop = textarea.scrollTop;
+      backdrop.scrollLeft = textarea.scrollLeft;
+      this._saveToStorageImmediately();
+    });
+
+    textarea.addEventListener("scroll", () => {
+      backdrop.scrollTop = textarea.scrollTop;
+      backdrop.scrollLeft = textarea.scrollLeft;
+    });
+
+    editorWrap.appendChild(backdrop);
+    editorWrap.appendChild(textarea);
+
+    // 2. Action Controls (Type selector, Loop key, Delete)
     const actionWrap = document.createElement("div");
     actionWrap.className = "ts-question-card__top";
 
@@ -179,11 +213,8 @@ window.ScenarioBuilder = class extends window.BasePanel {
     actionWrap.appendChild(loopKeyInput);
     actionWrap.appendChild(deleteBtn);
 
-    container.appendChild(textarea);
+    container.appendChild(editorWrap);
     container.appendChild(actionWrap);
-
-    textarea.addEventListener("input", () => this._saveToStorageImmediately());
-    select.addEventListener("change", () => this._saveToStorageImmediately());
 
     this.el.querySelector("#questions-container").appendChild(container);
     textarea.focus();

@@ -795,6 +795,43 @@ class ContentHelper {
   }
 
   /**
+   * Chuyển đổi prompt template thành HTML highlight cú pháp kiểu IDE Code Editor.
+   * Nhận diện: ${varName}, ${varName|opt1,opt2}, markdown heading, markdown bold.
+   * @param {string} text - Văn bản gốc
+   * @returns {string} - Chuỗi HTML an toàn đã tô màu
+   */
+  static highlightPromptSyntax(text) {
+    if (!text) return '<br>';
+
+    // 1. Escape HTML an toàn tuyệt đối
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // 2. Highlight biến và danh sách: ${varName} hoặc ${varName|opt1,opt2}
+    escaped = escaped.replace(/\$\{([^}|]+)(?:\|([^}]+))?\}/g, (match, varName, options) => {
+      if (options !== undefined) {
+        return `<span class="ts-hl-var-wrap"><span class="ts-hl-delim">\${</span><span class="ts-hl-var-name">${varName}</span><span class="ts-hl-pipe">|</span><span class="ts-hl-options">${options}</span><span class="ts-hl-delim">}</span></span>`;
+      }
+      return `<span class="ts-hl-var-wrap"><span class="ts-hl-delim">\${</span><span class="ts-hl-var-name">${varName}</span><span class="ts-hl-delim">}</span></span>`;
+    });
+
+    // 3. Highlight tiêu đề Markdown (### Title)
+    escaped = escaped.replace(/^(#{1,6}\s+.*)$/gm, '<span class="ts-hl-heading">$1</span>');
+
+    // 4. Highlight in đậm Markdown (**bold**)
+    escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<span class="ts-hl-bold">**$1**</span>');
+
+    // Đồng bộ chiều cao dòng cuối khi người dùng nhấn Enter
+    if (escaped.endsWith('\n')) {
+      escaped += '<br>';
+    }
+
+    return escaped;
+  }
+
+  /**
    * Hiển thị thông báo Toast siêu cấp
    * @param {string} message 
    * @param {'success'|'error'|'warning'|'info'} type 
