@@ -1,18 +1,16 @@
-window.ContentCopyPanel = class {
+window.ContentCopyPanel = class extends window.BasePanel {
   constructor(onClose) {
-    this.onClose = onClose;
-    this.elements = window.ChatAdapter.getContentElements() || [];
-    console.log("ContentCopyPanel elements:", this.elements);
-    this._render();
-  }
-
-  _render() {
-    this.el = document.createElement("div");
-    this.el.id = "content-copy-panel";
-    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative";
-    this.el.style.maxHeight = "580px";
-
-    this.el.innerHTML = window.ContentCopyView?.render?.(this.elements.length) || "";
+    const elements = window.ChatAdapter.getContentElements() || [];
+    super({
+      id: "content-copy-panel",
+      title: "Copy Content",
+      icon: "⎘",
+      onClose: onClose,
+      view: {
+        render: () => window.ContentCopyView?.render?.(elements.length) || ""
+      }
+    });
+    this.elements = elements;
 
     // Load saved custom filenames từ localStorage
     const savedFilenames = localStorage.getItem('ccp-filenames');
@@ -20,10 +18,6 @@ window.ContentCopyPanel = class {
       const filenameInput = this.el.querySelector('#ccp-filenames');
       if (filenameInput) filenameInput.value = savedFilenames;
     }
-
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".ts-title");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     this._renderList();
     this._bindEvents();
@@ -34,12 +28,12 @@ window.ContentCopyPanel = class {
     container.innerHTML = "";
     this.elements.forEach((el, idx) => {
       const row = document.createElement("div");
-      row.className = "mb-1 py-1.5 border-b border-gray-50 last:border-0 hover:bg-white hover:rounded hover:px-1.5 transition-all group cursor-default flex items-center gap-1.5";
+      row.className = "ts-item-row";
 
       // Checkbox chọn item
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.className = "ccp-item-check flex-shrink-0 w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded cursor-pointer";
+      checkbox.className = "ts-item-row__check ccp-item-check";
       checkbox.dataset.idx = idx;
       checkbox.checked = true;
       checkbox.onclick = (e) => {
@@ -49,21 +43,22 @@ window.ContentCopyPanel = class {
       };
 
       const number = document.createElement("span");
-      number.className = "font-bold text-indigo-400 mr-1 text-[10px] w-6 flex-shrink-0 text-right";
+      number.className = "ts-item-row__idx";
       number.textContent = `#${idx + 1}`;
 
       const preview = document.createElement("span");
-      preview.className = "text-[11px] text-gray-400 group-hover:text-gray-700 truncate font-medium flex-1 min-w-0";
+      preview.className = "ts-item-row__text";
       const text = el.innerText.trim();
       preview.textContent = this._shorten(text);
 
       // Button Download
       const btnDownload = document.createElement("button");
-      btnDownload.className = "flex-shrink-0 h-6 w-6 flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded text-[11px] hover:bg-emerald-100 transition-all active:scale-95 opacity-50 group-hover:opacity-100";
+      btnDownload.className = "ts-item-row__btn";
       btnDownload.title = `Download item #${idx + 1}`;
-      btnDownload.innerHTML = "📥";
+      btnDownload.innerHTML = "↓";
       btnDownload.onclick = (e) => {
         e.stopPropagation();
+        ContentHelper.playHapticFeedback?.(8);
         const filenamesInput = this.el.querySelector('#ccp-filenames')?.value || '';
         const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
         const addPrefix = prefixCheckbox?.checked;
@@ -77,16 +72,17 @@ window.ContentCopyPanel = class {
 
       // Button Copy
       const btnCopy = document.createElement("button");
-      btnCopy.className = "flex-shrink-0 h-6 w-6 flex items-center justify-center bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded text-[11px] hover:bg-indigo-100 transition-all active:scale-95 opacity-50 group-hover:opacity-100";
+      btnCopy.className = "ts-item-row__btn";
       btnCopy.title = `Copy item #${idx + 1}`;
-      btnCopy.innerHTML = "📋";
+      btnCopy.innerHTML = "⎘";
       btnCopy.onclick = (e) => {
         e.stopPropagation();
+        ContentHelper.playHapticFeedback?.(8);
         const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
         const addPrefix = prefixCheckbox?.checked;
         let content = this._getText(el);
         if (addPrefix) content = `Part ${idx + 1}\n` + content;
-        this._copyToClipboard(content, `✅ Copied item #${idx + 1}!`);
+        this._copyToClipboard(content, `✓ Đã chép mục #${idx + 1}!`);
       };
 
       row.appendChild(checkbox);

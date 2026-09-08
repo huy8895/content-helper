@@ -1,24 +1,18 @@
-window.GoogleAIStudioPanel = class {
+window.GoogleAIStudioPanel = class extends window.BasePanel {
   constructor(onClose) {
-    this.onClose = onClose;
-    this.storageKey = 'google_ai_studio_profiles'; // Đổi key lưu trữ
+    super({
+      id: "google-ai-studio-panel",
+      title: "AI Studio Settings",
+      icon: "⚙",
+      onClose: onClose,
+      view: window.GoogleAIStudioView
+    });
+    this.storageKey = 'google_ai_studio_profiles';
     this.profiles = {};
     this.activeProfileName = 'default';
 
-    this._render();
-    this.loadProfiles();
-  }
-
-  _render() {
-    this.el = document.createElement('div');
-    this.el.id = "google-ai-studio-panel";
-    this.el.className = "ts-panel animate-in";
-    this.el.innerHTML = window.GoogleAIStudioView?.render?.() || "";
-
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".ts-title");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
     this.attachEvents();
+    this.loadProfiles();
   }
 
   attachEvents() {
@@ -99,7 +93,7 @@ window.GoogleAIStudioPanel = class {
       item.className = `custom-dropdown-item ${name === this.activeProfileName ? 'selected' : ''}`;
       item.innerHTML = `
         <span>${name}</span>
-        ${name === this.activeProfileName ? '<span class="text-indigo-500">✓</span>' : ''}
+        ${name === this.activeProfileName ? '<span style="color: var(--ch-accent); font-weight: bold;">✓</span>' : ''}
       `;
       item.onclick = () => {
         this.switchProfile(name);

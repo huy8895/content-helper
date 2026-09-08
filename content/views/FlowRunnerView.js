@@ -9,7 +9,7 @@ window.FlowRunnerView = {
   <!-- Header -->
   <div class="ts-header sr-header">
     <div class="ts-header__main">
-      <span class="ts-header__icon">🔗</span>
+      <span class="ts-header__icon">🔀</span>
       <div>
         <h3 class="ts-header__title">Flow Runner</h3>
         <div class="ts-header__subtitle">Thực thi kịch bản liên hoàn</div>
@@ -18,7 +18,7 @@ window.FlowRunnerView = {
   </div>
 
   <!-- Chọn Flow -->
-  <div id="flow-browser" class="ts-relative" style="margin-bottom: 12px;">
+  <div id="flow-browser" class="ts-relative ts-mb-3">
     <label class="ts-label" for="flow-select">CHỌN FLOW</label>
     <select id="flow-select" class="ts-select">
       <option value="">-- Đang tải dữ liệu... --</option>
@@ -26,7 +26,7 @@ window.FlowRunnerView = {
   </div>
 
   <!-- Chọn bước bắt đầu -->
-  <div class="ts-card" style="padding: 10px 12px; margin-bottom: 12px;">
+  <div class="ts-card ts-p-3 ts-mb-3">
     <label class="ts-label" for="flow-step-select">BẮT ĐẦU TỪ BƯỚC</label>
     <select id="flow-step-select" class="ts-select" disabled>
       <option value="0">Vui lòng chọn Flow...</option>
@@ -34,41 +34,41 @@ window.FlowRunnerView = {
   </div>
 
   <!-- Cấu hình biến đầu vào -->
-  <div id="flow-inputs" class="ts-card ts-overflow-y-auto custom-scrollbar" style="max-height: 192px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;">
-    <div style="font-size: 11.5px; color: var(--ch-text-muted); font-style: italic; text-align: center;">Các biến cấu hình sẽ hiển thị ở đây.</div>
+  <div id="flow-inputs" class="ts-card ts-p-3 ts-mb-3 ts-overflow-y-auto ts-scroll-h-xl custom-scrollbar">
+    <div class="ts-hint ts-text-center">Các biến cấu hình sẽ hiển thị ở đây.</div>
   </div>
 
   <!-- Thanh tiến trình -->
   <div id="flow-progress-box" class="ts-progress hidden">
     <div class="ts-progress__meta">
       <div class="ts-progress__step">
-        Step <span id="flow-progress-step" style="color: var(--ch-accent);">0</span> / <span id="flow-progress-total">0</span>
+        Step <span id="flow-progress-step" class="ts-tabular ts-text-accent">0</span> / <span id="flow-progress-total" class="ts-tabular">0</span>
       </div>
       <div id="flow-progress-status" class="ts-progress__percent">Đang chạy...</div>
     </div>
     <div class="ts-progress__track">
       <div id="flow-progress-bar" class="ts-progress__bar" style="width: 0%;"></div>
     </div>
-    <div id="flow-step-details" class="ts-truncate" style="margin-top: 6px; font-size: 10.5px; color: var(--ch-text-muted); font-style: italic;"></div>
+    <div id="flow-step-details" class="ts-truncate ts-hint ts-mt-1-5"></div>
     
     <!-- Controls khi gặp lỗi -->
-    <div id="flow-error-controls" class="ts-grid ts-grid-2 ts-gap-2 hidden" style="margin-top: 8px;">
-      <button id="flow-retry-btn" class="ts-btn ts-btn--warning ts-btn--sm">🔄 Thử lại (Retry)</button>
-      <button id="flow-skip-btn" class="ts-btn ts-btn--secondary ts-btn--sm">⏭ Bỏ qua (Skip)</button>
+    <div id="flow-error-controls" class="ts-grid ts-grid-2 ts-gap-2 ts-mt-2 hidden">
+      <button id="flow-retry-btn" class="ts-btn ts-btn--warning ts-btn--sm">↺ Thử lại (Retry)</button>
+      <button id="flow-skip-btn" class="ts-btn ts-btn--secondary ts-btn--sm">⇥ Bỏ qua (Skip)</button>
     </div>
   </div>
 
   <!-- Nút thực thi chính -->
-  <div style="margin-bottom: 10px;">
+  <div class="ts-mb-2-5">
     <button id="flow-start-btn" class="ts-btn ts-btn--primary ts-w-full">
-      ▶️ Bắt đầu Flow
+      ▶ Bắt đầu Flow
     </button>
   </div>
 
   <!-- Nút Tạm dừng / Tiếp tục -->
   <div class="ts-grid ts-grid-2 ts-gap-2">
-    <button id="flow-pause-btn" class="ts-btn ts-btn--secondary" disabled>⏸ Tạm dừng</button>
-    <button id="flow-resume-btn" class="ts-btn ts-btn--accent" disabled>▶️ Tiếp tục</button>
+    <button id="flow-pause-btn" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
+    <button id="flow-resume-btn" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
   </div>
     `;
   }

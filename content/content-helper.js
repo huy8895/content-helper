@@ -51,13 +51,8 @@ class ContentHelper {
       ;
     this._observer.observe(document.body, { childList: true, subtree: true });
 
-    if (!document.getElementById('content-helper-panel-bar')) {
-      const bar = document.createElement('div');
-      bar.id = 'content-helper-panel-bar';
-      // Tailwind: fixed at bottom, centered, gap between panels, high z-index
-      bar.className = 'fixed bottom-[90px] left-5 right-5 flex items-end gap-5 pointer-events-none justify-center z-[2147483647]';
-      document.body.appendChild(bar);
-    }
+    // Khởi tạo Master Shadow Root duy nhất chứa toàn bộ hệ thống giao diện
+    ContentHelper.getShadowRoot();
 
     // ⌨️  ESC → đóng panel trên cùng
     document.addEventListener('keydown', (e) => {
@@ -69,54 +64,29 @@ class ContentHelper {
   static zTop = 2147483000;   // cao nhưng vẫn < 2^31-1 để còn ++
 
   /**
-   * Phản hồi âm thanh cơ học (Acoustic click) mô phỏng phím cơ xúc giác
-   * Tần số quét nhanh 2200Hz -> 100Hz trong 12ms kèm rung nhẹ 8ms
+   * Phản hồi xúc giác vi mô (Haptic feedback)
+   * @param {number|number[]} pattern Độ dài rung tính bằng ms
    */
-  static playMechanicalClick() {
+  static playHapticFeedback(pattern = 8) {
     try {
-      if (window.navigator?.vibrate) window.navigator.vibrate(8);
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(2200, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.012);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.012);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.014);
+      if (window.navigator?.vibrate) window.navigator.vibrate(pattern);
     } catch (e) {
       // Fail silently - không chặn luồng chính
     }
   }
 
   /**
-   * Phản hồi âm thanh trầm (Done Thump) báo hiệu hoàn thành tác vụ
+   * Tương thích ngược: Rung nhẹ khi bấm nút (không phát âm thanh)
+   */
+  static playMechanicalClick() {
+    this.playHapticFeedback(8);
+  }
+
+  /**
+   * Tương thích ngược: Rung nhịp đôi khi hoàn tất tác vụ (không phát âm thanh)
    */
   static playDoneThump() {
-    try {
-      if (window.navigator?.vibrate) window.navigator.vibrate([15, 30, 15]);
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.06);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.065);
-    } catch (e) {
-      // Fail silently
-    }
+    this.playHapticFeedback([12, 30, 12]);
   }
 
   /* UI helpers */
@@ -212,7 +182,8 @@ class ContentHelper {
 
   _toggleAIStudioSettings() {
     let panelExists = false;
-    const existingEl = document.getElementById('google-ai-studio-panel');
+    const shadow = ContentHelper.getShadowRoot();
+    const existingEl = shadow.getElementById('google-ai-studio-panel');
     if (existingEl) {
       existingEl.remove();
       panelExists = true;
@@ -231,7 +202,8 @@ class ContentHelper {
 
   _toggleAIStudioSpeechSettings() {
     let panelExists = false;
-    const existingEl = document.getElementById('google-ai-studio-speech-panel');
+    const shadow = ContentHelper.getShadowRoot();
+    const existingEl = shadow.getElementById('google-ai-studio-speech-panel');
     if (existingEl) {
       existingEl.remove();
       panelExists = true;
@@ -296,20 +268,21 @@ class ContentHelper {
       if (!el.dataset.free) {           // tách khỏi bar 1 lần duy nhất
         el.dataset.free = "1";
 
-        /* ✨ tắt animation để không flash */
+        /* Tắt animation để không flash */
         el.style.animation = "none";
 
         el.style.position = "fixed";
         el.style.left = rect.left + "px";
         el.style.top = rect.top + "px";
+        el.style.bottom = "auto";
+        el.style.right = "auto";
         el.style.width = rect.width + "px";
-        document.body.appendChild(el);
+        ContentHelper.getShadowRoot().appendChild(el);
       }
 
-
       const onMouseMove = (ev) => {
-        el.style.left = ev.clientX - shiftX + "px";
-        el.style.top = ev.clientY - shiftY + "px";
+        el.style.left = (ev.clientX - shiftX) + "px";
+        el.style.top = (ev.clientY - shiftY) + "px";
       };
 
       const onMouseUp = () => {
@@ -389,7 +362,7 @@ class ContentHelper {
    */
   static addMinimizeButton(panelEl, options = {}) {
     const {
-      icon = '📤',
+      icon = '▶',
       tooltip = 'Panel',
       onMinimize = null,
       onRestore = null,
@@ -445,7 +418,7 @@ class ContentHelper {
         controller.restore();
       });
 
-      document.body.appendChild(bubbleEl);
+      ContentHelper.getShadowRoot().appendChild(bubbleEl);
 
       // Bắt đầu cập nhật badge nếu có getBadgeInfo
       if (getBadgeInfo) {
@@ -539,36 +512,94 @@ class ContentHelper {
    * Hàm tiện ích đưa panel vào bar
    * @param {T} el
    */
-  /* ---------- mountPanel: đưa panel vào thanh bar ---------- */
+  /**
+   * Trả về Single Master Shadow Root duy nhất của Content Helper.
+   * Cách ly 100% CSS khỏi trang web chủ, chống xung đột giao diện.
+   * @returns {ShadowRoot}
+   */
+  static getShadowRoot() {
+    let host = document.getElementById('content-helper-root');
+    if (host && host.shadowRoot) {
+      return host.shadowRoot;
+    }
+
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'content-helper-root';
+      // Inline styles cố định cho Host trên Light DOM
+      host.style.position = 'fixed';
+      host.style.inset = '0';
+      host.style.width = '100vw';
+      host.style.height = '100vh';
+      host.style.pointerEvents = 'none'; // Xuyên thấu toàn bộ, chỉ con bên trong mới nhận click
+      host.style.zIndex = '2147483640';
+
+      const parent = document.body || document.documentElement;
+      parent.appendChild(host);
+    }
+
+    let shadow = host.shadowRoot;
+    if (!shadow) {
+      shadow = host.attachShadow({ mode: 'open' });
+
+      // Nạp 3 stylesheet vào Shadow DOM
+      const cssFiles = [
+        'content/css/tokens.css',
+        'content/css/base.css',
+        'content/css/components.css'
+      ];
+
+      cssFiles.forEach(path => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = chrome.runtime.getURL(path);
+        shadow.appendChild(link);
+      });
+
+      // Tạo sẵn dock bar cho Panels
+      const bar = document.createElement('div');
+      bar.id = 'content-helper-panel-bar';
+      shadow.appendChild(bar);
+
+      // Tạo sẵn container cho Toasts
+      const toastBox = document.createElement('div');
+      toastBox.id = 'ts-toast-container';
+      shadow.appendChild(toastBox);
+    }
+
+    return shadow;
+  }
+
+  /* ---------- mountPanel: đưa panel vào thanh bar trong Shadow DOM ---------- */
   static mountPanel(el) {
     el.classList.add('helper-panel');
 
-    let bar = document.getElementById('content-helper-panel-bar');
+    const shadow = ContentHelper.getShadowRoot();
+    let bar = shadow.getElementById('content-helper-panel-bar');
     if (!bar) {
       bar = document.createElement('div');
       bar.id = 'content-helper-panel-bar';
-      document.body.appendChild(bar);
+      shadow.appendChild(bar);
     }
 
     bar.appendChild(el);
 
-    const handle = el.querySelector('.sb-title, .sr-header, .ts-title');
+    const handle = el.querySelector('.ts-header, .sb-title, .sr-header, .ts-title');
     if (handle) {
       handle.style.userSelect = 'none';
       handle.addEventListener('mousedown', () => ContentHelper.bringToFront(el));
     }
   }
 
-
   /* ---------- bringToFront: luôn đưa panel lên trên cùng ---------- */
   static bringToFront(el) {
     if (el.dataset.free) {                        // panel đã “floating”
       el.style.zIndex = ++ContentHelper.zTop;    // chỉ đổi z-index
     } else {                                       // panel còn trong thanh bar
-      const bar = document.getElementById('content-helper-panel-bar');
+      const shadow = ContentHelper.getShadowRoot();
+      const bar = shadow.getElementById('content-helper-panel-bar');
 
-      // Nếu đã là phần tử cuối rồi thì thôi – tránh re-append gây nháy
-      if (bar.lastElementChild !== el) {
+      if (bar && bar.lastElementChild !== el) {
         el.style.animation = 'none';             // tắt hiệu ứng fadeIn
         bar.appendChild(el);                     // đưa về cuối thanh
       }
@@ -576,28 +607,23 @@ class ContentHelper {
   }
 
   static closeTopPanel() {
-    const barPanels = Array.from(document.querySelectorAll(
+    const shadow = ContentHelper.getShadowRoot();
+    const barPanels = Array.from(shadow.querySelectorAll(
       '#content-helper-panel-bar .helper-panel'));
-    const floating = Array.from(document.querySelectorAll(
-      'body > .helper-panel:not(#content-helper-panel-bar *)'));
+    const floating = Array.from(shadow.querySelectorAll(
+      '.helper-panel[data-free="1"]'));
 
-    // panel mở sau cùng = phần tử cuối của mảng floating, nếu không có thì lấy ở bar
     const lastEl = floating.at(-1) || barPanels.at(-1);
     if (!lastEl) return;
-
-    // Thay vì gọi click() thẳng, ta sẽ kích hoạt logic trong close button
-    // Cách an toàn nhất là sử dụng logic xác nhận trực tiếp ở đây hoặc kích hoạt click
-    // Để tái sử dụng logic trong addCloseButton, ta sẽ giả lập click
     lastEl.querySelector('.panel-close')?.click();
   }
 
   /* 👇  thêm vào cuối class */
   destroy() {
     console.log("❌ [ContentHelper] destroy");
-    // ngắt quan sát
     this._observer?.disconnect();
-    // gỡ khung nút nếu còn
-    document.getElementById('content-helper-button-container')?.remove();
+    const shadow = ContentHelper.getShadowRoot();
+    shadow.getElementById('content-helper-button-container')?.remove();
   }
 
   /**
@@ -650,21 +676,22 @@ class ContentHelper {
    * @param {number} duration 
    */
   static showToast(message, type = 'info', duration = 3500) {
-    let container = document.getElementById('ts-toast-container');
+    const shadow = ContentHelper.getShadowRoot();
+    let container = shadow.getElementById('ts-toast-container');
     if (!container) {
       container = document.createElement('div');
       container.id = 'ts-toast-container';
-      document.body.appendChild(container);
+      shadow.appendChild(container);
     }
 
     const toast = document.createElement('div');
     toast.className = `ts-toast ${type}`;
 
     const icons = {
-      success: '✅',
-      error: '❌',
-      warning: '⚠️',
-      info: 'ℹ️'
+      success: '✓',
+      error: '✕',
+      warning: '!',
+      info: 'i'
     };
 
     toast.innerHTML = `
@@ -763,8 +790,9 @@ chrome.storage.local.get(['gg_access_token', 'button_configs'], data => {
   if (data.button_configs) {
     window.__buttonConfigs = data.button_configs;
   }
+  // Luôn khởi tạo ContentHelper để người dùng có thể sử dụng các panel cục bộ ngay lập tức
+  showButtons();
   if (data.gg_access_token) {
-    showButtons();
     _downloadFromFirestore();
   }
 });

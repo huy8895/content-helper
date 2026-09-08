@@ -1,22 +1,19 @@
-window.SRTAutomationPanel = class {
+/**
+ * SRTAutomationPanel.js
+ * Quản lý logic quét và trích xuất file phụ đề SRT
+ * Kế thừa BasePanel chuẩn hóa Lifecycle và Minimize Bubble.
+ */
+
+window.SRTAutomationPanel = class extends window.BasePanel {
     constructor(onClose) {
-        this.onClose = onClose;
+        super({
+            id: "srt-automation-panel",
+            title: "SRT Automation",
+            icon: "⏱️",
+            onClose: onClose,
+            view: window.SRTAutomationView
+        });
         this.collectedSRTs = {}; // languageLabel -> srtContent
-        this._render();
-    }
-
-    _render() {
-        this.el = document.createElement("div");
-        this.el.id = "srt-automation-panel";
-        // Tailwind classes for the main panel
-        this.el.className = "panel-box ts-panel w-[380px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-
-        this.el.innerHTML = window.SRTAutomationView?.render?.() || "";
-
-        ContentHelper.mountPanel(this.el);
-        ContentHelper.makeDraggable(this.el, ".ts-title");
-        ContentHelper.addCloseButton(this.el, () => this.destroy());
-
         this._bindEvents();
         this._updateList();
     }
@@ -32,6 +29,7 @@ window.SRTAutomationPanel = class {
             btnScan.disabled = true;
             btnScan.textContent = 'Scanning...';
             statusText.textContent = 'Status: Scanning chat...';
+            ContentHelper.playHapticFeedback?.(8);
 
             this._scanExisting();
 
@@ -42,10 +40,14 @@ window.SRTAutomationPanel = class {
             }, 1000);
         };
 
-        btnDownload.onclick = () => this._downloadZip();
+        btnDownload.onclick = () => {
+            ContentHelper.playHapticFeedback?.(8);
+            this._downloadZip();
+        };
 
         btnClear.onclick = () => {
             if (confirm('Clear all collected SRTs?')) {
+                ContentHelper.playHapticFeedback?.(8);
                 this.collectedSRTs = {};
                 this._updateList();
             }
@@ -103,7 +105,7 @@ window.SRTAutomationPanel = class {
         });
 
         this._updateList();
-        console.log(`✅ [SRTAutomation] Scan complete. Mapped ${mappedCount} SRTs.`);
+        console.log(`✓ [SRTAutomation] Scan complete. Mapped ${mappedCount} SRTs.`);
         ContentHelper.showToast(`Successfully scanned and mapped ${mappedCount} files.`, "success");
     }
 
@@ -117,18 +119,23 @@ window.SRTAutomationPanel = class {
         listEl.innerHTML = '';
         keys.forEach(label => {
             const li = document.createElement('li');
-            li.className = "flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0 hover:bg-white px-1 rounded transition-all";
+            li.className = "ts-item-row";
             li.innerHTML = `
-                <span class="text-[11px] text-gray-700 flex items-center gap-1.5 font-medium">
-                    <span class="text-emerald-500 text-[10px]">✅</span> ${label}.srt
+                <span class="ts-item-row__text flex items-center gap-1.5 font-medium">
+                    <span style="color: var(--ch-success); font-size: 11px;">✓</span> ${label}.srt
                 </span> 
-                <span class="text-[9px] text-gray-400 font-bold">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span class="ts-item-row__idx font-mono font-bold" style="color: var(--ch-text-muted); font-size: 9.5px;">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             `;
             listEl.appendChild(li);
         });
 
         const box = listEl.parentElement;
         box.scrollTop = box.scrollHeight;
+
+        // Cập nhật badge bong bóng Messenger nếu đang thu nhỏ
+        if (this._minimizeCtrl && this._minimizeCtrl.isMinimized) {
+            this._minimizeCtrl.updateBadge(keys.length > 0 ? `${keys.length}` : '−', keys.length > 0 ? 'running' : 'idle');
+        }
     }
 
     async _downloadZip() {
@@ -165,13 +172,15 @@ window.SRTAutomationPanel = class {
     }
 
     _isBusy() {
-        // Kiểm tra xem nút scan có đang disabled không (trạng thái đang quét)
         const btnScan = this.el?.querySelector('#srt-scan-existing');
         return btnScan ? btnScan.disabled : false;
     }
 
-    destroy() {
-        this.el?.remove();
-        this.onClose?.();
+    _getBubbleBadgeInfo() {
+        const count = Object.keys(this.collectedSRTs || {}).length;
+        return {
+            text: count > 0 ? `${count}` : '−',
+            status: count > 0 ? 'running' : 'idle'
+        };
     }
 };

@@ -136,7 +136,7 @@ window.ParallelWorker = (() => {
     while (Date.now() - startTime < maxWaitMs) {
       const content = _collectContent();
       if (content && content.trim().length > 0) {
-        console.log(`✨ [ParallelWorker] Đã thu thập thành công sau ${Date.now() - startTime}ms!`);
+        console.log(`✓ [ParallelWorker] Đã thu thập thành công sau ${Date.now() - startTime}ms!`);
         return content;
       }
       console.log(`⏳ [ParallelWorker] Nội dung trống, đang đợi DOM render... (chờ thêm tối đa ${Math.max(0, maxWaitMs - (Date.now() - startTime))}ms)`);

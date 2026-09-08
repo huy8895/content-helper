@@ -1,27 +1,32 @@
-window.ScenarioBuilder = class {
+window.ScenarioBuilder = class extends window.BasePanel {
   constructor(onClose) {
+    super({
+      id: "scenario-builder",
+      title: "Quản lý Kịch bản",
+      icon: "≡",
+      onClose: onClose,
+      view: window.ScenarioBuilderView
+    });
     console.log("📦 [ScenarioBuilder] init");
-    this.onClose = onClose;
-    this._render();
+    this._setupUI();
     this._loadScenarioList();
   }
 
-  _render() {
-    console.log("🎨 [ScenarioBuilder] render UI");
-    this.el = document.createElement("div");
-    this.el.id = "scenario-builder";
-    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.style.maxHeight = "640px";
-    this.el.innerHTML = window.ScenarioBuilderView?.render?.() || "";
-
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".sb-title");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
-
-    this.el.querySelector("#add-question").addEventListener("click", () => this._addQuestion());
-    this.el.querySelector("#save-to-storage").addEventListener("click", () => this._save());
-    this.el.querySelector("#delete-scenario").addEventListener("click", () => this._deleteScenario());
+  _setupUI() {
+    this.el.querySelector("#add-question").addEventListener("click", () => {
+      ContentHelper.playHapticFeedback?.(8);
+      this._addQuestion();
+    });
+    this.el.querySelector("#save-to-storage").addEventListener("click", () => {
+      ContentHelper.playHapticFeedback?.(8);
+      this._save();
+    });
+    this.el.querySelector("#delete-scenario").addEventListener("click", () => {
+      ContentHelper.playHapticFeedback?.(8);
+      this._deleteScenario();
+    });
     this.el.querySelector("#new-scenario-btn").addEventListener("click", () => {
+      ContentHelper.playHapticFeedback?.(8);
       this.el.querySelector("#scenario-name").value = "";
       this.el.querySelector("#questions-container").innerHTML = "";
       this.el.querySelector("#scenario-group").value = "";
@@ -38,7 +43,7 @@ window.ScenarioBuilder = class {
     searchBox.addEventListener("input", () => {
       const k = searchBox.value.trim();
       dropdown.classList.remove("hidden-dropdown");
-      dropdown.style.setProperty('display', 'flex', 'important');
+      dropdown.style.display = 'flex';
 
       const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
 
@@ -50,41 +55,47 @@ window.ScenarioBuilder = class {
 
       scoredItems.forEach(item => {
         if (item.score > 0) {
-          item.div.style.setProperty('display', 'flex', 'important');
+          item.div.style.display = 'flex';
           item.div.style.order = -item.score;
         } else {
-          item.div.style.setProperty('display', 'none', 'important');
+          item.div.style.display = 'none';
         }
       });
     });
 
     searchBox.addEventListener("focus", () => {
       dropdown.classList.remove("hidden-dropdown");
-      dropdown.style.display = 'flex'; // Ensure it's visible on focus
+      dropdown.style.display = 'flex';
     });
 
-    document.addEventListener('click', (event) => {
+    this._onDocClick = (event) => {
       if (!browserWrapper.contains(event.target)) {
         dropdown.classList.add('hidden-dropdown');
         dropdown.style.removeProperty('display');
       }
-    });
+    };
+    document.addEventListener('click', this._onDocClick);
   }
 
   _addQuestion(q = { text: "", type: "text" }) {
     const container = document.createElement("div");
-    container.className = "question-item bg-white p-2 rounded-lg border border-gray-100 shadow-sm mb-2 group hover:border-indigo-200 transition-all";
+    container.className = "ts-question-card mb-2";
 
     const textarea = document.createElement("textarea");
     textarea.placeholder = "Câu hỏi... (VD: ${topic|AI,Tech} hoặc ${name})";
-    textarea.className = "question-input w-full min-h-[50px] p-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all resize-y mb-2 font-sans leading-snug text-indigo-900 font-medium";
+    textarea.className = "question-input ts-textarea ts-question-card__textarea";
     textarea.value = q.text || "";
 
     const actionWrap = document.createElement("div");
-    actionWrap.className = "flex items-center gap-2";
+    actionWrap.className = "ts-question-card__top";
 
     const select = document.createElement("select");
-    select.className = "question-type h-6 px-1.5 text-[10px] font-bold uppercase bg-white border border-gray-300 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-indigo-600 cursor-pointer transition-all";
+    select.className = "question-type ts-select";
+    select.style.height = "26px";
+    select.style.fontSize = "10px";
+    select.style.fontWeight = "700";
+    select.style.width = "auto";
+    select.style.minWidth = "80px";
 
     ["text", "variable", "loop", "list"].forEach(t => {
       const opt = document.createElement("option");
@@ -95,15 +106,22 @@ window.ScenarioBuilder = class {
     });
 
     const loopKeyInput = document.createElement("input");
-    loopKeyInput.className = "question-loopkey h-6 px-2 flex-1 text-[10px] border border-gray-100 rounded-md bg-white outline-none focus:border-indigo-500 font-mono text-indigo-600";
+    loopKeyInput.className = "question-loopkey ts-input";
+    loopKeyInput.style.height = "26px";
+    loopKeyInput.style.fontSize = "10.5px";
+    loopKeyInput.style.fontFamily = "var(--ch-font-mono)";
+    loopKeyInput.style.color = "var(--ch-accent)";
+    loopKeyInput.style.flex = "1";
     loopKeyInput.placeholder = "Loop key (e.g. users)";
     loopKeyInput.classList.toggle("hidden", !(q.type === "loop" || q.type === "list"));
     loopKeyInput.value = q.loopKey || "";
 
     const deleteBtn = document.createElement("button");
-    deleteBtn.innerHTML = "🗑️";
-    deleteBtn.className = "w-6 h-6 flex items-center justify-center text-[10px] bg-rose-50 text-rose-500 rounded-md hover:bg-rose-100 transition-all opacity-0 group-hover:opacity-100";
+    deleteBtn.innerHTML = "✕";
+    deleteBtn.className = "ts-question-card__del";
+    deleteBtn.title = "Xóa câu hỏi này";
     deleteBtn.onclick = () => {
+      ContentHelper.playHapticFeedback?.(8);
       container.remove();
       this._saveToStorageImmediately();
     };
@@ -223,10 +241,10 @@ window.ScenarioBuilder = class {
         const qs = Array.isArray(raw) ? raw : raw.questions || [];
 
         const item = document.createElement("div");
-        item.className = "scenario-dropdown-item px-3 py-2 hover:bg-gray-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
+        item.className = "scenario-dropdown-item custom-dropdown-item flex items-center justify-between";
 
         const titleSpan = document.createElement("span");
-        titleSpan.className = "scenario-title text-[11px] text-gray-700 font-medium group-hover:text-indigo-600";
+        titleSpan.className = "scenario-title text-[11px] font-medium";
         titleSpan.textContent = group ? `[${group}] ${name}` : name;
 
         item.appendChild(titleSpan);
@@ -248,8 +266,25 @@ window.ScenarioBuilder = class {
     });
   }
 
+  _isBusy() {
+    const name = this.el?.querySelector("#scenario-name")?.value.trim();
+    const count = this.el?.querySelectorAll(".question-item, .ts-question-card")?.length || 0;
+    return !!(name || count > 0);
+  }
+
+  _getBubbleBadgeInfo() {
+    const count = this.el?.querySelectorAll(".ts-question-card")?.length || 0;
+    return {
+      text: count > 0 ? `${count}` : '−',
+      status: count > 0 ? 'running' : 'idle'
+    };
+  }
+
   destroy() {
-    this.el?.remove();
-    this.onClose?.();
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+      this._onDocClick = null;
+    }
+    super.destroy();
   }
 };

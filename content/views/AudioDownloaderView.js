@@ -9,7 +9,7 @@ window.AudioDownloaderView = {
       <!-- Header -->
       <div class="ts-header ts-title">
         <div class="ts-header__main">
-          <span class="ts-header__icon">🎵</span>
+          <span class="ts-header__icon">🎙️</span>
           <div>
             <h3 class="ts-header__title">Audio Downloader</h3>
             <div id="srt-status-text" class="ts-header__subtitle">TTS Audio Generator</div>
@@ -18,8 +18,8 @@ window.AudioDownloaderView = {
       </div>
 
       <!-- Controls Cấu hình Voice & Format -->
-      <div class="ts-card" style="padding: 10px 12px; margin-bottom: 12px;">
-        <div class="ts-grid ts-grid-2 ts-gap-2" style="margin-bottom: 10px;">
+      <div class="ts-card ts-p-3 ts-mb-3">
+        <div class="ts-grid ts-grid-2 ts-gap-2 ts-mb-2-5">
           <div>
             <label class="ts-label" for="ad-voice">Giọng đọc</label>
             <select id="ad-voice" class="ts-select">
@@ -42,25 +42,25 @@ window.AudioDownloaderView = {
 
         <div class="ts-flex ts-gap-2">
           <button id="ad-dlall" class="ts-btn ts-btn--primary ts-flex-1">
-            Download All
+            ↓ Download All
           </button>
           <button id="ad-reset" class="ts-btn ts-btn--danger">
-            🔄 Reset
+            ↺ Reset
           </button>
         </div>
       </div>
 
       <!-- Header danh sách tin nhắn -->
-      <div class="ts-flex ts-justify-between ts-items-center" style="margin-bottom: 8px; padding: 0 4px;">
+      <div class="ts-flex ts-justify-between ts-items-center ts-mb-2 ts-px-1">
         <label class="ts-flex ts-items-center ts-gap-1-5 ts-cursor-pointer ts-select-none">
           <input type="checkbox" id="ad-select-all" class="ts-cursor-pointer" />
-          <span class="ts-label" style="margin-bottom: 0;">Select all messages</span>
+          <span class="ts-label ts-mb-0">Select all messages</span>
         </label>
-        <div id="ad-progress" class="ts-badge ts-badge--accent ts-animate-pulse"></div>
+        <div id="ad-progress" class="ts-badge ts-badge--accent ts-tabular ts-animate-pulse"></div>
       </div>
 
       <!-- Danh sách audio items -->
-      <div id="ad-list" class="ts-results ts-card ts-card--white ts-flex-1 ts-overflow-y-auto custom-scrollbar" style="padding: 6px; display: flex; flex-direction: column; gap: 6px;"></div>
+      <div id="ad-list" class="ts-results ts-card ts-card--white ts-flex-1 ts-overflow-y-auto ts-list-container custom-scrollbar ts-p-1-5"></div>
     `;
   }
 };

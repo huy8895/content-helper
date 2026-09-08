@@ -4,15 +4,22 @@
  * Khởi tạo FlowSequencer để điều khiển quá trình chạy (chạy, tạm dừng, thử lại, bỏ qua).
  */
 
-window.FlowRunnerPanel = class {
+window.FlowRunnerPanel = class extends window.BasePanel {
   constructor(onClose) {
-    console.log("▶️ [FlowRunnerPanel] init");
     if (!window.ChatAdapter) {
       ContentHelper.showToast("Không tìm thấy ChatAdapter phù hợp. Flow Runner sẽ bị vô hiệu.", "error");
       throw new Error("ChatAdapter not available");
     }
 
-    this.onClose = onClose;
+    super({
+      id: "flow-runner-panel",
+      title: "Trình chạy Luồng",
+      icon: "🔀",
+      onClose: onClose,
+      view: window.FlowRunnerView
+    });
+
+    console.log("▶️ [FlowRunnerPanel] init");
     this.sequencer = null;
     this.flowConfigs = {};
     this.allScenarios = {};
@@ -20,28 +27,8 @@ window.FlowRunnerPanel = class {
     // Lưu các biến override của người dùng nhập trên UI
     this.userInputs = {}; 
     
-    this._render();
-    this._loadData();
-  }
-
-  _render() {
-    this.el = document.createElement("div");
-    this.el.id = "flow-runner-panel";
-    this.el.className = "panel-box ts-panel w-[400px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.innerHTML = window.FlowRunnerView?.render?.() || "";
-
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".sr-header");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
-
-    // Nút thu nhỏ (minimize) — tạo bong bóng Messenger khi click
-    this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
-      icon: '🔗',
-      tooltip: 'Flow Runner',
-      getBadgeInfo: () => this._getBubbleBadgeInfo()
-    });
-
     this._attachEvents();
+    this._loadData();
   }
 
   /**
@@ -209,11 +196,10 @@ window.FlowRunnerPanel = class {
         headerDiv.appendChild(label);
 
         let inputEl;
-        const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:border-indigo-500 transition-all outline-none";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer`;
+          inputEl.className = "ts-select w-full";
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -224,12 +210,12 @@ window.FlowRunnerPanel = class {
           });
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[40px] resize-y`;
+          inputEl.className = "ts-textarea w-full min-h-[40px]";
           inputEl.value = finalValue;
           inputEl.placeholder = "Nhập giá trị override...";
           
           const fileBtn = document.createElement('button');
-          fileBtn.className = "text-[9px] font-bold text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95";
+          fileBtn.className = "ts-btn ts-btn--secondary text-[10px] py-0.5 px-2";
           fileBtn.textContent = "📂 Chọn file";
           fileBtn.onclick = () => {
             const fileInput = document.createElement('input');
@@ -384,8 +370,8 @@ window.FlowRunnerPanel = class {
     switch (status) {
       case 'running':
         statusEl.textContent = "Đang xử lý...";
-        statusEl.className = "text-xs font-black text-indigo-600";
-        bar.className = "h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out";
+        statusEl.className = "text-xs font-black ts-text-accent";
+        bar.className = "ts-progress__bar";
         break;
       case 'success':
         statusEl.textContent = "Thành công!";
@@ -487,9 +473,7 @@ window.FlowRunnerPanel = class {
   }
 
   destroy() {
-    this._minimizeCtrl?.destroy();
-    this.el?.remove();
-    this.onClose();
     this.sequencer?.stop();
+    super.destroy();
   }
 };

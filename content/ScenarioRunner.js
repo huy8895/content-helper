@@ -1,45 +1,30 @@
 // --- STAGE: ScenarioRunner.js (CLEANED & COMPACT) ---
 
-window.ScenarioRunner = class {
+window.ScenarioRunner = class extends window.BasePanel {
   constructor(onClose) {
-    console.log("▶️ [ScenarioRunner] init");
     if (!window.ChatAdapter) {
       ContentHelper.showToast("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.", "error");
       throw new Error("ChatAdapter not available");
     }
 
-    this.onClose = onClose;
+    super({
+      id: "scenario-runner",
+      title: "Trình chạy Kịch bản",
+      icon: "▶",
+      onClose: onClose,
+      view: window.ScenarioRunnerView
+    });
+
+    console.log("▶️ [ScenarioRunner] init");
     this.sequencer = null;
     this.templates = {};
     this.queue = [];
-    this._render();
-  }
-
-  _render() {
-    console.log("🎛 [ScenarioRunner] render UI");
-    this.el = document.createElement("div");
-    this.el.id = "scenario-runner";
-    this.el.className = "panel-box ts-panel w-[430px] p-3.5 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.style.maxHeight = "780px";
-    this.el.innerHTML = window.ScenarioRunnerView?.render?.() || "";
-
-    ContentHelper.mountPanel(this.el);
 
     // Tải kịch bản và thiết lập giao diện tìm kiếm mới
     this._setupScenarioSearch();
 
     // Gắn sự kiện cho các nút điều khiển
     this._attachControlEvents();
-
-    ContentHelper.makeDraggable(this.el, ".sr-header");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
-
-    // Nút thu nhỏ (minimize) — tạo bong bóng Messenger khi click
-    this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
-      icon: '📤',
-      tooltip: 'Scenario Runner',
-      getBadgeInfo: () => this._getBubbleBadgeInfo()
-    });
 
     // Kiểm tra xem có phiên parallel nào bị gián đoạn trước đó không
     this._checkInterruptedParallelSession();
@@ -165,7 +150,7 @@ window.ScenarioRunner = class {
           sessionId: sessionId
         }, () => {
           banner.classList.add('hidden');
-          ContentHelper.showToast('🗑️ Đã bỏ qua và xóa phiên song song bị gián đoạn.', 'info');
+          ContentHelper.showToast('Đã bỏ qua và xóa phiên song song bị gián đoạn.', 'info');
         });
       };
     });
@@ -184,10 +169,10 @@ window.ScenarioRunner = class {
         const group = Array.isArray(raw) ? "" : (raw.group || "");
 
         const item = document.createElement("div");
-        item.className = "scenario-dropdown-item px-3 py-2 hover:bg-indigo-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
+        item.className = "custom-dropdown-item ts-item-row";
 
         const titleSpan = document.createElement("span");
-        titleSpan.className = "text-[11px] text-gray-700 font-bold group-hover:text-indigo-600";
+        titleSpan.className = "ts-item-row__text font-bold";
         titleSpan.textContent = group ? `[${group}] ${name}` : name;
 
         item.appendChild(titleSpan);
@@ -281,11 +266,10 @@ window.ScenarioRunner = class {
         headerDiv.appendChild(label);
 
         let inputEl;
-        const baseClasses = "w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none leading-relaxed";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer border-gray-200`;
+          inputEl.className = "ts-select w-full";
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -296,21 +280,21 @@ window.ScenarioRunner = class {
         } else if (q.type === "loop" && varName === loopKey) {
           inputEl = document.createElement("input");
           inputEl.type = "number";
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-600`;
+          inputEl.className = "ts-input w-full font-bold";
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[90px] font-mono text-xs text-indigo-600 resize-y`;
+          inputEl.className = "ts-textarea ts-textarea--mono w-full min-h-[90px]";
           inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: item1, item2, item3)...";
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[120px] resize-y`;
+          inputEl.className = "ts-textarea w-full min-h-[120px]";
           inputEl.placeholder = "Nhập nội dung cho " + varName + "...";
         }
         
         if (inputEl.tagName === 'TEXTAREA' || (inputEl.tagName === 'INPUT' && inputEl.type === 'text')) {
           const fileBtn = document.createElement('button');
-          fileBtn.className = "text-[9px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95 flex items-center gap-1";
+          fileBtn.className = "ts-btn ts-btn--secondary text-[9.5px] py-0.5 px-2";
           fileBtn.textContent = "📂 Chọn file";
           fileBtn.onclick = () => {
             const fileInput = document.createElement('input');
@@ -645,7 +629,7 @@ window.ScenarioRunner = class {
     if (Array.from(list.children).some(el => el.textContent === label)) return;
 
     const span = document.createElement("span");
-    span.className = "bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[9px] font-bold border border-indigo-100";
+    span.className = "ts-badge ts-badge--accent ts-tabular";
     span.textContent = label;
     list.appendChild(span);
     list.scrollTop = list.scrollHeight;
@@ -738,15 +722,15 @@ window.ScenarioRunner = class {
       const fullVars = Object.entries(job.values).map(([k, v]) => `${k}=${v}`).join(', ');
       const shortenedVars = this._shortenText(fullVars);
       return `
-        <li class="bg-gray-50 border border-gray-100 rounded-xl p-2 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
-          <div class="flex-1 min-w-0 pr-2">
-             <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="text-[9px] font-black text-gray-300">#${i + 1}</span>
-                <span class="text-xs font-bold text-gray-700 truncate">${job.name}</span>
+        <li class="ts-item-row">
+          <div class="ts-flex-1 min-w-0 pr-2">
+             <div class="ts-flex ts-items-center ts-gap-1 mb-0.5">
+                <span class="ts-item-row__idx">#${i + 1}</span>
+                <span class="ts-item-row__text font-bold">${job.name}</span>
              </div>
-             <div class="text-[10px] text-gray-400 italic truncate" title="${fullVars}">${shortenedVars}</div>
+             <div class="ts-hint ts-truncate" title="${fullVars}">${shortenedVars}</div>
           </div>
-          <button class="sr-queue-copy w-5 h-5 flex items-center justify-center bg-white border border-gray-100 rounded text-[9px] hover:bg-indigo-600 hover:text-white transition-all active:scale-90" data-idx="${i}">
+          <button class="sr-queue-copy ts-item-row__btn" data-idx="${i}">
              📋
           </button>
         </li>
@@ -1364,5 +1348,16 @@ window.ScenarioRunner = class {
       if (detail) detail.innerHTML = '';
       ContentHelper.showToast('🛑 Đã dừng phiên chia tab và đóng các tab con.', 'info');
     });
+  }
+
+  _isBusy() {
+    return (!!this.sequencer && !this.sequencer.stopped) || this._parallelRunning || this._splitTabsRunning;
+  }
+
+  destroy() {
+    this.sequencer?.stop();
+    if (this._parallelRunning) this._stopParallelSession();
+    if (this._splitTabsRunning) this._stopSplitTabsSession();
+    super.destroy();
   }
 };

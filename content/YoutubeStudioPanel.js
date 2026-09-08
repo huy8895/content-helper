@@ -48,29 +48,39 @@ const AVAILABLE_LANGUAGES = [
 ];
 
 // =================================================================
-// UPDATED HTML
+// YoutubeStudioPanel Controller
 // =================================================================
-  _render() {
-    this.el = document.createElement('div');
-    this.el.id = 'youtube-studio-helper-panel';
-    this.el.className = 'ts-panel animate-in';
+window.YoutubeStudioPanel = class extends window.BasePanel {
+  constructor(onClose) {
+    super({
+      id: 'youtube-studio-helper-panel',
+      title: 'Phụ đề YouTube',
+      icon: '文A',
+      onClose: onClose,
+      view: window.YoutubeStudioView
+    });
 
-    this.el.innerHTML = window.YoutubeStudioView?.render?.() || "";
+    this.storageKey = 'youtube_studio_profiles';
+    this.profiles = {};
+    this.activeProfileName = 'default';
 
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".ts-title");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
+    this._initLanguagesUI();
+    this.attachEvents();
+    this.loadProfiles();
+  }
 
+  _initLanguagesUI() {
     const container = this.el.querySelector('#yt-language-checkbox-container');
+    if (!container) return;
+
     AVAILABLE_LANGUAGES.forEach(lang => {
       const label = document.createElement('label');
-      label.className = 'flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white transition-all cursor-pointer group yt-language-label';
+      label.className = 'ts-item-row yt-language-label';
       label.innerHTML = `
-        <input type="checkbox" value="${lang}" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all"> 
-        <span class="text-xs text-gray-600 group-hover:text-indigo-600 font-medium transition-colors">${lang}</span>
+        <input type="checkbox" value="${lang}" class="ts-checkbox"> 
+        <span class="ts-item-row__text">${lang}</span>
       `;
 
-      // === THÊM EVENT CHO TỪNG CHECKBOX ===
       // Khi tick/untick một ngôn ngữ, gọi lại hàm cập nhật hiển thị
       label.querySelector('input').addEventListener('change', () => {
         this._updateLanguageVisibility();
@@ -78,13 +88,11 @@ const AVAILABLE_LANGUAGES = [
 
       container.appendChild(label);
     });
-
-    this.attachEvents();
   }
+
   destroy() {
     this.stopTranslationObserver();
-    this.el?.remove();
-    this.onClose?.();
+    super.destroy();
   }
 
   // Thay thế hàm attachEvents()
@@ -191,7 +199,7 @@ const AVAILABLE_LANGUAGES = [
       item.className = `custom-dropdown-item ${name === this.activeProfileName ? 'selected' : ''}`;
       item.innerHTML = `
         <span>${name}</span>
-        ${name === this.activeProfileName ? '<span class="text-indigo-500">✓</span>' : ''}
+        ${name === this.activeProfileName ? '<span style="color: var(--ch-accent); font-weight: bold;">✓</span>' : ''}
       `;
       item.onclick = () => {
         this.switchProfile(name);
