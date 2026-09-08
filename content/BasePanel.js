@@ -25,27 +25,38 @@ window.BasePanel = class {
   }
 
   /**
-   * Khởi tạo cấu trúc DOM chuẩn và đăng ký vòng đời
+   * Khởi tạo cấu trúc DOM chuẩn và đăng ký vòng đời theo mô hình Bottom Sheet
    */
   _initBase() {
     this.el = document.createElement("div");
     this.el.id = this.id;
     this.el.className = "ts-panel";
 
-    if (this.view && typeof this.view.render === 'function') {
-      this.el.innerHTML = this.view.render(this._getViewData ? this._getViewData() : undefined);
-    }
+    // 1. Thêm thanh nắm kéo Bottom Sheet (Grabber handle pill)
+    const handleWrapper = document.createElement("div");
+    handleWrapper.className = "ts-sheet-handle";
+    handleWrapper.innerHTML = `<div class="ts-sheet-handle__bar"></div>`;
+    this.el.appendChild(handleWrapper);
 
-    // 1. Gắn vào Single Master Shadow Root
+    // 2. Nội dung view bọc trong scrollable body đồng nhất
+    const bodyEl = document.createElement("div");
+    bodyEl.className = "ts-sheet-body custom-scrollbar";
+    if (this.view && typeof this.view.render === 'function') {
+      bodyEl.innerHTML = this.view.render(this._getViewData ? this._getViewData() : undefined);
+    }
+    this.el.appendChild(bodyEl);
+
+    // 3. Gắn vào Single Master Shadow Root
     ContentHelper.mountPanel(this.el);
 
-    // 2. Kéo thả tự do trên toàn màn hình với handle chuẩn .ts-header
-    ContentHelper.makeDraggable(this.el, ".ts-header");
+    // 4. Cử chỉ vuốt/kéo xuống chuẩn Bottom Sheet để thu nhỏ/đóng
+    const headerEl = bodyEl.querySelector('.ts-header, .sb-title, .sr-header, .ts-title');
+    ContentHelper.attachBottomSheetSwipe(this.el, [handleWrapper, headerEl]);
 
-    // 3. Nút đóng (✕) có kiểm tra trạng thái bận
+    // 5. Nút đóng (✕) có kiểm tra trạng thái bận
     ContentHelper.addCloseButton(this.el, () => this.destroy());
 
-    // 4. Nút thu nhỏ (−) thành bong bóng tròn Messenger
+    // 6. Nút thu nhỏ (−) thành bong bóng tròn Messenger
     this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
       icon: this.icon,
       tooltip: this.title,

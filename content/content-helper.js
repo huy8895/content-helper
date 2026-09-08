@@ -41,6 +41,12 @@ class ContentHelper {
     /** @type {YoutubeStudioPanel|null} */
     this.youtubePanel = null; // <-- Thêm dòng này
 
+    /** @type {ContentCopyPanel|null} */
+    this.contentCopyPanel = null;
+
+    /** @type {BasePanel|null} */
+    this.activePanel = null;
+
     // Observe DOM mutations so we can inject buttons when chat UI appears
     this._observer = new MutationObserver(() => {
       if (window.ChatAdapter) {
@@ -105,222 +111,226 @@ class ContentHelper {
     return btn;
   }
 
-  _toggleBuilder() {
-    if (this.builder) {
-      if (this.builder._minimizeCtrl?.isMinimized) {
-        this.builder._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.builder.el);
+  /**
+   * Đảm bảo chỉ có 1 panel được mở tại một thời điểm (Single Active Panel Policy).
+   * Khi mở panel mới, panel cũ đang mở sẽ được tự động đóng lại an toàn.
+   * @param {string} panelKey - Tên thuộc tính panel trong ContentHelper
+   * @param {Function} createInstanceFn - Hàm khởi tạo instance
+   */
+  _toggleExclusivePanel(panelKey, createInstanceFn) {
+    const currentInstance = this[panelKey];
+
+    // 1. Nếu chính panel này đang tồn tại
+    if (currentInstance) {
+      // 1.1. Nếu đang bị thu nhỏ thành bubble -> Khôi phục lên làm active Bottom Sheet
+      if (currentInstance._minimizeCtrl?.isMinimized) {
+        if (!this._closeOtherOpenPanels(panelKey)) {
+          return;
+        }
+        currentInstance._minimizeCtrl.restore();
+        ContentHelper.bringToFront(currentInstance.el);
+        this.activePanel = currentInstance;
         return;
       }
-      console.log("❌ [ContentHelper] Closing ScenarioBuilder");
-      this.builder.destroy();
-      this.builder = null;
+
+      // 1.2. Nếu đang mở hiển thị trên màn hình -> Kiểm tra bận trước khi đóng
+      if (currentInstance._isBusy && currentInstance._isBusy()) {
+        if (!confirm("Bảng điều khiển đang hoạt động. Bạn có chắc chắn muốn đóng và dừng tác vụ không?")) {
+          return;
+        }
+      }
+      console.log(`❌ [ContentHelper] Closing ${panelKey}`);
+      currentInstance.destroy();
+      this[panelKey] = null;
+      if (this.activePanel === currentInstance) {
+        this.activePanel = null;
+      }
       return;
     }
-    console.log("📝 [ContentHelper] Opening ScenarioBuilder");
-    this.builder = new ScenarioBuilder(() => (this.builder = null));
+
+    // 2. Nếu panel này chưa mở -> Cần mở mới
+    // Đóng bất kỳ panel nào khác đang mở trên màn hình
+    if (!this._closeOtherOpenPanels(panelKey)) {
+      return;
+    }
+
+    console.log(`🚀 [ContentHelper] Opening ${panelKey}`);
+    try {
+      const instance = createInstanceFn();
+      this[panelKey] = instance;
+      this.activePanel = instance;
+    } catch (err) {
+      console.error(`❌ [ContentHelper] Lỗi khi tạo panel ${panelKey}:`, err);
+      ContentHelper.showToast(`Lỗi khi mở panel: ${err.message}`, "error");
+    }
   }
 
-  /* ---------- toggle splitter ---------- */
-  _toggleSplitter() {
-    if (this.splitter) {
-      if (this.splitter._minimizeCtrl?.isMinimized) {
-        this.splitter._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.splitter.el);
-        return;
-      }
-      console.log("❌ [ContentHelper] Closing TextSplitter");
-      this.splitter.destroy();
-      this.splitter = null;
-      return;
-    }
+  /**
+   * Đóng an toàn các panel khác đang hiển thị (không đóng bubble đang thu nhỏ chạy background)
+   * @param {string} [exceptKey] - Bỏ qua key này
+   * @returns {boolean} true nếu thành công đóng hoặc không có panel nào; false nếu người dùng chọn Hủy vì bận
+   */
+  _closeOtherOpenPanels(exceptKey = null) {
+    const allPanelKeys = [
+      'builder', 'runner', 'flowRunner', 'splitter',
+      'audioDownloader', 'contentCopyPanel', 'aiStudioSettings',
+      'aiStudioSpeechSettings', 'srtAutomation', 'youtubePanel'
+    ];
 
-    console.log("✂️  [ContentHelper] Opening TextSplitter");
-    this.splitter = new TextSplitter(() => (this.splitter = null));
+    for (const key of allPanelKeys) {
+      if (key === exceptKey) continue;
+      const p = this[key];
+      // Chỉ đóng các panel đang HIỂN THỊ (chưa bị minimize thành bubble)
+      if (p && !p._minimizeCtrl?.isMinimized) {
+        if (p._isBusy && p._isBusy()) {
+          if (!confirm("Một bảng điều khiển khác đang hoạt động. Bạn có chắc chắn muốn đóng để mở công cụ này không?")) {
+            return false;
+          }
+        }
+        console.log(`🔄 [ContentHelper] Auto-closing previous panel: ${key}`);
+        p.destroy();
+        this[key] = null;
+      }
+    }
+    return true;
+  }
+
+  _toggleBuilder() {
+    this._toggleExclusivePanel('builder', () => new ScenarioBuilder(() => (this.builder = null)));
+  }
+
+  _toggleSplitter() {
+    this._toggleExclusivePanel('splitter', () => new TextSplitter(() => (this.splitter = null)));
   }
 
   _toggleRunner() {
-    if (this.runner) {
-      if (this.runner._minimizeCtrl?.isMinimized) {
-        this.runner._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.runner.el);
-        return;
-      }
-      if (this.runner._isBusy && this.runner._isBusy()) {
-        if (!confirm("Kịch bản đang chạy. Bạn có chắc chắn muốn đóng và dừng kịch bản không?")) {
-          return;
-        }
-      }
-      console.log("❌ [ContentHelper] Closing ScenarioRunner");
-      this.runner.destroy();
-      this.runner = null;
-      return;
-    }
-    console.log("🚀 [ContentHelper] Opening ScenarioRunner");
-    this.runner = new ScenarioRunner(() => (this.runner = null));
+    this._toggleExclusivePanel('runner', () => new ScenarioRunner(() => (this.runner = null)));
   }
 
   _toggleFlowRunner() {
-    if (this.flowRunner) {
-      if (this.flowRunner._minimizeCtrl?.isMinimized) {
-        this.flowRunner._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.flowRunner.el);
-        return;
-      }
-      if (this.flowRunner._isBusy && this.flowRunner._isBusy()) {
-        if (!confirm("Flow đang chạy. Bạn có chắc chắn muốn đóng và dừng flow không?")) {
-          return;
-        }
-      }
-      console.log("❌ [ContentHelper] Closing FlowRunnerPanel");
-      this.flowRunner.destroy();
-      this.flowRunner = null;
-      return;
-    }
-    console.log("🔗 [ContentHelper] Opening FlowRunnerPanel");
-    this.flowRunner = new FlowRunnerPanel(() => (this.flowRunner = null));
+    this._toggleExclusivePanel('flowRunner', () => new FlowRunnerPanel(() => (this.flowRunner = null)));
   }
 
   _toggleAudioDownloader() {
-    if (this.audioDownloader) {
-      if (this.audioDownloader._minimizeCtrl?.isMinimized) {
-        this.audioDownloader._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.audioDownloader.el);
-        return;
-      }
-      this.audioDownloader.destroy();
-      this.audioDownloader = null;
-      return;
-    }
-    this.audioDownloader = new AudioDownloader(() => (this.audioDownloader = null));
+    this._toggleExclusivePanel('audioDownloader', () => new AudioDownloader(() => (this.audioDownloader = null)));
   }
 
   _toggleContentCopyPanel() {
-    if (this.contentCopyPanel) {
-      if (this.contentCopyPanel._minimizeCtrl?.isMinimized) {
-        this.contentCopyPanel._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.contentCopyPanel.el);
-        return;
-      }
-      this.contentCopyPanel.destroy();
-      this.contentCopyPanel = null;
-      return;
-    }
-    this.contentCopyPanel = new ContentCopyPanel(
-      () => (this.contentCopyPanel = null));
+    this._toggleExclusivePanel('contentCopyPanel', () => new ContentCopyPanel(() => (this.contentCopyPanel = null)));
   }
 
   _toggleAIStudioSettings() {
-    if (this.aiStudioSettings) {
-      if (this.aiStudioSettings._minimizeCtrl?.isMinimized) {
-        this.aiStudioSettings._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.aiStudioSettings.el);
-        return;
-      }
-      this.aiStudioSettings.destroy();
-      this.aiStudioSettings = null;
-      return;
-    }
-    this.aiStudioSettings = new GoogleAIStudioPanel(() => (this.aiStudioSettings = null));
+    this._toggleExclusivePanel('aiStudioSettings', () => new GoogleAIStudioPanel(() => (this.aiStudioSettings = null)));
   }
 
   _toggleAIStudioSpeechSettings() {
-    if (this.aiStudioSpeechSettings) {
-      if (this.aiStudioSpeechSettings._minimizeCtrl?.isMinimized) {
-        this.aiStudioSpeechSettings._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.aiStudioSpeechSettings.el);
-        return;
-      }
-      this.aiStudioSpeechSettings.destroy();
-      this.aiStudioSpeechSettings = null;
-      return;
-    }
-    this.aiStudioSpeechSettings = new GoogleAIStudioSpeechPanel(() => (this.aiStudioSpeechSettings = null));
+    this._toggleExclusivePanel('aiStudioSpeechSettings', () => new GoogleAIStudioSpeechPanel(() => (this.aiStudioSpeechSettings = null)));
   }
 
   _toggleSRTAutomation() {
-    if (this.srtAutomation) {
-      if (this.srtAutomation._minimizeCtrl?.isMinimized) {
-        this.srtAutomation._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.srtAutomation.el);
-        return;
-      }
-      this.srtAutomation.destroy();
-      this.srtAutomation = null;
-      return;
-    }
-    this.srtAutomation = new SRTAutomationPanel(() => (this.srtAutomation = null));
+    this._toggleExclusivePanel('srtAutomation', () => new SRTAutomationPanel(() => (this.srtAutomation = null)));
   }
 
   _toggleYoutubePanel() {
-    if (this.youtubePanel) {
-      if (this.youtubePanel._minimizeCtrl?.isMinimized) {
-        this.youtubePanel._minimizeCtrl.restore();
-        ContentHelper.bringToFront(this.youtubePanel.el);
-        return;
-      }
-      this.youtubePanel.destroy();
-      this.youtubePanel = null;
+    if (!window.YoutubeStudioPanel) {
+      ContentHelper.showToast("Lỗi: Không tìm thấy YoutubeStudioPanel.", "error");
       return;
     }
-    if (window.YoutubeStudioPanel) {
-      this.youtubePanel = new YoutubeStudioPanel(
-        () => (this.youtubePanel = null));
-    } else {
-      ContentHelper.showToast("Lỗi: Không tìm thấy YoutubeStudioPanel.", "error");
-    }
+    this._toggleExclusivePanel('youtubePanel', () => new YoutubeStudioPanel(() => (this.youtubePanel = null)));
   }
 
+  /* ---------- Cử chỉ vuốt/kéo xuống chuẩn Bottom Sheet (Swipe-down to dismiss/minimize) ---------- */
+  static attachBottomSheetSwipe(el, handleSelector = null) {
+    let handles = [];
+    if (typeof handleSelector === "string") {
+      handles = Array.from(el.querySelectorAll(handleSelector));
+    } else if (Array.isArray(handleSelector)) {
+      handles = handleSelector.filter(Boolean);
+    } else if (handleSelector) {
+      handles = [handleSelector];
+    } else {
+      handles = [el.querySelector('.ts-sheet-handle') || el.querySelector('.ts-header') || el];
+    }
 
-  /* ---------- helper kéo-thả dùng chung ---------- */
-  static makeDraggable(el, handleSelector = null) {
-    const handle = typeof handleSelector === "string"
-      ? el.querySelector(handleSelector)
-      : handleSelector || el;
-    if (!handle) return;
+    if (handles.length === 0) return;
 
-    handle.style.cursor = "move";
+    handles.forEach(handle => {
+      let startY = 0;
+      let currentDy = 0;
+      let isSwiping = false;
 
-    let shiftX = 0, shiftY = 0;
+      const onMouseDown = (e) => {
+        // Chỉ nhận chuột trái, không chặn click nút close/minimize hoặc controls
+        if (e.button !== 0 || e.target.closest('.panel-close, .panel-minimize, button, input, select, textarea, label')) return;
+        e.preventDefault();
 
-    handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
+        ContentHelper.bringToFront(el);
 
-      /* 👉 luôn đưa panel lên trên cùng */
-      ContentHelper.bringToFront(el);
+        startY = e.clientY;
+        currentDy = 0;
+        isSwiping = true;
 
-      const rect = el.getBoundingClientRect();
-      shiftX = e.clientX - rect.left;
-      shiftY = e.clientY - rect.top;
+        el.style.transition = 'none';
 
-      if (!el.dataset.free) {           // tách khỏi bar 1 lần duy nhất
-        el.dataset.free = "1";
+        const onMouseMove = (ev) => {
+          if (!isSwiping) return;
+          const dy = ev.clientY - startY;
+          // Chỉ cho phép kéo hướng xuống dưới
+          if (dy > 0) {
+            currentDy = dy;
+            el.style.transform = `translateY(${currentDy}px)`;
+          } else {
+            currentDy = 0;
+            el.style.transform = 'translateY(0)';
+          }
+        };
 
-        /* Tắt animation để không flash */
-        el.style.animation = "none";
+        const onMouseUp = () => {
+          if (!isSwiping) return;
+          isSwiping = false;
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
 
-        el.style.position = "fixed";
-        el.style.left = rect.left + "px";
-        el.style.top = rect.top + "px";
-        el.style.bottom = "auto";
-        el.style.right = "auto";
-        el.style.width = rect.width + "px";
-        ContentHelper.getShadowRoot().appendChild(el);
-      }
+          // Nếu kéo xuống > 80px: Tự động thu nhỏ (minimize) hoặc đóng panel
+          if (currentDy > 80) {
+            el.style.transition = 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease';
+            el.style.transform = 'translateY(100%)';
+            el.style.opacity = '0';
 
-      const onMouseMove = (ev) => {
-        el.style.left = (ev.clientX - shiftX) + "px";
-        el.style.top = (ev.clientY - shiftY) + "px";
+            setTimeout(() => {
+              const minBtn = el.querySelector('.panel-minimize');
+              const closeBtn = el.querySelector('.panel-close');
+              if (minBtn) {
+                minBtn.click();
+              } else if (closeBtn) {
+                closeBtn.click();
+              }
+              // Reset transform cho lần mở tiếp theo
+              el.style.transform = '';
+              el.style.opacity = '';
+              el.style.transition = '';
+            }, 200);
+          } else {
+            // Nảy về vị trí ban đầu (Snap back) mượt mà
+            el.style.transition = 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+            el.style.transform = 'translateY(0)';
+            setTimeout(() => {
+              el.style.transition = '';
+            }, 220);
+          }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
       };
 
-      const onMouseUp = () => {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      };
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      handle.addEventListener("mousedown", onMouseDown);
     });
+  }
+
+  // Tương thích ngược: chuyển hướng kéo thả sang Bottom Sheet swipe
+  static makeDraggable(el, handleSelector = null) {
+    this.attachBottomSheetSwipe(el, handleSelector);
   }
 
 
@@ -516,6 +526,29 @@ class ContentHelper {
       /** Khôi phục panel từ bubble */
       restore() {
         if (!isMinimized) return;
+        // Đóng bất kỳ panel nào khác đang mở trên màn hình
+        const h = window.__helperInjected;
+        if (h && typeof h._closeOtherOpenPanels === 'function') {
+          let myKey = null;
+          const allKeys = [
+            'builder', 'runner', 'flowRunner', 'splitter',
+            'audioDownloader', 'contentCopyPanel', 'aiStudioSettings',
+            'aiStudioSpeechSettings', 'srtAutomation', 'youtubePanel'
+          ];
+          for (const k of allKeys) {
+            if (h[k] && h[k].el === panelEl) {
+              myKey = k;
+              break;
+            }
+          }
+          if (!h._closeOtherOpenPanels(myKey)) {
+            return;
+          }
+          if (myKey && h[myKey]) {
+            h.activePanel = h[myKey];
+          }
+        }
+
         isMinimized = false;
         _removeBubble();
         panelEl.classList.remove('panel-minimized');
@@ -660,14 +693,11 @@ class ContentHelper {
 
   static closeTopPanel() {
     const shadow = ContentHelper.getShadowRoot();
-    const barPanels = Array.from(shadow.querySelectorAll(
-      '#content-helper-panel-bar .helper-panel'));
-    const floating = Array.from(shadow.querySelectorAll(
-      '.helper-panel[data-free="1"]'));
-
-    const lastEl = floating.at(-1) || barPanels.at(-1);
-    if (!lastEl) return;
-    lastEl.querySelector('.panel-close')?.click();
+    const activePanelEl = shadow.querySelector(
+      '#content-helper-panel-bar .ts-panel:not(.panel-minimized), #content-helper-panel-bar .helper-panel:not(.panel-minimized)');
+    if (activePanelEl) {
+      activePanelEl.querySelector('.panel-close')?.click();
+    }
   }
 
   /* 👇  thêm vào cuối class */
@@ -864,9 +894,11 @@ function hideButtons() {
   h.flowRunner?.destroy?.();
   h.splitter?.destroy?.();
   h.audioDownloader?.destroy?.();
+  h.contentCopyPanel?.destroy?.();
   h.srtAutomation?.destroy?.();
   h.aiStudioSettings?.destroy?.();
   h.aiStudioSpeechSettings?.destroy?.();
+  h.youtubePanel?.destroy?.();
 
   // ngắt observer & xóa khung nút
   h.destroy();                               // ⬅️ gọi hàm mới

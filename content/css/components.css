@@ -4,6 +4,36 @@
    Cách ly 100% – Toàn bộ components đều mang tiền tố .ts-* và scoped trong .ts-panel
    ========================================================================== */
 
+/* ── 0. BOTTOM SHEET DRAG HANDLE (.ts-sheet-handle) ────────────────────────── */
+.ts-sheet-handle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px 0 6px 0;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.ts-sheet-handle:active {
+  cursor: grabbing;
+}
+
+.ts-sheet-handle__bar {
+  width: 38px;
+  height: 4px;
+  background-color: var(--ch-border-strong);
+  border-radius: 9999px;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.ts-sheet-handle:hover .ts-sheet-handle__bar {
+  background-color: var(--ch-text-muted);
+  transform: scaleX(1.15);
+}
+
 /* ── 1. PANEL HEADER SYSTEM (.ts-header & .ts-title) ───────────────────────── */
 .ts-header,
 .ts-title {
@@ -11,10 +41,14 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
-  cursor: move;
+  cursor: grab;
   user-select: none;
-  padding-right: 48px; /* Chừa không gian cho nút minimize và close */
+  padding-right: 56px; /* Chừa không gian cho nút minimize và close */
   flex-shrink: 0;
+}
+
+.ts-header:active {
+  cursor: grabbing;
 }
 
 .ts-header__main {
@@ -575,7 +609,7 @@
 /* ── 10. PANEL WINDOW CONTROLS (.panel-close, .panel-minimize, .panel-bubble) ── */
 .panel-close {
   position: absolute;
-  top: 10px;
+  top: 12px;
   right: 12px;
   width: 24px;
   height: 24px;
@@ -608,7 +642,7 @@
 
 .panel-minimize {
   position: absolute;
-  top: 10px;
+  top: 12px;
   right: 40px;
   width: 24px;
   height: 24px;

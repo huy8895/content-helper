@@ -87,13 +87,7 @@ BUTTONS = {
     id: "chatgpt-ytstudio-settings-button",
     text: "文A Phụ đề YouTube",
     className: "ts-menu-item",
-    onClick: () => {
-      if (window.ChatAdapter && typeof window.ChatAdapter._toggleYoutubePanel === 'function') {
-        window.ChatAdapter._toggleYoutubePanel();
-      } else {
-        ensureHelperInstance()?._toggleYoutubePanel();
-      }
-    },
+    onClick: () => ensureHelperInstance()?._toggleYoutubePanel(),
   },
   YT_ADD_LANGUAGES: {
     id: "chatgpt-yt-add-languages-button",
@@ -924,12 +918,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   isDone() { return true; }
 
   _toggleYoutubePanel() {
-    if (this.ytPanel) {
-      this.ytPanel.destroy();
-      this.ytPanel = null; // Quan trọng: reset lại sau khi destroy
-    } else {
-      this.ytPanel = new YoutubeStudioPanel(() => (this.ytPanel = null));
-    }
+    ensureHelperInstance()?._toggleYoutubePanel();
   }
 
   sleep(ms) {
