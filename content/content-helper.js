@@ -239,7 +239,7 @@ class ContentHelper {
     this._toggleExclusivePanel('youtubePanel', () => new YoutubeStudioPanel(() => (this.youtubePanel = null)));
   }
 
-  /* ---------- Cử chỉ vuốt/kéo xuống chuẩn Bottom Sheet (Swipe-down to dismiss/minimize) ---------- */
+  /* ---------- Cử chỉ vuốt/kéo chuẩn Bottom Sheet (Dual-Action: Drag to Resize & Swipe-down to dismiss) ---------- */
   static attachBottomSheetSwipe(el, handleSelector = null) {
     let handles = [];
     if (typeof handleSelector === "string") {
@@ -256,8 +256,11 @@ class ContentHelper {
 
     handles.forEach(handle => {
       let startY = 0;
+      let startHeight = 0;
+      let isDragging = false;
+      let isResizing = false;
       let currentDy = 0;
-      let isSwiping = false;
+      let initialHeightStyle = '';
 
       const onMouseDown = (e) => {
         // Chỉ nhận chuột trái, không chặn click nút close/minimize hoặc controls
@@ -267,27 +270,54 @@ class ContentHelper {
         ContentHelper.bringToFront(el);
 
         startY = e.clientY;
+        startHeight = el.getBoundingClientRect().height;
+        initialHeightStyle = el.style.height;
+        isDragging = true;
+        isResizing = false;
         currentDy = 0;
-        isSwiping = true;
 
         el.style.transition = 'none';
 
         const onMouseMove = (ev) => {
-          if (!isSwiping) return;
+          if (!isDragging) return;
           const dy = ev.clientY - startY;
-          // Chỉ cho phép kéo hướng xuống dưới
-          if (dy > 0) {
-            currentDy = dy;
-            el.style.transform = `translateY(${currentDy}px)`;
-          } else {
+
+          // Hướng 1: Kéo lên trên (dy < 0) => Tăng chiều cao của Panel (Resize Taller)
+          if (dy < 0) {
+            isResizing = true;
             currentDy = 0;
             el.style.transform = 'translateY(0)';
+
+            // Cho phép panel mở rộng tới 92% màn hình hoặc 960px
+            const maxAllowed = Math.min(window.innerHeight * 0.92, 960);
+            const newHeight = Math.min(maxAllowed, startHeight - dy);
+
+            el.style.maxHeight = '92vh';
+            el.style.height = `${Math.round(newHeight)}px`;
+          } 
+          // Hướng 2: Kéo xuống dưới (dy > 0)
+          else {
+            // Nếu panel trước đó đã được kéo dãn cao hơn chiều cao cơ sở:
+            // Cho phép kéo thu ngắn chiều cao lại trước
+            if (isResizing || (initialHeightStyle && parseInt(initialHeightStyle, 10) > 300)) {
+              const newHeight = startHeight - dy;
+              if (newHeight >= 260) {
+                el.style.height = `${Math.round(newHeight)}px`;
+                el.style.transform = 'translateY(0)';
+                currentDy = 0;
+                return;
+              }
+            }
+
+            // Nếu đang ở chiều cao cơ sở => Cử chỉ vuốt để đóng/thu nhỏ (Swipe to Dismiss)
+            currentDy = dy;
+            el.style.transform = `translateY(${currentDy}px)`;
           }
         };
 
         const onMouseUp = () => {
-          if (!isSwiping) return;
-          isSwiping = false;
+          if (!isDragging) return;
+          isDragging = false;
           document.removeEventListener("mousemove", onMouseMove);
           document.removeEventListener("mouseup", onMouseUp);
 
@@ -325,6 +355,19 @@ class ContentHelper {
       };
 
       handle.addEventListener("mousedown", onMouseDown);
+
+      // Double-click vào Handle bar: Khôi phục chiều cao tự nhiên (Fit-Content)
+      if (handle.classList.contains('ts-sheet-handle') || handle.querySelector('.ts-sheet-handle__bar')) {
+        handle.addEventListener("dblclick", (e) => {
+          e.preventDefault();
+          el.style.transition = 'height 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+          el.style.height = 'auto';
+          el.style.maxHeight = '';
+          setTimeout(() => {
+            el.style.transition = '';
+          }, 220);
+        });
+      }
     });
   }
 

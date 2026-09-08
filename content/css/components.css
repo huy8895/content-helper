@@ -10,15 +10,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2px 0 6px 0;
-  cursor: grab;
+  padding: 3px 0 7px 0;
+  cursor: ns-resize;
   user-select: none;
   flex-shrink: 0;
   touch-action: none;
 }
 
 .ts-sheet-handle:active {
-  cursor: grabbing;
+  cursor: ns-resize;
 }
 
 .ts-sheet-handle__bar {
@@ -30,8 +30,8 @@
 }
 
 .ts-sheet-handle:hover .ts-sheet-handle__bar {
-  background-color: var(--ch-text-muted);
-  transform: scaleX(1.15);
+  background-color: var(--ch-accent);
+  transform: scaleX(1.25);
 }
 
 /* ── 1. PANEL HEADER SYSTEM (.ts-header & .ts-title) ───────────────────────── */
@@ -1226,7 +1226,7 @@
 .ts-scroll-h-md { max-height: 112px; }
 .ts-scroll-h-lg { max-height: 128px; }
 .ts-scroll-h-xl { max-height: 192px; }
-.ts-scroll-h-2xl { max-height: 320px; min-height: 130px; }
+.ts-scroll-h-2xl { max-height: 520px; min-height: 110px; }
 .ts-scroll-h-yt-lang { min-height: 120px; max-height: 160px; }
 
 /* Dropdown Container Width */
