@@ -45,8 +45,8 @@ window.GoogleAIStudioSpeechView = {
   </div>
 
   <!-- Form Cài Đặt -->
-  <div id="profile-settings-form" class="ts-flex ts-flex-col ts-gap-2 ts-mb-3">
-    <div class="ts-grid ts-grid-2 ts-gap-2">
+  <div id="profile-settings-form" class="ts-flex ts-flex-col ts-gap-2 ts-mb-2 ts-flex-1 ts-min-h-0">
+    <div class="ts-grid ts-grid-2 ts-gap-2 ts-flex-shrink-0">
       <div>
         <label for="input-value1" class="ts-label">Speaker 1</label>
         <input id="input-value1" type="text" class="ts-input">
@@ -57,7 +57,7 @@ window.GoogleAIStudioSpeechView = {
       </div>
     </div>
 
-    <div class="ts-grid ts-grid-2 ts-gap-2">
+    <div class="ts-grid ts-grid-2 ts-gap-2 ts-flex-shrink-0">
       <div>
         <label for="voice1" class="ts-label">Voice 1</label>
         <input id="voice1" type="text" class="ts-input" placeholder="Aoede">
@@ -68,22 +68,22 @@ window.GoogleAIStudioSpeechView = {
       </div>
     </div>
 
-    <div>
+    <div class="ts-flex-shrink-0">
       <label for="scene-instructions" class="ts-label">Scene</label>
       <textarea id="scene-instructions" class="ts-textarea" rows="2" placeholder="Nhập bối cảnh (Scene)..."></textarea>
     </div>
 
-    <div>
+    <div class="ts-flex-1 ts-flex ts-flex-col ts-min-h-0">
       <label for="style-instructions" class="ts-label">Style instructions (Sample Context)</label>
-      <textarea id="style-instructions" class="ts-textarea" rows="3" placeholder="Nhập hướng dẫn phong cách..."></textarea>
+      <textarea id="style-instructions" class="ts-textarea ts-flex-1 custom-scrollbar ts-min-h-0" style="min-height: 72px; resize: vertical;" placeholder="Nhập hướng dẫn phong cách..."></textarea>
     </div>
 
-    <label class="ts-switch-row">
+    <label class="ts-switch-row ts-flex-shrink-0">
       <span class="ts-switch-row__title">Tự động cấu hình (Auto Set)</span>
       <input type="checkbox" id="auto-set-value" class="ts-switch">
     </label>
 
-    <label class="ts-switch-row">
+    <label class="ts-switch-row ts-flex-shrink-0">
       <span class="ts-switch-row__title">Tự động dán Clipboard (Auto Paste)</span>
       <input type="checkbox" id="auto-paste-clipboard" class="ts-switch">
     </label>

@@ -123,6 +123,7 @@
 .ts-flex-wrap { flex-wrap: wrap; }
 .ts-flex-1 { flex: 1 1 0%; }
 .ts-flex-shrink-0 { flex-shrink: 0; }
+.ts-min-h-0 { min-height: 0; }
 
 .ts-items-center { align-items: center; }
 .ts-items-start { align-items: flex-start; }
