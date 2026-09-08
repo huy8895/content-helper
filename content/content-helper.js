@@ -68,6 +68,57 @@ class ContentHelper {
   /* ngay trong class ContentHelper (ngoài mọi hàm) */
   static zTop = 2147483000;   // cao nhưng vẫn < 2^31-1 để còn ++
 
+  /**
+   * Phản hồi âm thanh cơ học (Acoustic click) mô phỏng phím cơ xúc giác
+   * Tần số quét nhanh 2200Hz -> 100Hz trong 12ms kèm rung nhẹ 8ms
+   */
+  static playMechanicalClick() {
+    try {
+      if (window.navigator?.vibrate) window.navigator.vibrate(8);
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(2200, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.012);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.012);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.014);
+    } catch (e) {
+      // Fail silently - không chặn luồng chính
+    }
+  }
+
+  /**
+   * Phản hồi âm thanh trầm (Done Thump) báo hiệu hoàn thành tác vụ
+   */
+  static playDoneThump() {
+    try {
+      if (window.navigator?.vibrate) window.navigator.vibrate([15, 30, 15]);
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.065);
+    } catch (e) {
+      // Fail silently
+    }
+  }
+
   /* UI helpers */
   _createButton({ id, text, className, onClick }) {
     const btn = document.createElement("button");
@@ -76,6 +127,7 @@ class ContentHelper {
     btn.className = className;
     btn.addEventListener("click", (e) => {
       console.log(`🔘 [ContentHelper] Click ${text}`);
+      ContentHelper.playMechanicalClick();
       e.preventDefault();
       e.stopPropagation();
       onClick();

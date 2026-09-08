@@ -1,0 +1,142 @@
+/* ==========================================================================
+   CONTENT HELPER – BASE & SCOPED LAYOUT HELPERS
+   Tuân thủ nghiêm ngặt design.md & AGENTS.md
+   Cách ly 100% – Mọi quy tắc đều được scoped trong .ts-panel hoặc có tiền tố .ts-*
+   ========================================================================== */
+
+/* ── 1. ROOT PANEL CONTAINER (.ts-panel & .panel-box) ──────────────────────── */
+.ts-panel,
+.panel-box {
+  position: fixed !important;
+  width: 420px !important;
+  min-width: 400px !important;
+  max-width: 460px !important;
+  max-height: 85dvh !important;
+  min-height: 180px !important;
+
+  background-color: var(--ch-canvas) !important;
+  border: 1px solid var(--ch-border) !important;
+  border-radius: var(--ch-radius-panel) !important;
+  box-shadow: var(--ch-shadow-panel) !important;
+
+  font-family: var(--ch-font-sans) !important;
+  color: var(--ch-text-primary) !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 14px !important;
+  z-index: 2147483645 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  animation: ts-panel-appear 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+@keyframes ts-panel-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Scoped Reset cho tất cả con bên trong .ts-panel */
+.ts-panel *,
+.ts-panel *::before,
+.ts-panel *::after {
+  box-sizing: border-box !important;
+}
+
+/* ── 2. SCROLLBARS TÙY CHỈNH (.custom-scrollbar) ───────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--ch-border-strong) !important;
+  border-radius: 4px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--ch-text-muted) !important;
+}
+
+/* ── 3. SCOPED LAYOUT HELPERS (Chỉ dùng tiền tố ts-*) ──────────────────────── */
+
+/* Flexbox */
+.ts-flex { display: flex !important; }
+.ts-inline-flex { display: inline-flex !important; }
+.ts-flex-col { flex-direction: column !important; }
+.ts-flex-row { flex-direction: row !important; }
+.ts-flex-wrap { flex-wrap: wrap !important; }
+.ts-flex-1 { flex: 1 1 0% !important; }
+.ts-flex-shrink-0 { flex-shrink: 0 !important; }
+
+.ts-items-center { align-items: center !important; }
+.ts-items-start { align-items: flex-start !important; }
+.ts-items-end { align-items: flex-end !important; }
+
+.ts-justify-between { justify-content: space-between !important; }
+.ts-justify-center { justify-content: center !important; }
+.ts-justify-end { justify-content: flex-end !important; }
+
+/* Grid */
+.ts-grid { display: grid !important; }
+.ts-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.ts-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.ts-grid-12 { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; }
+
+.ts-col-5 { grid-column: span 5 / span 5 !important; }
+.ts-col-7 { grid-column: span 7 / span 7 !important; }
+.ts-col-12 { grid-column: span 12 / span 12 !important; }
+
+/* Spacing & Gaps */
+.ts-gap-1 { gap: 4px !important; }
+.ts-gap-1-5 { gap: 6px !important; }
+.ts-gap-2 { gap: 8px !important; }
+.ts-gap-2-5 { gap: 10px !important; }
+.ts-gap-3 { gap: 12px !important; }
+.ts-gap-4 { gap: 16px !important; }
+
+/* Sizing & Position */
+.ts-w-full { width: 100% !important; }
+.ts-h-full { height: 100% !important; }
+.ts-relative { position: relative !important; }
+.ts-absolute { position: absolute !important; }
+.ts-hidden,
+.ts-panel .hidden { display: none !important; }
+
+/* Overflow & Text */
+.ts-overflow-hidden { overflow: hidden !important; }
+.ts-overflow-y-auto { overflow-y: auto !important; }
+.ts-truncate { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.ts-text-center { text-align: center !important; }
+
+/* Interaction */
+.ts-cursor-pointer { cursor: pointer !important; }
+.ts-cursor-move { cursor: move !important; }
+.ts-select-none { user-select: none !important; }
+
+/* Pulse Animation */
+@keyframes ts-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.ts-animate-pulse {
+  animation: ts-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+}

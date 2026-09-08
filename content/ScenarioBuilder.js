@@ -1,59 +1,3 @@
-const ScenarioBuilderInnerHTML = `
-  <div class="sb-title flex items-center mb-4 cursor-move select-none">
-    <span class="text-xl mr-2">🛠</span>
-    <div>
-      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Quản lý Kịch bản</h3>
-      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Create and edit prompt templates</div>
-    </div>
-  </div>
-
-  <div id="scenario-browser" class="mb-4 relative">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest pl-1">📄 Danh sách kịch bản</label>
-    <div class="relative">
-      <input type="text" id="scenario-search" 
-        class="w-full h-8 pl-8 pr-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 transition-all outline-none" 
-        placeholder="Tìm kịch bản nhanh...">
-      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">🔍</span>
-    </div>
-    <div id="scenario-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto hidden-dropdown custom-scrollbar p-1 flex flex-col"></div>
-  </div>
-
-  <div id="scenario-editor" class="flex-1 overflow-hidden flex flex-col bg-gray-50 rounded-xl border border-gray-100 p-3 mb-4">
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div>
-        <label for="scenario-name" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Tên kịch bản</label>
-        <input type="text" id="scenario-name" 
-          class="w-full h-8 px-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all font-bold" 
-          placeholder="Tên kịch bản">
-      </div>
-      <div>
-        <label for="scenario-group" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Nhóm</label>
-        <input type="text" id="scenario-group" 
-          class="w-full h-8 px-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 outline-none transition-all" 
-          placeholder="podcast / video / blog">
-      </div>
-    </div>
-
-    <div class="flex-1 overflow-y-auto mb-3 pr-1 custom-scrollbar" id="questions-container"></div>
-    
-    <button id="add-question" class="w-full h-8 border border-dashed border-gray-200 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-indigo-500 hover:border-indigo-200 transition-all active:scale-[0.98]">
-      + Thêm câu hỏi mới
-    </button>
-  </div>
-
-  <div id="scenario-buttons" class="grid grid-cols-3 gap-2">
-    <button id="new-scenario-btn" class="h-8 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
-      ➕ Tạo mới
-    </button>
-    <button id="save-to-storage" class="h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-      💾 Lưu lại
-    </button>
-    <button id="delete-scenario" class="h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
-      🗑️ Xoá
-    </button>
-  </div>
-`;
-
 window.ScenarioBuilder = class {
   constructor(onClose) {
     console.log("📦 [ScenarioBuilder] init");
@@ -68,7 +12,7 @@ window.ScenarioBuilder = class {
     this.el.id = "scenario-builder";
     this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
     this.el.style.maxHeight = "640px";
-    this.el.innerHTML = ScenarioBuilderInnerHTML;
+    this.el.innerHTML = window.ScenarioBuilderView?.render?.() || "";
 
     ContentHelper.mountPanel(this.el);
     ContentHelper.makeDraggable(this.el, ".sb-title");

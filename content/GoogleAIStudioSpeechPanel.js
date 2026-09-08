@@ -1,99 +1,3 @@
-// =================================================================
-// CONSTANTS FOR HTML
-// =================================================================
-
-const SPEECH_PANEL_HTML = `
-  <div class="ts-title flex items-center mb-4 cursor-move select-none">
-    <span class="text-xl mr-2">🎙️</span>
-    <div>
-      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">AI Studio Speech Settings</h3>
-      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Profile & Automation Config</div>
-    </div>
-  </div>
-  
-  <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4 relative z-50">
-    <div class="flex items-center justify-between mb-2 pl-1">
-      <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Profile Cài đặt</label>
-      <div class="flex gap-2">
-         <button id="gaisp-new-profile" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors">➕ Mới</button>
-         <button id="gaisp-delete-profile" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 transition-colors">🗑️ Xóa</button>
-      </div>
-    </div>
-    <div class="flex gap-2 mb-3">
-      <div id="profile-dropdown-container" class="custom-dropdown-container flex-1">
-        <button id="profile-dropdown-trigger" class="custom-dropdown-trigger">
-          <span id="profile-selected-text">Tải Profile...</span>
-          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        <div id="profile-dropdown-menu" class="custom-dropdown-menu custom-scrollbar"></div>
-      </div>
-    </div>
-    
-    <div id="gaisp-new-profile-group" class="hidden flex gap-2 animate-in">
-      <input type="text" id="new-profile-name" class="flex-1 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white focus:border-indigo-500 outline-none transition-all" placeholder="Tên profile mới...">
-      <button id="save-as-new-btn" class="h-8 px-3 bg-indigo-50 text-indigo-600 font-bold rounded-md text-[10px] hover:bg-indigo-100 transition-all active:scale-95">Lưu</button>
-    </div>
-  </div>
-
-  <div id="profile-settings-form" class="space-y-3 mb-4">
-    <div class="grid grid-cols-2 gap-3">
-      <div class="form-group">
-        <label for="input-value1" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Speaker 1</label>
-        <input id="input-value1" type="text" class="w-full h-8 px-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all shadow-sm">
-      </div>
-      <div class="form-group">
-        <label for="input-value2" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Speaker 2</label>
-        <input id="input-value2" type="text" class="w-full h-8 px-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all shadow-sm">
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div class="form-group">
-        <label for="voice1" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Voice 1</label>
-        <input id="voice1" type="text" class="w-full h-8 px-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all shadow-sm" placeholder="Aoede">
-      </div>
-      <div class="form-group">
-        <label for="voice2" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Voice 2</label>
-        <input id="voice2" type="text" class="w-full h-8 px-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all shadow-sm" placeholder="Charon">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label for="scene-instructions" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Scene</label>
-      <textarea id="scene-instructions" class="w-full h-12 p-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-y shadow-sm" placeholder="Nhập bối cảnh (Scene)..."></textarea>
-    </div>
-
-    <div class="form-group">
-      <label for="style-instructions" class="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Style instructions (Sample Context)</label>
-      <textarea id="style-instructions" class="w-full h-20 p-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 outline-none transition-all resize-y shadow-sm" placeholder="Nhập hướng dẫn phong cách..."></textarea>
-    </div>
-
-    <div class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 bg-white hover:border-emerald-100 transition-all group">
-        <label class="flex items-center justify-between w-full cursor-pointer select-none">
-          <span class="text-xs font-bold text-gray-700 group-hover:text-emerald-700 transition-colors">Tự động cấu hình (Auto Set)</span>
-          <input type="checkbox" id="auto-set-value" class="ts-switch">
-        </label>
-    </div>
-
-    <div class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 bg-white hover:border-amber-100 transition-all group">
-        <label class="flex items-center justify-between w-full cursor-pointer select-none">
-          <span class="text-xs font-bold text-gray-700 group-hover:text-amber-700 transition-colors">Tự động dán Clipboard (Auto Paste)</span>
-          <input type="checkbox" id="auto-paste-clipboard" class="ts-switch">
-        </label>
-    </div>
-  </div>
-
-  <button id="save-settings-btn" class="w-full h-[42px] flex-shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl text-[13px] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center shadow-sm">
-    Cập nhật Profile
-  </button>
-`;
-
-// =================================================================
-// THE REFACTORED CLASS FOR NEW SPEECH UI
-// =================================================================
-
 window.GoogleAIStudioSpeechPanel = class {
   constructor(onClose) {
     this.onClose = onClose;
@@ -110,7 +14,7 @@ window.GoogleAIStudioSpeechPanel = class {
     this.el = document.createElement('div');
     this.el.id = "google-ai-studio-speech-panel";
     this.el.className = "ts-panel animate-in";
-    this.el.innerHTML = SPEECH_PANEL_HTML;
+    this.el.innerHTML = window.GoogleAIStudioSpeechView?.render?.() || "";
 
     ContentHelper.mountPanel(this.el);
     ContentHelper.makeDraggable(this.el, ".ts-title");
@@ -778,7 +682,7 @@ window.GoogleAIStudioSpeechPanel = class {
     const btn = document.createElement('button');
     btn.id = 'content-helper-aistudio-speech-settings';
     btn.textContent = '🎙️ Settings';
-    btn.className = 'ai-gradient-border font-bold text-xs shadow-2xl hover:shadow-xl transition-all active:scale-95';
+    btn.className = 'bg-[#141517] text-[#fbfbfa] border border-[#2e3035] font-bold text-xs shadow-lg hover:shadow-xl transition-all active:scale-95';
     btn.addEventListener('click', (e) => {
       if (container.dataset.isDragging !== 'true') {
         window.__helperInjected?._toggleAIStudioSpeechSettings();

@@ -30,54 +30,7 @@ window.AudioDownloader = class {
     this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative";
     this.el.style.maxHeight = "580px";
 
-    this.el.innerHTML = `
-      <div class="ts-title flex items-center mb-4 cursor-move select-none">
-        <span class="text-xl mr-2">🎵</span>
-        <div>
-          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Audio Downloader</h3>
-          <div id="srt-status-text" class="text-[10px] text-gray-500 font-medium tracking-tight">TTS Audio Generator</div>
-        </div>
-      </div>
-
-      <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
-        <div class="flex gap-3 mb-3">
-          <div class="flex-1">
-            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block tracking-widest pl-1">Voice Model</label>
-            <select id="ad-voice" class="w-full h-8 px-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all">
-              <option value="shade">Monday</option>
-              <option value="glimmer">Sol</option>
-              <option value="vale">Vale</option>
-              <option value="cove">Cove</option>
-              <option value="fathom">Arbor</option>
-              <option value="juniper">Juniper</option>
-        <div class="grid grid-cols-2 gap-2 mb-3">
-          <select id="ad-voice" class="h-8 px-2 bg-white border border-gray-300 rounded-lg text-[11px] font-bold text-indigo-600 outline-none focus:border-indigo-500 transition-all cursor-pointer"></select>
-          <select id="ad-format" class="h-8 px-2 bg-white border border-gray-300 rounded-lg text-[11px] font-bold text-indigo-600 outline-none focus:border-indigo-500 transition-all cursor-pointer">
-            <option value="mp3">MP3</option>
-            <option value="wav">WAV</option>
-          </select>
-        </div>
-
-        <div class="flex gap-2">
-          <button id="ad-dlall" class="flex-[2] h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-            Download All
-          </button>
-          <button id="ad-reset" class="flex-1 h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
-            🔄 Reset
-          </button>
-        </div>
-      </div>
-
-      <div class="flex justify-between items-center mb-2 px-1">
-        <label class="flex items-center gap-2 cursor-pointer select-none group">
-          <input type="checkbox" id="ad-select-all" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all" />
-          <span class="text-[11px] text-gray-500 font-bold group-hover:text-gray-700">Select all messages</span>
-        </label>
-        <div id="ad-progress" class="text-[10px] font-bold text-indigo-600 animate-pulse"></div>
-      </div>
-
-      <div id="ad-list" class="ts-results flex-1 overflow-y-auto pr-1 bg-white rounded-xl border border-gray-50 p-1.5 custom-scrollbar"></div>
-    `;
+    this.el.innerHTML = window.AudioDownloaderView?.render?.() || "";
 
     ContentHelper.mountPanel(this.el);
     ContentHelper.makeDraggable(this.el, ".ts-title");

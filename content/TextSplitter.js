@@ -70,78 +70,7 @@ window.TextSplitter = class {
     this.el.style.maxHeight = "640px";
 
     /** Panel HTML */
-    this.el.innerHTML = `
-      <div class="ts-title flex items-center mb-4 cursor-move select-none">
-        <span class="text-xl mr-2">✂️</span>
-        <div>
-          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Text Splitter</h3>
-          <div class="text-[10px] text-gray-500 font-medium tracking-tight">Split long text into manageable chunks</div>
-        </div>
-      </div>
-
-      <!-- Radio chọn nguồn dữ liệu -->
-      <div class="flex gap-2 mb-3 bg-gray-50 p-1 rounded-lg border border-gray-100">
-        <label class="flex-1 flex items-center justify-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-all hover:bg-white hover:shadow-sm has-[:checked]:bg-white has-[:checked]:shadow-sm has-[:checked]:text-indigo-600 font-bold text-[10px] text-gray-400">
-          <input type="radio" name="ts-input-mode" value="file" checked class="hidden"> 
-          <span>📂 Load File</span>
-        </label>
-        <label class="flex-1 flex items-center justify-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-all hover:bg-white hover:shadow-sm has-[:checked]:bg-white has-[:checked]:shadow-sm has-[:checked]:text-indigo-600 font-bold text-[10px] text-gray-400">
-          <input type="radio" name="ts-input-mode" value="text" class="hidden"> 
-          <span>✍️ Manual Text</span>
-        </label>
-      </div>
-
-      <!-- File input -->
-      <div id="ts-file-block" class="mb-4">
-        <div class="flex items-center gap-2">
-          <label class="ts-file-wrapper h-8 px-3 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition-all shadow-sm">
-            <span>➕</span> Browse .txt
-            <input type="file" id="ts-file-input" accept=".txt" class="hidden" />
-          </label>
-          <span id="ts-file-name" class="text-[10px] text-gray-400 italic truncate flex-1">No file chosen</span>
-        </div>
-      </div>
-
-      <!-- Textarea input -->
-      <textarea id="ts-input" 
-        class="ts-textarea w-full h-24 p-2 text-xs border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none resize-y mb-4 hidden"
-        placeholder="Paste or type your long text…"></textarea>
-
-      <div class="flex items-center justify-between mb-4 bg-gray-50/50 p-2 rounded-xl border border-gray-100">
-        <div class="flex items-center gap-1.5">
-          <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest pl-1">Limit:</span>
-          <input id="ts-limit" type="number" value="1000" class="w-16 h-7 px-2 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-500/20">
-          <span class="text-[9px] font-bold text-gray-300">chars</span>
-        </div>
-        <button id="ts-split" class="h-7 px-4 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-          ✂️ Split Text
-        </button>
-      </div>
-
-      <!-- controls -->
-      <div class="grid grid-cols-4 gap-1.5 mb-4">
-        <button id="ts-start" class="h-8 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm disabled:opacity-30 disabled:pointer-events-none" disabled>
-          ▶️ Send All
-        </button>
-        <button id="ts-pause" class="h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none" disabled>
-          ⏸ Pause
-        </button>
-        <button id="ts-resume" class="h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none" disabled>
-          ▶️ Resume
-        </button>
-        <button id="ts-reset" class="h-8 bg-white border border-rose-100 text-rose-400 font-bold rounded-lg text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
-          🔄 Reset
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-hidden flex flex-col">
-          <div class="flex justify-between items-center mb-2 px-1">
-             <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Segments</label>
-             <span id="ts-progress-badge" class="hidden text-[9px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold">Progress: 0%</span>
-          </div>
-          <div id="ts-results" class="ts-results flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar"></div>
-      </div>
-    `;
+    this.el.innerHTML = window.TextSplitterView?.render?.() || "";
 
     // Sự kiện thay đổi giữa File / Text
     const radios = this.el.querySelectorAll('input[name="ts-input-mode"]');

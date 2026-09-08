@@ -4,65 +4,6 @@
  * Khởi tạo FlowSequencer để điều khiển quá trình chạy (chạy, tạm dừng, thử lại, bỏ qua).
  */
 
-const FlowRunnerInnerHTML = `
-  <div class="sr-header flex items-center mb-4 cursor-move select-none">
-    <span class="text-xl mr-2">🔗</span>
-    <div>
-      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Flow Runner</h3>
-      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Thực thi kịch bản liên hoàn</div>
-    </div>
-  </div>
-
-  <div id="flow-browser" class="mb-4 relative">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">CHỌN FLOW</label>
-    <select id="flow-select" class="w-full h-9 px-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 transition-all outline-none">
-      <option value="">-- Đang tải dữ liệu... --</option>
-    </select>
-  </div>
-
-  <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100 mb-4">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">BẮT ĐẦU TỪ BƯỚC</label>
-    <select id="flow-step-select" class="w-full h-9 px-3 text-sm font-bold text-indigo-600 bg-white border border-gray-300 rounded-lg outline-none focus:border-indigo-500 transition-all cursor-pointer" disabled>
-      <option value="0">Vui lòng chọn Flow...</option>
-    </select>
-  </div>
-
-  <div id="flow-inputs" class="space-y-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar">
-    <div class="text-xs text-gray-500 italic text-center">Các biến cấu hình sẽ hiển thị ở đây.</div>
-  </div>
-
-  <!-- Thanh tiến trình -->
-  <div id="flow-progress-box" class="mb-4 hidden">
-    <div class="flex justify-between items-end mb-1.5 px-1">
-      <div class="text-[10px] font-bold text-gray-500 uppercase">
-        Step <span id="flow-progress-step" class="text-indigo-600">0</span> / <span id="flow-progress-total">0</span>
-      </div>
-      <div id="flow-progress-status" class="text-xs font-black text-indigo-600">Đang chạy...</div>
-    </div>
-    <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
-      <div id="flow-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-    </div>
-    <div id="flow-step-details" class="mt-2 text-[10px] text-gray-500 italic truncate"></div>
-    
-    <!-- Controls khi gặp lỗi -->
-    <div id="flow-error-controls" class="mt-2 flex gap-2 hidden">
-      <button id="flow-retry-btn" class="flex-1 h-7 bg-orange-50 text-orange-600 border border-orange-200 rounded text-[10px] font-bold hover:bg-orange-100 transition-all">🔄 Thử lại (Retry)</button>
-      <button id="flow-skip-btn" class="flex-1 h-7 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[10px] font-bold hover:bg-gray-200 transition-all">⏭ Bỏ qua (Skip)</button>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 gap-2 mb-4">
-    <button id="flow-start-btn" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-      ▶️ Bắt đầu Flow
-    </button>
-  </div>
-
-  <div class="flex gap-2">
-    <button id="flow-pause-btn" class="flex-1 h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
-    <button id="flow-resume-btn" class="flex-1 h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
-  </div>
-`;
-
 window.FlowRunnerPanel = class {
   constructor(onClose) {
     console.log("▶️ [FlowRunnerPanel] init");
@@ -87,7 +28,7 @@ window.FlowRunnerPanel = class {
     this.el = document.createElement("div");
     this.el.id = "flow-runner-panel";
     this.el.className = "panel-box ts-panel w-[400px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.innerHTML = FlowRunnerInnerHTML;
+    this.el.innerHTML = window.FlowRunnerView?.render?.() || "";
 
     ContentHelper.mountPanel(this.el);
     ContentHelper.makeDraggable(this.el, ".sr-header");

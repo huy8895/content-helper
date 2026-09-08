@@ -1,0 +1,158 @@
+/* ==========================================================================
+   CONTENT HELPER – CALM TECH DESIGN TOKENS
+   Tuân thủ nghiêm ngặt design.md & AGENTS.md
+   Hệ thống biến CSS (Variables) cách ly 100%, hỗ trợ Light/Dark Mode mượt mà.
+   ========================================================================== */
+
+/* ── 1. LIGHT MODE TOKENS (RAW PAPER & TERRACOTTA) ────────────────────────── */
+:root {
+  /* Nền và Bề mặt giấy mộc ngà ấm */
+  --ch-canvas: #FBFBFA;
+  --ch-surface: #FFFFFF;
+  --ch-surface-alt: #F3F2EE;
+  --ch-surface-hover: #EBE9E3;
+  --ch-border: #E6E4DF;
+  --ch-border-subtle: #EFECE6;
+  --ch-border-strong: #D1CEC7;
+
+  /* Typography & Mức độ tương phản văn bản */
+  --ch-text-primary: #1A1918;
+  --ch-text-secondary: #4A4844;
+  --ch-text-muted: #706E6A;
+  --ch-text-disabled: #A6A39D;
+
+  /* Điểm nhấn Đất nung (Terracotta) */
+  --ch-accent: #C25E2E;
+  --ch-accent-hover: #A84E24;
+  --ch-accent-subtle: #FAF0EB;
+  --ch-accent-border: #F0D5C7;
+
+  /* Màu trạng thái: Lục trầm cơ học */
+  --ch-success: #2D6A4F;
+  --ch-success-subtle: #EAF4EE;
+  --ch-success-border: #CBE4D4;
+
+  /* Màu trạng thái: Hổ phách ấm (Amber / Warning / Song song) */
+  --ch-warning: #B45309;
+  --ch-warning-subtle: #FEF3C7;
+  --ch-warning-border: #FDE68A;
+
+  /* Màu trạng thái: Đỏ son gạch nung (Danger / Xóa / Dừng) */
+  --ch-danger: #A83232;
+  --ch-danger-subtle: #FDF2F2;
+  --ch-danger-border: #FACDCD;
+
+  /* Nhóm màu mở rộng (Teal / Purple) */
+  --ch-teal: #0F766E;
+  --ch-teal-subtle: #F0FDFA;
+  --ch-teal-border: #CCFBF1;
+
+  --ch-purple: #6B21A8;
+  --ch-purple-subtle: #FAF5FF;
+  --ch-purple-border: #F3E8FF;
+
+  /* Font chữ hệ thống Calm Tech */
+  --ch-font-sans: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ch-font-mono: "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Bóng đổ mộc (Diffuse Hairline Shadows) */
+  --ch-shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.04), 0 20px 40px -12px rgba(0, 0, 0, 0.16);
+  --ch-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ch-shadow-dropdown: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* Bo góc công thái học */
+  --ch-radius-panel: 14px;
+  --ch-radius-control: 8px;
+  --ch-radius-card: 12px;
+}
+
+/* ── 2. DARK MODE TOKENS (BRUSHED GRAPHITE & AMBER) ───────────────────────── */
+.dark,
+[data-theme="dark"],
+[data-color-mode="dark"],
+body[class*="dark"],
+html[class*="dark"] {
+  --ch-canvas: #141517;
+  --ch-surface: #1D1F22;
+  --ch-surface-alt: #26292E;
+  --ch-surface-hover: #31353C;
+  --ch-border: #2E3238;
+  --ch-border-subtle: #23272C;
+  --ch-border-strong: #424750;
+
+  --ch-text-primary: #EDEDEC;
+  --ch-text-secondary: #B6B8BC;
+  --ch-text-muted: #8E929A;
+  --ch-text-disabled: #5A5E66;
+
+  --ch-accent: #D97736;
+  --ch-accent-hover: #E58848;
+  --ch-accent-subtle: #2D1E16;
+  --ch-accent-border: #523120;
+
+  --ch-success: #40916C;
+  --ch-success-subtle: #14281E;
+  --ch-success-border: #1E4733;
+
+  --ch-warning: #D97706;
+  --ch-warning-subtle: #2D2010;
+  --ch-warning-border: #523B18;
+
+  --ch-danger: #C94A4A;
+  --ch-danger-subtle: #2D1616;
+  --ch-danger-border: #522222;
+
+  --ch-teal: #14B8A6;
+  --ch-teal-subtle: #112826;
+  --ch-teal-border: #1B4E4A;
+
+  --ch-purple: #C084FC;
+  --ch-purple-subtle: #261633;
+  --ch-purple-border: #4A2666;
+
+  --ch-shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.2), 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  --ch-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ch-shadow-dropdown: 0 12px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.light) body:not(.light) {
+    --ch-canvas: #141517;
+    --ch-surface: #1D1F22;
+    --ch-surface-alt: #26292E;
+    --ch-surface-hover: #31353C;
+    --ch-border: #2E3238;
+    --ch-border-subtle: #23272C;
+    --ch-border-strong: #424750;
+
+    --ch-text-primary: #EDEDEC;
+    --ch-text-secondary: #B6B8BC;
+    --ch-text-muted: #8E929A;
+    --ch-text-disabled: #5A5E66;
+
+    --ch-accent: #D97736;
+    --ch-accent-hover: #E58848;
+    --ch-accent-subtle: #2D1E16;
+    --ch-accent-border: #523120;
+
+    --ch-success: #40916C;
+    --ch-success-subtle: #14281E;
+    --ch-success-border: #1E4733;
+
+    --ch-warning: #D97706;
+    --ch-warning-subtle: #2D2010;
+    --ch-warning-border: #523B18;
+
+    --ch-danger: #C94A4A;
+    --ch-danger-subtle: #2D1616;
+    --ch-danger-border: #522222;
+
+    --ch-teal: #14B8A6;
+    --ch-teal-subtle: #112826;
+    --ch-teal-border: #1B4E4A;
+
+    --ch-purple: #C084FC;
+    --ch-purple-subtle: #261633;
+    --ch-purple-border: #4A2666;
+  }
+}
