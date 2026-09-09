@@ -1,71 +1,19 @@
-window.SRTAutomationPanel = class {
+/**
+ * SRTAutomationPanel.js
+ * Quản lý logic quét và trích xuất file phụ đề SRT
+ * Kế thừa BasePanel chuẩn hóa Lifecycle và Minimize Bubble.
+ */
+
+window.SRTAutomationPanel = class extends window.BasePanel {
     constructor(onClose) {
-        this.onClose = onClose;
+        super({
+            id: "srt-automation-panel",
+            title: "SRT Automation",
+            icon: "⏱️",
+            onClose: onClose,
+            view: window.SRTAutomationView
+        });
         this.collectedSRTs = {}; // languageLabel -> srtContent
-        this._render();
-    }
-
-    _render() {
-        this.el = document.createElement("div");
-        this.el.id = "srt-automation-panel";
-        // Tailwind classes for the main panel
-        this.el.className = "panel-box ts-panel w-[380px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-
-        const html = `
-      <!-- Header / Draggable Area -->
-      <div class="ts-title flex items-center mb-4 cursor-move select-none">
-        <span class="text-xl mr-2">🤖</span>
-        <div>
-          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">SRT Automation</h3>
-          <div id="srt-status-text" class="text-[10px] text-gray-500 font-medium tracking-tight">Status: Standby (Scan ready)</div>
-        </div>
-      </div>
-      
-      <!-- Label Input Area -->
-      <div class="mb-3">
-        <label for="srt-labels-input" class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">Manual Labels (comma separated):</label>
-        <div class="relative">
-          <textarea id="srt-labels-input" 
-            class="w-full h-16 text-xs p-2.5 border border-gray-300 rounded-lg resize-y outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans leading-snug" 
-            placeholder="e.g. Arabic, Chinese, English, French"></textarea>
-        </div>
-      </div>
-
-      <!-- Action Button -->
-      <div class="sr-controls mb-4">
-        <button id="srt-scan-existing" class="w-full h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-center gap-2 text-[11px] cursor-pointer transition-all active:scale-95 hover:bg-indigo-100 shadow-sm">
-          <span class="text-sm">🔍</span> Scan Chat Content
-        </button>
-      </div>
-
-      <!-- Result List Area -->
-      <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
-        <div class="flex justify-between items-center mb-2 px-1">
-           <strong class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Collected SRTs</strong>
-           <span id="srt-count-badge" class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-sm">0 files</span>
-        </div>
-        <div class="sr-queue-box max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-          <ul id="srt-list" class="sr-queue-list m-0 p-0 list-none space-y-0.5"></ul>
-        </div>
-      </div>
-
-      <!-- Bottom Controls -->
-      <div class="sr-controls mt-4 flex gap-2.5">
-        <button id="srt-download-zip" class="flex-[2] h-9 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-100 shadow-sm transition-all active:scale-95 text-[11px]">
-          📥 Download ZIP
-        </button>
-        <button id="srt-clear" class="flex-1 h-9 font-bold rounded-lg bg-white border border-rose-100 text-rose-400 text-[10px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95">
-          Clear
-        </button>
-      </div>
-    `;
-
-        this.el.innerHTML = html;
-
-        ContentHelper.mountPanel(this.el);
-        ContentHelper.makeDraggable(this.el, ".ts-title");
-        ContentHelper.addCloseButton(this.el, () => this.destroy());
-
         this._bindEvents();
         this._updateList();
     }
@@ -81,6 +29,7 @@ window.SRTAutomationPanel = class {
             btnScan.disabled = true;
             btnScan.textContent = 'Scanning...';
             statusText.textContent = 'Status: Scanning chat...';
+            ContentHelper.playHapticFeedback?.(8);
 
             this._scanExisting();
 
@@ -91,10 +40,14 @@ window.SRTAutomationPanel = class {
             }, 1000);
         };
 
-        btnDownload.onclick = () => this._downloadZip();
+        btnDownload.onclick = () => {
+            ContentHelper.playHapticFeedback?.(8);
+            this._downloadZip();
+        };
 
         btnClear.onclick = () => {
             if (confirm('Clear all collected SRTs?')) {
+                ContentHelper.playHapticFeedback?.(8);
                 this.collectedSRTs = {};
                 this._updateList();
             }
@@ -152,7 +105,7 @@ window.SRTAutomationPanel = class {
         });
 
         this._updateList();
-        console.log(`✅ [SRTAutomation] Scan complete. Mapped ${mappedCount} SRTs.`);
+        console.log(`✓ [SRTAutomation] Scan complete. Mapped ${mappedCount} SRTs.`);
         ContentHelper.showToast(`Successfully scanned and mapped ${mappedCount} files.`, "success");
     }
 
@@ -166,18 +119,23 @@ window.SRTAutomationPanel = class {
         listEl.innerHTML = '';
         keys.forEach(label => {
             const li = document.createElement('li');
-            li.className = "flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0 hover:bg-white px-1 rounded transition-all";
+            li.className = "ts-item-row";
             li.innerHTML = `
-                <span class="text-[11px] text-gray-700 flex items-center gap-1.5 font-medium">
-                    <span class="text-emerald-500 text-[10px]">✅</span> ${label}.srt
+                <span class="ts-item-row__text flex items-center gap-1.5 font-medium">
+                    <span style="color: var(--ch-success); font-size: 11px;">✓</span> ${label}.srt
                 </span> 
-                <span class="text-[9px] text-gray-400 font-bold">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span class="ts-item-row__idx font-mono font-bold" style="color: var(--ch-text-muted); font-size: 9.5px;">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             `;
             listEl.appendChild(li);
         });
 
         const box = listEl.parentElement;
         box.scrollTop = box.scrollHeight;
+
+        // Cập nhật badge bong bóng Messenger nếu đang thu nhỏ
+        if (this._minimizeCtrl && this._minimizeCtrl.isMinimized) {
+            this._minimizeCtrl.updateBadge(keys.length > 0 ? `${keys.length}` : '−', keys.length > 0 ? 'running' : 'idle');
+        }
     }
 
     async _downloadZip() {
@@ -214,13 +172,15 @@ window.SRTAutomationPanel = class {
     }
 
     _isBusy() {
-        // Kiểm tra xem nút scan có đang disabled không (trạng thái đang quét)
         const btnScan = this.el?.querySelector('#srt-scan-existing');
         return btnScan ? btnScan.disabled : false;
     }
 
-    destroy() {
-        this.el?.remove();
-        this.onClose?.();
+    _getBubbleBadgeInfo() {
+        const count = Object.keys(this.collectedSRTs || {}).length;
+        return {
+            text: count > 0 ? `${count}` : '−',
+            status: count > 0 ? 'running' : 'idle'
+        };
     }
 };

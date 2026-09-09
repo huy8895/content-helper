@@ -26,10 +26,19 @@ window.PromptSequencer = class {
         await new Promise(r => (this._resume = r));
         continue;
       }
-      await this.send(this.prompts[this.idx]);
-      await this.wait();
-      this.idx++;
-      this.onStep(this.idx, this.prompts.length);
+      try {
+        console.log(`▶ [PromptSequencer] Đang gửi prompt #${this.idx + 1}/${this.prompts.length}:`, this.prompts[this.idx]);
+        await this.send(this.prompts[this.idx]);
+        console.log(`⏳ [PromptSequencer] Đang chờ phản hồi prompt #${this.idx + 1}...`);
+        await this.wait();
+        console.log(`✅ [PromptSequencer] Đã hoàn thành prompt #${this.idx + 1}`);
+        this.idx++;
+        this.onStep(this.idx, this.prompts.length);
+      } catch (stepErr) {
+        console.error(`❌ [PromptSequencer] Lỗi tại prompt #${this.idx + 1}:`, stepErr);
+        ContentHelper.showToast(`Lỗi tại bước #${this.idx + 1}: ${stepErr.message || stepErr}`, "error");
+        break;
+      }
     }
 
     if (this.stopped) {

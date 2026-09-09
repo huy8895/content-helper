@@ -1,0 +1,1536 @@
+/* ==========================================================================
+   CONTENT HELPER – SEMANTIC COMPONENTS
+   Tuân thủ nghiêm ngặt design.md & AGENTS.md
+   Cách ly 100% – Toàn bộ components đều mang tiền tố .ts-* và scoped trong .ts-panel
+   ========================================================================== */
+
+/* ── 0. BOTTOM SHEET DRAG HANDLE (.ts-sheet-handle) ────────────────────────── */
+.ts-sheet-handle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3px 0 7px 0;
+  cursor: ns-resize;
+  user-select: none;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.ts-sheet-handle:active {
+  cursor: ns-resize;
+}
+
+.ts-sheet-handle__bar {
+  width: 38px;
+  height: 4px;
+  background-color: var(--ch-border-strong);
+  border-radius: 9999px;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.ts-sheet-handle:hover .ts-sheet-handle__bar {
+  background-color: var(--ch-accent);
+  transform: scaleX(1.25);
+}
+
+/* ── 1. PANEL HEADER SYSTEM (.ts-header & .ts-title) ───────────────────────── */
+.ts-header,
+.ts-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  cursor: grab;
+  user-select: none;
+  padding-right: 56px; /* Chừa không gian cho nút minimize và close */
+  flex-shrink: 0;
+}
+
+.ts-header:active {
+  cursor: grabbing;
+}
+
+.ts-header__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-header__icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ts-header__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ch-text-primary);
+  line-height: 1.25;
+}
+
+.ts-header__subtitle {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--ch-text-muted);
+  letter-spacing: -0.01em;
+}
+
+/* ── 2. CARDS & SECTION CONTAINERS (.ts-card) ──────────────────────────────── */
+.ts-card {
+  background-color: var(--ch-surface-alt);
+  border: 1px solid var(--ch-border-subtle);
+  border-radius: var(--ch-radius-card);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  position: relative;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ts-card--white {
+  background-color: var(--ch-surface);
+  border-color: var(--ch-border);
+}
+
+.ts-card--warning,
+.ts-card--amber {
+  background-color: var(--ch-warning-subtle);
+  border-color: var(--ch-warning-border);
+}
+
+.ts-card--success {
+  background-color: var(--ch-success-subtle);
+  border-color: var(--ch-success-border);
+}
+
+.ts-card--danger {
+  background-color: var(--ch-danger-subtle);
+  border-color: var(--ch-danger-border);
+}
+
+.ts-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+
+.ts-card__title {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ch-text-muted);
+}
+
+.ts-card__desc {
+  font-size: 10.5px;
+  color: var(--ch-text-secondary);
+  line-height: 1.45;
+}
+
+/* ── 3. FORM CONTROLS (.ts-label, .ts-input, .ts-select, .ts-textarea) ──────── */
+.ts-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ch-text-muted);
+  margin-bottom: 4px;
+  padding-left: 2px;
+  user-select: none;
+}
+
+.ts-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-family: var(--ch-font-sans);
+  color: var(--ch-text-primary);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius-control);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ts-input:focus {
+  border-color: var(--ch-accent);
+  background-color: var(--ch-surface);
+  box-shadow: 0 0 0 2px var(--ch-accent-border);
+}
+
+.ts-input::placeholder {
+  color: var(--ch-text-disabled);
+}
+
+.ts-select {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--ch-font-sans);
+  color: var(--ch-accent);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius-control);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ts-select:focus {
+  border-color: var(--ch-accent);
+}
+
+.ts-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ts-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: var(--ch-font-sans);
+  color: var(--ch-text-primary);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: 10px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ts-textarea:focus {
+  border-color: var(--ch-accent);
+  box-shadow: 0 0 0 2px var(--ch-accent-border);
+}
+
+.ts-textarea--mono {
+  font-family: var(--ch-font-mono);
+  font-size: 11px;
+}
+
+/* ── 4. TOGGLE SWITCH & SWITCH ROW (.ts-switch & .ts-switch-row) ───────────── */
+.ts-switch {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 38px;
+  height: 22px;
+  background-color: var(--ch-border-strong);
+  border-radius: 11px;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+  border: none;
+  margin: 0;
+}
+
+.ts-switch::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.3, 1.5, 0.7, 1);
+}
+
+.ts-switch:checked {
+  background-color: var(--ch-accent);
+}
+
+.ts-switch:checked::before {
+  transform: translateX(16px);
+}
+
+.ts-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--ch-border-subtle);
+  background-color: var(--ch-surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  margin-bottom: 6px;
+  user-select: none;
+}
+
+.ts-switch-row:hover {
+  border-color: var(--ch-border-strong);
+}
+
+.ts-switch-row__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ch-text-primary);
+  line-height: 1.25;
+}
+
+.ts-switch-row__desc {
+  font-size: 9.5px;
+  color: var(--ch-text-muted);
+  line-height: 1.3;
+}
+
+/* ── 5. BUTTON SYSTEM (.ts-btn) ────────────────────────────────────────────── */
+.ts-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--ch-radius-control);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: var(--ch-font-sans);
+  cursor: pointer;
+  border: 1px solid transparent;
+  box-shadow: var(--ch-shadow-sm);
+  transition: all 0.15s ease;
+  user-select: none;
+  outline: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.ts-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ts-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Các biến thể màu nút */
+.ts-btn--primary {
+  background-color: #1A1918;
+  border-color: #2E3238;
+  color: #FFFFFF;
+}
+.ts-btn--primary:hover:not(:disabled) {
+  background-color: #2E3238;
+}
+
+.ts-btn--accent {
+  background-color: var(--ch-accent);
+  border-color: var(--ch-accent);
+  color: #FFFFFF;
+}
+.ts-btn--accent:hover:not(:disabled) {
+  background-color: var(--ch-accent-hover);
+}
+
+.ts-btn--secondary {
+  background-color: var(--ch-surface);
+  border-color: var(--ch-border);
+  color: var(--ch-text-primary);
+}
+.ts-btn--secondary:hover:not(:disabled) {
+  background-color: var(--ch-surface-alt);
+  border-color: var(--ch-border-strong);
+}
+
+.ts-btn--warning,
+.ts-btn--amber {
+  background-color: var(--ch-warning-subtle);
+  border-color: var(--ch-warning-border);
+  color: var(--ch-warning);
+}
+.ts-btn--warning:hover:not(:disabled),
+.ts-btn--amber:hover:not(:disabled) {
+  background-color: #FDE68A;
+}
+
+.ts-btn--danger {
+  background-color: var(--ch-danger-subtle);
+  border-color: var(--ch-danger-border);
+  color: var(--ch-danger);
+}
+.ts-btn--danger:hover:not(:disabled) {
+  background-color: #FACDCD;
+}
+
+.ts-btn--success {
+  background-color: var(--ch-success-subtle);
+  border-color: var(--ch-success-border);
+  color: var(--ch-success);
+}
+.ts-btn--success:hover:not(:disabled) {
+  background-color: #CBE4D4;
+}
+
+.ts-btn--purple {
+  background-color: var(--ch-purple-subtle);
+  border-color: var(--ch-purple-border);
+  color: var(--ch-purple);
+}
+.ts-btn--purple:hover:not(:disabled) {
+  background-color: #F3E8FF;
+}
+
+.ts-btn--ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--ch-text-muted);
+  box-shadow: none;
+}
+.ts-btn--ghost:hover:not(:disabled) {
+  background-color: var(--ch-surface-alt);
+  color: var(--ch-text-primary);
+}
+
+/* Kích thước nút */
+.ts-btn--sm {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 9.5px;
+  border-radius: 6px;
+}
+
+.ts-btn--xs {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 9px;
+  border-radius: 4px;
+}
+
+/* ── 6. PROGRESS SYSTEM (.ts-progress) ─────────────────────────────────────── */
+.ts-progress {
+  margin-bottom: 10px;
+}
+
+.ts-progress__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 4px;
+  padding: 0 2px;
+}
+
+.ts-progress__step {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ch-text-muted);
+  text-transform: uppercase;
+}
+
+.ts-progress__percent {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ch-accent);
+}
+
+.ts-progress__track {
+  width: 100%;
+  height: 6px;
+  background-color: var(--ch-border-subtle);
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 1px solid var(--ch-border-subtle);
+}
+
+.ts-progress__bar {
+  height: 100%;
+  background-color: #1A1918;
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── 7. BADGES & TAGS (.ts-badge) ──────────────────────────────────────────── */
+.ts-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.ts-badge--success {
+  background-color: var(--ch-success-subtle);
+  color: var(--ch-success);
+  border-color: var(--ch-success-border);
+}
+
+.ts-badge--warning {
+  background-color: var(--ch-warning-subtle);
+  color: var(--ch-warning);
+  border-color: var(--ch-warning-border);
+}
+
+.ts-badge--danger {
+  background-color: var(--ch-danger-subtle);
+  color: var(--ch-danger);
+  border-color: var(--ch-danger-border);
+}
+
+.ts-badge--accent {
+  background-color: var(--ch-accent-subtle);
+  color: var(--ch-accent);
+  border-color: var(--ch-accent-border);
+}
+
+/* ── 8. DROPDOWN SYSTEM (.custom-dropdown-*) ───────────────────────────────── */
+.custom-dropdown-container {
+  position: relative;
+}
+
+.custom-dropdown-trigger {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  background-color: var(--ch-surface);
+  color: var(--ch-text-primary);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius-control);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius-control);
+  box-shadow: var(--ch-shadow-dropdown);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 2px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden-dropdown {
+  display: none !important;
+}
+
+.scenario-dropdown-item,
+.custom-dropdown-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--ch-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--ch-border-subtle);
+  transition: background-color 0.12s ease, color 0.12s ease;
+  user-select: none;
+}
+
+.scenario-dropdown-item:last-child,
+.custom-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.scenario-dropdown-item:hover,
+.custom-dropdown-item:hover {
+  background-color: var(--ch-surface-alt);
+  color: var(--ch-accent);
+}
+
+.scenario-dropdown-item.selected,
+.custom-dropdown-item.selected {
+  background-color: var(--ch-accent-subtle);
+  color: var(--ch-accent);
+  font-weight: 600;
+}
+
+.scenario-dropdown-item .ts-selected-check,
+.custom-dropdown-item .ts-selected-check {
+  margin-left: auto;
+  color: var(--ch-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── 9. TOAST SYSTEM (#ts-toast-container) ─────────────────────────────────── */
+#ts-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2147483647;
+  pointer-events: none;
+}
+
+.ts-toast {
+  pointer-events: auto;
+  min-width: 260px;
+  max-width: 360px;
+  background-color: var(--ch-surface);
+  color: var(--ch-text-primary);
+  border: 1px solid var(--ch-border);
+  border-left-width: 4px;
+  border-radius: var(--ch-radius-control);
+  box-shadow: var(--ch-shadow-panel);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ch-font-sans);
+  animation: ts-toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.ts-toast.success { border-left-color: var(--ch-success); }
+.ts-toast.error { border-left-color: var(--ch-danger); }
+.ts-toast.warning { border-left-color: var(--ch-warning); }
+.ts-toast.info { border-left-color: var(--ch-accent); }
+
+.ts-toast-icon { font-size: 16px; flex-shrink: 0; }
+.ts-toast-message { font-size: 12px; font-weight: 500; line-height: 1.4; }
+
+@keyframes ts-toast-slide-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.ts-toast.fade-out {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* ── 10. CHATBAR BUTTONS & FLOATING MENU ───────────────────────────────────── */
+/* ── 10. PANEL WINDOW CONTROLS (.panel-close, .panel-minimize, .panel-bubble) ── */
+.panel-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ch-text-muted);
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  z-index: 100;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.panel-close:hover {
+  background-color: var(--ch-danger-subtle);
+  border-color: var(--ch-danger-border);
+  color: var(--ch-danger);
+}
+
+.panel-close:active {
+  transform: scale(0.92);
+}
+
+.panel-minimize {
+  position: absolute;
+  top: 12px;
+  right: 40px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ch-text-muted);
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  z-index: 100;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.panel-minimize:hover {
+  background-color: var(--ch-warning-subtle);
+  border-color: var(--ch-warning-border);
+  color: var(--ch-warning);
+}
+
+.panel-minimize:active {
+  transform: scale(0.92);
+}
+
+/* Panel khi bị thu nhỏ (Ẩn hoàn toàn khỏi màn hình) */
+.panel-minimized,
+.ts-panel.panel-minimized,
+.panel-box.panel-minimized {
+  display: none !important;
+}
+
+/* Floating Messenger Bubble khi Panel bị thu nhỏ */
+.panel-bubble {
+  position: fixed;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  box-shadow: var(--ch-shadow-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  z-index: 2147483646;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.panel-bubble:hover {
+  transform: scale(1.1);
+  border-color: var(--ch-accent);
+}
+
+.panel-bubble-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ch-surface);
+  background-color: var(--ch-accent);
+  color: #ffffff;
+  box-sizing: border-box;
+  pointer-events: none !important;
+}
+
+.panel-bubble-badge.idle {
+  background-color: var(--ch-border-strong);
+}
+
+.panel-bubble-badge.running {
+  background-color: var(--ch-success);
+}
+
+.panel-bubble-badge.error {
+  background-color: var(--ch-danger);
+}
+
+/* Tooltip hiển thị khi hover Bubble */
+.panel-bubble::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+  background-color: var(--ch-surface);
+  color: var(--ch-text-primary);
+  border: 1px solid var(--ch-border);
+  box-shadow: var(--ch-shadow-popover);
+  border-radius: var(--ch-radius-control);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 2147483647;
+}
+
+.panel-bubble:hover::before {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Trạng thái đang chạy */
+.panel-bubble.is-running {
+  border-color: var(--ch-accent);
+  box-shadow: 0 0 0 4px var(--ch-accent-border), var(--ch-shadow-panel);
+}
+
+@keyframes bubble-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bubble-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.4) translateY(20px);
+  }
+}
+
+/* ── 11. MASTER FLOATING BUTTON & POPUP MENU ──────────────────────────────── */
+#content-helper-button-container {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 2147483645;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#helper-toggle-button {
+  background-color: #141517;
+  color: #FBFBFA;
+  border: 1px solid var(--ch-border-strong);
+  border-radius: 9999px;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--ch-shadow-panel);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+#helper-toggle-button:hover {
+  transform: scale(1.04);
+  border-color: var(--ch-accent);
+}
+
+#helper-toggle-button:active {
+  cursor: grabbing;
+  transform: scale(0.97);
+}
+
+#helper-buttons-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: 14px;
+  box-shadow: var(--ch-shadow-dropdown);
+  padding: 6px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 2147483647;
+  animation: ts-menu-appear 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Bung menu xuống phía dưới khi nút kéo lên góc trên màn hình */
+#helper-buttons-menu.menu-down {
+  bottom: auto;
+  top: calc(100% + 10px);
+  animation: ts-menu-appear-down 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ts-menu-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ts-menu-appear-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#helper-buttons-menu.hidden {
+  display: none !important;
+}
+
+#helper-buttons-menu button {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 8px 12px;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--ch-text-primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+#helper-buttons-menu button:hover {
+  background-color: var(--ch-surface-alt);
+  color: var(--ch-accent);
+}
+
+#helper-buttons-menu button:active {
+  transform: scale(0.98);
+}
+
+/* ── 11. DYNAMIC LIST ITEMS (Scoped cho nội dung render động) ─────────────── */
+
+/* YouTube Language Checkbox Item */
+.yt-language-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  font-size: 11.5px;
+  color: var(--ch-text-secondary);
+  user-select: none;
+}
+.yt-language-label:hover {
+  background-color: var(--ch-surface-alt);
+  color: var(--ch-text-primary);
+}
+
+/* SRT Automation Item */
+#srt-list > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--ch-border-subtle);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--ch-text-primary);
+  transition: background-color 0.12s ease;
+}
+#srt-list > li:last-child {
+  border-bottom: none;
+}
+#srt-list > li:hover {
+  background-color: var(--ch-surface-alt);
+}
+
+/* Scenario Runner Queue Item */
+#sr-queue-list > li {
+  background-color: var(--ch-surface-alt);
+  border: 1px solid var(--ch-border-subtle);
+  border-radius: var(--ch-radius-control);
+  padding: 8px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  transition: all 0.12s ease;
+}
+#sr-queue-list > li:hover {
+  background-color: var(--ch-surface);
+  border-color: var(--ch-border);
+}
+
+/* Scenario Runner Split Tabs Detail */
+#sr-split-detail > div {
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border-subtle);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 9.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Scenario Runner Input Groups & Controls */
+.sr-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.sr-input-group:last-child {
+  margin-bottom: 0;
+}
+.sr-input-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+.sr-input-group__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: var(--ch-font-mono);
+  color: var(--ch-text-secondary);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+.sr-input-group__label-tag {
+  color: var(--ch-accent);
+  font-weight: 800;
+}
+.sr-input-group__file-btn {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 9.5px;
+  font-weight: 600;
+  border-radius: 5px;
+}
+
+/* Scenario Runner Textarea Sizing */
+.sr-textarea {
+  min-height: 72px;
+  height: 72px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+/* Scenario Runner Empty State */
+.sr-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--ch-text-muted);
+  gap: 8px;
+  min-height: 140px;
+  user-select: none;
+}
+.sr-empty-state__icon {
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0.7;
+}
+.sr-empty-state__text {
+  font-size: 11px;
+  line-height: 1.5;
+  max-width: 260px;
+  color: var(--ch-text-muted);
+}
+
+/* Dropdown Group Tag & Empty State */
+.ts-group-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 4px;
+  background-color: var(--ch-surface-alt);
+  border: 1px solid var(--ch-border);
+  color: var(--ch-text-muted);
+  margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  line-height: 1.2;
+  font-family: var(--ch-font-sans);
+}
+.ts-dropdown-empty {
+  padding: 12px 8px;
+  font-size: 11px;
+  color: var(--ch-text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Checkbox Calm Tech */
+.ts-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--ch-accent);
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ts-btn > .ts-badge-input {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ── 12. BEM SEMANTIC COMPONENTS MỞ RỘNG (Calm Tech & Scoped) ──────────────── */
+
+/* Search Box với icon ⚲ tích hợp */
+.ts-search-box {
+  position: relative;
+  width: 100%;
+}
+.ts-search-box__input {
+  width: 100%;
+  height: 32px;
+  padding-left: 28px;
+  padding-right: 10px;
+  font-size: 11.5px;
+  color: var(--ch-text-primary);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius-control);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+.ts-search-box__input:focus {
+  border-color: var(--ch-accent);
+  box-shadow: 0 0 0 2px var(--ch-accent-border);
+}
+.ts-search-box__icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ch-text-muted);
+  font-size: 11px;
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* Badge Number Input (Dùng trong nút song song, chia tab, index, limit) */
+.ts-badge-input {
+  width: 32px;
+  height: 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--ch-font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ch-accent);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: 4px;
+  outline: none;
+  padding: 0 2px;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease;
+}
+.ts-badge-input:focus {
+  border-color: var(--ch-accent);
+}
+.ts-badge-input--amber {
+  color: var(--ch-warning);
+  background-color: #FEF3C7;
+  border-color: var(--ch-warning-border);
+}
+.ts-badge-input--teal {
+  color: var(--ch-teal);
+  background-color: var(--ch-surface);
+  border-color: var(--ch-teal-border);
+}
+.ts-badge-input--sm {
+  width: 28px;
+  height: 20px;
+  font-size: 9.5px;
+}
+.ts-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--ch-success);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.ts-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+.ts-text-accent {
+  color: var(--ch-accent);
+  font-weight: 700;
+}
+.ts-text-danger {
+  color: var(--ch-danger);
+  font-weight: 600;
+}
+.ts-hint {
+  font-size: 11px;
+  color: var(--ch-text-muted);
+  font-style: italic;
+}
+.ts-sublabel {
+  font-size: 10.5px;
+  color: var(--ch-text-secondary);
+}
+
+/* Scroll heights & Container Constraints */
+.ts-scroll-h-sm { max-height: 64px; }
+.ts-scroll-h-md { max-height: 112px; }
+.ts-scroll-h-lg { max-height: 128px; }
+.ts-scroll-h-xl { max-height: 192px; }
+.ts-scroll-h-2xl { max-height: 520px; min-height: 110px; }
+.ts-scroll-h-yt-lang { min-height: 120px; max-height: 160px; }
+
+/* Dropdown Container Width */
+.ts-dropdown-menu--search {
+  width: 320px;
+  max-width: 380px;
+  max-height: 224px;
+}
+
+/* Square Icon Badge */
+.ts-badge--square {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Layering */
+.ts-layer-dropdown { z-index: 40; }
+.ts-layer-row { z-index: 30; }
+
+/* Dashed Button (Dùng cho nút thêm câu hỏi mới) */
+.ts-btn--dashed {
+  border: 1px dashed var(--ch-border-strong);
+  background: transparent;
+  color: var(--ch-text-muted);
+  border-radius: var(--ch-radius-control);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: all 0.15s ease;
+}
+.ts-btn--dashed:hover {
+  border-color: var(--ch-accent);
+  color: var(--ch-accent);
+  background-color: var(--ch-surface-alt);
+}
+
+/* Semantic Item Row (Dùng cho list items ở ContentCopy, AudioDownloader, Dropdown) */
+.ts-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--ch-border-subtle);
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--ch-text-primary);
+  background-color: transparent;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+  user-select: none;
+}
+.ts-item-row:last-child {
+  border-bottom: none;
+}
+.ts-item-row:hover {
+  background-color: var(--ch-surface);
+}
+.ts-item-row__check {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--ch-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+}
+.ts-item-row__idx {
+  font-family: var(--ch-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ch-accent);
+  min-width: 22px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.ts-item-row__text {
+  font-size: 11px;
+  color: var(--ch-text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ts-item-row__btn {
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid var(--ch-border);
+  background-color: var(--ch-surface);
+  color: var(--ch-text-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.ts-item-row__btn:hover {
+  background-color: var(--ch-surface-alt);
+  color: var(--ch-accent);
+  border-color: var(--ch-accent-border);
+}
+
+/* Question Card trong Scenario Builder */
+.ts-question-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border-subtle);
+  border-radius: var(--ch-radius-control);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ts-question-card:hover {
+  border-color: var(--ch-border);
+}
+.ts-question-card__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ts-question-card__textarea {
+  min-height: 48px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.ts-question-card__del {
+  width: 24px;
+  height: 24px;
+  color: var(--ch-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: background-color 0.12s ease;
+}
+.ts-question-card__del:hover {
+  background-color: var(--ch-danger-subtle);
+}
+
+/* Helper Menu Item trong ChatAdapter */
+.ts-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ch-text-primary);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border-subtle);
+  border-radius: var(--ch-radius-control);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+  box-sizing: border-box;
+}
+.ts-menu-item:hover {
+  background-color: var(--ch-surface-alt);
+  border-color: var(--ch-border);
+  color: var(--ch-accent);
+  transform: translateX(2px);
+}
+.ts-menu-item:active {
+  transform: scale(0.98);
+}
+
+/* ── 28. BOTTOM SHEET PINNED FOOTER (.ts-sheet-footer) ─────────────────────── */
+.ts-sheet-footer {
+  margin-top: auto !important;
+  flex-shrink: 0;
+  padding-top: 8px;
+  width: 100%;
+}
+
+.ts-mt-auto {
+  margin-top: auto !important;
+}
+
+/* ── 29. CODE SYNTAX HIGHLIGHT EDITOR (.ts-code-editor) ───────────────────── */
+.ts-code-editor {
+  position: relative;
+  width: 100%;
+  border-radius: var(--ch-radius-control);
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ts-code-editor:focus-within {
+  border-color: var(--ch-accent);
+  box-shadow: 0 0 0 2px var(--ch-accent-border);
+}
+
+.ts-code-editor__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  box-sizing: border-box;
+  border-radius: inherit;
+}
+
+.ts-code-editor__highlight,
+.ts-code-editor__textarea {
+  font-family: var(--ch-font-mono, Consolas, "Fira Code", "JetBrains Mono", monospace);
+  font-size: 11.5px;
+  line-height: 18px;
+  letter-spacing: 0;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  tab-size: 2;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.ts-code-editor__highlight {
+  min-height: 100%;
+  color: var(--ch-text-primary);
+  border: 1px solid transparent;
+}
+
+.ts-code-editor__textarea {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 72px;
+  background: transparent !important;
+  color: transparent !important;
+  caret-color: var(--ch-text-primary);
+  outline: none;
+  resize: vertical;
+  display: block;
+  border: 1px solid transparent;
+}
+
+.ts-code-editor__textarea::selection {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+  color: transparent !important;
+}
+
+.ts-code-editor__textarea::placeholder {
+  color: var(--ch-text-muted);
+}
+
+/* Syntax Highlight Tokens (IDE Calm Tech Theme) */
+.ts-hl-var-wrap {
+  background-color: rgba(245, 158, 11, 0.14);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4);
+  border-radius: 3px;
+  padding: 0;
+  margin: 0;
+  display: inline;
+}
+
+.ts-hl-delim {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.ts-hl-var-name {
+  color: #b45309;
+  font-weight: 700;
+  text-decoration: underline dotted rgba(180, 83, 9, 0.6);
+}
+
+.ts-hl-pipe {
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.ts-hl-options {
+  color: #059669;
+  font-weight: 600;
+}
+
+.ts-hl-heading {
+  color: var(--ch-text-primary);
+  font-weight: 700;
+}
+
+.ts-hl-bold {
+  font-weight: 700;
+  color: var(--ch-text-primary);
+}
+

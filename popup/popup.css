@@ -1,0 +1,317 @@
+/* ==========================================================================
+   CONTENT HELPER – POPUP STYLESHEET
+   Tuân thủ nghiêm ngặt design.md: Calm Tech, Raw Paper, Carbon Ink, Terracotta
+   Loại bỏ hoàn toàn Tailwind runtime và gradient tím neon
+   ========================================================================== */
+
+:root {
+  --ch-canvas: #FBFBFA;
+  --ch-surface: #FFFFFF;
+  --ch-surface-alt: #F3F2EE;
+  --ch-border: #E6E4DF;
+  --ch-border-subtle: #ECEAE5;
+  --ch-text-primary: #1A1918;
+  --ch-text-muted: #706E6A;
+  --ch-accent: #C25E2E;
+  --ch-accent-hover: #AA4F24;
+  --ch-danger: #A83232;
+  --ch-danger-subtle: #FDF2F2;
+  --ch-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ch-font-mono: ui-monospace, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 300px;
+  background-color: var(--ch-canvas);
+  font-family: var(--ch-font-sans);
+  color: var(--ch-text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  padding: 12px;
+}
+
+/* ── HEADER TỐI GIẢN CHUẨN CƠ HỌC ────────────────────────────────────────── */
+.popup-header {
+  background-color: #141517;
+  color: #EDEDEC;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.popup-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-brand-icon {
+  font-size: 16px;
+  line-height: 1;
+  color: #EDEDEC;
+}
+
+.popup-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.popup-version {
+  font-family: var(--ch-font-mono);
+  font-size: 9.5px;
+  color: #8E929A;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ── THẺ CHÍNH (SURFACE CARD) ────────────────────────────────────────────── */
+.popup-card {
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  min-height: 180px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* ── LOADING INLINE (KHÔNG CHẶN TOÀN MÀN HÌNH) ────────────────────────────── */
+#loading {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+  font-size: 11px;
+  color: var(--ch-text-muted);
+}
+
+.loading-bar {
+  width: 48px;
+  height: 3px;
+  background-color: var(--ch-border);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background-color: var(--ch-accent);
+  border-radius: 2px;
+  animation: loading-slide 1s infinite ease-in-out;
+}
+
+@keyframes loading-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* ── PHẦN ĐĂNG NHẬP ──────────────────────────────────────────────────────── */
+#login-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.welcome-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ch-text-muted);
+  margin-bottom: 6px;
+}
+
+.welcome-desc {
+  font-size: 12px;
+  color: var(--ch-text-muted);
+  margin-bottom: 20px;
+  line-height: 1.4;
+  padding: 0 4px;
+}
+
+.btn-google {
+  width: 100%;
+  height: 38px;
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ch-text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.btn-google:hover {
+  background-color: var(--ch-surface-alt);
+  border-color: #D6D3CC;
+}
+
+.btn-google:active {
+  transform: scale(0.98);
+}
+
+.btn-google img {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── PHẦN THÔNG TIN USER ─────────────────────────────────────────────────── */
+#user-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.user-avatar-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+#user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--ch-border);
+  object-fit: cover;
+  background-color: var(--ch-surface-alt);
+}
+
+#user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ch-text-primary);
+  margin-bottom: 2px;
+}
+
+#user-email {
+  font-family: var(--ch-font-mono);
+  font-size: 10.5px;
+  color: var(--ch-text-muted);
+  margin-bottom: 18px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-logout {
+  width: 100%;
+  height: 32px;
+  background-color: var(--ch-surface);
+  border: 1px solid var(--ch-border);
+  color: var(--ch-danger);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-logout:hover {
+  background-color: var(--ch-danger-subtle);
+  border-color: rgba(168, 50, 50, 0.3);
+}
+
+.btn-logout:active {
+  transform: scale(0.98);
+}
+
+/* ── STATUS MESSAGE ──────────────────────────────────────────────────────── */
+#status {
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  min-height: 14px;
+}
+
+.status-info {
+  color: var(--ch-accent);
+}
+
+.status-error {
+  color: var(--ch-danger);
+}
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────── */
+.popup-footer {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.footer-tag {
+  font-size: 9.5px;
+  font-family: var(--ch-font-mono);
+  font-weight: 600;
+  color: var(--ch-text-muted);
+}
+
+#open-settings-btn {
+  background: transparent;
+  border: none;
+  color: var(--ch-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+#open-settings-btn:hover {
+  color: var(--ch-accent);
+  background-color: var(--ch-surface-alt);
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}

@@ -1,0 +1,206 @@
+/* ==========================================================================
+   CONTENT HELPER – BASE & SCOPED LAYOUT HELPERS
+   Tuân thủ nghiêm ngặt design.md & AGENTS.md
+   Cách ly 100% – Mọi quy tắc đều được scoped trong .ts-panel hoặc có tiền tố .ts-*
+   ========================================================================== */
+
+:host {
+  all: initial;
+  display: block;
+}
+
+/* ── 0. MASTER BOTTOM SHEET CONTAINER (#content-helper-panel-bar) ────────── */
+#content-helper-panel-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2147483640;
+}
+
+#content-helper-panel-bar > .ts-panel,
+#content-helper-panel-bar > .panel-box,
+#content-helper-panel-bar > .helper-panel {
+  pointer-events: auto;
+  position: relative;
+  margin: 0;
+}
+
+/* ── 1. ROOT BOTTOM SHEET PANEL (.ts-panel & .panel-box) ──────────────────── */
+.ts-panel,
+.panel-box {
+  width: 480px;
+  min-width: 380px;
+  max-width: calc(100vw - 32px);
+  height: auto;
+  min-height: 260px;
+  max-height: min(640px, 85vh);
+
+  background-color: var(--ch-canvas);
+  border: 1px solid var(--ch-border);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.04), 0 -12px 32px -4px rgba(0, 0, 0, 0.16);
+
+  font-family: var(--ch-font-sans);
+  color: var(--ch-text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  display: flex;
+  flex-direction: column;
+  padding: 4px 14px 14px 14px;
+  z-index: 2147483645;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: ts-bottom-sheet-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+@keyframes ts-bottom-sheet-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scrollable Body bọc nội dung View */
+.ts-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Scoped Reset cho tất cả con bên trong .ts-panel */
+.ts-panel *,
+.ts-panel *::before,
+.ts-panel *::after {
+  box-sizing: border-box;
+}
+
+/* ── 2. SCROLLBARS TÙY CHỈNH (.custom-scrollbar) ───────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--ch-border-strong);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--ch-text-muted);
+}
+
+/* ── 3. SCOPED LAYOUT HELPERS (Chỉ dùng tiền tố ts-*) ──────────────────────── */
+
+/* Flexbox */
+.ts-flex { display: flex; }
+.ts-inline-flex { display: inline-flex; }
+.ts-flex-col { flex-direction: column; }
+.ts-flex-row { flex-direction: row; }
+.ts-flex-wrap { flex-wrap: wrap; }
+.ts-flex-1 { flex: 1 1 0%; }
+.ts-flex-shrink-0 { flex-shrink: 0; }
+.ts-min-h-0 { min-height: 0; }
+
+.ts-items-center { align-items: center; }
+.ts-items-start { align-items: flex-start; }
+.ts-items-end { align-items: flex-end; }
+
+.ts-justify-between { justify-content: space-between; }
+.ts-justify-center { justify-content: center; }
+.ts-justify-end { justify-content: flex-end; }
+.ts-ml-auto { margin-left: auto; }
+
+/* Grid */
+.ts-grid { display: grid; }
+.ts-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ts-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ts-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ts-grid-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+
+.ts-col-5 { grid-column: span 5 / span 5; }
+.ts-col-7 { grid-column: span 7 / span 7; }
+.ts-col-12 { grid-column: span 12 / span 12; }
+
+/* Spacing & Gaps */
+.ts-gap-1 { gap: 4px; }
+.ts-gap-1-5 { gap: 6px; }
+.ts-gap-2 { gap: 8px; }
+.ts-gap-2-5 { gap: 10px; }
+.ts-gap-3 { gap: 12px; }
+.ts-gap-4 { gap: 16px; }
+
+.ts-mb-0 { margin-bottom: 0; }
+.ts-mb-1 { margin-bottom: 4px; }
+.ts-mb-1-5 { margin-bottom: 6px; }
+.ts-mb-2 { margin-bottom: 8px; }
+.ts-mb-2-5 { margin-bottom: 10px; }
+.ts-mb-3 { margin-bottom: 12px; }
+
+.ts-mt-1 { margin-top: 4px; }
+.ts-mt-1-5 { margin-top: 6px; }
+.ts-mt-2 { margin-top: 8px; }
+
+.ts-p-1 { padding: 4px; }
+.ts-p-1-5 { padding: 6px; }
+.ts-p-2 { padding: 8px; }
+.ts-p-2-5 { padding: 10px; }
+.ts-p-3 { padding: 12px; }
+
+.ts-px-1 { padding-left: 4px; padding-right: 4px; }
+.ts-px-2 { padding-left: 8px; padding-right: 8px; }
+.ts-py-1 { padding-top: 4px; padding-bottom: 4px; }
+.ts-py-2 { padding-top: 8px; padding-bottom: 8px; }
+
+/* Sizing & Position */
+.ts-w-full { width: 100%; }
+.ts-h-full { height: 100%; }
+.ts-relative { position: relative; }
+.ts-absolute { position: absolute; }
+.ts-hidden,
+.panel-minimized,
+.ts-panel.panel-minimized,
+.ts-panel .hidden { display: none !important; }
+
+/* Overflow & Text */
+.ts-overflow-hidden { overflow: hidden; }
+.ts-overflow-y-auto { overflow-y: auto; }
+.ts-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-text-center { text-align: center; }
+
+/* Interaction */
+.ts-cursor-pointer { cursor: pointer; }
+.ts-cursor-move { cursor: move; }
+.ts-select-none { user-select: none; }
+
+/* Pulse Animation */
+@keyframes ts-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.ts-animate-pulse {
+  animation: ts-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

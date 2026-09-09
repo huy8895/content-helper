@@ -136,7 +136,7 @@ window.ParallelWorker = (() => {
     while (Date.now() - startTime < maxWaitMs) {
       const content = _collectContent();
       if (content && content.trim().length > 0) {
-        console.log(`✨ [ParallelWorker] Đã thu thập thành công sau ${Date.now() - startTime}ms!`);
+        console.log(`✓ [ParallelWorker] Đã thu thập thành công sau ${Date.now() - startTime}ms!`);
         return content;
       }
       console.log(`⏳ [ParallelWorker] Nội dung trống, đang đợi DOM render... (chờ thêm tối đa ${Math.max(0, maxWaitMs - (Date.now() - startTime))}ms)`);
@@ -501,61 +501,61 @@ window.ParallelWorker = (() => {
     el.style.cssText = `
       position: fixed; bottom: 20px; right: 20px; z-index: 2147483647;
       width: 360px; max-height: 400px; overflow-y: auto;
-      background: #1a1a2e; color: #e0e0e0; border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 12px; padding: 16px;
+      background: #141517; color: #fbfbfa; border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4); border: 1px solid #27272a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px; padding: 14px;
     `;
 
     const itemsHtml = items.map((item, i) => 
       `<span id="split-item-${i}" style="
-        display: inline-block; padding: 2px 8px; margin: 2px;
-        border-radius: 12px; font-size: 10px; font-weight: 600;
-        background: rgba(255,255,255,0.08); color: #888;
+        display: inline-block; padding: 2px 7px; margin: 2px;
+        border-radius: 6px; font-size: 10px; font-weight: 600;
+        background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46;
       ">⏳ ${item}</span>`
     ).join('');
 
     el.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <div>
-          <div style="font-weight:700; font-size:13px; color:#5eead4;">🔀 ${label}</div>
-          <div style="font-size:10px; color:#888; margin-top:2px;">${scenarioName}</div>
+          <div style="font-weight:700; font-size:12px; color:#f4f4f5; letter-spacing:-0.01em;">🔀 ${label}</div>
+          <div style="font-size:10px; color:#71717a; margin-top:1px;">${scenarioName}</div>
         </div>
         <button id="split-panel-minimize" style="
-          background: none; border: none; color: #888; cursor: pointer; font-size: 16px;
+          background: none; border: none; color: #a1a1aa; cursor: pointer; font-size: 14px;
           padding: 4px; line-height: 1;
         " title="Thu nhỏ">−</button>
       </div>
       <div id="split-panel-body">
         <div style="margin-bottom:8px;">
-          <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:9px; font-weight:700; color:#71717a; text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; letter-spacing:0.05em;">
             <span>Items</span>
             <div style="display:flex; gap:8px;">
-              <button id="split-panel-sync-btn" style="background:none; border:none; color:#facc15; cursor:pointer; font-size:9px; padding:0; line-height:1;" title="Đồng bộ tên lên trò chuyện">Đồng bộ tên</button>
-              <button id="split-panel-copy-btn" style="background:none; border:none; color:#5eead4; cursor:pointer; font-size:9px; padding:0; line-height:1;">Copy</button>
+              <button id="split-panel-sync-btn" style="background:none; border:none; color:#e4e4e7; cursor:pointer; font-size:9px; padding:0; line-height:1;" title="Đồng bộ tên lên trò chuyện">Đồng bộ tên</button>
+              <button id="split-panel-copy-btn" style="background:none; border:none; color:#a1a1aa; cursor:pointer; font-size:9px; padding:0; line-height:1;">Copy</button>
             </div>
           </div>
           <textarea id="split-panel-copy-text" readonly style="
-            width: 100%; height: 28px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 6px; color: #888; font-size: 9px; padding: 4px 6px; margin-bottom: 6px; 
+            width: 100%; height: 26px; background: #1c1d20; border: 1px solid #27272a; 
+            border-radius: 6px; color: #a1a1aa; font-size: 9px; padding: 4px 6px; margin-bottom: 6px; 
             resize: none; outline: none; font-family: monospace; white-space: nowrap; overflow-x: auto;
           ">${items.join(', ')}</textarea>
           <div id="split-items-list" style="line-height:1.8;">${itemsHtml}</div>
         </div>
         <div style="margin-bottom:8px;">
-          <div style="font-size:10px; font-weight:700; color:#666; text-transform:uppercase; margin-bottom:4px;">Prompt</div>
+          <div style="font-size:9px; font-weight:700; color:#71717a; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.05em;">Tiến độ</div>
           <div id="split-prompt-progress" style="
             display:flex; align-items:center; gap:8px;
           ">
-            <div style="flex:1; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
-              <div id="split-prompt-bar" style="height:100%; width:0%; background:#5eead4; border-radius:2px; transition:width 0.3s;"></div>
+            <div style="flex:1; height:4px; background:#27272a; border-radius:2px; overflow:hidden;">
+              <div id="split-prompt-bar" style="height:100%; width:0%; background:#e4e4e7; border-radius:2px; transition:width 0.3s;"></div>
             </div>
-            <span id="split-prompt-text" style="font-size:10px; color:#5eead4; font-weight:700;">0/0</span>
+            <span id="split-prompt-text" style="font-size:10px; color:#e4e4e7; font-weight:700; font-family:monospace;">0/0</span>
           </div>
         </div>
         <div id="split-current-prompt" style="
-          font-size:10px; color:#aaa; background:rgba(255,255,255,0.05);
-          padding:8px; border-radius:8px; max-height:60px; overflow-y:auto;
+          font-size:10px; color:#a1a1aa; background:#1c1d20;
+          padding:8px; border-radius:6px; border: 1px solid #27272a; max-height:60px; overflow-y:auto;
           word-break:break-word; line-height:1.4;
         ">Đang chuẩn bị...</div>
       </div>

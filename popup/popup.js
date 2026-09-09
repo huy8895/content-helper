@@ -70,7 +70,7 @@ function updateUserUI(data) {
 
 function setStatus(msg, isError = false) {
   $status.textContent = msg;
-  $status.className = `mt-4 text-[10px] font-bold uppercase tracking-widest transition-opacity duration-300 ${isError ? 'text-rose-500' : 'text-indigo-600'}`;
+  $status.className = isError ? 'status-error' : 'status-info';
   $status.style.opacity = '1';
   setTimeout(() => { $status.style.opacity = '0'; }, 3000);
 }

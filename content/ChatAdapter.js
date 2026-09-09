@@ -13,60 +13,68 @@
 //   chat.getSendBtn()?.click();
 // ----------------------------------------------------------------------------
 
+// Helper đảm bảo instance ContentHelper luôn sẵn sàng để điều khiển các Panel
+function ensureHelperInstance() {
+  if (!window.__helperInjected && typeof ContentHelper !== 'undefined') {
+    window.__helperInjected = new ContentHelper();
+  }
+  return window.__helperInjected;
+}
+
 // Các button chung (dùng cho mọi adapter)
 BUTTONS = {
   MANAGE_SCENARIO: {
     id: "content-helper-button",
-    text: "🛠 Quản lý kịch bản",
-    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleBuilder(),
+    text: "≡ Quản lý kịch bản",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleBuilder(),
   },
   RUN_SCENARIO: {
     id: "chatgpt-run-button",
-    text: "📤 Chạy kịch bản",
-    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleRunner(),
+    text: "▶ Chạy kịch bản",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleRunner(),
   },
   RUN_FLOW: {
     id: "chatgpt-run-flow-button",
-    text: "🔗 Chạy Flow",
-    className: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleFlowRunner(),
+    text: "🔀 Chạy Flow",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleFlowRunner(),
   },
   COPY_CONTENT: {
     id: "chatgpt-copy-content-button",
-    text: "📋 Copy Content",
-    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleContentCopyPanel(),
+    text: "⎘ Sao chép nội dung",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleContentCopyPanel(),
   },
   SPLITTER: {
     id: "chatgpt-splitter-button",
-    text: "✂️ Text Split",
-    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleSplitter(),
+    text: "✂ Phân tách văn bản",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleSplitter(),
   },
   AUDIO: {
     id: "chatgpt-audio-button",
-    text: "🎵 Audio",
-    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleAudioDownloader(),
+    text: "🎙️ Trích xuất giọng đọc (TTS)",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleAudioDownloader(),
   },
   AI_STUDIO_SETTINGS: {
     id: "chatgpt-aistudio-settings-button",
-    text: "⚙️ AI Studio Settings",
-    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleAIStudioSettings(),
+    text: "⚙ Thiết lập AI Studio",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleAIStudioSettings(),
   },
   SRT_AUTOMATION: {
     id: "chatgpt-srt-automation-button",
-    text: "🤖 SRT Automation",
-    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleSRTAutomation(),
+    text: "⏱️ SRT Timeline (Auto)",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleSRTAutomation(),
   },
   COLLAPSE_CODE: {
     id: "chatgpt-collapse-code-button",
-    text: "Collapse Code",
-    className: "bg-white text-gray-600 border border-gray-100 hover:bg-gray-50",
+    text: "⇥ Thu gọn khối code",
+    className: "ts-menu-item",
     onClick: () => {
       // Gọi đến một hàm của adapter hiện tại
       if (window.ChatAdapter
@@ -77,12 +85,28 @@ BUTTONS = {
   },
   YT_STUDIO_SETTINGS: {
     id: "chatgpt-ytstudio-settings-button",
-    text: "🎬 YT Studio",
-    className: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    onClick: () => window.__helperInjected?._toggleYoutubePanel(),
+    text: "文A Phụ đề YouTube",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleYoutubePanel(),
+  },
+  YT_ADD_LANGUAGES: {
+    id: "chatgpt-yt-add-languages-button",
+    text: "🌐 Thêm ngôn ngữ (Auto)",
+    className: "ts-menu-item",
+    onClick: () => {
+      if (window.ChatAdapter && typeof window.ChatAdapter.addMyLanguages === 'function') {
+        window.ChatAdapter.addMyLanguages();
+      }
+    },
+  },
+  AI_STUDIO_SPEECH_SETTINGS: {
+    id: "chatgpt-aistudio-speech-settings-button",
+    text: "🎙️ Thiết lập giọng đọc",
+    className: "ts-menu-item",
+    onClick: () => ensureHelperInstance()?._toggleAIStudioSpeechSettings(),
   },
 };
-/* ---------------------------  Base (Abstract)  --------------------------- */
+/* ---------------------------  Base (Abstract)  --------------------------- */
 class BaseChatAdapter {
   constructor() {
     console.log("👨 BaseChatAdapter constructed")
@@ -125,18 +149,21 @@ class BaseChatAdapter {
 
 
 
-  // Hàm mặc định trả về danh sách button cần dùng (chỉ có 3 button chung)
+  // Danh mục button mặc định cho các trang chat/AI
   getButtonConfigs() {
     return [
-      BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_SCENARIO,
+      BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_FLOW,
       BUTTONS.COPY_CONTENT,
+      BUTTONS.SPLITTER,
+      BUTTONS.AUDIO,
+      BUTTONS.SRT_AUTOMATION,
     ];
   }
 
-  // Chế độ thu gọn (mặc định false). Nếu true, các button sẽ nằm trong menu dropdown.
-  isCompactMode() { return false; }
+  // Chế độ Master Floating Button (mặc định luôn true trên 100% trang web)
+  isCompactMode() { return true; }
 
   // Định danh nền tảng để map với cấu hình
   getPlatformId() {
@@ -151,161 +178,180 @@ class BaseChatAdapter {
     return '';
   }
 
-  // Hàm chèn button (dùng chung cho mọi adapter)
+  // Hàm chèn button chuẩn hóa: 1 Master Floating Button -> Popup Menu -> Click mở Panel
   insertHelperButtons() {
-    if (document.querySelector('#content-helper-button-container')) return; // Đã tồn tại
-    const chatForm = this.getForm();
-    if (!chatForm) {
-      return;
-    }
+    if (!document.body && !document.documentElement) return; // Chờ DOM sẵn sàng
+    const shadow = ContentHelper.getShadowRoot();
+    if (shadow.querySelector('#content-helper-button-container')) return; // Đã tồn tại
 
-    const container = document.createElement("div");
-    container.id = "content-helper-button-container";
-    // Thêm class relative để menu absolute định vị theo container này
-    container.className = "flex flex-row gap-1.5 mt-1.5 justify-center py-1.5 relative";
-
-    // Lấy danh sách button từ lớp con
     let buttons = this.getButtonConfigs();
-
-    // Mặc định
-    let isCompact = this.isCompactMode();
     let isEnabled = true;
 
-    // --- Lọc nút và chế độ hiển thị theo cấu hình động ---
+    // --- Lọc nút theo cấu hình động nếu người dùng tùy chỉnh ---
     const platformId = this.getPlatformId();
-    if (platformId && window.__buttonConfigs) {
-      if (window.__buttonConfigs[platformId]) {
-        const platformConfig = window.__buttonConfigs[platformId];
-
-        let allowedKeys = [];
-        if (Array.isArray(platformConfig)) {
-          allowedKeys = platformConfig; // Legacy array
-        } else {
-          isEnabled = platformConfig.enabled !== false; // Mặc định true nếu ko set false
-          allowedKeys = platformConfig.buttons || [];
-          isCompact = !!platformConfig.compactMode;
+    if (platformId && window.__buttonConfigs && window.__buttonConfigs[platformId]) {
+      const platformConfig = window.__buttonConfigs[platformId];
+      if (typeof platformConfig === 'object' && !Array.isArray(platformConfig)) {
+        isEnabled = platformConfig.enabled !== false;
+        if (platformConfig.buttons && platformConfig.buttons.length > 0) {
+          buttons = platformConfig.buttons.map(key => BUTTONS[key]).filter(Boolean);
         }
-
-        buttons = allowedKeys.map(key => BUTTONS[key]).filter(Boolean);
-      } else {
-        // Có tồn tại config tổng nhưng platform này không có key => coi như đã bị disable hoàn toàn (với dữ liệu mới)
-        // Hoặc chưa từng lưu platform này. Để an toàn ta cứ coi như disabled nếu dùng config mới.
-        // Tuy nhiên theo code lưu thì nó luôn tạo key cho tất cả platforms khi lưu.
       }
     }
 
-    // Nếu người dùng chọn Tắt toàn bộ Extension cho trang này
-    if (!isEnabled) return;
+    // Nếu người dùng chọn Tắt Extension cho trang này hoặc không có nút nào
+    if (!isEnabled || buttons.length === 0) return;
 
-    // Nếu không có nút nào sau khi lọc, thoát luôn không render giao diện
-    if (buttons.length === 0) return;
+    const container = document.createElement("div");
+    container.id = "content-helper-button-container";
+    container.dataset.free = "1";
 
-    if (isCompact) {
-      // --- CHẾ ĐỘ COMPACT: Hiển thị 1 nút Tools dạng bong bóng nổi ---
+    let isDragging = false;
+    let hasMoved = false;
+    let startX = 0, startY = 0;
 
-      // Định dạng lại container thành fixed (mặc định ở góc dưới bên phải)
-      container.className = "fixed bottom-24 right-6 flex flex-col items-end z-[2147483647]";
-      container.dataset.free = "1";
+    // 1. Nút Master Toggle Bubble (Pill shape Calm Tech)
+    const toggleBtn = document.createElement("button");
+    toggleBtn.id = "helper-toggle-button";
+    toggleBtn.innerHTML = `<span>⌘</span> <span>Helper</span>`;
+    toggleBtn.title = "Content Helper - Click để mở Menu công cụ (Kéo thả để di chuyển)";
 
-      let isDragging = false;
-      let startX, startY;
+    toggleBtn.addEventListener("click", (e) => {
+      if (isDragging) return; // Không mở menu nếu vừa kéo thả xong
+      if (window.ContentHelper?.playMechanicalClick) {
+        window.ContentHelper.playMechanicalClick();
+      }
+      const menu = shadow.getElementById('helper-buttons-menu');
+      if (menu) {
+        menu.classList.toggle('hidden');
+      }
+    });
 
-      // 1. Tạo nút Toggle dạng bong bóng chữ nhật bo tròn (pill shape)
-      const toggleBtn = this._createButton({
-        id: 'helper-toggle-button',
-        text: '🛠️ Content Helper',
-        className: 'ai-gradient-border shadow-2xl hover:shadow-xl !rounded-full !px-4 !h-10 !text-xs cursor-move transition-transform active:scale-95 !flex !items-center !justify-center',
-        onClick: () => {
-          if (isDragging) return; // Không mở menu nếu đang kéo thả
-          const menu = document.getElementById('helper-buttons-menu');
+    // Bổ sung logic Drag & Drop tự do cho bong bóng
+    toggleBtn.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // Chỉ nhận chuột trái
+      e.preventDefault(); // Ngăn chọn văn bản hoặc native drag của trình duyệt
+
+      isDragging = false;
+      hasMoved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const rect = container.getBoundingClientRect();
+      const shiftX = e.clientX - rect.left;
+      const shiftY = e.clientY - rect.top;
+
+      const onMouseMove = (ev) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+
+        if (!hasMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+          hasMoved = true;
+          isDragging = true;
+        }
+
+        if (hasMoved) {
+          // Tính toạ độ mới với viewport clamping an toàn
+          const pad = 8;
+          const maxLeft = window.innerWidth - rect.width - pad;
+          const maxTop = window.innerHeight - rect.height - pad;
+
+          let newLeft = Math.max(pad, Math.min(ev.clientX - shiftX, maxLeft));
+          let newTop = Math.max(pad, Math.min(ev.clientY - shiftY, maxTop));
+
+          container.style.left = newLeft + 'px';
+          container.style.top = newTop + 'px';
+          container.style.right = 'auto';
+          container.style.bottom = 'auto';
+
+          // Tự động điều chỉnh hướng bung menu: nếu ở nửa trên thì bung xuống dưới
+          const menu = shadow.getElementById('helper-buttons-menu');
           if (menu) {
-            if (menu.classList.contains('hidden')) {
-              menu.classList.remove('hidden');
-              menu.classList.add('flex');
+            if (newTop < 260) {
+              menu.classList.add('menu-down');
             } else {
-              menu.classList.add('hidden');
-              menu.classList.remove('flex');
+              menu.classList.remove('menu-down');
             }
           }
-        },
-      });
+        }
+      };
 
-      // Bổ sung logic Drag & Drop tùy chỉnh cho bong bóng
-      toggleBtn.addEventListener('mousedown', (e) => {
-        isDragging = false;
-        startX = e.clientX;
-        startY = e.clientY;
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
 
-        const rect = container.getBoundingClientRect();
-        const shiftX = e.clientX - rect.left;
-        const shiftY = e.clientY - rect.top;
+        if (hasMoved) {
+          // Giữ cờ isDragging trong 120ms để sự kiện click không mở menu
+          setTimeout(() => {
+            isDragging = false;
+          }, 120);
+        } else {
+          isDragging = false;
+        }
+      };
 
-        const onMouseMove = (ev) => {
-          // Chỉ coi là drag khi chuột di chuyển > 3px
-          if (Math.abs(ev.clientX - startX) > 3 || Math.abs(ev.clientY - startY) > 3) {
-            isDragging = true;
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    // 2. Menu chứa danh sách công cụ (Popup List Menu)
+    const menu = document.createElement("div");
+    menu.id = "helper-buttons-menu";
+    menu.className = "hidden";
+
+    buttons.forEach(config => {
+      const btn = document.createElement("button");
+      btn.id = config.id;
+      btn.innerHTML = config.text;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.ContentHelper?.playMechanicalClick) {
+          window.ContentHelper.playMechanicalClick();
+        }
+        // Tự động đóng menu khi click vào item
+        menu.classList.add('hidden');
+        try {
+          config.onClick();
+        } catch (err) {
+          console.error("❌ [Content Helper] Lỗi khi mở panel:", err);
+          if (window.ContentHelper?.showToast) {
+            window.ContentHelper.showToast(`Lỗi khi mở panel: ${err.message}`, "error");
           }
-          if (isDragging) {
-            container.style.left = ev.clientX - shiftX + "px";
-            container.style.top = ev.clientY - shiftY + "px";
-            container.style.bottom = "auto";
-            container.style.right = "auto";
-          }
-        };
-
-        const onMouseUp = () => {
-          document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
-        };
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-      });
-
-      // 2. Tạo Menu chứa các button con
-      const menu = document.createElement("div");
-      menu.id = "helper-buttons-menu";
-      // Style: Menu hiện ở trên bong bóng, lệch phải để thẳng hàng
-      menu.className = "hidden absolute bottom-full mb-3 right-0 flex-col gap-1 p-2 bg-white shadow-2xl rounded-xl border border-gray-100 z-50 min-w-[180px] origin-bottom-right transition-all duration-200";
-
-      buttons.forEach(config => {
-        const btn = this._createButton(config);
-        btn.classList.add('w-full', '!justify-start', 'border-none', 'shadow-none', 'hover:bg-indigo-50', 'text-gray-600', 'font-medium', 'py-2');
-        menu.appendChild(btn);
-      });
-
-      // 3. Xử lý click outside để đóng menu
-      document.addEventListener('click', (e) => {
-        if (!container.contains(e.target) && !isDragging) {
-          menu.classList.add('hidden');
-          menu.classList.remove('flex');
         }
       });
+      menu.appendChild(btn);
+    });
 
-      container.appendChild(menu);
-      container.appendChild(toggleBtn);
+    // 3. Xử lý click outside và phím ESC để đóng menu (sử dụng composedPath xuyên Shadow DOM)
+    document.addEventListener('click', (e) => {
+      const path = e.composedPath ? e.composedPath() : [e.target];
+      if (!path.includes(container) && !isDragging) {
+        menu.classList.add('hidden');
+      }
+    });
 
-      // Nút bong bóng độc lập nên gắn trực tiếp vào body thay vì chatForm
-      document.body.appendChild(container);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.classList.contains('hidden')) {
+        menu.classList.add('hidden');
+      }
+    });
 
-    } else {
-      // --- CHẾ ĐỘ THƯỜNG: Render hàng ngang như cũ ---
-      buttons.forEach(config => {
-        const btn = this._createButton(config);
-        container.appendChild(btn);
-      });
-      chatForm.after(container);
-    }
+    container.appendChild(menu);
+    container.appendChild(toggleBtn);
+    shadow.appendChild(container);
   }
 
-  // Helper method để tạo button
+  // Helper method tạo button nếu cần
   _createButton({ id, text, className, onClick }) {
     const btn = document.createElement("button");
     btn.id = id;
-    btn.textContent = text;
-    // Base Tailwind styles for all buttons + specific classes from config
-    btn.className = `px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-all active:scale-95 shadow-sm border cursor-pointer flex items-center gap-1 ${className}`;
+    btn.innerHTML = text;
+    btn.className = `ts-btn ${className || ''}`;
     btn.addEventListener("click", (e) => {
+      if (window.ContentHelper?.playMechanicalClick) {
+        window.ContentHelper.playMechanicalClick();
+      }
       e.preventDefault();
       e.stopPropagation();
       onClick();
@@ -321,20 +367,72 @@ class ChatGPTAdapter extends BaseChatAdapter {
   }
 
   getTextarea() {
-    return this._q("#prompt-textarea")
+    return this._q("#prompt-textarea") || this._q('div[contenteditable="true"][id="prompt-textarea"]');
   }
-  getSendBtn() { return this._q('button[aria-label="Send prompt"]'); }
-  getStopBtn() { return this._q('button[aria-label="Stop generating"]'); }
-  getVoiceBtn() { return this._q('button[aria-label="Start voice mode"]'); }
+
+  getSendBtn() {
+    return this._q('button[data-testid="send-button"]') ||
+      this._q('button[aria-label="Send prompt"]') ||
+      this._q('button[aria-label*="Send" i]') ||
+      this._q('button[aria-label*="Gửi" i]') ||
+      this._q('form button[type="submit"]');
+  }
+
+  getStopBtn() {
+    return this._q('button[data-testid="stop-button"]') ||
+      this._q('button[aria-label="Stop generating"]') ||
+      this._q('button[aria-label*="Stop" i]') ||
+      this._q('button[aria-label*="Dừng" i]');
+  }
+
+  getVoiceBtn() {
+    return this._q('button[data-testid="composer-speech-button"]') ||
+      this._q('button[aria-label="Start voice mode"]') ||
+      this._q('button[aria-label*="voice" i]') ||
+      this._q('button[aria-label*="thoại" i]');
+  }
 
   isDone() {
     const stopBtn = this.getStopBtn();
-    const sendBtn = this.getSendBtn();
+    // 1. Nếu nút Stop đang tồn tại và hiển thị -> Đang sinh câu trả lời -> Chưa xong
+    if (stopBtn && (stopBtn.offsetWidth > 0 || stopBtn.offsetHeight > 0 || stopBtn.getClientRects().length > 0)) {
+      return false;
+    }
+
     const voiceBtn = this.getVoiceBtn();
-    const done = (!stopBtn && sendBtn && sendBtn.disabled) || (!stopBtn
-      && voiceBtn);
-    return done;
+    // 2. TH1: Nút Voice hiển thị (ChatGPT chuyển sang nút mic khi textarea trống và đã sinh xong)
+    if (voiceBtn && (voiceBtn.offsetWidth > 0 || voiceBtn.offsetHeight > 0 || voiceBtn.getClientRects().length > 0)) {
+      return true;
+    }
+
+    const sendBtn = this.getSendBtn();
+    // 3. TH2: Nút Send tồn tại nhưng đang ở trạng thái disabled / aria-disabled
+    if (sendBtn) {
+      const isDisabled = sendBtn.disabled || sendBtn.getAttribute('aria-disabled') === 'true';
+      if (isDisabled) {
+        return true;
+      }
+    }
+
+    // 4. TH3: Ô textarea đã trống (ChatGPT dọn sau khi gửi) và không có nút Stop
+    const textarea = this.getTextarea();
+    if (textarea) {
+      const text = textarea.value ?? textarea.textContent ?? '';
+      if (!text.trim()) {
+        return true;
+      }
+    }
+
+    // 5. TH4: Xuất hiện nút action bar ở câu trả lời cuối (nút copy/regenerate khi hoàn thành)
+    const turnActions = document.querySelectorAll('button[data-testid*="copy"], button[aria-label*="Copy" i], button[data-testid*="good-response"]');
+    if (turnActions.length > 0 && !stopBtn) {
+      return true;
+    }
+
+    // Fallback: Khi không có nút Stop nào đang hiển thị
+    return !stopBtn;
   }
+
   getForm() {
     return this.getTextarea()?.closest("form") ?? null;
   }
@@ -343,7 +441,6 @@ class ChatGPTAdapter extends BaseChatAdapter {
     return Array.from(document.getElementsByClassName(
       'markdown prose dark:prose-invert w-full break-words'));
   }
-
 
   // Trả về danh sách button cần dùng (3 chung + 2 đặc thù)
   getButtonConfigs() {
@@ -702,15 +799,7 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   }
 
   insertHelperButtons() {
-    if (this.isSpeechPage) {
-      if (window.GoogleAIStudioSpeechPanel && window.GoogleAIStudioSpeechPanel.insertSpeechPageButton) {
-        window.GoogleAIStudioSpeechPanel.insertSpeechPageButton();
-      } else {
-        console.error("❌ [GoogleAIStudioAdapter] window.GoogleAIStudioSpeechPanel is undefined or missing insertSpeechPageButton");
-      }
-    } else {
-      super.insertHelperButtons();
-    }
+    super.insertHelperButtons();
   }
 
   getForm() {
@@ -760,16 +849,14 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   }
 
   getButtonConfigs() {
-    if (this.isSpeechPage) return [];
     return [
-      BUTTONS.MANAGE_SCENARIO,
-      BUTTONS.RUN_SCENARIO,
-      BUTTONS.COPY_CONTENT,   // Thêm nút Copy Content để người dùng có thể mở bảng copy tin nhắn
-      BUTTONS.SRT_AUTOMATION, // 👈 Thêm nút mới
       BUTTONS.AI_STUDIO_SETTINGS,
-      BUTTONS.COLLAPSE_CODE,
-      BUTTONS.YT_STUDIO_SETTINGS,
-      BUTTONS.RUN_FLOW
+      BUTTONS.AI_STUDIO_SPEECH_SETTINGS,
+      BUTTONS.RUN_SCENARIO,
+      BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.RUN_FLOW,
+      BUTTONS.SRT_AUTOMATION,
+      BUTTONS.COPY_CONTENT,
     ];
   }
 
@@ -813,13 +900,17 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   constructor() {
     super();
     this.ytPanel = null;
-    const observer = new MutationObserver(() => {
-      if (this._q('#add-translations-button') || this._q('#add-button button')) {
-        this.insertHelperButtons();
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    this.insertHelperButtons();
+  }
+
+  getButtonConfigs() {
+    return [
+      BUTTONS.YT_STUDIO_SETTINGS,
+      BUTTONS.YT_ADD_LANGUAGES,
+      BUTTONS.RUN_SCENARIO,
+      BUTTONS.MANAGE_SCENARIO,
+      BUTTONS.SPLITTER,
+    ];
   }
 
   getTextarea() { return null; }
@@ -827,57 +918,7 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
   isDone() { return true; }
 
   _toggleYoutubePanel() {
-    if (this.ytPanel) {
-      this.ytPanel.destroy();
-      this.ytPanel = null; // Quan trọng: reset lại sau khi destroy
-    } else {
-      this.ytPanel = new YoutubeStudioPanel(() => (this.ytPanel = null));
-    }
-  }
-
-  insertHelperButtons() {
-    if (document.getElementById('helper-config-languages')) return;
-    const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
-    if (!addLanguageBtn) return;
-
-    // Tìm container chứa các action
-    const container = addLanguageBtn.parentElement;
-    if (!container) return;
-
-    // Đảm bảo container là flex row để không bị nhảy hàng
-    container.style.setProperty('display', 'flex', 'important');
-    container.style.setProperty('flex-direction', 'row', 'important');
-    container.style.setProperty('align-items', 'center', 'important');
-    container.style.setProperty('gap', '10px', 'important');
-    container.style.setProperty('flex-wrap', 'nowrap', 'important');
-
-    const configButton = this._createButton({
-      id: 'helper-config-languages',
-      text: '⚙️ Configure',
-      className: 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100 h-10 rounded-full px-4 shadow-sm',
-      onClick: () => this._toggleYoutubePanel()
-    });
-
-    const runButton = this._createButton({
-      id: 'helper-add-my-languages',
-      text: '🌐 Add Languages',
-      className: 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700 h-10 rounded-full px-5 shadow-lg',
-      onClick: () => this.addMyLanguages()
-    });
-
-    // Ép kiểu lại text để tránh lỗi icon bị nổi lên (floating icon)
-    [configButton, runButton].forEach(btn => {
-      btn.style.lineHeight = '1';
-      btn.style.fontSize = '12px';
-      btn.style.display = 'inline-flex';
-      btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'center';
-      btn.style.whiteSpace = 'nowrap';
-      btn.style.flexShrink = '0';
-    });
-
-    addLanguageBtn.after(runButton);
-    addLanguageBtn.after(configButton);
+    ensureHelperInstance()?._toggleYoutubePanel();
   }
 
   sleep(ms) {
@@ -1232,6 +1273,11 @@ function initializeAdapter() {
 
   console.log("[Adapter Factory] Host =", window.location.hostname);
   console.log("[Adapter Factory] Picked =", window.ChatAdapter?.constructor.name || 'None');
+
+  // Gọi trực tiếp insertHelperButtons() ngay sau khi adapter sẵn sàng
+  if (window.ChatAdapter) {
+    window.ChatAdapter.insertHelperButtons();
+  }
 }
 
 // Đảm bảo chạy sau khi tất cả các script đã được tải và DOM sẵn sàng.

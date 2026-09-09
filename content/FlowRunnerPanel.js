@@ -4,74 +4,22 @@
  * Khởi tạo FlowSequencer để điều khiển quá trình chạy (chạy, tạm dừng, thử lại, bỏ qua).
  */
 
-const FlowRunnerInnerHTML = `
-  <div class="sr-header flex items-center mb-4 cursor-move select-none">
-    <span class="text-xl mr-2">🔗</span>
-    <div>
-      <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Flow Runner</h3>
-      <div class="text-[10px] text-gray-500 font-medium tracking-tight">Thực thi kịch bản liên hoàn</div>
-    </div>
-  </div>
-
-  <div id="flow-browser" class="mb-4 relative">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">CHỌN FLOW</label>
-    <select id="flow-select" class="w-full h-9 px-3 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:border-indigo-500 transition-all outline-none">
-      <option value="">-- Đang tải dữ liệu... --</option>
-    </select>
-  </div>
-
-  <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100 mb-4">
-    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">BẮT ĐẦU TỪ BƯỚC</label>
-    <select id="flow-step-select" class="w-full h-9 px-3 text-sm font-bold text-indigo-600 bg-white border border-gray-300 rounded-lg outline-none focus:border-indigo-500 transition-all cursor-pointer" disabled>
-      <option value="0">Vui lòng chọn Flow...</option>
-    </select>
-  </div>
-
-  <div id="flow-inputs" class="space-y-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar">
-    <div class="text-xs text-gray-500 italic text-center">Các biến cấu hình sẽ hiển thị ở đây.</div>
-  </div>
-
-  <!-- Thanh tiến trình -->
-  <div id="flow-progress-box" class="mb-4 hidden">
-    <div class="flex justify-between items-end mb-1.5 px-1">
-      <div class="text-[10px] font-bold text-gray-500 uppercase">
-        Step <span id="flow-progress-step" class="text-indigo-600">0</span> / <span id="flow-progress-total">0</span>
-      </div>
-      <div id="flow-progress-status" class="text-xs font-black text-indigo-600">Đang chạy...</div>
-    </div>
-    <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
-      <div id="flow-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-    </div>
-    <div id="flow-step-details" class="mt-2 text-[10px] text-gray-500 italic truncate"></div>
-    
-    <!-- Controls khi gặp lỗi -->
-    <div id="flow-error-controls" class="mt-2 flex gap-2 hidden">
-      <button id="flow-retry-btn" class="flex-1 h-7 bg-orange-50 text-orange-600 border border-orange-200 rounded text-[10px] font-bold hover:bg-orange-100 transition-all">🔄 Thử lại (Retry)</button>
-      <button id="flow-skip-btn" class="flex-1 h-7 bg-gray-100 text-gray-600 border border-gray-200 rounded text-[10px] font-bold hover:bg-gray-200 transition-all">⏭ Bỏ qua (Skip)</button>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 gap-2 mb-4">
-    <button id="flow-start-btn" class="h-9 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-      ▶️ Bắt đầu Flow
-    </button>
-  </div>
-
-  <div class="flex gap-2">
-    <button id="flow-pause-btn" class="flex-1 h-8 bg-white border border-gray-100 text-gray-400 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95 disabled:opacity-30" disabled>⏸ Tạm dừng</button>
-    <button id="flow-resume-btn" class="flex-1 h-8 bg-white border border-indigo-100 text-indigo-400 font-bold rounded-lg text-[10px] hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-30" disabled>▶️ Tiếp tục</button>
-  </div>
-`;
-
-window.FlowRunnerPanel = class {
+window.FlowRunnerPanel = class extends window.BasePanel {
   constructor(onClose) {
-    console.log("▶️ [FlowRunnerPanel] init");
     if (!window.ChatAdapter) {
       ContentHelper.showToast("Không tìm thấy ChatAdapter phù hợp. Flow Runner sẽ bị vô hiệu.", "error");
       throw new Error("ChatAdapter not available");
     }
 
-    this.onClose = onClose;
+    super({
+      id: "flow-runner-panel",
+      title: "Trình chạy Luồng",
+      icon: "🔀",
+      onClose: onClose,
+      view: window.FlowRunnerView
+    });
+
+    console.log("▶️ [FlowRunnerPanel] init");
     this.sequencer = null;
     this.flowConfigs = {};
     this.allScenarios = {};
@@ -79,28 +27,8 @@ window.FlowRunnerPanel = class {
     // Lưu các biến override của người dùng nhập trên UI
     this.userInputs = {}; 
     
-    this._render();
-    this._loadData();
-  }
-
-  _render() {
-    this.el = document.createElement("div");
-    this.el.id = "flow-runner-panel";
-    this.el.className = "panel-box ts-panel w-[400px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.innerHTML = FlowRunnerInnerHTML;
-
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".sr-header");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
-
-    // Nút thu nhỏ (minimize) — tạo bong bóng Messenger khi click
-    this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
-      icon: '🔗',
-      tooltip: 'Flow Runner',
-      getBadgeInfo: () => this._getBubbleBadgeInfo()
-    });
-
     this._attachEvents();
+    this._loadData();
   }
 
   /**
@@ -128,29 +56,163 @@ window.FlowRunnerPanel = class {
       this.cachedInputs = result.flowRunnerCache || {};
 
       const selectEl = this.el.querySelector("#flow-select");
-      selectEl.innerHTML = '<option value="">-- Chọn Flow --</option>';
+      const dropdown = this.el.querySelector("#flow-dropdown");
+      if (selectEl) selectEl.innerHTML = '<option value="">-- Chọn Flow --</option>';
+      if (dropdown) dropdown.innerHTML = '';
 
       Object.keys(this.flowConfigs).forEach(flowName => {
-        const option = document.createElement('option');
-        option.value = flowName;
-        option.textContent = flowName;
-        selectEl.appendChild(option);
+        if (selectEl) {
+          const option = document.createElement('option');
+          option.value = flowName;
+          option.textContent = flowName;
+          selectEl.appendChild(option);
+        }
+
+        if (dropdown) {
+          const item = document.createElement("div");
+          item.className = "scenario-dropdown-item custom-dropdown-item ts-item-row";
+
+          const groupTag = document.createElement("span");
+          groupTag.className = "ts-group-tag";
+          groupTag.textContent = "FLOW";
+          item.appendChild(groupTag);
+
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "ts-item-row__text font-bold";
+          titleSpan.textContent = flowName;
+          item.appendChild(titleSpan);
+
+          item.dataset.name = flowName;
+
+          item.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            this._selectFlow(flowName, flowName);
+          });
+
+          dropdown.appendChild(item);
+        }
       });
       
+      this._setupFlowSearch();
+
       const lastFlow = result.flowRunnerLastFlow;
       if (lastFlow && this.flowConfigs[lastFlow]) {
-        selectEl.value = lastFlow;
-        this._onFlowSelected(lastFlow);
+        this._selectFlow(lastFlow, lastFlow);
       }
     });
   }
 
+  _selectFlow(name, displayText) {
+    const searchBox = this.el.querySelector("#flow-search");
+    const dropdown = this.el.querySelector("#flow-dropdown");
+    const selectEl = this.el.querySelector("#flow-select");
+
+    if (searchBox) {
+      searchBox.value = displayText || name;
+      searchBox.dataset.selectedName = name;
+      searchBox.blur();
+    }
+    if (selectEl) {
+      selectEl.value = name;
+    }
+    if (dropdown) {
+      dropdown.classList.add("hidden-dropdown");
+    }
+
+    chrome.storage.local.set({ flowRunnerLastFlow: name });
+    this._onFlowSelected(name);
+  }
+
+  _setupFlowSearch() {
+    const searchBox = this.el.querySelector("#flow-search");
+    const dropdown = this.el.querySelector("#flow-dropdown");
+    const browserWrapper = this.el.querySelector("#flow-browser");
+
+    if (!searchBox || !dropdown || !browserWrapper) return;
+
+    dropdown.style.display = "flex";
+    dropdown.style.flexDirection = "column";
+
+    // Tìm kiếm fuzzy khi người dùng gõ
+    searchBox.oninput = () => {
+      dropdown.classList.remove("hidden-dropdown");
+      const keyword = searchBox.value.trim();
+      const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
+
+      if (!keyword) {
+        items.forEach(item => {
+          item.style.removeProperty('display');
+          item.style.removeProperty('order');
+        });
+        dropdown.querySelector(".ts-dropdown-empty")?.remove();
+        return;
+      }
+
+      let matchCount = 0;
+      items.forEach(item => {
+        const score = ContentHelper.fuzzySearch(keyword, item.textContent);
+        if (score > 0) {
+          item.style.display = 'flex';
+          item.style.order = -score;
+          matchCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      let emptyMsg = dropdown.querySelector(".ts-dropdown-empty");
+      if (matchCount === 0) {
+        if (!emptyMsg) {
+          emptyMsg = document.createElement("div");
+          emptyMsg.className = "ts-dropdown-empty";
+          emptyMsg.textContent = "Không tìm thấy Flow phù hợp";
+          dropdown.appendChild(emptyMsg);
+        }
+      } else if (emptyMsg) {
+        emptyMsg.remove();
+      }
+    };
+
+    const showDropdown = () => {
+      dropdown.classList.remove("hidden-dropdown");
+      if (!searchBox.value.trim()) {
+        dropdown.querySelectorAll(".scenario-dropdown-item").forEach(i => {
+          i.style.removeProperty('display');
+          i.style.removeProperty('order');
+        });
+        dropdown.querySelector(".ts-dropdown-empty")?.remove();
+      }
+    };
+
+    searchBox.onfocus = showDropdown;
+    searchBox.onclick = showDropdown;
+
+    searchBox.onkeydown = (e) => {
+      if (e.key === "Escape") {
+        dropdown.classList.add("hidden-dropdown");
+      }
+    };
+
+    // Đóng khi click ngoài
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+    }
+    this._onDocClick = (event) => {
+      const path = event.composedPath ? event.composedPath() : [];
+      if (!path.includes(browserWrapper)) {
+        dropdown.classList.add('hidden-dropdown');
+      }
+    };
+    document.addEventListener('click', this._onDocClick);
+  }
+
   _attachEvents() {
     const flowSelect = this.el.querySelector("#flow-select");
-    flowSelect.addEventListener("change", (e) => {
-      chrome.storage.local.set({ flowRunnerLastFlow: e.target.value });
-      this._onFlowSelected(e.target.value);
-    });
+    if (flowSelect) {
+      flowSelect.addEventListener("change", (e) => {
+        this._selectFlow(e.target.value, e.target.value);
+      });
+    }
 
     this.el.querySelector("#flow-start-btn").onclick = () => this._startFlow();
     
@@ -268,11 +330,10 @@ window.FlowRunnerPanel = class {
         headerDiv.appendChild(label);
 
         let inputEl;
-        const baseClasses = "w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:border-indigo-500 transition-all outline-none";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer`;
+          inputEl.className = "ts-select w-full";
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -283,12 +344,12 @@ window.FlowRunnerPanel = class {
           });
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[40px] resize-y`;
+          inputEl.className = "ts-textarea w-full min-h-[40px]";
           inputEl.value = finalValue;
           inputEl.placeholder = "Nhập giá trị override...";
           
           const fileBtn = document.createElement('button');
-          fileBtn.className = "text-[9px] font-bold text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95";
+          fileBtn.className = "ts-btn ts-btn--secondary text-[10px] py-0.5 px-2";
           fileBtn.textContent = "📂 Chọn file";
           fileBtn.onclick = () => {
             const fileInput = document.createElement('input');
@@ -372,6 +433,8 @@ window.FlowRunnerPanel = class {
     this.el.querySelector("#flow-pause-btn").disabled = false;
     this.el.querySelector("#flow-resume-btn").disabled = true;
     this.el.querySelector("#flow-select").disabled = true;
+    const flowSearch = this.el.querySelector("#flow-search");
+    if (flowSearch) flowSearch.disabled = true;
     this.el.querySelector("#flow-step-select").disabled = true;
     
     this._showProgress(true);
@@ -443,8 +506,8 @@ window.FlowRunnerPanel = class {
     switch (status) {
       case 'running':
         statusEl.textContent = "Đang xử lý...";
-        statusEl.className = "text-xs font-black text-indigo-600";
-        bar.className = "h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out";
+        statusEl.className = "text-xs font-black ts-text-accent";
+        bar.className = "ts-progress__bar";
         break;
       case 'success':
         statusEl.textContent = "Thành công!";
@@ -492,6 +555,8 @@ window.FlowRunnerPanel = class {
     this.el.querySelector("#flow-pause-btn").disabled = true;
     this.el.querySelector("#flow-resume-btn").disabled = true;
     this.el.querySelector("#flow-select").disabled = false;
+    const flowSearch = this.el.querySelector("#flow-search");
+    if (flowSearch) flowSearch.disabled = false;
     this.el.querySelector("#flow-step-select").disabled = false;
   }
 
@@ -546,9 +611,10 @@ window.FlowRunnerPanel = class {
   }
 
   destroy() {
-    this._minimizeCtrl?.destroy();
-    this.el?.remove();
-    this.onClose();
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+    }
     this.sequencer?.stop();
+    super.destroy();
   }
 };

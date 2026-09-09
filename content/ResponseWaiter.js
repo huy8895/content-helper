@@ -24,7 +24,8 @@ window.ResponseWaiter = (() => {
     hiddenInterval: 3000,   // 3 giây khi tab ẩn
     autoScroll: true,       // Tự cuộn xuống khi có nội dung mới
     debounceMs: 800,        // Debounce sau khi DOM ngừng thay đổi mới kiểm tra isDone
-    lockoutMs: 2500,        // Trì hoãn khóa kiểm tra isDone ban đầu (ms) để tránh độ trễ UI/Server
+    lockoutMs: 2000,        // Trì hoãn khóa kiểm tra isDone ban đầu (ms) để tránh độ trễ UI/Server
+    quiescenceMs: 2200,     // Thời gian DOM hoàn toàn tĩnh lặng để kích hoạt dự phòng (ms)
   };
 
   /**
@@ -37,6 +38,7 @@ window.ResponseWaiter = (() => {
 
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
+      let lastMutationTime = Date.now();
       let observer = null;
       let fallbackTimer = null;
       let debounceTimer = null;
@@ -58,17 +60,19 @@ window.ResponseWaiter = (() => {
         }
       };
 
-      // ── Kiểm tra trạng thái isDone() ──────────────────────────────
+      // ── Kiểm tra trạng thái hoàn tất ──────────────────────────────
       const checkDone = (source) => {
         if (isSettled) return;
 
-        // Tránh kiểm tra quá sớm ngay sau khi gửi (tránh độ trễ UI/Server phản hồi ban đầu)
-        if (Date.now() - startTime < config.lockoutMs) {
+        const elapsed = Date.now() - startTime;
+
+        // Tránh kiểm tra quá sớm ngay sau khi gửi (chờ UI/Server phản hồi ban đầu)
+        if (elapsed < config.lockoutMs) {
           return;
         }
 
         // Kiểm tra timeout trước
-        if (Date.now() - startTime > config.timeout) {
+        if (elapsed > config.timeout) {
           isSettled = true;
           cleanup();
           reject(new Error("Timeout khi chờ AI phản hồi"));
@@ -76,14 +80,33 @@ window.ResponseWaiter = (() => {
         }
 
         try {
-          if (window.ChatAdapter && window.ChatAdapter.isDone()) {
+          // 1. Kiểm tra chính: ChatAdapter.isDone()
+          const isDoneByAdapter = window.ChatAdapter && window.ChatAdapter.isDone();
+          if (isDoneByAdapter) {
             console.log(`✅ [ResponseWaiter] AI đã trả lời xong (phát hiện từ: ${source})`);
             isSettled = true;
             cleanup();
             resolve();
+            return;
+          }
+
+          // 2. Dự phòng an toàn: DOM Quiescence (DOM tĩnh lặng hoàn toàn)
+          // Nếu đã qua ít nhất 3.5s kể từ khi gửi và DOM ngừng thay đổi trong hơn quiescenceMs
+          const quietDuration = Date.now() - lastMutationTime;
+          if (elapsed >= 3500 && quietDuration >= config.quiescenceMs) {
+            const stopBtn = window.ChatAdapter?.getStopBtn ? window.ChatAdapter.getStopBtn() : null;
+            const isStopVisible = stopBtn && (stopBtn.offsetWidth > 0 || stopBtn.offsetHeight > 0 || stopBtn.getClientRects().length > 0);
+
+            if (!isStopVisible) {
+              console.log(`✅ [ResponseWaiter] AI đã trả lời xong (phát hiện từ DOM Quiescence: DOM tĩnh lặng ${quietDuration}ms & không có nút Stop, nguồn: ${source})`);
+              isSettled = true;
+              cleanup();
+              resolve();
+              return;
+            }
           }
         } catch (err) {
-          console.error("[ResponseWaiter] Lỗi khi kiểm tra isDone():", err);
+          console.error("[ResponseWaiter] Lỗi khi kiểm tra hoàn tất:", err);
         }
       };
 
@@ -128,6 +151,8 @@ window.ResponseWaiter = (() => {
       // Khi AI dừng → DOM ngừng thay đổi → debounce hết → kiểm tra isDone()
       try {
         observer = new MutationObserver(() => {
+          lastMutationTime = Date.now();
+
           // AI đang sinh nội dung → auto-scroll
           performAutoScroll();
 
@@ -164,8 +189,8 @@ window.ResponseWaiter = (() => {
         }
       };
 
-      // Bắt đầu fallback polling sau 2 giây (cho MutationObserver cơ hội xử lý trước)
-      fallbackTimer = setTimeout(pollFallback, 2000);
+      // Bắt đầu fallback polling sau 1.5 giây
+      fallbackTimer = setTimeout(pollFallback, 1500);
     });
   }
 

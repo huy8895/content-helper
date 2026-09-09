@@ -1,192 +1,32 @@
 // --- STAGE: ScenarioRunner.js (CLEANED & COMPACT) ---
 
-const ScenarioRunnerInnerHTML = `
-  <div class="sr-header flex items-center justify-between mb-2.5 cursor-move select-none pr-12">
-    <div class="flex items-center gap-2">
-      <span class="text-lg">📤</span>
-      <div>
-        <h3 class="m-0 text-sm font-bold text-gray-900 leading-tight">Scenario Runner</h3>
-        <div class="text-[9px] text-gray-400 font-medium">Execute automation sequences</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Banner khôi phục phiên song song bị gián đoạn -->
-  <div id="sr-restore-banner" class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-2.5 flex flex-col gap-1 hidden animate-in">
-    <div class="flex items-center justify-between">
-      <div class="text-xs font-bold text-amber-800 flex items-center gap-1 select-none">
-        <span>⚡</span> Khôi phục phiên chạy song song
-      </div>
-      <span class="text-[10px] text-amber-600 animate-pulse select-none">⏳ Gián đoạn</span>
-    </div>
-    <div class="text-[10px] text-amber-700 font-medium leading-relaxed" id="sr-restore-desc">
-      Đang tải thông tin...
-    </div>
-    <div class="flex gap-2 justify-end mt-1">
-      <button id="sr-restore-cancel" class="px-2.5 py-1 text-[9px] font-bold text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
-        Bỏ qua & Xóa
-      </button>
-      <button id="sr-restore-confirm" class="px-3 py-1 text-[9px] font-bold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-all shadow-sm active:scale-95">
-        Tiếp tục chạy
-      </button>
-    </div>
-  </div>
-
-  <!-- Hàng chọn kịch bản & bước bắt đầu (gọn gàng 2 cột) -->
-  <div class="grid grid-cols-12 gap-2 mb-2.5 relative z-30">
-    <div id="sr-scenario-browser" class="col-span-7 relative z-40">
-      <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block tracking-wider pl-0.5" for="sr-scenario-search">CHỌN KỊCH BẢN</label>
-      <div class="relative">
-        <input type="text" id="sr-scenario-search" 
-          class="w-full h-8 pl-7 pr-2 text-xs border border-gray-200 rounded-lg bg-gray-50/80 focus:bg-white focus:border-indigo-500 transition-all outline-none" 
-          placeholder="Tìm kịch bản...">
-        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">🔍</span>
-      </div>
-      <div id="sr-scenario-dropdown" class="absolute left-0 top-full mt-1 w-[320px] max-w-[380px] bg-white border border-gray-200 rounded-lg shadow-2xl z-[150] max-h-56 overflow-y-auto hidden-dropdown custom-scrollbar p-1 flex flex-col"></div>
-    </div>
-
-    <div class="col-span-5 relative">
-      <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block tracking-wider pl-0.5" for="step-select">BẮT ĐẦU TỪ</label>
-      <select id="step-select" class="w-full h-8 px-2 text-xs font-semibold text-indigo-600 bg-white border border-gray-200 rounded-lg outline-none focus:border-indigo-500 transition-all cursor-pointer truncate" disabled>
-        <option value="0">Bước 1...</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Phần nhập thông tin đầu vào (rộng rãi, thoải mái) -->
-  <div class="flex items-center justify-between mb-1 pl-0.5">
-    <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">THÔNG TIN ĐẦU VÀO</label>
-    <button id="sr-clear-inputs" class="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition-all active:scale-95" title="Xóa toàn bộ nội dung đã nhập">🧹 Xóa Form</button>
-  </div>
-  <div id="scenario-inputs" class="space-y-2.5 mb-2.5 bg-gray-50/60 p-2.5 rounded-xl border border-gray-100 max-h-[320px] overflow-y-auto custom-scrollbar flex-1 min-h-[130px]"></div>
-
-  <!-- Thanh tiến trình -->
-  <div id="sr-progress-box" class="mb-2.5 hidden">
-    <div class="flex justify-between items-end mb-1 px-0.5">
-      <div class="text-[9px] font-bold text-gray-500 uppercase">
-        <span id="sr-progress-step" class="text-indigo-600">0</span> / <span id="sr-progress-total">0</span> Prompts
-      </div>
-      <div class="flex items-center gap-1.5">
-        <span id="sr-polling-dot" class="w-2 h-2 rounded-full bg-green-400 hidden" style="animation:pulse 1s ease-in-out infinite"></span>
-        <button id="sr-download-zip" class="h-5 px-2 flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-bold rounded-md text-[9px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm hidden" title="Tải kết quả đã xong dưới dạng ZIP">
-          📦 <span id="sr-zip-count">0</span>/<span id="sr-zip-total">0</span>
-        </button>
-        <div id="sr-progress-percent" class="text-xs font-black text-indigo-600">0%</div>
-      </div>
-    </div>
-    <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
-      <div id="sr-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out"></div>
-    </div>
-    <div id="sr-done-list" class="flex flex-wrap gap-1 mt-1.5 max-h-16 overflow-y-auto custom-scrollbar"></div>
-    <div id="sr-split-detail" class="mt-1.5 space-y-1 max-h-28 overflow-y-auto custom-scrollbar hidden"></div>
-  </div>
-
-  <!-- Nút điều khiển thực thi (Grid 2x2 gọn gàng) -->
-  <div class="grid grid-cols-2 gap-1.5 mb-2">
-    <button id="sr-start" class="h-8 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1">
-      ▶️ Tuần tự
-    </button>
-    
-    <div class="relative flex">
-      <button id="sr-parallel" class="w-full h-8 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-lg text-[10px] hover:bg-amber-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Mỗi giá trị list chạy trên 1 tab riêng">
-        ⚡ Song song
-        <input type="number" id="sr-parallel-tabs" value="5" min="1" max="10"
-          class="w-7 h-5 text-center text-[10px] font-bold text-amber-700 bg-amber-100/80 border border-amber-300 rounded outline-none focus:border-amber-500"
-          title="Số tab đồng thời" onclick="event.stopPropagation()" />
-      </button>
-      <button id="sr-parallel-stop" class="w-full h-8 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chạy song song">
-        🛑 Dừng song song
-      </button>
-    </div>
-
-    <div class="relative flex">
-      <button id="sr-split-tabs" class="w-full h-8 bg-teal-50 border border-teal-200 text-teal-800 font-bold rounded-lg text-[10px] hover:bg-teal-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1" title="Chia đều items vào N tab">
-        🔀 Chia tab
-        <input type="number" id="sr-split-tabs-count" value="3" min="1" max="10"
-          class="w-7 h-5 text-center text-[10px] font-bold text-teal-700 bg-teal-100/80 border border-teal-300 rounded outline-none focus:border-teal-500"
-          title="Số tab sẽ mở" onclick="event.stopPropagation()" />
-      </button>
-      <button id="sr-split-tabs-stop" class="w-full h-8 bg-red-50 border border-red-200 text-red-700 font-bold rounded-lg text-[10px] hover:bg-red-100 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1 hidden" title="Hủy bỏ toàn bộ phiên chia tab">
-        🛑 Dừng chia tab
-      </button>
-    </div>
-
-    <button id="sr-addqueue" class="h-8 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-[10px] hover:bg-gray-50 hover:text-gray-800 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5">
-      ➕ Hàng đợi <span id="sr-queue-count" class="bg-indigo-50 text-indigo-600 px-1.5 py-0.2 rounded-full text-[9px]">0</span>
-    </button>
-  </div>
-
-  <!-- Nút Tạm dừng / Tiếp tục (Hiển thị khi cần) -->
-  <div id="sr-pause-resume-bar" class="flex gap-1.5 mb-2 hidden">
-    <button id="sr-pause" class="flex-1 h-7 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-[10px] hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-40" disabled>⏸ Tạm dừng</button>
-    <button id="sr-resume" class="flex-1 h-7 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-lg text-[10px] hover:bg-indigo-50 transition-all active:scale-95 disabled:opacity-40" disabled>▶️ Tiếp tục</button>
-  </div>
-
-  <!-- Tùy chọn chuyển tab / chống ngủ đông (gọn gàng) -->
-  <div class="bg-gray-50/50 p-2 rounded-lg border border-gray-100/80 flex flex-col gap-1 mb-2">
-    <label class="flex items-center gap-1.5 text-[10px] text-gray-500 cursor-pointer select-none">
-      <input type="checkbox" id="sr-parallel-active" class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
-      <span>Tự động chuyển sang tab mới mở</span>
-    </label>
-    <div class="flex items-center gap-1.5 text-[10px] text-gray-500 select-none">
-      <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="checkbox" id="sr-auto-switch-tabs" class="w-3.5 h-3.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-        <span>Tự động xoay vòng tab mỗi</span>
-      </label>
-      <input type="number" id="sr-auto-switch-interval" value="5" min="1" max="60"
-        class="w-8 h-5 text-center text-[9px] font-bold text-teal-700 bg-white border border-teal-200 rounded outline-none focus:border-teal-500"
-        title="Số giây mỗi lần xoay vòng" />
-      <span>giây (Chống ngủ đông)</span>
-    </div>
-  </div>
-  
-  <!-- Hàng đợi dự kiến (chỉ hiện khi có item) -->
-  <div class="sr-queue-box flex flex-col hidden mt-1">
-    <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 tracking-wider block pl-0.5">DỰ KIẾN HÀNG ĐỢI</label>
-    <ul id="sr-queue-list" class="max-h-28 overflow-y-auto space-y-1 pr-1 custom-scrollbar"></ul>
-  </div>
-`;
-
-window.ScenarioRunner = class {
+window.ScenarioRunner = class extends window.BasePanel {
   constructor(onClose) {
-    console.log("▶️ [ScenarioRunner] init");
     if (!window.ChatAdapter) {
       ContentHelper.showToast("Không tìm thấy ChatAdapter phù hợp cho trang hiện tại. Scenario Runner sẽ bị vô hiệu.", "error");
       throw new Error("ChatAdapter not available");
     }
 
-    this.onClose = onClose;
+    super({
+      id: "scenario-runner",
+      title: "Trình chạy Kịch bản",
+      icon: "▶",
+      onClose: onClose,
+      view: window.ScenarioRunnerView
+    });
+
+    console.log("▶️ [ScenarioRunner] init");
     this.sequencer = null;
     this.templates = {};
     this.queue = [];
-    this._render();
-  }
-
-  _render() {
-    console.log("🎛 [ScenarioRunner] render UI");
-    this.el = document.createElement("div");
-    this.el.id = "scenario-runner";
-    this.el.className = "panel-box ts-panel w-[430px] p-3.5 rounded-2xl shadow-2xl bg-white border border-gray-100 flex flex-col relative animate-in";
-    this.el.style.maxHeight = "780px";
-    this.el.innerHTML = ScenarioRunnerInnerHTML;
-
-    ContentHelper.mountPanel(this.el);
+    this.selectedScenarioName = null;
+    this._onDocClick = null;
 
     // Tải kịch bản và thiết lập giao diện tìm kiếm mới
     this._setupScenarioSearch();
 
     // Gắn sự kiện cho các nút điều khiển
     this._attachControlEvents();
-
-    ContentHelper.makeDraggable(this.el, ".sr-header");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
-
-    // Nút thu nhỏ (minimize) — tạo bong bóng Messenger khi click
-    this._minimizeCtrl = ContentHelper.addMinimizeButton(this.el, {
-      icon: '📤',
-      tooltip: 'Scenario Runner',
-      getBadgeInfo: () => this._getBubbleBadgeInfo()
-    });
 
     // Kiểm tra xem có phiên parallel nào bị gián đoạn trước đó không
     this._checkInterruptedParallelSession();
@@ -312,10 +152,61 @@ window.ScenarioRunner = class {
           sessionId: sessionId
         }, () => {
           banner.classList.add('hidden');
-          ContentHelper.showToast('🗑️ Đã bỏ qua và xóa phiên song song bị gián đoạn.', 'info');
+          ContentHelper.showToast('Đã bỏ qua và xóa phiên song song bị gián đoạn.', 'info');
         });
       };
     });
+  }
+
+  /**
+   * Chọn kịch bản và cập nhật toàn bộ trạng thái giao diện
+   * @param {string} name - Tên kịch bản trong template store
+   * @param {string} [displayText] - Chuỗi hiển thị trên ô tìm kiếm
+   */
+  _selectScenario(name, displayText) {
+    const searchBox = this.el.querySelector("#sr-scenario-search");
+    const dropdown = this.el.querySelector("#sr-scenario-dropdown");
+    this.selectedScenarioName = name;
+    if (searchBox) {
+      searchBox.value = displayText || name;
+      searchBox.dataset.selectedName = name;
+      searchBox.blur();
+    }
+    if (dropdown) {
+      dropdown.classList.add("hidden-dropdown");
+    }
+    this._onScenarioSelected(name);
+  }
+
+  /**
+   * Lấy thông tin kịch bản hiện tại đang được chọn (an toàn, không phụ thuộc textContent thô)
+   * @returns {{ name: string, template: any } | null}
+   */
+  _getSelectedScenario() {
+    const searchBox = this.el.querySelector("#sr-scenario-search");
+    let name = this.selectedScenarioName || searchBox?.dataset?.selectedName;
+    if (name && this.templates[name]) {
+      return { name, template: this.templates[name] };
+    }
+
+    const text = (searchBox?.value || "").trim().toLowerCase();
+    if (!text) return null;
+
+    // Fallback: Tìm theo tên chính xác hoặc định dạng [Nhóm] Tên
+    const foundKey = Object.keys(this.templates).find(k => {
+      const raw = this.templates[k];
+      const group = Array.isArray(raw) ? "" : (raw.group || "");
+      const full = group ? `[${group}] ${k}` : k;
+      return k.toLowerCase() === text || full.toLowerCase() === text;
+    });
+
+    if (foundKey) {
+      this.selectedScenarioName = foundKey;
+      if (searchBox) searchBox.dataset.selectedName = foundKey;
+      return { name: foundKey, template: this.templates[foundKey] };
+    }
+
+    return null;
   }
 
   _setupScenarioSearch() {
@@ -325,67 +216,115 @@ window.ScenarioRunner = class {
       const dropdown = this.el.querySelector("#sr-scenario-dropdown");
       const browserWrapper = this.el.querySelector("#sr-scenario-browser");
 
-      // Tạo các item trong danh sách thả xuống
+      if (!searchBox || !dropdown || !browserWrapper) return;
+
+      dropdown.innerHTML = "";
+
+      // 1. Tạo các item trong danh sách thả xuống với class BEM đầy đủ
       Object.keys(this.templates).forEach((name) => {
         const raw = this.templates[name];
         const group = Array.isArray(raw) ? "" : (raw.group || "");
 
         const item = document.createElement("div");
-        item.className = "scenario-dropdown-item px-3 py-2 hover:bg-indigo-50 cursor-pointer transition-all border-b border-gray-50 last:border-0 flex items-center justify-between group";
+        item.className = "scenario-dropdown-item custom-dropdown-item ts-item-row";
+
+        if (group) {
+          const groupTag = document.createElement("span");
+          groupTag.className = "ts-group-tag";
+          groupTag.textContent = group;
+          item.appendChild(groupTag);
+        }
 
         const titleSpan = document.createElement("span");
-        titleSpan.className = "text-[11px] text-gray-700 font-bold group-hover:text-indigo-600";
-        titleSpan.textContent = group ? `[${group}] ${name}` : name;
-
+        titleSpan.className = "ts-item-row__text font-bold";
+        titleSpan.textContent = name;
         item.appendChild(titleSpan);
+
         item.dataset.name = name;
         item.dataset.group = group.toLowerCase();
 
-        // Sử dụng 'mousedown' để đảm bảo sự kiện được xử lý trước 'blur'
+        // Sử dụng 'mousedown' để kích hoạt trước khi searchBox mất focus
         item.addEventListener("mousedown", (e) => {
           e.preventDefault();
-          searchBox.value = item.textContent;
-          dropdown.classList.add("hidden-dropdown");
-          this._onScenarioSelected(name);
-          searchBox.blur();
+          const displayLabel = group ? `[${group}] ${name}` : name;
+          this._selectScenario(name, displayLabel);
         });
 
         dropdown.appendChild(item);
       });
 
+      // 2. Logic lọc danh sách khi người dùng gõ tìm kiếm (Fuzzy Search)
       searchBox.addEventListener("input", () => {
         dropdown.classList.remove("hidden-dropdown");
         const keyword = searchBox.value.trim();
-
         const items = Array.from(dropdown.querySelectorAll(".scenario-dropdown-item"));
-        const scoredItems = items.map(div => {
-          const score = ContentHelper.fuzzySearch(keyword, div.textContent);
-          return { div, score };
-        });
 
-        scoredItems.forEach(item => {
-          if (item.score > 0) {
-            item.div.style.setProperty('display', 'flex', 'important');
-            item.div.style.order = -item.score;
+        if (!keyword) {
+          items.forEach(item => {
+            item.style.removeProperty('display');
+            item.style.removeProperty('order');
+          });
+          dropdown.querySelector(".ts-dropdown-empty")?.remove();
+          return;
+        }
+
+        let matchCount = 0;
+        items.forEach(item => {
+          const score = ContentHelper.fuzzySearch(keyword, item.textContent);
+          if (score > 0) {
+            item.style.display = 'flex';
+            item.style.order = -score;
+            matchCount++;
           } else {
-            item.div.style.setProperty('display', 'none', 'important');
+            item.style.display = 'none';
           }
         });
+
+        let emptyMsg = dropdown.querySelector(".ts-dropdown-empty");
+        if (matchCount === 0) {
+          if (!emptyMsg) {
+            emptyMsg = document.createElement("div");
+            emptyMsg.className = "ts-dropdown-empty";
+            emptyMsg.textContent = "Không tìm thấy kịch bản phù hợp";
+            dropdown.appendChild(emptyMsg);
+          }
+        } else if (emptyMsg) {
+          emptyMsg.remove();
+        }
       });
 
-      // Cần đảm bảo dropdown là flex column để 'order' hoạt động
+      // Đảm bảo dropdown hiển thị dạng flex column để 'order' hoạt động mượt mà
       dropdown.style.display = "flex";
       dropdown.style.flexDirection = "column";
 
-      searchBox.addEventListener("focus", () => {
+      const showDropdown = () => {
         dropdown.classList.remove("hidden-dropdown");
-      });
+        if (!searchBox.value.trim()) {
+          dropdown.querySelectorAll(".scenario-dropdown-item").forEach(i => {
+            i.style.removeProperty('display');
+            i.style.removeProperty('order');
+          });
+          dropdown.querySelector(".ts-dropdown-empty")?.remove();
+        }
+      };
 
-      document.addEventListener('click', (event) => {
-        if (!browserWrapper.contains(event.target)) {
-          dropdown.classList.add('hidden-dropdown');
+      searchBox.addEventListener("focus", showDropdown);
+      searchBox.addEventListener("click", showDropdown);
+
+      searchBox.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          dropdown.classList.add("hidden-dropdown");
         }
       });
+
+      // Tự động đóng khi click ra ngoài (tương thích Shadow DOM với composedPath)
+      this._onDocClick = (event) => {
+        const path = event.composedPath ? event.composedPath() : [];
+        if (!path.includes(browserWrapper)) {
+          dropdown.classList.add('hidden-dropdown');
+        }
+      };
+      document.addEventListener('click', this._onDocClick);
     });
   }
 
@@ -395,13 +334,17 @@ window.ScenarioRunner = class {
     console.log("📋 Đã chọn kịch bản:", name);
 
     const stepSelect = this.el.querySelector("#step-select");
-    stepSelect.innerHTML = list.map((q, idx) => {
-      const preview = q.text?.slice(0, 40) || "";
-      return `<option value="${idx}" title="${q.text}">#${idx + 1}: ${preview}...</option>`;
-    }).join("");
-    stepSelect.disabled = list.length === 0;
+    if (stepSelect) {
+      stepSelect.innerHTML = list.map((q, idx) => {
+        const preview = q.text?.slice(0, 40) || "";
+        return `<option value="${idx}" title="${q.text}">#${idx + 1}: ${preview}...</option>`;
+      }).join("");
+      stepSelect.disabled = list.length === 0;
+    }
 
     const inputPanel = this.el.querySelector("#scenario-inputs");
+    if (!inputPanel) return;
+
     inputPanel.innerHTML = "";
     const shown = new Set();
 
@@ -417,22 +360,21 @@ window.ScenarioRunner = class {
         shown.add(varName);
 
         const wrapper = document.createElement("div");
-        wrapper.className = "sr-input-group flex flex-col gap-1";
+        wrapper.className = "sr-input-group";
         
         const headerDiv = document.createElement("div");
-        headerDiv.className = "flex justify-between items-center";
+        headerDiv.className = "sr-input-group__header";
 
         const label = document.createElement("label");
-        label.className = "text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-0.5";
-        label.textContent = varName;
+        label.className = "sr-input-group__label";
+        label.innerHTML = `<span class="sr-input-group__label-tag">$</span>{${varName}}`;
         headerDiv.appendChild(label);
 
         let inputEl;
-        const baseClasses = "w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none leading-relaxed";
 
         if (optionsStr) {
           inputEl = document.createElement("select");
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-700 cursor-pointer border-gray-200`;
+          inputEl.className = "ts-select ts-w-full";
           const options = optionsStr.split(',').map(v => v.trim()).filter(Boolean);
           options.forEach(opt => {
             const option = document.createElement("option");
@@ -443,22 +385,24 @@ window.ScenarioRunner = class {
         } else if (q.type === "loop" && varName === loopKey) {
           inputEl = document.createElement("input");
           inputEl.type = "number";
-          inputEl.className = `${baseClasses} h-8 font-bold text-indigo-600`;
+          inputEl.className = "ts-input ts-w-full font-bold";
           inputEl.placeholder = "Số lần lặp (vd: 3)";
         } else if (q.type === "list" && varName === loopKey) {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[90px] font-mono text-xs text-indigo-600 resize-y`;
-          inputEl.placeholder = "Các giá trị, cách nhau bằng dấu phẩy (vd: item1, item2, item3)...";
+          inputEl.className = "ts-textarea sr-textarea sr-textarea--mono ts-w-full";
+          inputEl.placeholder = "Các giá trị cách nhau bằng dấu phẩy (vd: mục 1, mục 2, mục 3)...";
         } else {
           inputEl = document.createElement("textarea");
-          inputEl.className = `${baseClasses} min-h-[120px] resize-y`;
-          inputEl.placeholder = "Nhập nội dung cho " + varName + "...";
+          inputEl.className = "ts-textarea sr-textarea ts-w-full";
+          inputEl.placeholder = `Nhập nội dung cho \${${varName}}...`;
         }
         
         if (inputEl.tagName === 'TEXTAREA' || (inputEl.tagName === 'INPUT' && inputEl.type === 'text')) {
           const fileBtn = document.createElement('button');
-          fileBtn.className = "text-[9px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-all active:scale-95 flex items-center gap-1";
-          fileBtn.textContent = "📂 Chọn file";
+          fileBtn.type = 'button';
+          fileBtn.className = "ts-btn ts-btn--secondary sr-input-group__file-btn";
+          fileBtn.innerHTML = "📄 Tải file";
+          fileBtn.title = `Nạp dữ liệu từ file văn bản cho \${${varName}}`;
           fileBtn.onclick = () => {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -467,8 +411,8 @@ window.ScenarioRunner = class {
               const file = e.target.files[0];
               if (!file) return;
               const reader = new FileReader();
-              reader.onload = (e) => {
-                inputEl.value = e.target.result;
+              reader.onload = (readEvent) => {
+                inputEl.value = readEvent.target.result;
                 inputEl.dispatchEvent(new Event("input", { bubbles: true }));
               };
               reader.readAsText(file);
@@ -485,6 +429,16 @@ window.ScenarioRunner = class {
         inputPanel.appendChild(wrapper);
       });
     });
+
+    // Nếu kịch bản không có biến nào, hiển thị thông báo hướng dẫn nhã nhặn
+    if (shown.size === 0) {
+      inputPanel.innerHTML = `
+        <div class="sr-empty-state">
+          <span class="sr-empty-state__icon">✓</span>
+          <div class="sr-empty-state__text">Kịch bản này không yêu cầu biến đầu vào.<br/>Bấm <b>▶ Tuần tự</b> hoặc <b>⚡ Song song</b> để thực thi ngay.</div>
+        </div>
+      `;
+    }
 
     chrome.storage.local.get("scenarioInputValues", (result) => {
       const saved = result.scenarioInputValues?.[name] || {};
@@ -510,44 +464,60 @@ window.ScenarioRunner = class {
     const btnClearInputs = this.el.querySelector('#sr-clear-inputs');
 
     if (btnClearInputs) {
-      btnClearInputs.onclick = () => this._clearVariableInputs();
+      btnClearInputs.onclick = () => {
+        ContentHelper.playMechanicalClick();
+        this._clearVariableInputs();
+      };
     }
 
-    btnStart.onclick = () => this._start();
+    btnStart.onclick = () => {
+      ContentHelper.playMechanicalClick();
+      this._start();
+    };
     btnParallel.onclick = (e) => {
       // Không trigger khi click vào input số tab
       if (e.target.id === 'sr-parallel-tabs') return;
+      ContentHelper.playMechanicalClick();
       this._startParallel();
     };
     if (btnParallelStop) {
-      btnParallelStop.onclick = () => this._stopParallelSession();
+      btnParallelStop.onclick = () => {
+        ContentHelper.playMechanicalClick();
+        this._stopParallelSession();
+      };
     }
     btnSplitTabs.onclick = (e) => {
       if (e.target.id === 'sr-split-tabs-count') return;
+      ContentHelper.playMechanicalClick();
       this._startSplitTabs();
     };
     if (btnSplitTabsStop) {
-      btnSplitTabsStop.onclick = () => this._stopSplitTabsSession();
+      btnSplitTabsStop.onclick = () => {
+        ContentHelper.playMechanicalClick();
+        this._stopSplitTabsSession();
+      };
     }
     btnPause.onclick = () => {
+      ContentHelper.playMechanicalClick();
       this.sequencer?.pause();
       btnPause.disabled = true;
       btnResume.disabled = false;
     };
     btnResume.onclick = () => {
+      ContentHelper.playMechanicalClick();
       this.sequencer?.resume();
       btnResume.disabled = true;
       btnPause.disabled = false;
     };
     btnAdd.onclick = () => {
-      const selectedText = this.el.querySelector("#sr-scenario-search").value;
-      const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
+      ContentHelper.playMechanicalClick();
+      const selected = this._getSelectedScenario();
 
-      if (!selectedDiv) {
+      if (!selected) {
         ContentHelper.showToast("Vui lòng chọn một kịch bản hợp lệ từ danh sách!", "warning");
         return;
       }
-      const name = selectedDiv.dataset.name;
+      const name = selected.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
       this.queue.push({ name, startAt, values });
@@ -658,14 +628,13 @@ window.ScenarioRunner = class {
 
   async _start() {
     if (this.queue.length === 0) {
-      const selectedText = this.el.querySelector("#sr-scenario-search").value;
-      const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item')).find(d => d.textContent === selectedText);
-      if (!selectedDiv) {
+      const selected = this._getSelectedScenario();
+      if (!selected) {
         ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
         return;
       }
 
-      const name = selectedDiv.dataset.name;
+      const name = selected.name;
       const startAt = parseInt(this.el.querySelector("#step-select").value || "0", 10);
       const values = this._readVariableValues();
       this.queue.push({ name, startAt, values });
@@ -688,6 +657,8 @@ window.ScenarioRunner = class {
       bigList.push(...prompts);
     }
 
+    console.log(`🚀 [ScenarioRunner] Bắt đầu chạy kịch bản. Tổng số prompts: ${bigList.length}`, bigList);
+
     this.queue = [];
     this._refreshQueueUI();
     this._updateQueueIndicator();
@@ -708,7 +679,11 @@ window.ScenarioRunner = class {
     this._showProgress(true);
     this._updateProgress(0, bigList.length);
     this._clearDoneList();
-    this.sequencer.start(() => this._resetControls());
+    this.sequencer.start(() => {
+      this._resetControls();
+      ContentHelper.playDoneThump();
+      ContentHelper.showToast("🎉 Đã hoàn thành toàn bộ kịch bản!", "success");
+    });
     
     if (this._minimizeCtrl) {
       this._minimizeCtrl.minimize();
@@ -771,7 +746,7 @@ window.ScenarioRunner = class {
     if (Array.from(list.children).some(el => el.textContent === label)) return;
 
     const span = document.createElement("span");
-    span.className = "bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[9px] font-bold border border-indigo-100";
+    span.className = "ts-badge ts-badge--accent ts-tabular";
     span.textContent = label;
     list.appendChild(span);
     list.scrollTop = list.scrollHeight;
@@ -780,37 +755,43 @@ window.ScenarioRunner = class {
   _expandScenario(questions, values) {
     const result = [];
     for (const q of questions) {
-      if (q.type === "text") {
-        result.push({ text: q.text, label: null });
-      } else if (q.type === "variable") {
-        const filled = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
-        result.push({ text: filled, label: null });
-      } else if (q.type === "loop") {
+      if (!q) continue;
+      const text = typeof q === 'string' ? q : (q.text || '');
+      const type = q.type || 'text';
+
+      if (type === "loop") {
         const loopKey = this._getLoopKey(q);
         const count = parseInt(values[loopKey] || "0", 10);
         for (let i = 1; i <= count; i++) {
-          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
+          const prompt = text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
             if (k === loopKey) return String(i);
             return values[k] || "";
           });
           result.push({ text: prompt, label: `Lần ${i}` });
         }
-      } else if (q.type === "list") {
+      } else if (type === "list") {
         const loopKey = this._getLoopKey(q);
         const listValues = (values[loopKey] || "").split(',').map(v => v.trim()).filter(Boolean);
         for (const itemValue of listValues) {
-          const prompt = q.text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
+          const prompt = text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => {
             if (k === loopKey) return itemValue;
             return values[k] || "";
           });
           result.push({ text: prompt, label: itemValue });
         }
+      } else {
+        // Áp dụng cho "text", "variable" và bất kỳ type nào khác (fallback an toàn tránh drop câu hỏi)
+        const filled = text.replace(/\$\{([^}|]+)(?:\|[^}]*)?\}/g, (_, k) => values[k] || "");
+        result.push({ text: filled, label: null });
       }
     }
     return result;
   }
 
   async _sendPrompt(prompt) {
+    // Khoảng đệm 600ms để trang AI (ChatGPT/Gemini/Google AI Studio) hoàn tất reset DOM sau câu trả lời trước
+    await new Promise(r => setTimeout(r, 600));
+
     const text = typeof prompt === 'string' ? prompt : prompt.text;
     const chat = window.ChatAdapter;
     const textarea = chat.getTextarea();
@@ -823,7 +804,11 @@ window.ScenarioRunner = class {
     }
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     const sendBtn = await this._waitForAdapterBtn(() => chat.getSendBtn());
-    sendBtn?.click();
+    if (!sendBtn) {
+      console.error("❌ [ScenarioRunner] Không tìm thấy nút gửi trên trang AI!");
+      throw new Error("Không tìm thấy nút gửi (Send button)");
+    }
+    sendBtn.click();
   }
 
   /**
@@ -864,15 +849,15 @@ window.ScenarioRunner = class {
       const fullVars = Object.entries(job.values).map(([k, v]) => `${k}=${v}`).join(', ');
       const shortenedVars = this._shortenText(fullVars);
       return `
-        <li class="bg-gray-50 border border-gray-100 rounded-xl p-2 flex items-start justify-between group hover:bg-white hover:border-indigo-100 transition-all">
-          <div class="flex-1 min-w-0 pr-2">
-             <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="text-[9px] font-black text-gray-300">#${i + 1}</span>
-                <span class="text-xs font-bold text-gray-700 truncate">${job.name}</span>
+        <li class="ts-item-row">
+          <div class="ts-flex-1 min-w-0 pr-2">
+             <div class="ts-flex ts-items-center ts-gap-1 mb-0.5">
+                <span class="ts-item-row__idx">#${i + 1}</span>
+                <span class="ts-item-row__text font-bold">${job.name}</span>
              </div>
-             <div class="text-[10px] text-gray-400 italic truncate" title="${fullVars}">${shortenedVars}</div>
+             <div class="ts-hint ts-truncate" title="${fullVars}">${shortenedVars}</div>
           </div>
-          <button class="sr-queue-copy w-5 h-5 flex items-center justify-center bg-white border border-gray-100 rounded text-[9px] hover:bg-indigo-600 hover:text-white transition-all active:scale-90" data-idx="${i}">
+          <button class="sr-queue-copy ts-item-row__btn" data-idx="${i}">
              📋
           </button>
         </li>
@@ -919,17 +904,15 @@ window.ScenarioRunner = class {
    */
   _startParallel() {
     // 1. Lấy scenario đang chọn
-    const selectedText = this.el.querySelector("#sr-scenario-search").value;
-    const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item'))
-      .find(d => d.textContent === selectedText);
+    const selected = this._getSelectedScenario();
 
-    if (!selectedDiv) {
+    if (!selected) {
       ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
       return;
     }
 
-    const name = selectedDiv.dataset.name;
-    const raw = this.templates[name];
+    const name = selected.name;
+    const raw = selected.template;
     if (!raw) return;
 
     const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
@@ -1095,6 +1078,7 @@ window.ScenarioRunner = class {
         this._stopParallelPolling();
         this._resetControls();
         this._parallelRunning = false;
+        ContentHelper.playDoneThump();
 
         let msg = `🎉 Hoàn thành: ${completed.length}/${total} thành công`;
         if (failed.length > 0) msg += `, ${failed.length} lỗi`;
@@ -1206,30 +1190,6 @@ window.ScenarioRunner = class {
     });
   }
 
-  destroy() {
-    this._minimizeCtrl?.destroy();
-    this.el?.remove();
-    this.onClose();
-    this.sequencer?.stop();
-    // Dừng polling
-    this._stopParallelPolling();
-    this._stopSplitTabsPolling();
-    // Dọn session parallel từ background + storage
-    if (this._parallelSessionId) {
-      chrome.runtime.sendMessage({
-        type: 'PARALLEL_CLEANUP_SESSION',
-        sessionId: this._parallelSessionId
-      });
-    }
-    // Dọn session split tabs từ background + storage
-    if (this._splitTabsSessionId) {
-      chrome.runtime.sendMessage({
-        type: 'SPLIT_TABS_CLEANUP_SESSION',
-        sessionId: this._splitTabsSessionId
-      });
-    }
-  }
-
   // ═══════════════════════════════════════════════════════════════
   // Split Tabs – Chia đều items vào N tab
   // ═══════════════════════════════════════════════════════════════
@@ -1240,17 +1200,15 @@ window.ScenarioRunner = class {
    */
   _startSplitTabs() {
     // 1. Lấy scenario đang chọn
-    const selectedText = this.el.querySelector("#sr-scenario-search").value;
-    const selectedDiv = Array.from(this.el.querySelectorAll('.scenario-dropdown-item'))
-      .find(d => d.textContent === selectedText);
+    const selected = this._getSelectedScenario();
 
-    if (!selectedDiv) {
+    if (!selected) {
       ContentHelper.showToast("Vui lòng chọn một kịch bản!", "warning");
       return;
     }
 
-    const name = selectedDiv.dataset.name;
-    const raw = this.templates[name];
+    const name = selected.name;
+    const raw = selected.template;
     if (!raw) return;
 
     const tplArr = Array.isArray(raw) ? raw : (raw.questions || []);
@@ -1428,6 +1386,7 @@ window.ScenarioRunner = class {
           this._stopSplitTabsPolling();
           this._resetControls();
           this._splitTabsRunning = false;
+          ContentHelper.playDoneThump();
 
           let msg = `🎉 Chia tab hoàn thành: ${completed.length}/${total} tab thành công`;
           if (failed.length > 0) msg += `, ${failed.length} lỗi`;
@@ -1488,5 +1447,39 @@ window.ScenarioRunner = class {
       if (detail) detail.innerHTML = '';
       ContentHelper.showToast('🛑 Đã dừng phiên chia tab và đóng các tab con.', 'info');
     });
+  }
+
+  _isBusy() {
+    return (!!this.sequencer && !this.sequencer.stopped) || this._parallelRunning || this._splitTabsRunning;
+  }
+
+  destroy() {
+    if (this._onDocClick) {
+      document.removeEventListener('click', this._onDocClick);
+      this._onDocClick = null;
+    }
+    this.sequencer?.stop();
+    this._stopParallelPolling();
+    this._stopSplitTabsPolling();
+
+    if (this._parallelRunning) {
+      this._stopParallelSession();
+    } else if (this._parallelSessionId) {
+      chrome.runtime.sendMessage({
+        type: 'PARALLEL_CLEANUP_SESSION',
+        sessionId: this._parallelSessionId
+      });
+    }
+
+    if (this._splitTabsRunning) {
+      this._stopSplitTabsSession();
+    } else if (this._splitTabsSessionId) {
+      chrome.runtime.sendMessage({
+        type: 'SPLIT_TABS_CLEANUP_SESSION',
+        sessionId: this._splitTabsSessionId
+      });
+    }
+
+    super.destroy();
   }
 };

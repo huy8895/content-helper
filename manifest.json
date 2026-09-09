@@ -48,11 +48,21 @@
         "https://gemini.google.com/*"
       ],
       "js": [
-        "libs/tailwind.min.js",
         "libs/jszip.min.js",
         "libs/compromise.min.js",
         "libs/firebase-app-compat.js",
         "libs/firebase-firestore-compat.js",
+        "content/views/SRTAutomationView.js",
+        "content/views/GoogleAIStudioView.js",
+        "content/views/GoogleAIStudioSpeechView.js",
+        "content/views/YoutubeStudioView.js",
+        "content/views/ScenarioBuilderView.js",
+        "content/views/ScenarioRunnerView.js",
+        "content/views/FlowRunnerView.js",
+        "content/views/TextSplitterView.js",
+        "content/views/AudioDownloaderView.js",
+        "content/views/ContentCopyView.js",
+        "content/BasePanel.js",
         "content/SRTAutomationPanel.js",
         "content/GoogleAIStudioPanel.js",
         "content/GoogleAIStudioSpeechPanel.js",
@@ -73,7 +83,9 @@
         "content/ChatAdapter.js"
       ],
       "css": [
-        "content/content-helper.css"
+        "content/css/tokens.css",
+        "content/css/base.css",
+        "content/css/components.css"
       ],
       "run_at": "document_idle"
     }
@@ -91,5 +103,24 @@
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none';"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/css/tokens.css",
+        "content/css/base.css",
+        "content/css/components.css"
+      ],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.qwen.ai/*",
+        "https://grok.com/*",
+        "https://aistudio.google.com/*",
+        "https://studio.youtube.com/*",
+        "https://gemini.google.com/*",
+        "https://my-ytb-tool.web.app/*"
+      ]
+    }
+  ]
 }

@@ -1,88 +1,67 @@
 <!DOCTYPE html>
-<html class="bg-gray-50">
+<html lang="vi">
 
 <head>
   <meta charset="utf-8">
   <title>Content Helper</title>
-  <script src="../libs/tailwind.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-
-    .custom-shadow {
-      shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    }
-  </style>
+  <link rel="stylesheet" href="popup.css">
 </head>
 
-<body class="w-[320px] m-0 bg-gray-50 overflow-hidden select-none">
-  <!-- Header with Gradient Area -->
-  <div
-    class="relative h-28 bg-gradient-to-br from-indigo-600 to-violet-700 flex flex-col items-center justify-center overflow-hidden">
-    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10">
+<body>
+  <!-- Header với logo cơ học chuẩn Calm Tech -->
+  <header class="popup-header">
+    <div class="popup-brand">
+      <span class="popup-brand-icon">⌘</span>
+      <span class="popup-title">Content Helper</span>
     </div>
-    <div class="relative z-10 flex flex-col items-center">
-      <span class="text-3xl mb-1">📤</span>
-      <h1 class="text-white text-lg font-black tracking-tight">CONTENT HELPER</h1>
-    </div>
-  </div>
+    <span class="popup-version">v1.0.1</span>
+  </header>
 
-  <div class="px-6 py-8 flex flex-col items-center min-h-[260px] relative -mt-5 bg-white rounded-t-3xl shadow-2xl">
-    <div id="loading"
-      class="hidden absolute inset-0 bg-white/80 z-50 flex items-center justify-center rounded-t-3xl backdrop-blur-sm">
-      <div class="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+  <main class="popup-card">
+    <!-- Loading State: thanh bar mỏng thanh lịch, không che chắn thô thiển -->
+    <div id="loading" class="hidden">
+      <div class="loading-bar"></div>
+      <span>Đang đồng bộ dữ liệu...</span>
     </div>
 
     <!-- Login Section -->
-    <div id="login-section" class="w-full">
-      <div class="text-center mb-8">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Welcome Back</p>
-        <p class="text-[13px] text-gray-500 font-medium leading-relaxed">
-          Đăng nhập để đồng bộ kịch bản và sử dụng các tính năng nâng cao.
-        </p>
-      </div>
+    <div id="login-section">
+      <p class="welcome-label">Tài Khoản Google</p>
+      <p class="welcome-desc">
+        Đăng nhập để tự động sao lưu và đồng bộ kịch bản qua Cloud Firestore.
+      </p>
 
-      <button id="google-login-btn"
-        class="w-full h-12 flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-all active:scale-95 shadow-sm">
-        <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5" alt="G">
-        Tiếp tục với Google
+      <button id="google-login-btn" class="btn-google">
+        <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="G">
+        <span>Tiếp tục với Google</span>
       </button>
     </div>
 
     <!-- User Section -->
-    <div id="user-section" class="hidden w-full flex-col items-center text-center">
-      <div class="relative mb-4 group">
-        <div
-          class="absolute inset-0 bg-indigo-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity">
-        </div>
-        <img id="user-avatar"
-          class="relative w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover transform transition-transform group-hover:scale-105"
-          src="" alt="Avatar">
+    <div id="user-section" class="hidden">
+      <div class="user-avatar-wrapper">
+        <img id="user-avatar" src="" alt="Avatar">
       </div>
 
-      <h2 id="user-name" class="text-lg font-black text-gray-900 mb-0.5">User Name</h2>
-      <p id="user-email" class="text-xs font-medium text-gray-400 mb-8 lowercase italic">user@example.com</p>
+      <h2 id="user-name">User Name</h2>
+      <p id="user-email">user@example.com</p>
 
-      <button id="google-logout-btn"
-        class="w-full h-11 bg-rose-50 text-rose-500 font-bold rounded-xl text-xs hover:bg-rose-100 transition-all active:scale-95">
+      <button id="google-logout-btn" class="btn-logout">
         Đăng xuất tài khoản
       </button>
     </div>
 
-    <div id="status"
-      class="mt-4 text-[10px] font-bold uppercase tracking-widest opacity-0 transition-opacity duration-300"></div>
-  </div>
+    <!-- Status Message -->
+    <div id="status"></div>
+  </main>
 
-  <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-    <span class="text-[9px] font-black text-gray-400">VERSION 1.0.1</span>
-    <button id="open-settings-btn"
-      class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-none">
-      ⚙️ Settings
+  <footer class="popup-footer">
+    <span class="footer-tag">WORKFLOW ASSISTANT</span>
+    <button id="open-settings-btn">
+      <span>⚙</span>
+      <span>Cài đặt</span>
     </button>
-  </div>
+  </footer>
 
   <script src="popup.js"></script>
 </body>

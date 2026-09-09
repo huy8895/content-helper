@@ -1,85 +1,16 @@
-window.ContentCopyPanel = class {
+window.ContentCopyPanel = class extends window.BasePanel {
   constructor(onClose) {
-    this.onClose = onClose;
-    this.elements = window.ChatAdapter.getContentElements() || [];
-    console.log("ContentCopyPanel elements:", this.elements);
-    this._render();
-  }
-
-  _render() {
-    this.el = document.createElement("div");
-    this.el.id = "content-copy-panel";
-    this.el.className = "panel-box ts-panel w-[420px] p-4 rounded-xl shadow-2xl bg-white border border-gray-100 flex flex-col relative";
-    this.el.style.maxHeight = "580px";
-
-    const html = `
-      <div class="ts-title flex items-center mb-4 cursor-move select-none">
-        <span class="text-xl mr-2">📋</span>
-        <div>
-          <h3 class="m-0 text-base font-bold text-gray-900 leading-tight">Copy Content</h3>
-          <div class="text-[10px] text-gray-500 font-medium tracking-tight">Found ${this.elements.length} message blocks</div>
-        </div>
-      </div>
-
-      <!-- Custom Filenames Input -->
-      <div class="mb-3">
-        <label for="ccp-filenames" class="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest pl-1">
-          Custom Filenames (optional, comma separated):
-        </label>
-        <div class="relative">
-          <input type="text" id="ccp-filenames" 
-            class="w-full h-9 text-xs p-2.5 border border-gray-300 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-sans"
-            placeholder="e.g. intro, chapter1, conclusion (leave empty for auto-numbering)"
-          />
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-3 mb-4">
-        <div class="flex items-center gap-2.5">
-          <button id="ccp-copy-all" class="h-8 px-3 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm">
-            Copy All
-          </button>
-          <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-lg border border-gray-100">
-            <input type="number" id="ccp-index" placeholder="Idx" min="1" 
-              class="w-12 h-6 text-center text-[10px] border-none bg-transparent focus:ring-0 font-bold text-indigo-600" />
-            <button id="ccp-copy-from" class="h-6 px-2 bg-white text-gray-500 text-[9px] font-bold rounded-md border border-gray-200 hover:bg-gray-50 hover:text-gray-700 shadow-sm transition-all active:scale-95">
-              Copy From
-            </button>
-          </div>
-          
-          <!-- Download buttons group -->
-          <div class="flex gap-1.5 ml-auto">
-            <button id="ccp-copy-txt" class="h-8 px-2.5 flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] hover:bg-indigo-100 transition-all active:scale-95 shadow-sm" title="Copy toàn bộ nội dung TXT (bao gồm phân tách và Part)">
-              <span>📋</span> Copy TXT
-            </button>
-            <button id="ccp-download-txt" class="h-8 px-3 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] hover:bg-emerald-100 transition-all active:scale-95 shadow-sm">
-              <span>📄</span> TXT
-            </button>
-            <button id="ccp-download-zip" class="h-8 px-3 flex items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700 font-bold rounded-lg text-[10px] hover:bg-purple-100 transition-all active:scale-95 shadow-sm">
-              <span>📦</span> ZIP
-            </button>
-          </div>
-        </div>
-
-        <label class="flex items-center gap-2 cursor-pointer select-none group px-1">
-          <input type="checkbox" id="ccp-prefix-part" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all" />
-          <span class="text-[11px] text-gray-400 font-bold group-hover:text-gray-600 tracking-tight">Add "Part X" prefix when downloading/copying</span>
-        </label>
-      </div>
-
-      <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 flex-1 overflow-hidden flex flex-col">
-        <div class="flex items-center mb-2 pl-1">
-          <label class="flex items-center gap-1.5 cursor-pointer select-none group">
-            <input type="checkbox" id="ccp-select-all" class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded cursor-pointer" checked />
-            <strong class="text-[11px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors">Content Preview</strong>
-          </label>
-          <span id="ccp-selected-count" class="ml-auto text-[10px] font-bold text-indigo-400"></span>
-        </div>
-        <div id="ccp-list" class="ts-results flex-1 overflow-y-auto pr-1 custom-scrollbar"></div>
-      </div>
-    `;
-
-    this.el.innerHTML = html;
+    const elements = window.ChatAdapter.getContentElements() || [];
+    super({
+      id: "content-copy-panel",
+      title: "Copy Content",
+      icon: "⎘",
+      onClose: onClose,
+      view: {
+        render: () => window.ContentCopyView?.render?.(elements.length) || ""
+      }
+    });
+    this.elements = elements;
 
     // Load saved custom filenames từ localStorage
     const savedFilenames = localStorage.getItem('ccp-filenames');
@@ -87,10 +18,6 @@ window.ContentCopyPanel = class {
       const filenameInput = this.el.querySelector('#ccp-filenames');
       if (filenameInput) filenameInput.value = savedFilenames;
     }
-
-    ContentHelper.mountPanel(this.el);
-    ContentHelper.makeDraggable(this.el, ".ts-title");
-    ContentHelper.addCloseButton(this.el, () => this.destroy());
 
     this._renderList();
     this._bindEvents();
@@ -101,12 +28,12 @@ window.ContentCopyPanel = class {
     container.innerHTML = "";
     this.elements.forEach((el, idx) => {
       const row = document.createElement("div");
-      row.className = "mb-1 py-1.5 border-b border-gray-50 last:border-0 hover:bg-white hover:rounded hover:px-1.5 transition-all group cursor-default flex items-center gap-1.5";
+      row.className = "ts-item-row";
 
       // Checkbox chọn item
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.className = "ccp-item-check flex-shrink-0 w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded cursor-pointer";
+      checkbox.className = "ts-item-row__check ccp-item-check";
       checkbox.dataset.idx = idx;
       checkbox.checked = true;
       checkbox.onclick = (e) => {
@@ -116,21 +43,22 @@ window.ContentCopyPanel = class {
       };
 
       const number = document.createElement("span");
-      number.className = "font-bold text-indigo-400 mr-1 text-[10px] w-6 flex-shrink-0 text-right";
+      number.className = "ts-item-row__idx";
       number.textContent = `#${idx + 1}`;
 
       const preview = document.createElement("span");
-      preview.className = "text-[11px] text-gray-400 group-hover:text-gray-700 truncate font-medium flex-1 min-w-0";
+      preview.className = "ts-item-row__text";
       const text = el.innerText.trim();
       preview.textContent = this._shorten(text);
 
       // Button Download
       const btnDownload = document.createElement("button");
-      btnDownload.className = "flex-shrink-0 h-6 w-6 flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold rounded text-[11px] hover:bg-emerald-100 transition-all active:scale-95 opacity-50 group-hover:opacity-100";
+      btnDownload.className = "ts-item-row__btn";
       btnDownload.title = `Download item #${idx + 1}`;
-      btnDownload.innerHTML = "📥";
+      btnDownload.innerHTML = "↓";
       btnDownload.onclick = (e) => {
         e.stopPropagation();
+        ContentHelper.playHapticFeedback?.(8);
         const filenamesInput = this.el.querySelector('#ccp-filenames')?.value || '';
         const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
         const addPrefix = prefixCheckbox?.checked;
@@ -144,16 +72,17 @@ window.ContentCopyPanel = class {
 
       // Button Copy
       const btnCopy = document.createElement("button");
-      btnCopy.className = "flex-shrink-0 h-6 w-6 flex items-center justify-center bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded text-[11px] hover:bg-indigo-100 transition-all active:scale-95 opacity-50 group-hover:opacity-100";
+      btnCopy.className = "ts-item-row__btn";
       btnCopy.title = `Copy item #${idx + 1}`;
-      btnCopy.innerHTML = "📋";
+      btnCopy.innerHTML = "⎘";
       btnCopy.onclick = (e) => {
         e.stopPropagation();
+        ContentHelper.playHapticFeedback?.(8);
         const prefixCheckbox = this.el.querySelector('#ccp-prefix-part');
         const addPrefix = prefixCheckbox?.checked;
         let content = this._getText(el);
         if (addPrefix) content = `Part ${idx + 1}\n` + content;
-        this._copyToClipboard(content, `✅ Copied item #${idx + 1}!`);
+        this._copyToClipboard(content, `✓ Đã chép mục #${idx + 1}!`);
       };
 
       row.appendChild(checkbox);
