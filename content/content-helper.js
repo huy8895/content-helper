@@ -220,7 +220,7 @@ class ContentHelper {
   }
 
   _toggleAIStudioSettings() {
-    this._toggleExclusivePanel('aiStudioSettings', () => new GoogleAIStudioPanel(() => (this.aiStudioSettings = null)));
+    this._toggleAIStudioSpeechSettings();
   }
 
   _toggleAIStudioSpeechSettings() {
