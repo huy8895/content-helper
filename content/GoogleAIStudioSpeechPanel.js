@@ -18,6 +18,12 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
 
   attachEvents() {
     this.el.querySelector('#save-settings-btn').addEventListener('click', () => this.saveCurrentProfile());
+    this.el.querySelector('#apply-to-page-btn')?.addEventListener('click', async () => {
+      const currentData = this.collectDataFromForm();
+      ContentHelper.showToast("⏳ Đang điền cấu hình vào trang AI Studio...", "info");
+      await GoogleAIStudioSpeechPanel.setValueScript(currentData);
+      ContentHelper.showToast("✅ Đã điền cấu hình vào trang!", "success");
+    });
     this.el.querySelector('#save-as-new-btn').addEventListener('click', () => {
       this.saveAsNewProfile();
       this.el.querySelector('#gaisp-new-profile-group').classList.add('hidden');
@@ -113,8 +119,17 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     this.el.querySelector('#input-value2').value = profileData.InputValue2 || '';
     this.el.querySelector('#voice1').value = profileData.Voice1 || '';
     this.el.querySelector('#voice2').value = profileData.Voice2 || '';
-    this.el.querySelector('#scene-instructions').value = profileData.sceneInstructions || '';
-    this.el.querySelector('#style-instructions').value = profileData.styleInstructions || '';
+
+    // Tương thích ngược: ưu tiên key mới (scene, sampleContext), fallback sang key cũ
+    const sceneVal = profileData.scene !== undefined ? profileData.scene : (profileData.sceneInstructions || '');
+    const sampleContextVal = profileData.sampleContext !== undefined ? profileData.sampleContext : (profileData.styleInstructions || '');
+
+    const sceneEl = this.el.querySelector('#scene-instructions');
+    if (sceneEl) sceneEl.value = sceneVal;
+
+    const sampleContextEl = this.el.querySelector('#sample-context-instructions') || this.el.querySelector('#style-instructions');
+    if (sampleContextEl) sampleContextEl.value = sampleContextVal;
+
     this.el.querySelector('#auto-set-value').checked = profileData.autoSetValue || false;
     this.el.querySelector('#auto-paste-clipboard').checked = profileData.autoPasteClipboard || false;
   }
@@ -127,13 +142,21 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
   }
 
   collectDataFromForm() {
+    const sceneEl = this.el.querySelector('#scene-instructions');
+    const sampleContextEl = this.el.querySelector('#sample-context-instructions') || this.el.querySelector('#style-instructions');
+    const sceneVal = sceneEl ? sceneEl.value : '';
+    const sampleContextVal = sampleContextEl ? sampleContextEl.value : '';
+
     return {
       InputValue1: this.el.querySelector('#input-value1').value,
       InputValue2: this.el.querySelector('#input-value2').value,
       Voice1: this.el.querySelector('#voice1').value,
       Voice2: this.el.querySelector('#voice2').value,
-      sceneInstructions: this.el.querySelector('#scene-instructions').value,
-      styleInstructions: this.el.querySelector('#style-instructions').value,
+      scene: sceneVal,
+      sampleContext: sampleContextVal,
+      // Lưu song song key cũ để tương thích với dữ liệu và Firestore đã có
+      sceneInstructions: sceneVal,
+      styleInstructions: sampleContextVal,
       autoSetValue: this.el.querySelector('#auto-set-value').checked,
       autoPasteClipboard: this.el.querySelector('#auto-paste-clipboard').checked,
     };
@@ -150,9 +173,15 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
   saveCurrentProfile() {
     const currentData = this.collectDataFromForm();
     this.profiles[this.activeProfileName] = currentData;
-    this.saveAllDataToStorage(() => {
-      ContentHelper.showToast(`Profile "${this.activeProfileName}" đã được cập nhật!`, "success");
+    this.saveAllDataToStorage(async () => {
+      ContentHelper.showToast(`Profile "${this.activeProfileName}" đã được lưu!`, "success");
       this._syncToFirestore();
+
+      // Tự động điền ngay vào trang web AI Studio nếu đang ở trang speech
+      if (window.location.pathname.includes('/generate-speech')) {
+        console.log("🚀 [SpeechPanel] Tự động áp dụng giá trị profile vào trang ngay sau khi lưu...");
+        await GoogleAIStudioSpeechPanel.setValueScript(currentData);
+      }
     });
   }
 
@@ -252,139 +281,354 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
   }
 
   static async setValueScript(settings) {
-    console.log("[Static] start setValueScript: ", settings);
+    console.log("🚀 [SpeechPanel] start setValueScript: ", settings);
+
+    // BƯỚC 1: Ưu tiên số 1 - Cập nhật Scene & Sample Context trước tiên (không phụ thuộc vào việc chọn giọng)
+    const sceneText = settings.scene !== undefined ? settings.scene : (settings.sceneInstructions || '');
+    if (sceneText) {
+      try {
+        console.log("📝 [SpeechPanel] Đang điền Scene...");
+        await GoogleAIStudioSpeechPanel.setTextareaValueByLabel('Scene', sceneText);
+      } catch (e) {
+        console.warn("⚠️ [SpeechPanel] Lỗi điền Scene:", e);
+      }
+    }
+
+    const sampleContextText = settings.sampleContext !== undefined ? settings.sampleContext : (settings.styleInstructions || '');
+    if (sampleContextText) {
+      try {
+        console.log("📝 [SpeechPanel] Đang điền Sample Context...");
+        await GoogleAIStudioSpeechPanel.setTextareaValueByLabel('Sample Context', sampleContextText);
+      } catch (e) {
+        console.warn("⚠️ [SpeechPanel] Lỗi điền Sample Context:", e);
+      }
+    }
+
+    // BƯỚC 2: Cập nhật tên Speaker
+    try {
+      if (settings.InputValue1) {
+        await GoogleAIStudioSpeechPanel.setSpeakerName(0, settings.InputValue1);
+      }
+      if (settings.InputValue2) {
+        await GoogleAIStudioSpeechPanel.setSpeakerName(1, settings.InputValue2);
+      }
+    } catch (e) {
+      console.warn("⚠️ [SpeechPanel] Lỗi set Speaker Name:", e);
+    }
+
+    // BƯỚC 3: Chọn Voice 1 và Voice 2 (bọc độc lập để nếu lỗi cũng không ảnh hưởng bước khác)
+    try {
+      if (settings.Voice1) {
+        await GoogleAIStudioSpeechPanel.selectVoice(0, settings.Voice1);
+      }
+    } catch (e) {
+      console.warn(`⚠️ [SpeechPanel] Không thể chọn Voice 1 (${settings.Voice1}):`, e);
+    }
 
     try {
-      // Đợi cho việc chọn Voice 1 hoàn thành
-      await GoogleAIStudioSpeechPanel.selectVoice(0, settings.Voice1);
-
-      // Sau khi Voice 1 xong, mới bắt đầu chọn Voice 2
-      await GoogleAIStudioSpeechPanel.selectVoice(1, settings.Voice2);
-
-      // Cập nhật tên Speaker
-      GoogleAIStudioSpeechPanel.setSpeakerName(0, settings.InputValue1);
-      GoogleAIStudioSpeechPanel.setSpeakerName(1, settings.InputValue2);
-
-      // Cập nhật Scene
-      GoogleAIStudioSpeechPanel.setTextareaValueByAriaLabel('Scene', settings.sceneInstructions);
-
-      // Cập nhật Style Instructions (Sample Context)
-      GoogleAIStudioSpeechPanel.setTextareaValueByAriaLabel('Sample Context', settings.styleInstructions);
-
-      console.log("✅ [SpeechPanel] All auto-set configuration actions completed.");
-
-    } catch (error) {
-      console.error("❌ [SpeechPanel] An error occurred during auto-set script:", error);
+      if (settings.Voice2) {
+        await GoogleAIStudioSpeechPanel.selectVoice(1, settings.Voice2);
+      }
+    } catch (e) {
+      console.warn(`⚠️ [SpeechPanel] Không thể chọn Voice 2 (${settings.Voice2}):`, e);
     }
+
+    console.log("✅ [SpeechPanel] Hoàn tất setValueScript.");
   }
 
   /**
-   * Chọn một giọng nói cho một Speaker cụ thể dựa trên giao diện mới.
+   * Chọn giọng nói cho một Speaker cụ thể dựa trên Dialog Speaker settings của AI Studio.
    * @param {number} speakerIndex - Chỉ số của speaker (0 hoặc 1).
    * @param {string} voiceName - Tên của giọng nói cần chọn.
+   * @param {number} timeoutMs - Thời gian timeout (mặc định 8000ms).
    */
-  static selectVoice(speakerIndex, voiceName) {
-    return new Promise((resolve, reject) => {
-      if (!voiceName) {
-        return resolve();
+  static selectVoice(speakerIndex, voiceName, timeoutMs = 8000) {
+    return new Promise(async (resolve) => {
+      if (!voiceName || !voiceName.trim()) {
+        return resolve(false);
       }
 
-      console.log(`[Static] Bắt đầu chọn giọng "${voiceName}" cho Speaker index ${speakerIndex}...`);
+      const cleanVoiceName = voiceName.trim();
+      console.log(`🎙️ [SpeechPanel] Bắt đầu chọn giọng "${cleanVoiceName}" cho Speaker index ${speakerIndex}...`);
 
-      let attempts = 0;
-      const maxAttempts = 50; // 5 seconds
-
-      const pollInterval = setInterval(() => {
-        attempts++;
-
+      const startTime = Date.now();
+      const findSettingInterval = setInterval(async () => {
         const allVoiceSettings = document.querySelectorAll('ms-voice-settings');
         const targetSetting = allVoiceSettings[speakerIndex];
 
         if (targetSetting) {
-          clearInterval(pollInterval);
-          console.log(`✅ [Static] Đã tìm thấy ms-voice-settings cho Speaker index ${speakerIndex}`);
+          clearInterval(findSettingInterval);
 
-          // Tìm nút mở dropdown: active-voice-card-trigger
-          const trigger = targetSetting.querySelector('.active-voice-card-trigger');
-          if (!trigger) {
-            console.error(`Không tìm thấy trigger bên trong ms-voice-settings của Speaker index ${speakerIndex}`);
-            return reject(new Error(`Không tìm thấy trigger cho Speaker index ${speakerIndex}`));
+          // 1. Kiểm tra nếu giọng hiện tại đã đúng rồi thì bỏ qua
+          const currentVoiceEl = targetSetting.querySelector('.voice-display-name');
+          if (currentVoiceEl && currentVoiceEl.textContent.trim().toLowerCase() === cleanVoiceName.toLowerCase()) {
+            console.log(`✅ [SpeechPanel] Speaker [${speakerIndex}] đã chọn sẵn giọng "${cleanVoiceName}". Bỏ qua.`);
+            return resolve(true);
           }
 
-          // Mở dropdown panel
-          console.log("Clicking voice trigger...");
-          trigger.click();
+          // 2. Tìm trigger mở Dialog: .active-voice-card-trigger hoặc button[aria-label="Open voice settings"]
+          const trigger = targetSetting.querySelector('.active-voice-card-trigger, button[aria-label="Open voice settings"]');
+          if (!trigger) {
+            console.warn(`⚠️ [SpeechPanel] Không tìm thấy trigger cho Speaker index ${speakerIndex}`);
+            return resolve(false);
+          }
 
-          // Đợi panel options xuất hiện ở cột phải
-          let optionAttempts = 0;
-          const checkOptionsPanel = setInterval(() => {
-            optionAttempts++;
-            // Tìm tất cả các element có text giống voiceName trong toàn màn hình (vì panel right trượt ra)
-            // Có thể là span, h2, div, class title, voice-name
-            const possibleElements = Array.from(document.querySelectorAll('span, div, h2, button, mat-option'));
+          console.log(`🔘 [SpeechPanel] Click mở dialog chọn giọng cho Speaker [${speakerIndex}]...`);
+          trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-            let foundAndClicked = false;
-            for (let el of possibleElements) {
-              const cleanText = el.textContent.replace(/\s+/g, ' ').trim();
-              if (cleanText.toLowerCase() === voiceName.toLowerCase() ||
-                (cleanText.toLowerCase().includes(voiceName.toLowerCase()) && el.children.length === 0)) { // Ưu tiên node lá
+          // 3. Đợi Dialog mat-dialog-container xuất hiện
+          let dialogAttempts = 0;
+          const checkDialogInterval = setInterval(async () => {
+            dialogAttempts++;
+            const dialog = document.querySelector('mat-dialog-container, ms-speaker-settings-panel');
 
-                // Đi lên để tìm element có thể click được
-                const clickable = el.closest('button') || el.closest('.model-selector-card') || el.closest('mat-option') || el;
-                console.log(`✅ [Static] Tìm thấy giọng "${voiceName}". Đang click...`);
-                clickable.click();
-                foundAndClicked = true;
-                break;
+            if (dialog) {
+              clearInterval(checkDialogInterval);
+              console.log("✅ [SpeechPanel] Dialog Speaker settings đã mở. Đang tìm giọng...");
+
+              // Tìm thẻ voice-card có data-voice-name khớp
+              let voiceCard = Array.from(dialog.querySelectorAll('.voice-card')).find(card => {
+                const name = (card.getAttribute('data-voice-name') || '').trim().toLowerCase();
+                const cardNameEl = card.querySelector('.voice-name');
+                const textName = cardNameEl ? cardNameEl.textContent.trim().toLowerCase() : '';
+                return name === cleanVoiceName.toLowerCase() || textName === cleanVoiceName.toLowerCase();
+              });
+
+              // Nếu chưa thấy trong danh sách mặc định, sử dụng ô Search voices
+              if (!voiceCard) {
+                const searchInput = dialog.querySelector('input[aria-label="Search voices"], .voice-search-input input');
+                if (searchInput) {
+                  console.log(`🔍 [SpeechPanel] Đang tìm kiếm giọng "${cleanVoiceName}" qua ô Search...`);
+                  searchInput.focus();
+                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+                  if (setter) {
+                    setter.call(searchInput, cleanVoiceName);
+                  } else {
+                    searchInput.value = cleanVoiceName;
+                  }
+                  searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                  searchInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                  // Chờ 600ms cho kết quả tìm kiếm load
+                  await new Promise(r => setTimeout(r, 600));
+
+                  voiceCard = Array.from(dialog.querySelectorAll('.voice-card')).find(card => {
+                    const name = (card.getAttribute('data-voice-name') || '').trim().toLowerCase();
+                    const cardNameEl = card.querySelector('.voice-name');
+                    const textName = cardNameEl ? cardNameEl.textContent.trim().toLowerCase() : '';
+                    return name.includes(cleanVoiceName.toLowerCase()) || textName.includes(cleanVoiceName.toLowerCase());
+                  });
+                }
               }
-            }
 
-            if (foundAndClicked) {
-              clearInterval(checkOptionsPanel);
-              resolve();
-            } else if (optionAttempts > 30) {
-              clearInterval(checkOptionsPanel);
-              console.error(`❌ [Static] Không tìm thấy giọng nói "${voiceName}" trong danh sách sau khi mở panel.`);
-              // Đóng panel bằng cách click ra ngoài (body)
-              document.body.click();
-              reject(new Error(`Không tìm thấy giọng "${voiceName}"`));
+              // Click vào voice card được tìm thấy
+              if (voiceCard) {
+                const clickTarget = voiceCard.querySelector('button.voice-card-content') || voiceCard;
+                console.log(`✅ [SpeechPanel] Tìm thấy giọng "${cleanVoiceName}". Đang click chọn...`);
+                clickTarget.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                await new Promise(r => setTimeout(r, 400));
+              } else {
+                console.warn(`⚠️ [SpeechPanel] Không tìm thấy thẻ giọng nói "${cleanVoiceName}" trong dialog.`);
+              }
+
+              // 4. BẮT BUỘC: Đóng Dialog để không che khuất màn hình và giải phóng cho speaker tiếp theo
+              const closeBtn = dialog.querySelector('button[aria-label="Close panel"], button[data-test-close-button], button[mat-dialog-close], .panel-header button');
+              if (closeBtn) {
+                console.log("🔒 [SpeechPanel] Đóng dialog speaker settings...");
+                closeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+              } else {
+                const backdrop = document.querySelector('.cdk-overlay-backdrop');
+                if (backdrop) backdrop.click();
+              }
+
+              // Chờ 400ms cho dialog đóng hoàn tất
+              await new Promise(r => setTimeout(r, 400));
+              resolve(true);
+
+            } else if (dialogAttempts > 40) {
+              clearInterval(checkDialogInterval);
+              console.warn(`⚠️ [SpeechPanel] Timeout: Không tìm thấy dialog sau 4s.`);
+              resolve(false);
             }
           }, 100);
 
-        } else if (attempts >= maxAttempts) {
-          clearInterval(pollInterval);
-          console.error(`❌ [Static] Timeout: Không tìm thấy ms-voice-settings cho Speaker index ${speakerIndex} sau 5s`);
-          reject(new Error(`Timeout finding Speaker index ${speakerIndex}`));
+        } else if (Date.now() - startTime >= timeoutMs) {
+          clearInterval(findSettingInterval);
+          console.warn(`⚠️ [SpeechPanel] Timeout: Không tìm thấy ms-voice-settings cho Speaker index ${speakerIndex} sau ${timeoutMs}ms.`);
+          resolve(false);
         }
       }, 100);
     });
   }
 
-  static setSpeakerName(index, valueToSet) {
-    if (!valueToSet) return;
-    setTimeout(() => {
-      const allVoiceSettings = document.querySelectorAll('ms-voice-settings');
-      if (index < allVoiceSettings.length) {
-        const input = allVoiceSettings[index].querySelector('input[aria-label="Speaker name"]');
-        if (input) {
-          input.value = valueToSet;
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
+  static setSpeakerName(index, valueToSet, timeoutMs = 3000) {
+    if (!valueToSet) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const pollInterval = setInterval(() => {
+        const allVoiceSettings = document.querySelectorAll('ms-voice-settings');
+        if (index < allVoiceSettings.length) {
+          const input = allVoiceSettings[index].querySelector('input[aria-label="Speaker name"], input.speaker-alias-input');
+          if (input) {
+            clearInterval(pollInterval);
+            input.focus();
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+            if (setter) {
+              setter.call(input, valueToSet);
+            } else {
+              input.value = valueToSet;
+            }
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            try {
+              input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: valueToSet }));
+            } catch (_) {}
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.blur();
+            console.log(`✅ [SpeechPanel] Đã set Speaker name [${index}] = "${valueToSet}"`);
+            return resolve(true);
+          }
         }
-      }
-    }, 500);
+
+        if (Date.now() - startTime >= timeoutMs) {
+          clearInterval(pollInterval);
+          console.warn(`⚠️ [SpeechPanel] Timeout: Không tìm thấy input Speaker name cho index ${index}`);
+          resolve(false);
+        }
+      }, 100);
+    });
   }
 
+  /**
+   * Tự động điền dữ liệu vào textarea của Scene hoặc Sample Context với cơ chế Polling, 4 tầng selector & Angular Native Setter
+   * @param {string} labelText - 'Scene' hoặc 'Sample Context'
+   * @param {string} valueToSet - Nội dung cần điền
+   * @param {number} timeoutMs - Thời gian timeout tối đa (mặc định 6000ms)
+   */
+  static setTextareaValueByLabel(labelText, valueToSet, timeoutMs = 6000) {
+    if (valueToSet === undefined || valueToSet === null || valueToSet === '') {
+      console.log(`ℹ️ [SpeechPanel] Giá trị cho "${labelText}" rỗng, bỏ qua.`);
+      return Promise.resolve(false);
+    }
+
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      console.log(`⏳ [SpeechPanel] Đang tìm ô "${labelText}" để điền: "${valueToSet.slice(0, 30)}..."`);
+
+      const pollInterval = setInterval(() => {
+        let targetTextarea = null;
+        let parentMsAutosize = null;
+
+        // Tầng 1: Tìm qua thẻ <textarea> có aria-label khớp (case-insensitive)
+        const allTextareas = Array.from(document.querySelectorAll('textarea'));
+        for (const ta of allTextareas) {
+          const ariaLabel = (ta.getAttribute('aria-label') || '').trim().toLowerCase();
+          if (ariaLabel === labelText.toLowerCase()) {
+            targetTextarea = ta;
+            parentMsAutosize = ta.closest('ms-autosize-textarea');
+            break;
+          }
+        }
+
+        // Tầng 2: Tìm qua component cha <ms-autosize-textarea> có arialabel hoặc aria-label
+        if (!targetTextarea) {
+          const allMs = Array.from(document.querySelectorAll('ms-autosize-textarea'));
+          for (const ms of allMs) {
+            const al = (ms.getAttribute('arialabel') || ms.getAttribute('aria-label') || '').trim().toLowerCase();
+            if (al === labelText.toLowerCase()) {
+              parentMsAutosize = ms;
+              targetTextarea = ms.shadowRoot ? ms.shadowRoot.querySelector('textarea') : ms.querySelector('textarea');
+              if (targetTextarea) break;
+            }
+          }
+        }
+
+        // Tầng 3: Tìm qua tiêu đề h4, h3 hoặc .section-title trong context-container-item
+        if (!targetTextarea) {
+          const allTitles = Array.from(document.querySelectorAll('h4, h3, .section-title'));
+          for (const title of allTitles) {
+            if (title.textContent.trim().toLowerCase() === labelText.toLowerCase()) {
+              const item = title.closest('.context-container-item') || title.parentElement;
+              if (item) {
+                targetTextarea = item.querySelector('textarea');
+                parentMsAutosize = item.querySelector('ms-autosize-textarea');
+                if (targetTextarea) break;
+              }
+            }
+          }
+        }
+
+        // Tầng 4: Tìm qua placeholder đặc trưng trên AI Studio
+        if (!targetTextarea) {
+          for (const ta of allTextareas) {
+            const ph = (ta.getAttribute('placeholder') || '').toLowerCase();
+            if (labelText.toLowerCase() === 'scene' && ph.includes('bustling street')) {
+              targetTextarea = ta;
+              parentMsAutosize = ta.closest('ms-autosize-textarea');
+              break;
+            } else if (labelText.toLowerCase().includes('sample') && ph.includes('previous speaker')) {
+              targetTextarea = ta;
+              parentMsAutosize = ta.closest('ms-autosize-textarea');
+              break;
+            }
+          }
+        }
+
+        if (targetTextarea) {
+          clearInterval(pollInterval);
+          console.log(`🎯 [SpeechPanel] Đã tìm thấy textarea cho "${labelText}"! Tiến hành gán giá trị...`);
+
+          try {
+            // 1. Focus vào phần tử
+            targetTextarea.focus();
+
+            // 2. Gán giá trị thông qua Prototype Setter của HTMLTextAreaElement
+            const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+            if (nativeSetter) {
+              nativeSetter.call(targetTextarea, valueToSet);
+            } else {
+              targetTextarea.value = valueToSet;
+            }
+
+            // 3. Dispatch chuỗi sự kiện đầy đủ cho Angular
+            targetTextarea.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+            try {
+              targetTextarea.dispatchEvent(new InputEvent('input', {
+                bubbles: true,
+                cancelable: true,
+                inputType: 'insertText',
+                data: valueToSet
+              }));
+            } catch (_) {}
+            targetTextarea.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+
+            // 4. Đồng bộ thuộc tính data-value trên component cha <ms-autosize-textarea>
+            if (parentMsAutosize) {
+              parentMsAutosize.setAttribute('data-value', valueToSet);
+              parentMsAutosize.dispatchEvent(new Event('input', { bubbles: true }));
+              parentMsAutosize.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // 5. Blur nhẹ để Angular trigger touch & form validation
+            targetTextarea.blur();
+
+            console.log(`✅ [SpeechPanel] Đã điền thành công "${labelText}" (${valueToSet.length} ký tự).`);
+          } catch (err) {
+            console.error(`❌ [SpeechPanel] Lỗi khi gán giá trị cho "${labelText}":`, err);
+          }
+
+          setTimeout(() => resolve(true), 250);
+        } else if (Date.now() - startTime >= timeoutMs) {
+          clearInterval(pollInterval);
+          console.warn(`⚠️ [SpeechPanel] Timeout: Không tìm thấy textarea cho "${labelText}" sau ${timeoutMs}ms.`);
+          resolve(false);
+        }
+      }, 100);
+    });
+  }
+
+  // Giữ alias tương thích ngược nếu có chỗ khác gọi hàm cũ
   static setTextareaValueByAriaLabel(labelText, valueToSet) {
-    if (!valueToSet) return;
-    setTimeout(() => {
-      const selector = `textarea[aria-label="${labelText}"]`;
-      const element = document.querySelector(selector);
-      if (element) {
-        element.value = valueToSet;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    }, 500);
+    return GoogleAIStudioSpeechPanel.setTextareaValueByLabel(labelText, valueToSet);
   }
 
   // =================================================================

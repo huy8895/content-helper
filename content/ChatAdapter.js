@@ -63,7 +63,7 @@ BUTTONS = {
     id: "chatgpt-aistudio-settings-button",
     text: "⚙ Thiết lập AI Studio",
     className: "ts-menu-item",
-    onClick: () => ensureHelperInstance()?._toggleAIStudioSettings(),
+    onClick: () => ensureHelperInstance()?._toggleAIStudioSpeechSettings(),
   },
   SRT_AUTOMATION: {
     id: "chatgpt-srt-automation-button",
@@ -851,7 +851,6 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
   getButtonConfigs() {
     return [
       BUTTONS.AI_STUDIO_SETTINGS,
-      BUTTONS.AI_STUDIO_SPEECH_SETTINGS,
       BUTTONS.RUN_SCENARIO,
       BUTTONS.MANAGE_SCENARIO,
       BUTTONS.RUN_FLOW,

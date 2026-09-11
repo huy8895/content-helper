@@ -70,12 +70,12 @@ window.GoogleAIStudioSpeechView = {
 
     <div class="ts-flex-shrink-0">
       <label for="scene-instructions" class="ts-label">Scene</label>
-      <textarea id="scene-instructions" class="ts-textarea" rows="2" placeholder="Nhập bối cảnh (Scene)..."></textarea>
+      <textarea id="scene-instructions" class="ts-textarea custom-scrollbar" rows="2" style="min-height: 54px; resize: vertical;" placeholder="e.g. A bustling street at night, two friends talking casually..."></textarea>
     </div>
 
     <div class="ts-flex-1 ts-flex ts-flex-col ts-min-h-0">
-      <label for="style-instructions" class="ts-label">Style instructions (Sample Context)</label>
-      <textarea id="style-instructions" class="ts-textarea ts-flex-1 custom-scrollbar ts-min-h-0" style="min-height: 72px; resize: vertical;" placeholder="Nhập hướng dẫn phong cách..."></textarea>
+      <label for="sample-context-instructions" class="ts-label">Sample Context</label>
+      <textarea id="sample-context-instructions" class="ts-textarea ts-flex-1 custom-scrollbar ts-min-h-0" style="min-height: 72px; resize: vertical;" placeholder="e.g. Previous speaker just finished a long story..."></textarea>
     </div>
 
     <label class="ts-switch-row ts-flex-shrink-0">
@@ -89,9 +89,12 @@ window.GoogleAIStudioSpeechView = {
     </label>
   </div>
 
-  <div class="ts-sheet-footer">
-    <button id="save-settings-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
-      Cập nhật Profile
+  <div class="ts-sheet-footer ts-flex ts-gap-2">
+    <button id="apply-to-page-btn" class="ts-btn ts-btn--secondary ts-flex-1 ts-py-2">
+      ▶ Điền vào trang
+    </button>
+    <button id="save-settings-btn" class="ts-btn ts-btn--primary ts-flex-1 ts-py-2">
+      Lưu Profile
     </button>
   </div>
     `;
