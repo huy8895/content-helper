@@ -60,7 +60,9 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
       view: window.YoutubeStudioView
     });
 
-    this.storageKey = 'youtube_studio_profiles';
+    this.storageKey = 'youtube_language_profiles';
+    this.storageKeyProfiles = 'youtube_language_profiles';
+    this.storageKeyTranslations = 'youtube_translation_data';
     this.profiles = {};
     this.activeProfileName = 'default';
 
@@ -99,6 +101,28 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
 
   attachEvents() {
     this.el.querySelector('#yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
+    this.el.querySelector('#yt-run-add-languages-btn')?.addEventListener('click', async () => {
+      console.log("🔘 [YT-Panel] Bấm nút '▶ Thêm ngôn ngữ'");
+      try {
+        this.saveCurrentProfile();
+        console.log("💾 [YT-Panel] Đã lưu profile hiện tại:", this.activeProfileName, this.collectDataFromForm());
+      } catch (err) {
+        console.error("❌ [YT-Panel] Lỗi khi lưu profile:", err);
+      }
+
+      if (window.ChatAdapter && typeof window.ChatAdapter.addMyLanguages === 'function') {
+        console.log("🚀 [YT-Panel] Kích hoạt ChatAdapter.addMyLanguages()...");
+        try {
+          await window.ChatAdapter.addMyLanguages();
+        } catch (err) {
+          console.error("❌ [YT-Panel] Lỗi khi thực thi addMyLanguages:", err);
+          ContentHelper.showToast(`Lỗi: ${err.message}`, "error");
+        }
+      } else {
+        console.error("❌ [YT-Panel] window.ChatAdapter.addMyLanguages không khả dụng! ChatAdapter =", window.ChatAdapter);
+        ContentHelper.showToast("Không tìm thấy YoutubeStudioAdapter!", "error");
+      }
+    });
     this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => {
       this.saveAsNewProfile();
       this.el.querySelector('#yt-new-profile-group').classList.add('hidden');
@@ -170,7 +194,8 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
 
   async loadProfiles() {
     const { google_user_email: userId } = await chrome.storage.local.get("google_user_email");
-    let localData = (await chrome.storage.local.get(this.storageKey))[this.storageKey] || {};
+    const stored = await chrome.storage.local.get([this.storageKey, 'youtube_studio_profiles']);
+    let localData = stored[this.storageKey] || stored.youtube_studio_profiles || {};
 
     if (userId) {
       console.log("☁️ YT Panel: Attempting to load profiles from Firestore...");
@@ -393,10 +418,16 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
     if (dialog.querySelector(`#${buttonId}`)) return;
 
     // Xác định selectors
-    const headerSelector = isAloudPopup ? 'h1.ytgn-language-dialog-title' : '.metadata-editor-translated .language-header';
-    const titleSelector = isAloudPopup ? '#metadata-title #textbox' : '#translated-title textarea';
-    const descSelector = isAloudPopup ? '#metadata-description #textbox' : '#translated-description textarea';
-    const publishBtnSelector = isAloudPopup ? '.ytgn-language-dialog-update' : '#publish-button';
+    const headerSelector = isAloudPopup ? 'h1.ytgn-language-dialog-title, .ytgn-language-dialog-title, #metadata-section-header' : '.metadata-editor-translated .language-header';
+    const titleSelector = isAloudPopup 
+      ? '.metadata-title #textbox, .metadata-title [contenteditable="true"], div[aria-label="Title"], #metadata-title #textbox' 
+      : '#translated-title textarea';
+    const descSelector = isAloudPopup 
+      ? '.metadata-description #textbox, .metadata-description [contenteditable="true"], div[aria-label="Description"], #metadata-description #textbox' 
+      : '#translated-description textarea';
+    const publishBtnSelector = isAloudPopup 
+      ? '.ytgn-language-dialog-update, ytcp-button.ytgn-language-dialog-update' 
+      : '#publish-button';
 
     const targetHeader = dialog.querySelector(headerSelector);
     if (!targetHeader) return;
@@ -436,12 +467,13 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
         if (isAutofillEnabledForProfile) {
           console.log('[Auto-publish] Auto-fill enabled. Waiting to click Publish...');
 
-          // Đợi 1 giây để YouTube nhận diện thay đổi
-          await new Promise(r => setTimeout(r, 100));
+          // Đợi một chút để YouTube nhận diện thay đổi
+          await new Promise(r => setTimeout(r, 400));
 
-          const publishBtn = dialog.querySelector(`${publishBtnSelector}:not([disabled])`);
-          if (publishBtn) {
+          const publishContainer = dialog.querySelector(`${publishBtnSelector}:not([disabled])`);
+          if (publishContainer) {
             console.log('[Auto-publish] Found enabled Publish/Update button. Clicking...');
+            const publishBtn = publishContainer.querySelector('button') || publishContainer;
             publishBtn.click();
           } else {
             console.warn('[Auto-publish] Could not find enabled Publish/Update button after waiting.');
@@ -458,17 +490,69 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
     // Logic auto-publish giờ đã nằm trong event listener của nút.
   }  // Chuyển thành hàm static
   static _fillAndFireEvents(element, value) {
-    if (!element) return;
-    const formattedValue = String(value || '').replace(/\\n/g, '\n');
-    element.focus();
-    if (element.tagName === 'TEXTAREA') {
-      element.value = formattedValue;
-    } else {
-      element.textContent = formattedValue;
+    if (!element) {
+      console.warn("⚠️ [_fillAndFireEvents] Element là null/undefined!");
+      return false;
     }
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    element.dispatchEvent(new Event('change', { bubbles: true }));
-    element.blur();
+    const formattedValue = String(value || '').replace(/\\n/g, '\n');
+    console.log(`📝 [_fillAndFireEvents] Điền dữ liệu vào <${element.tagName.toLowerCase()} id="${element.id}" class="${element.className}"> (độ dài: ${formattedValue.length})`);
+
+    try {
+      element.focus();
+
+      if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+        element.value = formattedValue;
+        element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+        console.log("✅ [_fillAndFireEvents] Đã điền xong vào TEXTAREA/INPUT");
+      } else {
+        // Dành cho contenteditable div trong YouTube Studio (ytcp-social-suggestions-textbox)
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        let success = false;
+        try {
+          success = document.execCommand('insertText', false, formattedValue);
+          console.log("📋 [_fillAndFireEvents] execCommand('insertText') kết quả:", success);
+        } catch (e) {
+          console.warn("⚠️ [_fillAndFireEvents] execCommand thất bại:", e);
+          success = false;
+        }
+
+        if (!success || element.innerText.trim() !== formattedValue.trim()) {
+          console.log("🔄 [_fillAndFireEvents] Fallback: gán innerText và dispatch InputEvent");
+          element.innerText = formattedValue;
+          try {
+            element.dispatchEvent(new InputEvent('input', {
+              bubbles: true,
+              composed: true,
+              inputType: 'insertText',
+              data: formattedValue
+            }));
+          } catch (e) {
+            element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+          }
+          element.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+        }
+        try {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          const newRange = document.createRange();
+          newRange.selectNodeContents(element);
+          newRange.collapse(false);
+          sel.addRange(newRange);
+        } catch (e) {}
+        console.log(`✅ [_fillAndFireEvents] Hoàn tất điền contenteditable, độ dài thực tế: ${element.innerText.length}`);
+      }
+      element.blur();
+      return true;
+    } catch (err) {
+      console.error("❌ [_fillAndFireEvents] Lỗi khi điền element:", err);
+      return false;
+    }
   }
 
   // Chuyển thành hàm static

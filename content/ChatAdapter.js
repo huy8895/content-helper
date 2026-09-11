@@ -940,11 +940,39 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     });
   }
 
-  async addMyLanguages() {
-    const storageKey = 'youtube_language_profiles';
-    const result = await chrome.storage.local.get([storageKey, 'youtube_translation_data']);
+  /**
+   * Tìm dòng của ngôn ngữ trong bảng translations table (ytgn-video-translation-row)
+   */
+  findRowForLanguage(langName) {
+    if (!langName) return null;
+    const normTarget = YoutubeStudioPanel._normalizeLangKey(langName);
+    const rows = Array.from(document.querySelectorAll('ytgn-video-translation-row'));
 
-    const profileData = result[storageKey] || {};
+    for (const row of rows) {
+      const langBtn = row.querySelector('button.language-display-name, .language-display-name, .tablecell-language');
+      if (!langBtn) continue;
+      const text = langBtn.textContent.trim();
+      const normText = YoutubeStudioPanel._normalizeLangKey(text);
+
+      // Khớp chính xác hoặc sau khi chuẩn hóa
+      if (text.toLowerCase() === langName.toLowerCase() ||
+          (normText && normTarget && (normText === normTarget || normText.startsWith(normTarget) || normTarget.startsWith(normText)))) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  async addMyLanguages() {
+    console.log("==================================================");
+    console.log("🌐 [addMyLanguages] BẮT ĐẦU QUÁ TRÌNH THÊM NGÔN NGỮ");
+    console.log("==================================================");
+
+    const storageKey = 'youtube_language_profiles';
+    const result = await chrome.storage.local.get([storageKey, 'youtube_studio_profiles', 'youtube_translation_data']);
+    console.log("📦 [addMyLanguages] Dữ liệu từ chrome.storage.local:", result);
+
+    const profileData = result[storageKey] || result.youtube_studio_profiles || {};
     const translations = result.youtube_translation_data;
 
     const activeProfileName = profileData.activeProfileName || 'default';
@@ -954,114 +982,224 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     const isAloudChannel = activeProfile.isAloudChannel || false;
     const isAutofillEnabled = activeProfile.isAutofillEnabled || false;
 
+    console.log(`📋 [addMyLanguages] Active Profile: "${activeProfileName}"`);
+    console.log(`📋 [addMyLanguages] Danh sách ngôn ngữ cần thêm (${LANGUAGES_TO_ADD.length}):`, LANGUAGES_TO_ADD);
+    console.log(`📋 [addMyLanguages] isAloudChannel: ${isAloudChannel}, isAutofillEnabled: ${isAutofillEnabled}`);
+    console.log(`📋 [addMyLanguages] Translations keys:`, translations ? Object.keys(translations) : 'Chưa có dữ liệu translation');
+
     if (LANGUAGES_TO_ADD.length === 0) {
-      ContentHelper.showToast(`No languages for profile "${activeProfileName}".`, "warning");
+      console.warn(`⚠️ [addMyLanguages] Profile "${activeProfileName}" chưa có ngôn ngữ nào được chọn.`);
+      ContentHelper.showToast(`Chưa có ngôn ngữ nào được chọn cho profile "${activeProfileName}".`, "warning");
       return;
     }
 
-    const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button');
+    const addLanguageBtn = this._q('#add-translations-button') || this._q('#add-button button') || document.querySelector('#add-translations-button, #add-button button');
+    console.log("🔍 [addMyLanguages] Nút 'Thêm ngôn ngữ' (Add language) tìm được:", addLanguageBtn);
+
     if (!addLanguageBtn) {
-      ContentHelper.showToast("Cannot find 'Add language' button!", "error");
+      console.error("❌ [addMyLanguages] Không tìm thấy nút #add-translations-button hoặc #add-button button trên trang YouTube Studio!");
+      ContentHelper.showToast("Không tìm thấy nút 'Thêm ngôn ngữ' (Add language) trên trang!", "error");
       return;
     }
 
-    const itemSelector = isAloudChannel ? 'yt-formatted-string.item-text' : 'tp-yt-paper-item .item-text';
+    const itemSelector = 'yt-formatted-string.item-text, tp-yt-paper-item .item-text, .item-text';
 
-    for (const langName of LANGUAGES_TO_ADD) {
-      addLanguageBtn.click();
-      await this.sleep(250);
+    for (let i = 0; i < LANGUAGES_TO_ADD.length; i++) {
+      const langName = LANGUAGES_TO_ADD[i];
+      console.log(`\n--------------------------------------------------`);
+      console.log(`👉 [addMyLanguages] (${i + 1}/${LANGUAGES_TO_ADD.length}) Xử lý ngôn ngữ: "${langName}"`);
 
-      const allItems = document.querySelectorAll(itemSelector);
-      let foundItem = null;
+      try {
+        // BƯỚC 1: Kiểm tra xem ngôn ngữ đã có dòng sẵn trong bảng hay chưa (ví dụ đã có phụ đề thủ công)
+        const existingRow = this.findRowForLanguage(langName);
+        if (existingRow) {
+          console.log(`🎯 [addMyLanguages] Phát hiện ngôn ngữ "${langName}" ĐÃ CÓ trong bảng translations. Bỏ qua nút Add language để tránh bị disabled.`);
+          const clickTarget = existingRow.querySelector('button.language-display-name') ||
+                              existingRow.querySelector('.language-display-name') ||
+                              existingRow.querySelector('.tablecell-metadata') ||
+                              existingRow;
 
-      for (const item of allItems) {
-        if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
-          const clickableParent = item.closest('tp-yt-paper-item');
-          if (clickableParent && !clickableParent.hasAttribute('disabled')) {
-            foundItem = clickableParent;
-            break;
+          console.log(`🖱️ [addMyLanguages] Cuộn tới và click vào dòng "${langName}"...`, clickTarget);
+          clickTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          await this.sleep(200);
+          clickTarget.click();
+
+          // Kích hoạt autofill cho kênh Aloud
+          if (isAloudChannel && isAutofillEnabled) {
+            console.log(`🤖 [addMyLanguages] Kích hoạt handleAloudAutofill cho "${langName}" từ dòng có sẵn...`);
+            await this.handleAloudAutofill(langName, translations);
+          } else {
+            console.log(`⏳ [addMyLanguages] Chờ 400ms UI YouTube cập nhật...`);
+            await this.sleep(400);
+          }
+          continue; // Chuyển sang ngôn ngữ tiếp theo
+        }
+
+        // BƯỚC 2: Nếu chưa có trong bảng, mở menu "Add language" để thêm mới
+        console.log(`🖱️ [addMyLanguages] "${langName}" chưa có trong bảng. Click nút mở menu ngôn ngữ (Add language)...`);
+        addLanguageBtn.click();
+        await this.sleep(400);
+
+        const allItems = document.querySelectorAll(itemSelector);
+        console.log(`🔎 [addMyLanguages] Tìm thấy ${allItems.length} mục trong menu dropdown.`);
+
+        let foundItem = null;
+        for (const item of allItems) {
+          if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
+            const clickableParent = item.closest('tp-yt-paper-item') || item;
+            if (clickableParent && !clickableParent.hasAttribute('disabled')) {
+              foundItem = clickableParent;
+              break;
+            } else {
+              console.log(`ℹ️ [addMyLanguages] Ngôn ngữ "${langName}" đã tồn tại hoặc đang DISABLED trong dropdown.`);
+            }
           }
         }
-      }
 
-      if (foundItem) {
-        foundItem.click();
-        console.log(`✅ Added language: ${langName}`);
+        if (foundItem) {
+          console.log(`🎯 [addMyLanguages] Đã tìm thấy "${langName}" trong menu. Tiến hành click chọn...`);
+          foundItem.click();
+          console.log(`✅ [addMyLanguages] Đã click chọn: "${langName}"`);
 
-        // TÁCH BIỆT LOGIC: Chỉ tự động hóa hoàn toàn cho kênh Aloud + Autofill
-        if (isAloudChannel && isAutofillEnabled) {
-          await this.handleAloudAutofill(langName, translations);
+          // TÁCH BIỆT LOGIC: Chỉ tự động hóa hoàn toàn cho kênh Aloud + Autofill
+          if (isAloudChannel && isAutofillEnabled) {
+            console.log(`🤖 [addMyLanguages] Kích hoạt handleAloudAutofill cho "${langName}"...`);
+            await this.handleAloudAutofill(langName, translations);
+          } else {
+            console.log(`⏳ [addMyLanguages] Chờ 400ms UI YouTube cập nhật...`);
+            await this.sleep(400);
+          }
+
         } else {
-          // Đối với các trường hợp khác, chỉ cần một khoảng nghỉ nhỏ
+          console.log(`⚠️ [addMyLanguages] Không tìm thấy mục khả dụng cho "${langName}" trong menu. Đóng menu lại.`);
+          document.body.click(); // Đóng menu lại
           await this.sleep(300);
-        }
 
-      } else {
-        console.log(`⚠️ Not found or already exists: ${langName}`);
-        document.body.click(); // Đóng menu lại
-        await this.sleep(100);
+          // Fallback: Thử tìm lại trong bảng translations một lần nữa
+          const fallbackRow = this.findRowForLanguage(langName);
+          if (fallbackRow) {
+            console.log(`🔄 [addMyLanguages] Fallback: Tìm thấy "${langName}" trong bảng sau khi đóng menu. Click vào dòng...`);
+            const clickTarget = fallbackRow.querySelector('button.language-display-name') ||
+                                fallbackRow.querySelector('.language-display-name') ||
+                                fallbackRow.querySelector('.tablecell-metadata') ||
+                                fallbackRow;
+            clickTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            await this.sleep(200);
+            clickTarget.click();
+
+            if (isAloudChannel && isAutofillEnabled) {
+              await this.handleAloudAutofill(langName, translations);
+            } else {
+              await this.sleep(400);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`❌ [addMyLanguages] Lỗi khi xử lý ngôn ngữ "${langName}":`, err);
       }
     }
-    ContentHelper.showToast("Finished adding all configured languages!", "success");
+
+    console.log("==================================================");
+    console.log("🎉 [addMyLanguages] HOÀN TẤT QUÁ TRÌNH THÊM TẤT CẢ NGÔN NGỮ!");
+    console.log("==================================================");
+    ContentHelper.showToast("Hoàn tất thêm các ngôn ngữ đã cấu hình!", "success");
   }
 
   /**
-   * Hàm mới chuyên xử lý logic tự động hóa cho kênh Aloud
+   * Hàm chuyên xử lý logic tự động hóa cho kênh Aloud / Multi-language audio
    */
   async handleAloudAutofill(langName, translations) {
-    console.log(`[Aloud Autofill] Waiting for dialog for ${langName}...`);
+    console.log(`🤖 [Aloud Autofill] >>> BẮT ĐẦU AUTOFILL CHO: "${langName}"`);
 
-    // Đợi popup xuất hiện
-    const dialog = await this.waitForElement('#dialog.ytcp-dialog[aria-label*="details"]');
+    const dialogSelector = 'ytgn-language-dialog, .ytgn-language-dialog-content-sections, #dialog.ytcp-dialog, ytcp-dialog[opened], #metadata-editor[opened]';
+    console.log(`🔍 [Aloud Autofill] Chờ Dialog xuất hiện (selector: ${dialogSelector})...`);
+
+    const dialog = await this.waitForElement(dialogSelector, document, 4000);
     if (!dialog) {
-      console.error(`[Aloud Autofill] Dialog for ${langName} did not appear. Skipping.`);
+      console.error(`❌ [Aloud Autofill] Hết 4s chờ, KHÔNG tìm thấy Dialog cho "${langName}"!`);
+      const allDialogs = Array.from(document.querySelectorAll('ytcp-dialog, ytgn-language-dialog, [role="dialog"], #dialog'));
+      console.log(`🔎 [Aloud Autofill] Các dialog đang có trong DOM:`, allDialogs.map(d => ({ tag: d.tagName, id: d.id, class: d.className, opened: d.getAttribute('opened') })));
       return;
     }
 
-    console.log('[Aloud Autofill] Dialog found. Filling data...');
+    console.log(`✅ [Aloud Autofill] Đã tìm thấy Dialog: <${dialog.tagName.toLowerCase()} id="${dialog.id}" class="${dialog.className}">`, dialog);
 
     const jsonKey = YoutubeStudioPanel._normalizeLangKey(langName);
+    console.log(`🔑 [Aloud Autofill] Normalized key cho "${langName}" là: "${jsonKey}"`);
     const translationData = YoutubeStudioPanel.getTranslation(translations, jsonKey);
+    console.log(`📄 [Aloud Autofill] Translation data tìm được:`, translationData);
 
     if (translationData) {
-      const titleInput = dialog.querySelector('#metadata-title #textbox');
-      const descInput = dialog.querySelector('#metadata-description #textbox');
+      await this.sleep(350);
 
-      YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
-      YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
+      const titleSelector = '.metadata-title #textbox, .metadata-title [contenteditable="true"], div[aria-label="Title"], #metadata-title #textbox';
+      const descSelector = '.metadata-description #textbox, .metadata-description [contenteditable="true"], div[aria-label="Description"], #metadata-description #textbox';
 
-      await this.sleep(100); // Đợi nút publish được enable
+      console.log(`🔍 [Aloud Autofill] Tìm ô Title với selector: ${titleSelector}`);
+      const titleInput = dialog.querySelector(titleSelector) || document.querySelector('.metadata-title #textbox, .metadata-title [contenteditable="true"]');
+      console.log(`📌 [Aloud Autofill] Title input:`, titleInput);
 
-      const publishBtn = dialog.querySelector('.ytgn-language-dialog-update:not([disabled])');
-      if (publishBtn) {
-        publishBtn.click();
-        console.log(`[Aloud Autofill] Published for ${langName}`);
-        await this.waitForElementToDisappear(`#dialog.ytcp-dialog[aria-label*="${langName}"]`);
+      console.log(`🔍 [Aloud Autofill] Tìm ô Description với selector: ${descSelector}`);
+      const descInput = dialog.querySelector(descSelector) || document.querySelector('.metadata-description #textbox, .metadata-description [contenteditable="true"]');
+      console.log(`📌 [Aloud Autofill] Description input:`, descInput);
+
+      if (titleInput) {
+        console.log(`✍️ [Aloud Autofill] Bắt đầu điền Title: "${translationData.title}"`);
+        YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
       } else {
-        console.warn(`[Aloud Autofill] Publish button not enabled. Closing.`);
-        dialog.querySelector('.ytgn-language-dialog-cancel')?.click();
+        console.warn(`⚠️ [Aloud Autofill] Không tìm thấy ô nhập Title cho "${langName}"!`);
+      }
+
+      if (descInput) {
+        console.log(`✍️ [Aloud Autofill] Bắt đầu điền Description: "${translationData.description ? translationData.description.substring(0, 50) + '...' : ''}"`);
+        YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
+      } else {
+        console.warn(`⚠️ [Aloud Autofill] Không tìm thấy ô nhập Description cho "${langName}"!`);
+      }
+
+      await this.sleep(400);
+
+      const publishBtnSelector = '.ytgn-language-dialog-update:not([disabled]), ytcp-button.ytgn-language-dialog-update:not([disabled]), #publish-button:not([disabled]), #save-button:not([disabled])';
+      console.log(`🔍 [Aloud Autofill] Tìm nút Publish/Update (${publishBtnSelector})...`);
+      const publishContainer = dialog.querySelector(publishBtnSelector) || document.querySelector(publishBtnSelector);
+
+      if (publishContainer) {
+        console.log(`🎯 [Aloud Autofill] Đã tìm thấy nút Publish/Update:`, publishContainer);
+        const publishBtn = publishContainer.querySelector('button') || publishContainer;
+        console.log(`🖱️ [Aloud Autofill] Click nút Publish...`);
+        publishBtn.click();
+        console.log(`⏳ [Aloud Autofill] Chờ Dialog đóng lại...`);
+        await this.waitForElementToDisappear('ytgn-language-dialog, .ytgn-language-dialog-content-sections, #dialog.ytcp-dialog[opened]', 3000);
+        await this.sleep(300);
+        console.log(`✅ [Aloud Autofill] Hoàn tất thành công ngôn ngữ "${langName}"`);
+      } else {
+        console.warn(`⚠️ [Aloud Autofill] Nút Publish chưa được kích hoạt (disabled) hoặc không tìm thấy cho "${langName}". Đang đóng dialog...`);
+        const allButtons = Array.from(dialog.querySelectorAll('ytcp-button, button'));
+        console.log(`🔎 [Aloud Autofill] Danh sách buttons trong dialog:`, allButtons.map(b => ({ tag: b.tagName, id: b.id, class: b.className, text: b.textContent.trim(), disabled: b.hasAttribute('disabled') })));
+        const cancelBtn = dialog.querySelector('.ytgn-language-dialog-cancel button, .ytgn-language-dialog-cancel, #close-button') ||
+          document.querySelector('.ytgn-language-dialog-cancel');
+        cancelBtn?.click();
         await this.sleep(500);
       }
     } else {
-      console.warn(`[Aloud Autofill] No data for ${langName}. Closing.`);
-      dialog.querySelector('.ytgn-language-dialog-cancel')?.click();
+      console.warn(`⚠️ [Aloud Autofill] Không có translationData cho "${langName}" (key: "${jsonKey}"). Đang đóng dialog...`);
+      const cancelBtn = dialog.querySelector('.ytgn-language-dialog-cancel button, .ytgn-language-dialog-cancel, #close-button') ||
+        document.querySelector('.ytgn-language-dialog-cancel');
+      cancelBtn?.click();
       await this.sleep(500);
     }
   }
 
   // Thêm hàm helper mới
-  waitForElementToDisappear(selector, timeout = 500) {
+  waitForElementToDisappear(selector, timeout = 2000) {
     return new Promise(resolve => {
+      const startTime = Date.now();
       const interval = setInterval(() => {
-        if (!document.querySelector(selector)) {
+        if (!document.querySelector(selector) || (Date.now() - startTime >= timeout)) {
           clearInterval(interval);
           resolve();
         }
       }, 100);
-      setTimeout(() => {
-        clearInterval(interval);
-        resolve(); // Vẫn resolve dù hết giờ
-      }, timeout);
     });
   }
 }

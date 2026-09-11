@@ -102,9 +102,12 @@ window.YoutubeStudioView = {
     </div>
   </div>
   
-  <div class="ts-sheet-footer">
-    <button id="yt-save-languages-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
-      Cập nhật Profile
+  <div class="ts-sheet-footer ts-flex ts-gap-2">
+    <button id="yt-save-languages-btn" class="ts-btn ts-btn--secondary ts-flex-1 ts-py-2">
+      Lưu Profile
+    </button>
+    <button id="yt-run-add-languages-btn" class="ts-btn ts-btn--primary ts-flex-1 ts-py-2">
+      ▶ Thêm ngôn ngữ
     </button>
   </div>
     `;
