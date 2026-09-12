@@ -101,23 +101,6 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
 
   attachEvents() {
     this.el.querySelector('#yt-save-languages-btn').addEventListener('click', () => this.saveCurrentProfile());
-    this.el.querySelector('#yt-run-add-languages-btn')?.addEventListener('click', async () => {
-      console.log("🔘 [YT-Panel] Bấm nút '▶ Thêm ngôn ngữ'");
-      try {
-        this.saveCurrentProfile();
-        console.log("💾 [YT-Panel] Đã lưu profile hiện tại:", this.activeProfileName, this.collectDataFromForm());
-      } catch (err) {
-        console.error("❌ [YT-Panel] Lỗi khi lưu profile:", err);
-      }
-
-      console.log("🚀 [YT-Panel] Kích hoạt YoutubeStudioPanel.runAddLanguages()...");
-      try {
-        await YoutubeStudioPanel.runAddLanguages();
-      } catch (err) {
-        console.error("❌ [YT-Panel] Lỗi khi thực thi runAddLanguages:", err);
-        ContentHelper.showToast(`Lỗi: ${err.message}`, "error");
-      }
-    });
     this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => {
       this.saveAsNewProfile();
       this.el.querySelector('#yt-new-profile-group').classList.add('hidden');

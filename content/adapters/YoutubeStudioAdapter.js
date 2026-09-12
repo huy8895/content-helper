@@ -16,9 +16,6 @@ class YoutubeStudioAdapter extends BaseChatAdapter {
     return [
       BUTTONS.YT_STUDIO_SETTINGS,
       BUTTONS.YT_ADD_LANGUAGES,
-      BUTTONS.RUN_SCENARIO,
-      BUTTONS.MANAGE_SCENARIO,
-      BUTTONS.SPLITTER,
     ];
   }
 
