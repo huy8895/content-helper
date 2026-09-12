@@ -80,7 +80,15 @@
         "content/TextSplitter.js",
         "content/AudioDownloader.js",
         "content/ContentCopyPanel.js",
-        "content/ChatAdapter.js"
+        "content/adapters/BaseChatAdapter.js",
+        "content/adapters/ChatGPTAdapter.js",
+        "content/adapters/DeepSeekAdapter.js",
+        "content/adapters/QwenAdapter.js",
+        "content/adapters/GrokAdapter.js",
+        "content/adapters/GoogleAIStudioAdapter.js",
+        "content/adapters/YoutubeStudioAdapter.js",
+        "content/adapters/GeminiAdapter.js",
+        "content/adapters/AdapterFactory.js"
       ],
       "css": [
         "content/css/tokens.css",

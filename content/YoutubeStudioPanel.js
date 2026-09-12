@@ -110,17 +110,12 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
         console.error("❌ [YT-Panel] Lỗi khi lưu profile:", err);
       }
 
-      if (window.ChatAdapter && typeof window.ChatAdapter.addMyLanguages === 'function') {
-        console.log("🚀 [YT-Panel] Kích hoạt ChatAdapter.addMyLanguages()...");
-        try {
-          await window.ChatAdapter.addMyLanguages();
-        } catch (err) {
-          console.error("❌ [YT-Panel] Lỗi khi thực thi addMyLanguages:", err);
-          ContentHelper.showToast(`Lỗi: ${err.message}`, "error");
-        }
-      } else {
-        console.error("❌ [YT-Panel] window.ChatAdapter.addMyLanguages không khả dụng! ChatAdapter =", window.ChatAdapter);
-        ContentHelper.showToast("Không tìm thấy YoutubeStudioAdapter!", "error");
+      console.log("🚀 [YT-Panel] Kích hoạt YoutubeStudioPanel.runAddLanguages()...");
+      try {
+        await YoutubeStudioPanel.runAddLanguages();
+      } catch (err) {
+        console.error("❌ [YT-Panel] Lỗi khi thực thi runAddLanguages:", err);
+        ContentHelper.showToast(`Lỗi: ${err.message}`, "error");
       }
     });
     this.el.querySelector('#yt-save-as-new-btn').addEventListener('click', () => {
@@ -616,6 +611,297 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
   _normalizeLangKey(langName) {
     if (typeof langName !== 'string') return '';
     return langName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  // Helper sleep
+  static sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Helper waitForElement
+  static waitForElement(selector, context = document, timeout = 1000) {
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        const el = context.querySelector(selector);
+        if (el) {
+          clearInterval(interval);
+          resolve(el);
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(null);
+      }, timeout);
+    });
+  }
+
+  // Helper waitForElementToDisappear
+  static waitForElementToDisappear(selector, timeout = 2000) {
+    return new Promise(resolve => {
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        if (!document.querySelector(selector) || (Date.now() - startTime >= timeout)) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+    });
+  }
+
+  /**
+   * Tìm dòng của ngôn ngữ trong bảng translations table (ytgn-video-translation-row)
+   */
+  static findRowForLanguage(langName) {
+    if (!langName) return null;
+    const normTarget = YoutubeStudioPanel._normalizeLangKey(langName);
+    const rows = Array.from(document.querySelectorAll('ytgn-video-translation-row'));
+
+    for (const row of rows) {
+      const langBtn = row.querySelector('button.language-display-name, .language-display-name, .tablecell-language');
+      if (!langBtn) continue;
+      const text = langBtn.textContent.trim();
+      const normText = YoutubeStudioPanel._normalizeLangKey(text);
+
+      // Khớp chính xác hoặc sau khi chuẩn hóa
+      if (text.toLowerCase() === langName.toLowerCase() ||
+          (normText && normTarget && (normText === normTarget || normText.startsWith(normTarget) || normTarget.startsWith(normText)))) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Điền dữ liệu Title & Description và Publish cho ngôn ngữ trong Aloud Dialog
+   */
+  static async handleAloudAutofill(langName, translations) {
+    console.log(`🤖 [Aloud Autofill] >>> BẮT ĐẦU AUTOFILL CHO: "${langName}"`);
+
+    const dialogSelector = 'ytgn-language-dialog, .ytgn-language-dialog-content-sections, #dialog.ytcp-dialog, ytcp-dialog[opened], #metadata-editor[opened]';
+    console.log(`🔍 [Aloud Autofill] Chờ Dialog xuất hiện (selector: ${dialogSelector})...`);
+
+    const dialog = await YoutubeStudioPanel.waitForElement(dialogSelector, document, 4000);
+    if (!dialog) {
+      console.error(`❌ [Aloud Autofill] Hết 4s chờ, KHÔNG tìm thấy Dialog cho "${langName}"!`);
+      const allDialogs = Array.from(document.querySelectorAll('ytcp-dialog, ytgn-language-dialog, [role="dialog"], #dialog'));
+      console.log(`🔎 [Aloud Autofill] Các dialog đang có trong DOM:`, allDialogs.map(d => ({ tag: d.tagName, id: d.id, class: d.className, opened: d.getAttribute('opened') })));
+      return;
+    }
+
+    console.log(`✅ [Aloud Autofill] Đã tìm thấy Dialog: <${dialog.tagName.toLowerCase()} id="${dialog.id}" class="${dialog.className}">`, dialog);
+
+    const jsonKey = YoutubeStudioPanel._normalizeLangKey(langName);
+    console.log(`🔑 [Aloud Autofill] Normalized key cho "${langName}" là: "${jsonKey}"`);
+    const translationData = YoutubeStudioPanel.getTranslation(translations, jsonKey);
+    console.log(`📄 [Aloud Autofill] Translation data tìm được:`, translationData);
+
+    if (translationData) {
+      await YoutubeStudioPanel.sleep(350);
+
+      const titleSelector = '.metadata-title #textbox, .metadata-title [contenteditable="true"], div[aria-label="Title"], #metadata-title #textbox';
+      const descSelector = '.metadata-description #textbox, .metadata-description [contenteditable="true"], div[aria-label="Description"], #metadata-description #textbox';
+
+      console.log(`🔍 [Aloud Autofill] Tìm ô Title với selector: ${titleSelector}`);
+      const titleInput = dialog.querySelector(titleSelector) || document.querySelector('.metadata-title #textbox, .metadata-title [contenteditable="true"]');
+      console.log(`📌 [Aloud Autofill] Title input:`, titleInput);
+
+      console.log(`🔍 [Aloud Autofill] Tìm ô Description với selector: ${descSelector}`);
+      const descInput = dialog.querySelector(descSelector) || document.querySelector('.metadata-description #textbox, .metadata-description [contenteditable="true"]');
+      console.log(`📌 [Aloud Autofill] Description input:`, descInput);
+
+      if (titleInput) {
+        console.log(`✍️ [Aloud Autofill] Bắt đầu điền Title: "${translationData.title}"`);
+        YoutubeStudioPanel._fillAndFireEvents(titleInput, translationData.title);
+      } else {
+        console.warn(`⚠️ [Aloud Autofill] Không tìm thấy ô nhập Title cho "${langName}"!`);
+      }
+
+      if (descInput) {
+        console.log(`✍️ [Aloud Autofill] Bắt đầu điền Description: "${translationData.description ? translationData.description.substring(0, 50) + '...' : ''}"`);
+        YoutubeStudioPanel._fillAndFireEvents(descInput, translationData.description);
+      } else {
+        console.warn(`⚠️ [Aloud Autofill] Không tìm thấy ô nhập Description cho "${langName}"!`);
+      }
+
+      await YoutubeStudioPanel.sleep(400);
+
+      const publishBtnSelector = '.ytgn-language-dialog-update:not([disabled]), ytcp-button.ytgn-language-dialog-update:not([disabled]), #publish-button:not([disabled]), #save-button:not([disabled])';
+      console.log(`🔍 [Aloud Autofill] Tìm nút Publish/Update (${publishBtnSelector})...`);
+      const publishContainer = dialog.querySelector(publishBtnSelector) || document.querySelector(publishBtnSelector);
+
+      if (publishContainer) {
+        console.log(`🎯 [Aloud Autofill] Đã tìm thấy nút Publish/Update:`, publishContainer);
+        const publishBtn = publishContainer.querySelector('button') || publishContainer;
+        console.log(`🖱️ [Aloud Autofill] Click nút Publish...`);
+        publishBtn.click();
+        console.log(`⏳ [Aloud Autofill] Chờ Dialog đóng lại...`);
+        await YoutubeStudioPanel.waitForElementToDisappear('ytgn-language-dialog, .ytgn-language-dialog-content-sections, #dialog.ytcp-dialog[opened]', 3000);
+        await YoutubeStudioPanel.sleep(300);
+        console.log(`✅ [Aloud Autofill] Hoàn tất thành công ngôn ngữ "${langName}"`);
+      } else {
+        console.warn(`⚠️ [Aloud Autofill] Nút Publish chưa được kích hoạt (disabled) hoặc không tìm thấy cho "${langName}". Đang đóng dialog...`);
+        const allButtons = Array.from(dialog.querySelectorAll('ytcp-button, button'));
+        console.log(`🔎 [Aloud Autofill] Danh sách buttons trong dialog:`, allButtons.map(b => ({ tag: b.tagName, id: b.id, class: b.className, text: b.textContent.trim(), disabled: b.hasAttribute('disabled') })));
+        const cancelBtn = dialog.querySelector('.ytgn-language-dialog-cancel button, .ytgn-language-dialog-cancel, #close-button') ||
+          document.querySelector('.ytgn-language-dialog-cancel');
+        cancelBtn?.click();
+        await YoutubeStudioPanel.sleep(500);
+      }
+    } else {
+      console.warn(`⚠️ [Aloud Autofill] Không có translationData cho "${langName}" (key: "${jsonKey}"). Đang đóng dialog...`);
+      const cancelBtn = dialog.querySelector('.ytgn-language-dialog-cancel button, .ytgn-language-dialog-cancel, #close-button') ||
+        document.querySelector('.ytgn-language-dialog-cancel');
+      cancelBtn?.click();
+      await YoutubeStudioPanel.sleep(500);
+    }
+  }
+
+  /**
+   * Quá trình chính: Tự động thêm và điền thông tin các ngôn ngữ theo profile đã chọn
+   */
+  static async runAddLanguages() {
+    console.log("==================================================");
+    console.log("🌐 [runAddLanguages] BẮT ĐẦU QUÁ TRÌNH THÊM NGÔN NGỮ");
+    console.log("==================================================");
+
+    const storageKey = 'youtube_language_profiles';
+    const result = await chrome.storage.local.get([storageKey, 'youtube_studio_profiles', 'youtube_translation_data']);
+    console.log("📦 [runAddLanguages] Dữ liệu từ chrome.storage.local:", result);
+
+    const profileData = result[storageKey] || result.youtube_studio_profiles || {};
+    const translations = result.youtube_translation_data;
+
+    const activeProfileName = profileData.activeProfileName || 'default';
+    const activeProfile = (profileData.profiles || {})[activeProfileName] || {};
+
+    const LANGUAGES_TO_ADD = activeProfile.languages || [];
+    const isAloudChannel = activeProfile.isAloudChannel || false;
+    const isAutofillEnabled = activeProfile.isAutofillEnabled || false;
+
+    console.log(`📋 [runAddLanguages] Active Profile: "${activeProfileName}"`);
+    console.log(`📋 [runAddLanguages] Danh sách ngôn ngữ cần thêm (${LANGUAGES_TO_ADD.length}):`, LANGUAGES_TO_ADD);
+    console.log(`📋 [runAddLanguages] isAloudChannel: ${isAloudChannel}, isAutofillEnabled: ${isAutofillEnabled}`);
+    console.log(`📋 [runAddLanguages] Translations keys:`, translations ? Object.keys(translations) : 'Chưa có dữ liệu translation');
+
+    if (LANGUAGES_TO_ADD.length === 0) {
+      console.warn(`⚠️ [runAddLanguages] Profile "${activeProfileName}" chưa có ngôn ngữ nào được chọn.`);
+      ContentHelper.showToast(`Chưa có ngôn ngữ nào được chọn cho profile "${activeProfileName}".`, "warning");
+      return;
+    }
+
+    const addLanguageBtn = document.querySelector('#add-translations-button, #add-button button');
+    console.log("🔍 [runAddLanguages] Nút 'Thêm ngôn ngữ' (Add language) tìm được:", addLanguageBtn);
+
+    if (!addLanguageBtn) {
+      console.error("❌ [runAddLanguages] Không tìm thấy nút #add-translations-button hoặc #add-button button trên trang YouTube Studio!");
+      ContentHelper.showToast("Không tìm thấy nút 'Thêm ngôn ngữ' (Add language) trên trang!", "error");
+      return;
+    }
+
+    const itemSelector = 'yt-formatted-string.item-text, tp-yt-paper-item .item-text, .item-text';
+
+    for (let i = 0; i < LANGUAGES_TO_ADD.length; i++) {
+      const langName = LANGUAGES_TO_ADD[i];
+      console.log(`\n--------------------------------------------------`);
+      console.log(`👉 [runAddLanguages] (${i + 1}/${LANGUAGES_TO_ADD.length}) Xử lý ngôn ngữ: "${langName}"`);
+
+      try {
+        // BƯỚC 1: Kiểm tra xem ngôn ngữ đã có dòng sẵn trong bảng hay chưa (ví dụ đã có phụ đề thủ công)
+        const existingRow = YoutubeStudioPanel.findRowForLanguage(langName);
+        if (existingRow) {
+          console.log(`🎯 [runAddLanguages] Phát hiện ngôn ngữ "${langName}" ĐÃ CÓ trong bảng translations. Bỏ qua nút Add language để tránh bị disabled.`);
+          const clickTarget = existingRow.querySelector('button.language-display-name') ||
+                              existingRow.querySelector('.language-display-name') ||
+                              existingRow.querySelector('.tablecell-metadata') ||
+                              existingRow;
+
+          console.log(`🖱️ [runAddLanguages] Cuộn tới và click vào dòng "${langName}"...`, clickTarget);
+          clickTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          await YoutubeStudioPanel.sleep(200);
+          clickTarget.click();
+
+          // Kích hoạt autofill cho kênh Aloud
+          if (isAloudChannel && isAutofillEnabled) {
+            console.log(`🤖 [runAddLanguages] Kích hoạt handleAloudAutofill cho "${langName}" từ dòng có sẵn...`);
+            await YoutubeStudioPanel.handleAloudAutofill(langName, translations);
+          } else {
+            console.log(`⏳ [runAddLanguages] Chờ 400ms UI YouTube cập nhật...`);
+            await YoutubeStudioPanel.sleep(400);
+          }
+          continue; // Chuyển sang ngôn ngữ tiếp theo
+        }
+
+        // BƯỚC 2: Nếu chưa có trong bảng, mở menu "Add language" để thêm mới
+        console.log(`🖱️ [runAddLanguages] "${langName}" chưa có trong bảng. Click nút mở menu ngôn ngữ (Add language)...`);
+        addLanguageBtn.click();
+        await YoutubeStudioPanel.sleep(400);
+
+        const allItems = document.querySelectorAll(itemSelector);
+        console.log(`🔎 [runAddLanguages] Tìm thấy ${allItems.length} mục trong menu dropdown.`);
+
+        let foundItem = null;
+        for (const item of allItems) {
+          if (item.textContent.trim().toLowerCase() === langName.toLowerCase()) {
+            const clickableParent = item.closest('tp-yt-paper-item') || item;
+            if (clickableParent && !clickableParent.hasAttribute('disabled')) {
+              foundItem = clickableParent;
+              break;
+            } else {
+              console.log(`ℹ️ [runAddLanguages] Ngôn ngữ "${langName}" đã tồn tại hoặc đang DISABLED trong dropdown.`);
+            }
+          }
+        }
+
+        if (foundItem) {
+          console.log(`🎯 [runAddLanguages] Đã tìm thấy "${langName}" trong menu. Tiến hành click chọn...`);
+          foundItem.click();
+          console.log(`✅ [runAddLanguages] Đã click chọn: "${langName}"`);
+
+          if (isAloudChannel && isAutofillEnabled) {
+            console.log(`🤖 [runAddLanguages] Kích hoạt handleAloudAutofill cho "${langName}"...`);
+            await YoutubeStudioPanel.handleAloudAutofill(langName, translations);
+          } else {
+            console.log(`⏳ [runAddLanguages] Chờ 400ms UI YouTube cập nhật...`);
+            await YoutubeStudioPanel.sleep(400);
+          }
+
+        } else {
+          console.log(`⚠️ [runAddLanguages] Không tìm thấy mục khả dụng cho "${langName}" trong menu. Đóng menu lại.`);
+          document.body.click(); // Đóng menu lại
+          await YoutubeStudioPanel.sleep(300);
+
+          // Fallback: Thử tìm lại trong bảng translations một lần nữa
+          const fallbackRow = YoutubeStudioPanel.findRowForLanguage(langName);
+          if (fallbackRow) {
+            console.log(`🔄 [runAddLanguages] Fallback: Tìm thấy "${langName}" trong bảng sau khi đóng menu. Click vào dòng...`);
+            const clickTarget = fallbackRow.querySelector('button.language-display-name') ||
+                                fallbackRow.querySelector('.language-display-name') ||
+                                fallbackRow.querySelector('.tablecell-metadata') ||
+                                fallbackRow;
+            clickTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            await YoutubeStudioPanel.sleep(200);
+            clickTarget.click();
+
+            if (isAloudChannel && isAutofillEnabled) {
+              await YoutubeStudioPanel.handleAloudAutofill(langName, translations);
+            } else {
+              await YoutubeStudioPanel.sleep(400);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`❌ [runAddLanguages] Lỗi khi xử lý ngôn ngữ "${langName}":`, err);
+      }
+    }
+
+    console.log("==================================================");
+    console.log("🎉 [runAddLanguages] HOÀN TẤT QUÁ TRÌNH THÊM TẤT CẢ NGÔN NGỮ!");
+    console.log("==================================================");
+    ContentHelper.showToast("Hoàn tất thêm các ngôn ngữ đã cấu hình!", "success");
+  }
+
+  async addMyLanguages() {
+    return YoutubeStudioPanel.runAddLanguages();
   }
 
   destroy() {
