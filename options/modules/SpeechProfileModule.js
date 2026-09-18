@@ -21,6 +21,7 @@ class SpeechProfileModule extends BaseModule {
     const micIcon = window.CHIcons ? CHIcons.mic({ size: 18 }) : '';
     const settingsIcon = window.CHIcons ? CHIcons.settings({ size: 15 }) : '';
     const saveIcon = window.CHIcons ? CHIcons.save({ size: 14 }) : '';
+    const shuffleIcon = window.CHIcons ? CHIcons.shuffle({ size: 13 }) : '⇄';
 
     const html = `
       <div class="module-section">
@@ -42,36 +43,52 @@ class SpeechProfileModule extends BaseModule {
         </div>
 
         <div class="card">
-          <div class="card-header">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
             <span class="card-title">${settingsIcon} Cấu hình Profile: <strong id="sp-current-name">${this.activeProfileName}</strong></span>
+            <button class="btn btn-ghost btn-sm" id="sp-swap-speakers" type="button" title="Hoán đổi nhanh vị trí Speaker 1 ⇄ Speaker 2">
+              ${shuffleIcon} Đổi vị trí 1 ⇄ 2
+            </button>
           </div>
 
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label">Speaker 1</label>
-              <input type="text" class="form-input" id="sp-speaker1">
+              <input type="text" class="form-input" id="sp-speaker1" placeholder="VD: 春樹">
             </div>
             <div class="form-group">
               <label class="form-label">Speaker 2</label>
-              <input type="text" class="form-input" id="sp-speaker2">
+              <input type="text" class="form-input" id="sp-speaker2" placeholder="VD: 結衣">
             </div>
           </div>
 
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label">Voice 1</label>
-              <input type="text" class="form-input" id="sp-voice1" placeholder="Aoede">
+              <input type="text" class="form-input" id="sp-voice1" placeholder="Enceladus">
             </div>
             <div class="form-group">
               <label class="form-label">Voice 2</label>
-              <input type="text" class="form-input" id="sp-voice2" placeholder="Charon">
+              <input type="text" class="form-input" id="sp-voice2" placeholder="Callirrhoe">
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Style Instructions</label>
-            <textarea class="form-textarea" id="sp-style" placeholder="Nhập hướng dẫn phong cách..."></textarea>
+            <label class="form-label">Scene</label>
+            <textarea class="form-textarea" id="sp-scene" rows="2" placeholder="vd: A bustling street at night, two friends talking casually..."></textarea>
           </div>
+
+          <div class="form-group">
+            <label class="form-label">Sample Context</label>
+            <textarea class="form-textarea" id="sp-sample-context" rows="3" placeholder="vd: Previous speaker just finished a long story..."></textarea>
+          </div>
+
+          <label class="toggle-wrapper" style="margin-bottom:12px">
+            <div>
+              <div class="toggle-label">Tự động phát hiện thứ tự Speaker</div>
+              <div class="toggle-desc">Tự đảo vị trí nếu Speaker 2 nói trước trong kịch bản thoại</div>
+            </div>
+            <input type="checkbox" class="toggle-switch" id="sp-auto-detect" checked>
+          </label>
 
           <label class="toggle-wrapper" style="margin-bottom:12px">
             <div>
@@ -102,6 +119,28 @@ class SpeechProfileModule extends BaseModule {
   }
 
   /**
+   * Hoán đổi nhanh vị trí Speaker 1 ⇄ Speaker 2 (và Voice 1 ⇄ Voice 2)
+   */
+  _swapSpeakers() {
+    const s1 = this.containerEl.querySelector('#sp-speaker1');
+    const s2 = this.containerEl.querySelector('#sp-speaker2');
+    const v1 = this.containerEl.querySelector('#sp-voice1');
+    const v2 = this.containerEl.querySelector('#sp-voice2');
+
+    if (!s1 || !s2 || !v1 || !v2) return;
+
+    const tmpS = s1.value;
+    s1.value = s2.value;
+    s2.value = tmpS;
+
+    const tmpV = v1.value;
+    v1.value = v2.value;
+    v2.value = tmpV;
+
+    BaseModule.showToast('Đã hoán đổi vị trí Speaker 1 ⇄ Speaker 2!', 'info');
+  }
+
+  /**
    * Điền dữ liệu profile vào form.
    * @param {string} profileName
    */
@@ -111,7 +150,21 @@ class SpeechProfileModule extends BaseModule {
     this.containerEl.querySelector('#sp-speaker2').value = p.InputValue2 || '';
     this.containerEl.querySelector('#sp-voice1').value = p.Voice1 || '';
     this.containerEl.querySelector('#sp-voice2').value = p.Voice2 || '';
-    this.containerEl.querySelector('#sp-style').value = p.styleInstructions || '';
+
+    const sceneVal = p.scene !== undefined ? p.scene : (p.sceneInstructions || '');
+    const sampleContextVal = p.sampleContext !== undefined ? p.sampleContext : (p.styleInstructions || '');
+
+    const sceneEl = this.containerEl.querySelector('#sp-scene');
+    if (sceneEl) sceneEl.value = sceneVal;
+
+    const sampleContextEl = this.containerEl.querySelector('#sp-sample-context');
+    if (sampleContextEl) sampleContextEl.value = sampleContextVal;
+
+    const autoDetectEl = this.containerEl.querySelector('#sp-auto-detect');
+    if (autoDetectEl) {
+      autoDetectEl.checked = p.autoDetectSpeakerOrder !== false;
+    }
+
     this.containerEl.querySelector('#sp-auto-set').checked = p.autoSetValue || false;
     this.containerEl.querySelector('#sp-auto-paste').checked = p.autoPasteClipboard || false;
     this.containerEl.querySelector('#sp-current-name').textContent = profileName;
@@ -122,12 +175,20 @@ class SpeechProfileModule extends BaseModule {
    * @returns {Object}
    */
   _collectForm() {
+    const sceneVal = this.containerEl.querySelector('#sp-scene')?.value || '';
+    const sampleContextVal = this.containerEl.querySelector('#sp-sample-context')?.value || '';
+    const autoDetectEl = this.containerEl.querySelector('#sp-auto-detect');
+
     return {
       InputValue1: this.containerEl.querySelector('#sp-speaker1').value,
       InputValue2: this.containerEl.querySelector('#sp-speaker2').value,
       Voice1: this.containerEl.querySelector('#sp-voice1').value,
       Voice2: this.containerEl.querySelector('#sp-voice2').value,
-      styleInstructions: this.containerEl.querySelector('#sp-style').value,
+      scene: sceneVal,
+      sampleContext: sampleContextVal,
+      sceneInstructions: sceneVal,
+      styleInstructions: sampleContextVal,
+      autoDetectSpeakerOrder: autoDetectEl ? autoDetectEl.checked : true,
       autoSetValue: this.containerEl.querySelector('#sp-auto-set').checked,
       autoPasteClipboard: this.containerEl.querySelector('#sp-auto-paste').checked,
     };
@@ -159,6 +220,11 @@ class SpeechProfileModule extends BaseModule {
    * Gắn tất cả event listeners.
    */
   _bindEvents() {
+    // Đổi nhanh Speaker 1 ⇄ 2
+    this.containerEl.querySelector('#sp-swap-speakers').onclick = () => {
+      this._swapSpeakers();
+    };
+
     // Chuyển profile
     this.containerEl.querySelector('#sp-profile-select').onchange = (e) => {
       this.activeProfileName = e.target.value;

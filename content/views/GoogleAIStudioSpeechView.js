@@ -50,25 +50,32 @@ window.GoogleAIStudioSpeechView = {
 
   <!-- Form Cài Đặt -->
   <div id="profile-settings-form" class="ts-flex ts-flex-col ts-gap-2 ts-mb-2 ts-flex-1 ts-min-h-0">
+    <div class="ts-flex ts-items-center ts-justify-between ts-px-1">
+      <span class="ts-card__title">Speaker & Voice Mapping</span>
+      <button id="btn-swap-speakers" class="ts-btn ts-btn--ghost ts-btn--xs" type="button" title="Hoán đổi nhanh vị trí Speaker 1 ⇄ Speaker 2">
+        ${window.CHIcons ? window.CHIcons.shuffle({ size: 12 }) : '⇄'} Đổi vị trí 1 ⇄ 2
+      </button>
+    </div>
+
     <div class="ts-grid ts-grid-2 ts-gap-2 ts-flex-shrink-0">
       <div>
         <label for="input-value1" class="ts-label">Speaker 1</label>
-        <input id="input-value1" type="text" class="ts-input">
+        <input id="input-value1" type="text" class="ts-input" placeholder="VD: 春樹">
       </div>
       <div>
         <label for="input-value2" class="ts-label">Speaker 2</label>
-        <input id="input-value2" type="text" class="ts-input">
+        <input id="input-value2" type="text" class="ts-input" placeholder="VD: 結衣">
       </div>
     </div>
 
     <div class="ts-grid ts-grid-2 ts-gap-2 ts-flex-shrink-0">
       <div>
         <label for="voice1" class="ts-label">Voice 1</label>
-        <input id="voice1" type="text" class="ts-input" placeholder="Aoede">
+        <input id="voice1" type="text" class="ts-input" placeholder="Enceladus">
       </div>
       <div>
         <label for="voice2" class="ts-label">Voice 2</label>
-        <input id="voice2" type="text" class="ts-input" placeholder="Charon">
+        <input id="voice2" type="text" class="ts-input" placeholder="Callirrhoe">
       </div>
     </div>
 
@@ -81,6 +88,14 @@ window.GoogleAIStudioSpeechView = {
       <label for="sample-context-instructions" class="ts-label">Sample Context</label>
       <textarea id="sample-context-instructions" class="ts-textarea ts-flex-1 custom-scrollbar ts-min-h-0" style="min-height: 72px; resize: vertical;" placeholder="vd: Previous speaker just finished a long story..."></textarea>
     </div>
+
+    <label class="ts-switch-row ts-flex-shrink-0">
+      <div>
+        <div class="ts-switch-row__title">Tự động phát hiện thứ tự Speaker</div>
+        <div class="ts-switch-row__desc">Tự đảo vị trí nếu Speaker 2 nói trước trong kịch bản</div>
+      </div>
+      <input type="checkbox" id="auto-detect-speaker-order" class="ts-switch" checked>
+    </label>
 
     <label class="ts-switch-row ts-flex-shrink-0">
       <span class="ts-switch-row__title">Tự động cấu hình (Auto Set)</span>

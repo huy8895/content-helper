@@ -24,6 +24,9 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       await GoogleAIStudioSpeechPanel.setValueScript(currentData);
       ContentHelper.showToast("✅ Đã điền cấu hình vào trang!", "success");
     });
+    this.el.querySelector('#btn-swap-speakers')?.addEventListener('click', () => {
+      this.swapSpeakers();
+    });
     this.el.querySelector('#save-as-new-btn').addEventListener('click', () => {
       this.saveAsNewProfile();
       this.el.querySelector('#gaisp-new-profile-group').classList.add('hidden');
@@ -58,6 +61,29 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       };
       document.addEventListener('click', this._onDocClick);
     }
+  }
+
+  /**
+   * Hoán đổi nhanh vị trí Speaker 1 ⇄ Speaker 2 (và Voice 1 ⇄ Voice 2)
+   */
+  swapSpeakers() {
+    const spk1Input = this.el.querySelector('#input-value1');
+    const spk2Input = this.el.querySelector('#input-value2');
+    const voice1Input = this.el.querySelector('#voice1');
+    const voice2Input = this.el.querySelector('#voice2');
+
+    if (!spk1Input || !spk2Input || !voice1Input || !voice2Input) return;
+
+    const tempSpk = spk1Input.value;
+    spk1Input.value = spk2Input.value;
+    spk2Input.value = tempSpk;
+
+    const tempVoice = voice1Input.value;
+    voice1Input.value = voice2Input.value;
+    voice2Input.value = tempVoice;
+
+    ContentHelper.playHapticFeedback?.(8);
+    ContentHelper.showToast('Đã hoán đổi vị trí Speaker 1 ⇄ Speaker 2!', 'info');
   }
 
   loadProfiles() {
@@ -132,6 +158,10 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
 
     this.el.querySelector('#auto-set-value').checked = profileData.autoSetValue || false;
     this.el.querySelector('#auto-paste-clipboard').checked = profileData.autoPasteClipboard || false;
+    const autoDetectEl = this.el.querySelector('#auto-detect-speaker-order');
+    if (autoDetectEl) {
+      autoDetectEl.checked = profileData.autoDetectSpeakerOrder !== false;
+    }
   }
 
   switchProfile(profileName) {
@@ -146,6 +176,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     const sampleContextEl = this.el.querySelector('#sample-context-instructions') || this.el.querySelector('#style-instructions');
     const sceneVal = sceneEl ? sceneEl.value : '';
     const sampleContextVal = sampleContextEl ? sampleContextEl.value : '';
+    const autoDetectEl = this.el.querySelector('#auto-detect-speaker-order');
 
     return {
       InputValue1: this.el.querySelector('#input-value1').value,
@@ -157,6 +188,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       // Lưu song song key cũ để tương thích với dữ liệu và Firestore đã có
       sceneInstructions: sceneVal,
       styleInstructions: sampleContextVal,
+      autoDetectSpeakerOrder: autoDetectEl ? autoDetectEl.checked : true,
       autoSetValue: this.el.querySelector('#auto-set-value').checked,
       autoPasteClipboard: this.el.querySelector('#auto-paste-clipboard').checked,
     };
@@ -249,12 +281,23 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
           await new Promise(r => setTimeout(r, 2000));
         }
 
-        await GoogleAIStudioSpeechPanel.setValueScript(activeProfile);
+        // Đọc trước clipboard nếu có bật autoPasteClipboard để phát hiện thứ tự speaker
+        let clipboardText = '';
+        if (activeProfile.autoPasteClipboard && navigator.clipboard?.readText) {
+          try {
+            clipboardText = await navigator.clipboard.readText();
+          } catch (e) {
+            console.warn("⚠️ [SpeechPanel] Không thể đọc trước clipboard:", e);
+          }
+        }
+
+        // Bước 2: Điền cấu hình vào trang (truyền clipboardText để tự động đảo speaker nếu speaker 2 nói trước)
+        await GoogleAIStudioSpeechPanel.setValueScript(activeProfile, clipboardText);
 
         // Bước cuối: Tự động dán clipboard nếu option được bật
         if (activeProfile.autoPasteClipboard) {
           console.log(`📋 [SpeechPanel] Auto Paste Clipboard enabled. Running paste script...`);
-          await GoogleAIStudioSpeechPanel.autoPasteClipboardToPrompt();
+          await GoogleAIStudioSpeechPanel.autoPasteClipboardToPrompt(clipboardText);
         } else {
           console.log(`ℹ️ Auto Paste Clipboard is disabled for profile "${activeProfileName}".`);
         }
@@ -280,7 +323,56 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     return false;
   }
 
-  static async setValueScript(settings) {
+  /**
+   * Tự động phát hiện speaker nào xuất hiện đầu tiên trong đoạn văn bản thoại.
+   * Ưu tiên nhận diện cấu trúc dòng thoại: "Tên:", "Tên：", v.v.
+   * @param {string} text - Văn bản kịch bản hội thoại
+   * @param {string} speaker1 - Tên Speaker 1 (vd: "春樹")
+   * @param {string} speaker2 - Tên Speaker 2 (vd: "結衣")
+   * @returns {1|2} 1 nếu Speaker 1 nói trước (hoặc mặc định), 2 nếu Speaker 2 nói trước
+   */
+  static detectSpeakerOrder(text, speaker1, speaker2) {
+    if (!text || typeof text !== 'string') return 1;
+    const s1 = (speaker1 || '').trim();
+    const s2 = (speaker2 || '').trim();
+    if (!s1 || !s2 || s1.toLowerCase() === s2.toLowerCase()) return 1;
+
+    const escapeReg = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // 1. Tìm speaker ở đầu dòng hoặc trước dấu hai chấm (: hoặc ： fullwidth)
+    // Hỗ trợ cả emotion tag đứng trước [excited] Tên: hoặc tên phụ sau [Tên (Haruki):]
+    const pattern1 = `(?:^|\\n)\\s*(?:\\[[^\\]]+\\]\\s*)?${escapeReg(s1)}(?:\\s*\\([^)]+\\))?\\s*[:：]`;
+    const pattern2 = `(?:^|\\n)\\s*(?:\\[[^\\]]+\\]\\s*)?${escapeReg(s2)}(?:\\s*\\([^)]+\\))?\\s*[:：]`;
+
+    const reg1 = new RegExp(pattern1, 'i');
+    const reg2 = new RegExp(pattern2, 'i');
+
+    const match1 = text.match(reg1);
+    const match2 = text.match(reg2);
+
+    const idx1 = match1 ? match1.index : -1;
+    const idx2 = match2 ? match2.index : -1;
+
+    if (idx1 !== -1 && idx2 !== -1) {
+      console.log(`🔍 [SpeechPanel] Phát hiện dòng thoại: "${s1}" ở index ${idx1}, "${s2}" ở index ${idx2}`);
+      return idx1 < idx2 ? 1 : 2;
+    }
+    if (idx1 !== -1) return 1;
+    if (idx2 !== -1) return 2;
+
+    // 2. Fallback: Nếu không có dấu hai chấm, tìm vị trí xuất hiện đầu tiên của từ tên
+    const pos1 = text.indexOf(s1);
+    const pos2 = text.indexOf(s2);
+    if (pos1 !== -1 && pos2 !== -1) {
+      console.log(`🔍 [SpeechPanel] Vị trí xuất hiện: "${s1}" (${pos1}) vs "${s2}" (${pos2})`);
+      return pos1 < pos2 ? 1 : 2;
+    }
+    if (pos2 !== -1 && pos1 === -1) return 2;
+
+    return 1;
+  }
+
+  static async setValueScript(settings, explicitText = null) {
     console.log("🚀 [SpeechPanel] start setValueScript: ", settings);
 
     // BƯỚC 1: Ưu tiên số 1 - Cập nhật Scene & Sample Context trước tiên (không phụ thuộc vào việc chọn giọng)
@@ -304,33 +396,76 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       }
     }
 
-    // BƯỚC 2: Cập nhật tên Speaker
-    try {
-      if (settings.InputValue1) {
-        await GoogleAIStudioSpeechPanel.setSpeakerName(0, settings.InputValue1);
+    // BƯỚC 2: Tự động phân tích thứ tự Speaker xuất hiện trong kịch bản thoại
+    let slot0Speaker = settings.InputValue1 || '';
+    let slot0Voice = settings.Voice1 || '';
+    let slot1Speaker = settings.InputValue2 || '';
+    let slot1Voice = settings.Voice2 || '';
+
+    const shouldAutoDetect = settings.autoDetectSpeakerOrder !== false;
+
+    if (shouldAutoDetect && slot0Speaker && slot1Speaker) {
+      let promptText = explicitText || '';
+
+      // Thử đọc từ ô textarea prompt nếu đã có sẵn text trên trang AI Studio
+      if (!promptText) {
+        const ta = GoogleAIStudioSpeechPanel.getPromptTextarea();
+        if (ta && ta.value && ta.value.trim()) {
+          promptText = ta.value;
+        }
       }
-      if (settings.InputValue2) {
-        await GoogleAIStudioSpeechPanel.setSpeakerName(1, settings.InputValue2);
+
+      // Thử đọc từ clipboard nếu được cấp quyền và chưa có text
+      if (!promptText && settings.autoPasteClipboard && navigator.clipboard?.readText) {
+        try {
+          promptText = await navigator.clipboard.readText();
+        } catch (_) {}
+      }
+
+      if (promptText) {
+        const firstSpeaker = GoogleAIStudioSpeechPanel.detectSpeakerOrder(promptText, settings.InputValue1, settings.InputValue2);
+        if (firstSpeaker === 2) {
+          console.log(`🔄 [SpeechPanel] Phát hiện Speaker 2 ("${settings.InputValue2}") nói trước Speaker 1 ("${settings.InputValue1}"). Tự động đảo Thẻ giọng 0 và 1!`);
+          if (typeof ContentHelper !== 'undefined') {
+            ContentHelper.showToast(`Phát hiện "${settings.InputValue2}" nói trước, đã tự động xếp vào Thẻ giọng 1!`, 'info');
+          }
+          slot0Speaker = settings.InputValue2 || '';
+          slot0Voice = settings.Voice2 || '';
+          slot1Speaker = settings.InputValue1 || '';
+          slot1Voice = settings.Voice1 || '';
+        } else {
+          console.log(`✅ [SpeechPanel] Speaker 1 ("${settings.InputValue1}") nói trước hoặc theo thứ tự mặc định.`);
+        }
+      }
+    }
+
+    // BƯỚC 3: Cập nhật tên Speaker theo đúng thứ tự slot đã tính toán
+    try {
+      if (slot0Speaker) {
+        await GoogleAIStudioSpeechPanel.setSpeakerName(0, slot0Speaker);
+      }
+      if (slot1Speaker) {
+        await GoogleAIStudioSpeechPanel.setSpeakerName(1, slot1Speaker);
       }
     } catch (e) {
       console.warn("⚠️ [SpeechPanel] Lỗi set Speaker Name:", e);
     }
 
-    // BƯỚC 3: Chọn Voice 1 và Voice 2 (bọc độc lập để nếu lỗi cũng không ảnh hưởng bước khác)
+    // BƯỚC 4: Chọn Voice 1 và Voice 2 tương ứng cho từng Slot
     try {
-      if (settings.Voice1) {
-        await GoogleAIStudioSpeechPanel.selectVoice(0, settings.Voice1);
+      if (slot0Voice) {
+        await GoogleAIStudioSpeechPanel.selectVoice(0, slot0Voice);
       }
     } catch (e) {
-      console.warn(`⚠️ [SpeechPanel] Không thể chọn Voice 1 (${settings.Voice1}):`, e);
+      console.warn(`⚠️ [SpeechPanel] Không thể chọn Voice Slot 0 (${slot0Voice}):`, e);
     }
 
     try {
-      if (settings.Voice2) {
-        await GoogleAIStudioSpeechPanel.selectVoice(1, settings.Voice2);
+      if (slot1Voice) {
+        await GoogleAIStudioSpeechPanel.selectVoice(1, slot1Voice);
       }
     } catch (e) {
-      console.warn(`⚠️ [SpeechPanel] Không thể chọn Voice 2 (${settings.Voice2}):`, e);
+      console.warn(`⚠️ [SpeechPanel] Không thể chọn Voice Slot 1 (${slot1Voice}):`, e);
     }
 
     console.log("✅ [SpeechPanel] Hoàn tất setValueScript.");
@@ -638,8 +773,9 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
   /**
    * Tự động click nút "Text" và dán nội dung clipboard vào textarea prompt.
    * Luồng: Click nút Text (data-value="TEXT") -> Đợi textarea xuất hiện -> Đọc clipboard -> Điền vào textarea.
+   * @param {string|null} cachedText - Nội dung clipboard đã đọc trước (nếu có)
    */
-  static async autoPasteClipboardToPrompt() {
+  static async autoPasteClipboardToPrompt(cachedText = null) {
     try {
       // Bước 0: Đóng panel cài đặt (nếu đang mở) trước khi thao tác
       await GoogleAIStudioSpeechPanel.clickClosePanel();
@@ -648,7 +784,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       await GoogleAIStudioSpeechPanel.clickTextModeButton();
 
       // Bước 2: Đợi textarea xuất hiện và dán nội dung clipboard vào
-      await GoogleAIStudioSpeechPanel.pasteClipboardToPromptTextarea();
+      await GoogleAIStudioSpeechPanel.pasteClipboardToPromptTextarea(cachedText);
 
       // Bước 3: Click nút "Run" để bắt đầu generate speech
       await GoogleAIStudioSpeechPanel.clickRunButton();
@@ -859,10 +995,83 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
   }
 
   /**
-   * Đọc nội dung clipboard và dán vào textarea có aria-label="Enter a prompt".
-   * Sử dụng Clipboard API để đọc text từ clipboard.
+   * Tìm ô textarea kịch bản (Text prompt) trên AI Studio bằng cơ chế 5 tầng selector.
+   * Dựa trên DOM thực tế của AI Studio:
+   * <div class="text-mode-container"><div class="style-instructions-textarea transcript-text"><textarea aria-label="Enter a prompt">
+   * @returns {HTMLTextAreaElement|null}
    */
-  static pasteClipboardToPromptTextarea() {
+  static getPromptTextarea() {
+    // Tầng 1: Selector chính xác qua aria-label
+    let ta = document.querySelector('textarea[aria-label="Enter a prompt"]');
+    if (ta) return ta;
+
+    // Tầng 2: Selector theo cấu trúc container của AI Studio (.text-mode-container / .transcript-text)
+    ta = document.querySelector('.text-mode-container textarea')
+      || document.querySelector('.transcript-text textarea')
+      || document.querySelector('.style-instructions-textarea textarea');
+    if (ta) return ta;
+
+    // Tầng 3: Selector qua placeholder đặc trưng ("Speaker 1: [empathy]...")
+    const allTextareas = Array.from(document.querySelectorAll('textarea'));
+    ta = allTextareas.find(el => {
+      const ph = el.getAttribute('placeholder') || '';
+      return ph.includes('Speaker 1:') || ph.includes("Type '[' for tags");
+    });
+    if (ta) return ta;
+
+    // Tầng 4: Selector qua tiêu đề h4 "Text"
+    const allTitles = Array.from(document.querySelectorAll('h4.section-title, h4'));
+    const textTitle = allTitles.find(t => t.textContent.trim() === 'Text');
+    if (textTitle) {
+      const container = textTitle.closest('.text-mode-container') || textTitle.parentElement;
+      if (container) {
+        ta = container.querySelector('textarea');
+        if (ta) return ta;
+      }
+    }
+
+    // Tầng 5: Fallback selector phụ
+    return document.querySelector('.prompt-input textarea');
+  }
+
+  /**
+   * Gán giá trị vào ô Textarea kịch bản với Angular Native Prototype Setter & đầy đủ Event
+   * @param {HTMLTextAreaElement} textarea - Phần tử textarea
+   * @param {string} text - Nội dung kịch bản
+   */
+  static setPromptTextareaValue(textarea, text) {
+    if (!textarea) return false;
+    try {
+      textarea.focus();
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      if (nativeSetter) {
+        nativeSetter.call(textarea, text);
+      } else {
+        textarea.value = text;
+      }
+      textarea.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+      try {
+        textarea.dispatchEvent(new InputEvent('input', {
+          bubbles: true,
+          cancelable: true,
+          inputType: 'insertText',
+          data: text
+        }));
+      } catch (_) {}
+      textarea.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+      return true;
+    } catch (err) {
+      console.error("❌ [SpeechPanel] Lỗi gán giá trị prompt textarea:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Đọc nội dung clipboard và dán vào textarea kịch bản (Text prompt).
+   * Sử dụng Clipboard API để đọc text từ clipboard (hoặc dùng cachedText nếu đã đọc trước).
+   * @param {string|null} cachedText - Nội dung clipboard đã đọc trước
+   */
+  static pasteClipboardToPromptTextarea(cachedText = null) {
     return new Promise((resolve, reject) => {
       let attempts = 0;
       const maxAttempts = 50; // Tối đa 5 giây
@@ -870,41 +1079,43 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       const pollInterval = setInterval(async () => {
         attempts++;
 
-        // Tìm textarea với aria-label="Enter a prompt"
-        const textarea = document.querySelector('textarea[aria-label="Enter a prompt"]');
+        // Tìm textarea prompt bằng 5 tầng selector chuyên sâu
+        const textarea = GoogleAIStudioSpeechPanel.getPromptTextarea();
         if (textarea) {
           clearInterval(pollInterval);
           try {
-            // Kiểm tra document focus để tránh lỗi "Document is not focused"
-            if (!document.hasFocus()) {
-              console.warn('⚠️ [SpeechPanel] Document is not focused. Waiting for user to click the page...');
-              if (typeof ContentHelper !== 'undefined') {
-                ContentHelper.showToast('Vui lòng click vào trang AI Studio để tiếp tục tự động dán Clipboard!', 'warning');
+            let promptText = cachedText;
+
+            // Nếu chưa có cachedText, đọc trực tiếp từ Clipboard API
+            if (!promptText) {
+              // Kiểm tra document focus để tránh lỗi "Document is not focused"
+              if (!document.hasFocus()) {
+                console.warn('⚠️ [SpeechPanel] Document is not focused. Waiting for user to click the page...');
+                if (typeof ContentHelper !== 'undefined') {
+                  ContentHelper.showToast('Vui lòng click vào trang AI Studio để tiếp tục tự động dán Clipboard!', 'warning');
+                }
+                await new Promise(resolveFocus => {
+                  const onFocus = () => {
+                    window.removeEventListener('focus', onFocus);
+                    resolveFocus();
+                  };
+                  window.addEventListener('focus', onFocus);
+                });
               }
-              await new Promise(resolveFocus => {
-                const onFocus = () => {
-                  window.removeEventListener('focus', onFocus);
-                  resolveFocus();
-                };
-                window.addEventListener('focus', onFocus);
-              });
+
+              // Đọc nội dung từ clipboard
+              promptText = await navigator.clipboard.readText();
             }
 
-            // Đọc nội dung từ clipboard
-            const clipboardText = await navigator.clipboard.readText();
-            if (!clipboardText || clipboardText.trim() === '') {
+            if (!promptText || promptText.trim() === '') {
               console.warn('⚠️ [SpeechPanel] Clipboard is empty. Skipping paste.');
               return resolve();
             }
 
-            // Điền nội dung clipboard vào textarea
-            textarea.value = clipboardText;
-            // Dispatch events để Angular nhận diện thay đổi
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            textarea.dispatchEvent(new Event('change', { bubbles: true }));
-            textarea.focus();
+            // Điền nội dung clipboard vào textarea bằng Native Prototype Setter cho Angular
+            GoogleAIStudioSpeechPanel.setPromptTextareaValue(textarea, promptText);
 
-            console.log(`✅ [SpeechPanel] Pasted ${clipboardText.length} characters from clipboard.`);
+            console.log(`✅ [SpeechPanel] Pasted ${promptText.length} characters to prompt textarea.`);
             resolve();
           } catch (clipError) {
             console.error('❌ [SpeechPanel] Cannot read clipboard:', clipError);
@@ -927,6 +1138,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     console.log("🛠️ [SpeechPanel] Creating Speech Settings button...");
     const container = document.createElement("div");
     container.id = "content-helper-button-container";
+    const btn = document.createElement("button");
     const micSvg = window.CHIcons ? window.CHIcons.mic({ size: 14 }) : '🎙️';
     btn.innerHTML = `${micSvg} <span>Cài đặt</span>`;
     btn.className = 'ts-btn font-bold text-xs shadow-md transition-all active:scale-95';
