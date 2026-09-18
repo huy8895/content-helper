@@ -9,10 +9,10 @@ window.AudioDownloaderView = {
       <!-- Header -->
       <div class="ts-header ts-title">
         <div class="ts-header__main">
-          <span class="ts-header__icon">🎙️</span>
+          <span class="ts-header__icon">${window.CHIcons ? window.CHIcons.mic({ size: 16 }) : '🎙️'}</span>
           <div>
             <h3 class="ts-header__title">Audio Downloader</h3>
-            <div id="srt-status-text" class="ts-header__subtitle">TTS Audio Generator</div>
+            <div id="srt-status-text" class="ts-header__subtitle">Trích xuất âm thanh TTS</div>
           </div>
         </div>
       </div>
@@ -42,10 +42,10 @@ window.AudioDownloaderView = {
 
         <div class="ts-flex ts-gap-2">
           <button id="ad-dlall" class="ts-btn ts-btn--primary ts-flex-1">
-            ↓ Download All
+            ${window.CHIcons ? window.CHIcons.download({ size: 13 }) : '↓'} Tải toàn bộ Audio
           </button>
           <button id="ad-reset" class="ts-btn ts-btn--danger">
-            ↺ Reset
+            ${window.CHIcons ? window.CHIcons.rotateCcw({ size: 13 }) : '↺'} Làm lại
           </button>
         </div>
       </div>

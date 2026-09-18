@@ -16,9 +16,11 @@ Content Helper từ chối đi theo lối mòn đó. Phần mềm phải mang l�
 - **Thiết bị đo lường chính xác (Precision Instrument):** Lấy cảm hứng từ máy tính bỏ túi Dieter Rams (Braun), thiết bị âm thanh Teenage Engineering (Pocket Operator) và sổ tay bỏ túi Field Notes. Giao diện đầm đặc, tin cậy, sắc nét và khiêm nhường.
 - **Calm Technology (Công nghệ Êm dịu):** Vô hình khi người dùng cần tập trung viết nội dung; hiện diện đĩnh đạc, chắc chắn khi được kích hoạt. Không popup giật gân, không banner quảng cáo, không animation thừa thãi làm gián đoạn mạch tư duy.
 - **Trung thực kỹ thuật (Technical Honesty):**
-  - ❌ **CẤM icon lấp lánh `✨` và ngôn ngữ ma mị kiểu "AI Magic":** AI là động cơ tính toán và xử lý ngôn ngữ, không phải trò ảo thuật. Sử dụng ký hiệu chức năng rõ ràng: `⚡`, `🔀`, `▶️`, `⌥`, `⌘`.
+  - ❌ **CẤM icon lấp lánh `✨` và ngôn ngữ ma mị kiểu "AI Magic":** AI là động cơ tính toán và xử lý ngôn ngữ, không phải trò ảo thuật.
+  - ❌ **CẤM Emoji hoạt hình của hệ điều hành trong giao diện:** Loại bỏ hoàn toàn các emoji hệ điều hành (`🎙️`, `🌍`, `📝`, `💾`, `🗑️`...) để tránh lỗi lệch baseline và không kiểm soát được màu sắc.
+  -  **Hệ Thống Vector Kỹ Thuật (Lucide Icons):** 100% biểu tượng trong hệ thống sử dụng định dạng SVG chuẩn hóa từ bộ **Lucide Icons** với nét mảnh đơn sắc cơ học (`stroke="currentColor"`, stroke-width `1.75px - 2px`), tương thích hoàn toàn Shadow DOM và đổi màu mượt mà theo trạng thái giao diện.
   - ❌ **CẤM dải màu Neon Gradient (Tím - Hồng - Xanh dương đậm):** Không dùng gradient tím mộng mơ kiểu Tailwind rẻ tiền.
-  - ❌ **CẤM Spinner Loading che kín màn hình:** Thay thế bằng **Inline Status Badges** (như `⏳ Đang gửi đợt 3/10`, `0/10 prompts`) hoặc chấm trạng thái tĩnh gọn gàng.
+  - ❌ **CẤM Spinner Loading che kín màn hình:** Thay thế bằng **Inline Status Badges** (như `CHIcons.clock()` kèm `Đang gửi đợt 3/10`) hoặc chấm trạng thái tĩnh gọn gàng.
 
 ---
 
@@ -189,14 +191,91 @@ Toàn bộ hệ thống giao diện của Content Helper được đóng gói b�
   - **Idle / Neutral:** `bg-stone-100 text-stone-700 border border-stone-200`.
 
 ### 7.3. Buttons (`.ts-btn`)
-- Chiều cao chuẩn: `28px` (Compact) hoặc `32px` (Standard).
-- Bo góc: `7px`. Font-weight: `600`.
-- Hiệu ứng cơ học khi bấm: `active:scale-[0.98]` êm ái.
-- Màu nhấn Primary là Đất nung Terracotta (`var(--ch-accent)`: `#C25E2E` ở Light Mode, `#D97736` ở Dark Mode), ấm áp và thân thiện. Tuyệt đối không dùng nút màu than chì đen (dễ gây nhầm lẫn là disabled và tạo cảm giác nặng nề) và không dùng màu xanh dương công nghiệp generic.
+- **Kích thước chuẩn:**
+  - Standard: Chiều cao `32px`, padding `0 12px`, font-size `12px`.
+  - Compact: Chiều cao `28px`, padding `0 8px`, font-size `11.5px`.
+  - Micro (`.ts-btn--xs`): Chiều cao `22px`, padding `0 6px`, font-size `11px`.
+- **Bo góc & Hiệu ứng cơ học:**
+  - Bo góc: `7px`. Font-weight: `600`.
+  - Hiệu ứng xúc giác khi bấm: `active:scale-[0.98]` êm ái kết hợp haptic rung vi mô `navigator.vibrate(8)`.
+- **Nguyên Tắc Màu Nút (CẤM Nút Đen Thô Cứng):**
+  - ❌ **CẤM Nút Màu Đen Than Chì/Đen Đậm:** Nút màu đen tạo cảm giác cồng kềnh, nặng nề, lấn át nội dung và dễ gây hiểu lầm là trạng thái disabled hoặc lỗi tải CSS.
+  - **Nút Primary (`.ts-btn--primary`):** Sử dụng màu nhấn **Đất nung Terracotta** (`var(--ch-accent)`: `#C25E2E` ở Light Mode, `#D97736` ở Dark Mode). Nổi bật, ấm áp và thể hiện rõ hành động chính (Bắt đầu, Chạy, Lưu).
+  - **Nút Secondary (`.ts-btn--secondary`):** Nền gốm mờ/kim loại xước (`var(--ch-surface)`), viền chì mảnh (`var(--ch-border)`), chữ mực carbon (`var(--ch-text-primary)`).
+  - **Nút Danger (`.ts-btn--danger`):** Nền đỏ gạch nung nhạt hoặc viền đỏ son (`var(--ch-danger)`: `#A83232`), chữ trắng hoặc đỏ son đầm.
+  - **Nút Ghost / Icon Action (`.ts-btn--ghost`):** Nền trong suốt, chỉ hiện nền giấy bồi (`var(--ch-surface-alt)`) khi hover, tối ưu cho các nút icon thao tác nhanh (Đóng, Thu nhỏ, Sao chép).
 
 ### 7.4. Empty States
 - Sử dụng câu chữ con người, ấm áp, ngắn gọn và có tính hướng dẫn hành động (ví dụ: *"Chưa có kịch bản nào được lưu. Bấm 'Tạo kịch bản mới' để bắt đầu tự động hóa."*).
 - Không nhồi nhét hình minh họa vector 3D to bản chiếm diện tích.
+
+### 7.5. Hệ Thống Icon Vector Kỹ Thuật (Lucide Technical Vector System)
+Toàn bộ icon trong hệ thống được quản lý tập trung qua helper `window.CHIcons` (`content/Icons.js`), xuất ra thẻ `<svg class="ts-icon">` độc lập, siêu nhẹ (~8-10 KB nén), không nạp thư viện ngoài, không phụ thuộc font mạng và tương thích 100% với Single Master Shadow DOM.
+
+#### 1. Quy chuẩn Thẻ SVG:
+- `viewBox="0 0 24 24"`, `fill="none"`, `stroke="currentColor"`, `stroke-width="2"`, `stroke-linecap="round"`, `stroke-linejoin="round"`.
+- Mọi icon tự động kế thừa màu chữ của container hoặc nút cha thông qua `currentColor`.
+
+#### 2. Phân Cấp Kích Thước (Icon Scale Hierarchy):
+- **11px – 12px:** Dành cho nút bấm vi mô (`.ts-btn--xs`), tag, inline status badge, nút xóa hàng bảng.
+- **13px – 14px:** Dành cho nút bấm tiêu chuẩn (`.ts-btn`), input action, dropdown triggers, breadcrumb.
+- **16px – 18px:** Dành cho Panel Header Title, Menu Item Popup, Nav Bar Sidebar Options.
+- **20px – 24px:** Dành cho Empty State, Master Floating Button.
+
+#### 3. Bảng Ánh Xạ Vector Chuẩn Hóa:
+
+| Tên Hàm `CHIcons` | Ký Hiệu / Emoji Cũ | Ngữ Cảnh Sử Dụng Chính |
+| :--- | :---: | :--- |
+| `CHIcons.command()` | `⌘` | Nút Master Nổi, Logo Header, Popup Brand |
+| `CHIcons.play()` | `▶` | Kích hoạt phiên chạy (Splitter, Flow, Scenario) |
+| `CHIcons.pause()` | `❚❚` | Tạm dừng phiên chạy |
+| `CHIcons.square()` | `■` | Dừng hẳn phiên chạy |
+| `CHIcons.rotateCcw()` | `↺` | Thử lại (Retry), khôi phục form, làm mới |
+| `CHIcons.stepForward()` | `⇥` | Bỏ qua bước hiện tại (Skip step) trong Flow |
+| `CHIcons.scissors()` | `✂`, `✂️` | Công cụ Text Splitter chia đoạn văn bản |
+| `CHIcons.shuffle()` | `🔀` | Chạy kịch bản song song đa tab (Multi-tab) |
+| `CHIcons.copy()` | `⎘`, `📋` | Sao chép nội dung, prompt, output |
+| `CHIcons.download()` | `📥`, `⬇` | Tải tệp Audio WAV, file TXT |
+| `CHIcons.upload()` | `📂` | Nạp file TXT / JSON kịch bản |
+| `CHIcons.archive()` | `📦` | Đóng gói và tải file nén ZIP |
+| `CHIcons.save()` | `💾` | Lưu kịch bản, lưu cấu hình, lưu profile |
+| `CHIcons.trash()` | `🗑️` | Xóa kịch bản, xóa hàng, dọn dẹp hàng đợi |
+| `CHIcons.eraser()` | `🧹` | Xóa trắng nội dung input / form |
+| `CHIcons.search()` | `🔍` | Tìm kiếm kịch bản, quét subtitle YouTube |
+| `CHIcons.plus()` | `+` | Thêm dòng, thêm câu hỏi, tạo mới profile |
+| `CHIcons.plusCircle()` | `+` (Tròn) | Thêm prompt vào hàng đợi xử lý |
+| `CHIcons.x()` | `✕`, `x` | Đóng panel, xóa step, hủy tác vụ |
+| `CHIcons.minus()` | `−`, `-` | Thu nhỏ panel thành Bubble Messenger |
+| `CHIcons.chevronDown()` | `▼` | Mũi tên dropdown tùy chọn |
+| `CHIcons.mic()` | `🎙️` | Menu & Module Speech AI Studio |
+| `CHIcons.globe()` | `🌍` | Menu & Module YouTube Language Studio |
+| `CHIcons.fileText()` | `📝`, `📄` | Menu & Module Scenario Manager |
+| `CHIcons.workflow()` | `🔗` | Menu & Module Multi-step Flow Runner |
+| `CHIcons.subtitles()` | `🤖` | Menu SRT Subtitle Automation |
+| `CHIcons.sliders()` | `🎛️` | Cấu hình bật/tắt nút hiển thị (Button Config) |
+| `CHIcons.settings()` | `⚙` | Cài đặt AI Studio, Cài đặt tiện ích |
+| `CHIcons.check()` | `✅` | Toast thành công, trạng thái đã chép |
+| `CHIcons.checkCircle()` | `✔` | Hoàn thành toàn bộ quy trình |
+| `CHIcons.alertTriangle()`| `⚠️` | Cảnh báo timeout, confirm xóa |
+| `CHIcons.clock()` | `⏳` | Đang gửi request, đếm ngược thời gian |
+| `CHIcons.info()` | `ℹ️` | Thông tin giới thiệu, hướng dẫn sử dụng |
+
+#### 4. Quy Chuẩn CSS Căn Chỉnh (`.ts-icon`):
+```css
+.ts-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  transition: stroke 0.15s ease, transform 0.15s ease;
+}
+.ts-icon--accent  { stroke: var(--ch-accent); }
+.ts-icon--danger  { stroke: var(--ch-danger); }
+.ts-icon--success { stroke: var(--ch-success); }
+.ts-icon--warning { stroke: var(--ch-warning); }
+.ts-icon--muted   { stroke: var(--ch-text-muted); }
+```
 
 ---
 
@@ -207,7 +286,10 @@ Trước khi phát hành hoặc thêm bất kỳ Panel / Component mới:
 - [ ] CSS có chứa bất kỳ `!important` dư thừa nào không? (Ngoại trừ duy nhất `display: none !important;`).
 - [ ] Mọi số liệu đếm (counters, tokens, time) đã áp dụng `tabular-nums` và font monospace chưa?
 - [ ] Màu sắc đã tuân thủ palette Giấy mộc & Than chì ở cả Light Mode và Dark Mode chưa?
+- [ ] Nút bấm có loại bỏ hoàn toàn màu đen thô cứng và chuyển sang Đất nung (`--ch-accent`) hoặc Giấy mộc (`--ch-surface`) chưa?
 - [ ] Có tồn tại bất kỳ icon lấp lánh `✨` hay màu gradient tím neon nào không? (Nếu có $\rightarrow$ Loại bỏ ngay).
+- [ ] 100% biểu tượng có sử dụng bộ vector Lucide qua `CHIcons` không? (Không còn emoji hay ký tự Unicode thô).
 - [ ] Các nút bấm quan trọng có phản hồi rung xúc giác nhẹ nhàng không?
-- [ ] Panel có đầy đủ nút Đóng (`✕`) và Thu nhỏ (`−`) thành Messenger Bubble không?
+- [ ] Panel có đầy đủ nút Đóng và Thu nhỏ thành Messenger Bubble không?
 - [ ] Khi kéo thả, panel và nút nổi có bị kẹt hay văng khỏi màn hình không?
+

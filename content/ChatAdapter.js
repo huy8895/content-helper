@@ -25,55 +25,55 @@ function ensureHelperInstance() {
 BUTTONS = {
   MANAGE_SCENARIO: {
     id: "content-helper-button",
-    text: "≡ Quản lý kịch bản",
+    get text() { return `${window.CHIcons?.fileText({ size: 14 }) || '📝'} Quản lý kịch bản`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleBuilder(),
   },
   RUN_SCENARIO: {
     id: "chatgpt-run-button",
-    text: "▶ Chạy kịch bản",
+    get text() { return `${window.CHIcons?.play({ size: 14 }) || '▶'} Chạy kịch bản`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleRunner(),
   },
   RUN_FLOW: {
     id: "chatgpt-run-flow-button",
-    text: "🔀 Chạy Flow",
+    get text() { return `${window.CHIcons?.workflow({ size: 14 }) || '🔀'} Chạy Flow`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleFlowRunner(),
   },
   COPY_CONTENT: {
     id: "chatgpt-copy-content-button",
-    text: "⎘ Sao chép nội dung",
+    get text() { return `${window.CHIcons?.copy({ size: 14 }) || '⎘'} Sao chép nội dung`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleContentCopyPanel(),
   },
   SPLITTER: {
     id: "chatgpt-splitter-button",
-    text: "✂ Phân tách văn bản",
+    get text() { return `${window.CHIcons?.scissors({ size: 14 }) || '✂'} Phân tách văn bản`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleSplitter(),
   },
   AUDIO: {
     id: "chatgpt-audio-button",
-    text: "🎙️ Trích xuất giọng đọc (TTS)",
+    get text() { return `${window.CHIcons?.mic({ size: 14 }) || '🎙️'} Trích xuất giọng đọc (TTS)`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleAudioDownloader(),
   },
   AI_STUDIO_SETTINGS: {
     id: "chatgpt-aistudio-settings-button",
-    text: "⚙ Thiết lập AI Studio",
+    get text() { return `${window.CHIcons?.settings({ size: 14 }) || '⚙'} Thiết lập AI Studio`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleAIStudioSpeechSettings(),
   },
   SRT_AUTOMATION: {
     id: "chatgpt-srt-automation-button",
-    text: "⏱️ SRT Timeline (Auto)",
+    get text() { return `${window.CHIcons?.subtitles({ size: 14 }) || '⏱️'} SRT Timeline (Auto)`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleSRTAutomation(),
   },
   COLLAPSE_CODE: {
     id: "chatgpt-collapse-code-button",
-    text: "⇥ Thu gọn khối code",
+    get text() { return `${window.CHIcons?.stepForward({ size: 14 }) || '⇥'} Thu gọn khối code`; },
     className: "ts-menu-item",
     onClick: () => {
       // Gọi đến một hàm của adapter hiện tại
@@ -85,13 +85,13 @@ BUTTONS = {
   },
   YT_STUDIO_SETTINGS: {
     id: "chatgpt-ytstudio-settings-button",
-    text: "文A Phụ đề YouTube",
+    get text() { return `${window.CHIcons?.subtitles({ size: 14 }) || '文A'} Phụ đề YouTube`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleYoutubePanel(),
   },
   YT_ADD_LANGUAGES: {
     id: "chatgpt-yt-add-languages-button",
-    text: "🌐 Thêm ngôn ngữ (Auto)",
+    get text() { return `${window.CHIcons?.globe({ size: 14 }) || '🌐'} Thêm ngôn ngữ (Auto)`; },
     className: "ts-menu-item",
     onClick: () => {
       if (window.ChatAdapter && typeof window.ChatAdapter.addMyLanguages === 'function') {
@@ -101,7 +101,7 @@ BUTTONS = {
   },
   AI_STUDIO_SPEECH_SETTINGS: {
     id: "chatgpt-aistudio-speech-settings-button",
-    text: "🎙️ Thiết lập giọng đọc",
+    get text() { return `${window.CHIcons?.mic({ size: 14 }) || '🎙️'} Thiết lập giọng đọc`; },
     className: "ts-menu-item",
     onClick: () => ensureHelperInstance()?._toggleAIStudioSpeechSettings(),
   },
@@ -213,7 +213,7 @@ class BaseChatAdapter {
     // 1. Nút Master Toggle Bubble (Pill shape Calm Tech)
     const toggleBtn = document.createElement("button");
     toggleBtn.id = "helper-toggle-button";
-    toggleBtn.innerHTML = `<span>⌘</span> <span>Helper</span>`;
+    toggleBtn.innerHTML = `<span>${window.CHIcons?.command({ size: 14 }) || '⌘'}</span> <span>Helper</span>`;
     toggleBtn.title = "Content Helper - Click để mở Menu công cụ (Kéo thả để di chuyển)";
 
     toggleBtn.addEventListener("click", (e) => {

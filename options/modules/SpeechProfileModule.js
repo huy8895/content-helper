@@ -18,10 +18,14 @@ class SpeechProfileModule extends BaseModule {
     this.profiles = data.profiles || { 'default': {} };
     this.activeProfileName = data.activeProfileName || 'default';
 
+    const micIcon = window.CHIcons ? CHIcons.mic({ size: 18 }) : '';
+    const settingsIcon = window.CHIcons ? CHIcons.settings({ size: 15 }) : '';
+    const saveIcon = window.CHIcons ? CHIcons.save({ size: 14 }) : '';
+
     const html = `
       <div class="module-section">
         <div class="page-header">
-          <h2>🎙️ Speech Profiles</h2>
+          <h2>${micIcon} Speech Profiles</h2>
           <p>Quản lý cấu hình giọng nói và speaker cho Google AI Studio.</p>
         </div>
 
@@ -39,7 +43,7 @@ class SpeechProfileModule extends BaseModule {
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">⚙️ Cấu hình Profile: <strong id="sp-current-name">${this.activeProfileName}</strong></span>
+            <span class="card-title">${settingsIcon} Cấu hình Profile: <strong id="sp-current-name">${this.activeProfileName}</strong></span>
           </div>
 
           <div class="grid-2">
@@ -86,7 +90,7 @@ class SpeechProfileModule extends BaseModule {
           </label>
 
           <button class="btn btn-primary" id="sp-save-btn" style="width:100%">
-            💾 Cập nhật Profile
+            ${saveIcon} Cập nhật Profile
           </button>
         </div>
       </div>

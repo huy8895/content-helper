@@ -3,7 +3,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     super({
       id: "google-ai-studio-speech-panel",
       title: "Speech Settings",
-      icon: "🎙️",
+      icon: window.CHIcons ? window.CHIcons.mic({ size: 20 }) : "🎙️",
       onClose: onClose,
       view: window.GoogleAIStudioSpeechView
     });
@@ -927,9 +927,8 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     console.log("🛠️ [SpeechPanel] Creating Speech Settings button...");
     const container = document.createElement("div");
     container.id = "content-helper-button-container";
-    const btn = document.createElement('button');
-    btn.id = 'content-helper-aistudio-speech-settings';
-    btn.textContent = '🎙️ Settings';
+    const micSvg = window.CHIcons ? window.CHIcons.mic({ size: 14 }) : '🎙️';
+    btn.innerHTML = `${micSvg} <span>Cài đặt</span>`;
     btn.className = 'ts-btn font-bold text-xs shadow-md transition-all active:scale-95';
     btn.addEventListener('click', (e) => {
       if (container.dataset.isDragging !== 'true') {
@@ -938,7 +937,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     });
     Object.assign(container.style, { position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647' });
     Object.assign(btn.style, { borderRadius: '24px', backgroundColor: 'var(--ch-surface)', color: 'var(--ch-text-primary)', border: '1px solid var(--ch-border-strong)', boxShadow: 'var(--ch-shadow-panel)', whiteSpace: 'nowrap', overflow: 'hidden', transition: 'width 0.3s ease, padding 0.3s ease, background-color 0.15s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move' });
-    const expandedText = "🎙️ Settings", collapsedText = "🎙️";
+    const expandedText = `${micSvg} <span>Cài đặt</span>`, collapsedText = micSvg;
     const updateButtonState = (isHovering) => {
       if (container.dataset.isDragging === 'true') return;
       if (isHovering) {

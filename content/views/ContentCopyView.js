@@ -9,10 +9,10 @@ window.ContentCopyView = {
       <!-- Header -->
       <div class="ts-header ts-title">
         <div class="ts-header__main">
-          <span class="ts-header__icon">⎘</span>
+          <span class="ts-header__icon">${window.CHIcons ? window.CHIcons.copy({ size: 16 }) : '⎘'}</span>
           <div>
             <h3 class="ts-header__title">Copy Content</h3>
-            <div class="ts-header__subtitle">Found <span class="ts-tabular">${elementsCount}</span> message blocks</div>
+            <div class="ts-header__subtitle">Tìm thấy <span class="ts-tabular">${elementsCount}</span> khối tin nhắn</div>
           </div>
         </div>
       </div>
@@ -20,11 +20,11 @@ window.ContentCopyView = {
       <!-- Custom Filenames Input -->
       <div class="ts-mb-3">
         <label for="ccp-filenames" class="ts-label">
-          Custom Filenames (optional, comma separated):
+          Tên tệp tùy chỉnh (phân cách bằng dấu phẩy):
         </label>
         <input type="text" id="ccp-filenames" 
           class="ts-input"
-          placeholder="e.g. intro, chapter1, conclusion (leave empty for auto-numbering)"
+          placeholder="vd: phan1, phan2, ketluan (để trống để tự đánh số)"
         />
       </div>
 
@@ -32,27 +32,27 @@ window.ContentCopyView = {
       <div class="ts-flex ts-flex-col ts-gap-2 ts-mb-3">
         <div class="ts-flex ts-items-center ts-gap-2">
           <button id="ccp-copy-all" class="ts-btn ts-btn--primary">
-            ⎘ Copy All
+            ${window.CHIcons ? window.CHIcons.copy({ size: 13 }) : ''} Sao chép toàn bộ
           </button>
           
           <div class="ts-flex ts-items-center ts-gap-1">
             <input type="number" id="ccp-index" placeholder="Idx" min="1" 
               class="ts-badge-input ts-badge-input--accent ts-tabular" />
             <button id="ccp-copy-from" class="ts-btn ts-btn--secondary ts-btn--xs">
-              Copy From
+              ${window.CHIcons ? window.CHIcons.copy({ size: 11 }) : ''} Từ vị trí
             </button>
           </div>
           
           <!-- Download buttons group -->
           <div class="ts-flex ts-gap-1 ts-ml-auto">
             <button id="ccp-copy-txt" class="ts-btn ts-btn--secondary ts-btn--sm" title="Copy toàn bộ nội dung TXT (bao gồm phân tách và Part)">
-              ⎘ TXT
+              ${window.CHIcons ? window.CHIcons.copy({ size: 12 }) : ''} TXT
             </button>
             <button id="ccp-download-txt" class="ts-btn ts-btn--success ts-btn--sm" title="Tải file TXT">
-              ↓ File
+              ${window.CHIcons ? window.CHIcons.download({ size: 12 }) : ''} Tệp TXT
             </button>
             <button id="ccp-download-zip" class="ts-btn ts-btn--purple ts-btn--sm" title="Tải file ZIP">
-              ↓ ZIP
+              ${window.CHIcons ? window.CHIcons.archive({ size: 12 }) : ''} ZIP
             </button>
           </div>
         </div>

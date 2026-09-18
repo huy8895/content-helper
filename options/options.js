@@ -102,7 +102,7 @@
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">📤 Content Helper</span>
+            <span class="card-title">${window.CHIcons ? CHIcons.command({ size: 16 }) : ''} Content Helper</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
             <div>
@@ -126,7 +126,7 @@
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">👤 Tài khoản</span>
+            <span class="card-title">${window.CHIcons ? CHIcons.info({ size: 16 }) : ''} Tài khoản</span>
           </div>
           ${isLoggedIn ? `
             <div style="display:flex;align-items:center;gap:16px">
@@ -139,7 +139,7 @@
             </div>
           ` : `
             <div class="empty-state" style="padding:24px">
-              <div class="empty-icon">🔒</div>
+              <div class="empty-icon">${window.CHIcons ? CHIcons.alertTriangle({ size: 32 }) : '!'}</div>
               <h4>Chưa đăng nhập</h4>
               <p>Mở popup extension để đăng nhập Google và đồng bộ dữ liệu.</p>
             </div>
@@ -148,7 +148,7 @@
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">🌐 Trang web hỗ trợ</span>
+            <span class="card-title">${window.CHIcons ? CHIcons.globe({ size: 16 }) : ''} Trang web hỗ trợ</span>
           </div>
           <div style="font-size:13px;line-height:2">
             <div>• <strong>ChatGPT</strong> – chatgpt.com</div>

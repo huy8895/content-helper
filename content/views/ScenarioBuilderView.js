@@ -9,10 +9,10 @@ window.ScenarioBuilderView = {
   <!-- Header -->
   <div class="ts-header sb-title">
     <div class="ts-header__main">
-      <span class="ts-header__icon">≡</span>
+      <span class="ts-header__icon">${window.CHIcons ? window.CHIcons.fileText({ size: 16 }) : '📝'}</span>
       <div>
         <h3 class="ts-header__title">Quản lý Kịch bản</h3>
-        <div class="ts-header__subtitle">Create and edit prompt templates</div>
+        <div class="ts-header__subtitle">Tạo và chỉnh sửa mẫu prompt</div>
       </div>
     </div>
   </div>
@@ -25,7 +25,7 @@ window.ScenarioBuilderView = {
         class="ts-search-box__input"
         placeholder="Tìm kiếm kịch bản..."
         autocomplete="off">
-      <span class="ts-search-box__icon">⚲</span>
+      <span class="ts-search-box__icon">${window.CHIcons ? window.CHIcons.search({ size: 14 }) : '🔍'}</span>
     </div>
     <div id="scenario-dropdown" class="custom-dropdown-menu custom-scrollbar ts-scroll-h-xl hidden-dropdown"></div>
   </div>
@@ -50,20 +50,20 @@ window.ScenarioBuilderView = {
     <div class="ts-flex-1 ts-overflow-y-auto custom-scrollbar ts-mb-2-5 ts-list-container" id="questions-container"></div>
     
     <button id="add-question" class="ts-btn ts-btn--dashed ts-w-full">
-      + Thêm câu hỏi mới
+      ${window.CHIcons ? window.CHIcons.plus({ size: 13 }) : '+'} Thêm câu hỏi mới
     </button>
   </div>
 
   <!-- Các nút hành động chính -->
   <div id="scenario-buttons" class="ts-grid ts-grid-3 ts-gap-2 ts-sheet-footer">
     <button id="new-scenario-btn" class="ts-btn ts-btn--secondary">
-      + Tạo mới
+      ${window.CHIcons ? window.CHIcons.filePlus({ size: 13 }) : '+'} Tạo mới
     </button>
     <button id="save-to-storage" class="ts-btn ts-btn--accent">
-      ↓ Lưu kịch bản
+      ${window.CHIcons ? window.CHIcons.save({ size: 13 }) : '💾'} Lưu kịch bản
     </button>
     <button id="delete-scenario" class="ts-btn ts-btn--danger">
-      ✕ Xoá
+      ${window.CHIcons ? window.CHIcons.trash({ size: 13 }) : '✕'} Xóa
     </button>
   </div>
     `;

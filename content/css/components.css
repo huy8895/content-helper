@@ -290,6 +290,23 @@
   line-height: 1.3;
 }
 
+/* ── 4.5. VECTOR ICON SYSTEM (.ts-icon) ────────────────────────────────────── */
+.ts-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  stroke: currentColor;
+  transition: stroke 0.15s ease, transform 0.15s ease;
+}
+
+.ts-icon--accent { stroke: var(--ch-accent); }
+.ts-icon--danger { stroke: var(--ch-danger); }
+.ts-icon--success { stroke: var(--ch-success); }
+.ts-icon--warning { stroke: var(--ch-warning); }
+.ts-icon--muted { stroke: var(--ch-text-muted); }
+
 /* ── 5. BUTTON SYSTEM (.ts-btn) ────────────────────────────────────────────── */
 .ts-btn {
   display: inline-flex;

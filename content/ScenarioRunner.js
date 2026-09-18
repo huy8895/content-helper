@@ -10,7 +10,7 @@ window.ScenarioRunner = class extends window.BasePanel {
     super({
       id: "scenario-runner",
       title: "Trình chạy Kịch bản",
-      icon: "▶",
+      icon: window.CHIcons ? window.CHIcons.play({ size: 20 }) : "▶",
       onClose: onClose,
       view: window.ScenarioRunnerView
     });

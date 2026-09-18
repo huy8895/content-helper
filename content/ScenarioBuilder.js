@@ -3,7 +3,7 @@ window.ScenarioBuilder = class extends window.BasePanel {
     super({
       id: "scenario-builder",
       title: "Quản lý Kịch bản",
-      icon: "≡",
+      icon: window.CHIcons ? window.CHIcons.fileText({ size: 20 }) : "📝",
       onClose: onClose,
       view: window.ScenarioBuilderView
     });

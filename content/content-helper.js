@@ -381,8 +381,8 @@ class ContentHelper {
   static addCloseButton(panelEl, onClose) {
     const btn = document.createElement("button");
     btn.className = "panel-close";
-    btn.textContent = "×";
-    btn.title = "Close";
+    btn.innerHTML = window.CHIcons ? window.CHIcons.x({ size: 14 }) : "✕";
+    btn.title = "Đóng panel";
 
     // Ngăn *tuyệt đối* sự kiện lan toả
     const stopAll = (ev) => {
@@ -458,7 +458,7 @@ class ContentHelper {
     // === Tạo nút minimize ===
     const btn = document.createElement("button");
     btn.className = "panel-minimize";
-    btn.textContent = "−"; // Ký tự minus
+    btn.innerHTML = window.CHIcons ? window.CHIcons.minus({ size: 14 }) : "−";
     btn.title = "Thu nhỏ";
 
     // Ngăn sự kiện lan toả (giống addCloseButton)
@@ -481,7 +481,11 @@ class ContentHelper {
       bubbleEl = document.createElement("div");
       bubbleEl.className = "panel-bubble";
       bubbleEl.dataset.tooltip = tooltip;
-      bubbleEl.textContent = icon;
+      if (typeof icon === 'string' && icon.includes('<svg')) {
+        bubbleEl.innerHTML = icon;
+      } else {
+        bubbleEl.textContent = icon;
+      }
       bubbleEl.style.setProperty('pointer-events', 'auto', 'important');
       bubbleEl.style.cursor = 'pointer';
       bubbleEl.style.animation = 'bubble-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards';

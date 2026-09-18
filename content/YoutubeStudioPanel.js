@@ -55,7 +55,7 @@ window.YoutubeStudioPanel = class extends window.BasePanel {
     super({
       id: 'youtube-studio-helper-panel',
       title: 'Phụ đề YouTube',
-      icon: '文A',
+      icon: window.CHIcons ? window.CHIcons.globe({ size: 20 }) : "🌍",
       onClose: onClose,
       view: window.YoutubeStudioView
     });

@@ -9,7 +9,7 @@ window.ScenarioRunnerView = {
   <!-- Header -->
   <div class="ts-header sr-header">
     <div class="ts-header__main">
-      <span class="ts-header__icon">▶</span>
+      <span class="ts-header__icon">${window.CHIcons ? window.CHIcons.play({ size: 16 }) : '▶'}</span>
       <div>
         <h3 class="ts-header__title">Trình chạy Kịch bản</h3>
         <div class="ts-header__subtitle">Thực thi chuỗi prompt tự động</div>
@@ -21,19 +21,21 @@ window.ScenarioRunnerView = {
   <div id="sr-restore-banner" class="ts-card ts-card--amber ts-flex ts-flex-col ts-gap-1 hidden">
     <div class="ts-flex ts-items-center ts-justify-between">
       <div class="ts-badge ts-badge--warning">
-        <span>⚡</span> Khôi phục phiên chạy song song
+        <span>${window.CHIcons ? window.CHIcons.rotateCcw({ size: 12 }) : '↺'}</span> Khôi phục phiên chạy song song
       </div>
-      <span class="ts-badge ts-badge--warning ts-animate-pulse">⏳ Gián đoạn</span>
+      <span class="ts-badge ts-badge--warning ts-animate-pulse">
+        ${window.CHIcons ? window.CHIcons.clock({ size: 11 }) : ''} Gián đoạn
+      </span>
     </div>
     <div class="ts-card__desc" id="sr-restore-desc">
       Đang tải thông tin...
     </div>
     <div class="ts-flex ts-gap-2 ts-justify-end ts-mt-1">
       <button id="sr-restore-cancel" class="ts-btn ts-btn--secondary ts-btn--sm">
-        Bỏ qua & Xóa
+        ${window.CHIcons ? window.CHIcons.x({ size: 12 }) : ''} Bỏ qua & Xóa
       </button>
       <button id="sr-restore-confirm" class="ts-btn ts-btn--warning ts-btn--sm">
-        Tiếp tục chạy
+        ${window.CHIcons ? window.CHIcons.play({ size: 12 }) : ''} Tiếp tục chạy
       </button>
     </div>
   </div>
@@ -47,7 +49,7 @@ window.ScenarioRunnerView = {
           class="ts-search-box__input"
           placeholder="Tìm kiếm kịch bản..."
           autocomplete="off">
-        <span class="ts-search-box__icon">⚲</span>
+        <span class="ts-search-box__icon">${window.CHIcons ? window.CHIcons.search({ size: 14 }) : '🔍'}</span>
       </div>
       <div id="sr-scenario-dropdown" class="custom-dropdown-menu custom-scrollbar ts-dropdown-menu--search hidden-dropdown"></div>
     </div>
@@ -63,11 +65,13 @@ window.ScenarioRunnerView = {
   <!-- Phần nhập thông tin đầu vào -->
   <div class="ts-flex ts-items-center ts-justify-between ts-mb-1 ts-px-1">
     <label class="ts-label ts-mb-0">THÔNG TIN ĐẦU VÀO</label>
-    <button id="sr-clear-inputs" class="ts-btn ts-btn--ghost ts-btn--xs ts-text-danger" title="Xóa toàn bộ nội dung đã nhập">✕ Xóa Form</button>
+    <button id="sr-clear-inputs" class="ts-btn ts-btn--ghost ts-btn--xs ts-text-danger" title="Xóa toàn bộ nội dung đã nhập">
+      ${window.CHIcons ? window.CHIcons.eraser({ size: 12 }) : '✕'} Xóa Form
+    </button>
   </div>
   <div id="scenario-inputs" class="ts-card ts-p-2-5 ts-overflow-y-auto custom-scrollbar ts-scroll-h-2xl ts-flex-1">
     <div class="sr-empty-state">
-      <span class="sr-empty-state__icon">⚙</span>
+      <span class="sr-empty-state__icon">${window.CHIcons ? window.CHIcons.fileText({ size: 28 }) : '📝'}</span>
       <div class="sr-empty-state__text">Vui lòng chọn một kịch bản ở trên để nạp các thông tin đầu vào.</div>
     </div>
   </div>
@@ -81,7 +85,7 @@ window.ScenarioRunnerView = {
       <div class="ts-flex ts-items-center ts-gap-1-5">
         <span id="sr-polling-dot" class="ts-status-dot ts-animate-pulse hidden"></span>
         <button id="sr-download-zip" class="ts-btn ts-btn--purple ts-btn--xs hidden" title="Tải kết quả đã xong dưới dạng ZIP">
-          ZIP <span id="sr-zip-count" class="ts-tabular">0</span>/<span id="sr-zip-total" class="ts-tabular">0</span>
+          ${window.CHIcons ? window.CHIcons.archive({ size: 12 }) : ''} ZIP <span id="sr-zip-count" class="ts-tabular">0</span>/<span id="sr-zip-total" class="ts-tabular">0</span>
         </button>
         <div id="sr-progress-percent" class="ts-progress__percent ts-tabular">0%</div>
       </div>
@@ -98,40 +102,44 @@ window.ScenarioRunnerView = {
     <!-- Nút điều khiển thực thi (Calm Tech Controls) -->
     <div class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2">
       <button id="sr-start" class="ts-btn ts-btn--accent" title="Thực thi tuần tự từng prompt">
-        ▶ Tuần tự
+        ${window.CHIcons ? window.CHIcons.play({ size: 13 }) : '▶'} Tuần tự
       </button>
       
       <div class="ts-relative ts-flex">
         <button id="sr-parallel" class="ts-btn ts-btn--warning ts-w-full" title="Mỗi giá trị list chạy trên 1 tab riêng">
-          ⚡ Song song
+          ${window.CHIcons ? window.CHIcons.shuffle({ size: 13 }) : '⚡'} Song song
           <input type="number" id="sr-parallel-tabs" class="ts-badge-input ts-badge-input--amber ts-badge-input--sm" value="5" min="1" max="10"
             title="Số tab đồng thời" onclick="event.stopPropagation()" />
         </button>
         <button id="sr-parallel-stop" class="ts-btn ts-btn--danger ts-w-full hidden" title="Hủy bỏ toàn bộ phiên chạy song song">
-          ■ Dừng song song
+          ${window.CHIcons ? window.CHIcons.square({ size: 13 }) : '■'} Dừng song song
         </button>
       </div>
 
       <div class="ts-relative ts-flex">
         <button id="sr-split-tabs" class="ts-btn ts-btn--secondary ts-w-full" title="Chia đều items vào N tab">
-          🔀 Chia tab
+          ${window.CHIcons ? window.CHIcons.scissors({ size: 13 }) : '✂'} Chia tab
           <input type="number" id="sr-split-tabs-count" class="ts-badge-input ts-badge-input--sm" value="3" min="1" max="10"
             title="Số tab sẽ mở" onclick="event.stopPropagation()" />
         </button>
         <button id="sr-split-tabs-stop" class="ts-btn ts-btn--danger ts-w-full hidden" title="Hủy bỏ toàn bộ phiên chia tab">
-          ■ Dừng chia tab
+          ${window.CHIcons ? window.CHIcons.square({ size: 13 }) : '■'} Dừng chia tab
         </button>
       </div>
 
       <button id="sr-addqueue" class="ts-btn ts-btn--secondary" title="Thêm phiên chạy này vào hàng đợi">
-        + Hàng đợi <span id="sr-queue-count" class="ts-badge ts-badge--secondary ts-tabular">0</span>
+        ${window.CHIcons ? window.CHIcons.plusCircle({ size: 13 }) : '+'} Hàng đợi <span id="sr-queue-count" class="ts-badge ts-badge--secondary ts-tabular">0</span>
       </button>
     </div>
 
     <!-- Nút Tạm dừng / Tiếp tục -->
     <div id="sr-pause-resume-bar" class="ts-grid ts-grid-2 ts-gap-1-5 ts-mb-2 hidden">
-      <button id="sr-pause" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
-      <button id="sr-resume" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
+      <button id="sr-pause" class="ts-btn ts-btn--secondary" disabled>
+        ${window.CHIcons ? window.CHIcons.pause({ size: 13 }) : '❚❚'} Tạm dừng
+      </button>
+      <button id="sr-resume" class="ts-btn ts-btn--accent" disabled>
+        ${window.CHIcons ? window.CHIcons.play({ size: 13 }) : '▶'} Tiếp tục
+      </button>
     </div>
 
     <!-- Tùy chọn chuyển tab / chống ngủ đông -->

@@ -14,7 +14,7 @@ window.FlowRunnerPanel = class extends window.BasePanel {
     super({
       id: "flow-runner-panel",
       title: "Trình chạy Luồng",
-      icon: "🔀",
+      icon: window.CHIcons ? window.CHIcons.workflow({ size: 20 }) : "🔀",
       onClose: onClose,
       view: window.FlowRunnerView
     });

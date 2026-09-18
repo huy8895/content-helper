@@ -9,7 +9,7 @@ window.FlowRunnerView = {
   <!-- Header -->
   <div class="ts-header sr-header">
     <div class="ts-header__main">
-      <span class="ts-header__icon">🔀</span>
+      <span class="ts-header__icon">${window.CHIcons ? window.CHIcons.workflow({ size: 16 }) : '🔀'}</span>
       <div>
         <h3 class="ts-header__title">Flow Runner</h3>
         <div class="ts-header__subtitle">Thực thi kịch bản liên hoàn</div>
@@ -25,7 +25,7 @@ window.FlowRunnerView = {
         class="ts-search-box__input"
         placeholder="Tìm kiếm Flow..."
         autocomplete="off">
-      <span class="ts-search-box__icon">⚲</span>
+      <span class="ts-search-box__icon">${window.CHIcons ? window.CHIcons.search({ size: 14 }) : '🔍'}</span>
     </div>
     <div id="flow-dropdown" class="custom-dropdown-menu custom-scrollbar ts-scroll-h-xl hidden-dropdown"></div>
     <select id="flow-select" class="hidden">
@@ -50,7 +50,7 @@ window.FlowRunnerView = {
   <div id="flow-progress-box" class="ts-progress hidden">
     <div class="ts-progress__meta">
       <div class="ts-progress__step">
-        Step <span id="flow-progress-step" class="ts-tabular ts-text-accent">0</span> / <span id="flow-progress-total" class="ts-tabular">0</span>
+        Bước <span id="flow-progress-step" class="ts-tabular ts-text-accent">0</span> / <span id="flow-progress-total" class="ts-tabular">0</span>
       </div>
       <div id="flow-progress-status" class="ts-progress__percent">Đang chạy...</div>
     </div>
@@ -61,8 +61,12 @@ window.FlowRunnerView = {
     
     <!-- Controls khi gặp lỗi -->
     <div id="flow-error-controls" class="ts-grid ts-grid-2 ts-gap-2 ts-mt-2 hidden">
-      <button id="flow-retry-btn" class="ts-btn ts-btn--warning ts-btn--sm">↺ Thử lại (Retry)</button>
-      <button id="flow-skip-btn" class="ts-btn ts-btn--secondary ts-btn--sm">⇥ Bỏ qua (Skip)</button>
+      <button id="flow-retry-btn" class="ts-btn ts-btn--warning ts-btn--sm">
+        ${window.CHIcons ? window.CHIcons.rotateCcw({ size: 12 }) : '↺'} Thử lại
+      </button>
+      <button id="flow-skip-btn" class="ts-btn ts-btn--secondary ts-btn--sm">
+        ${window.CHIcons ? window.CHIcons.stepForward({ size: 12 }) : '⇥'} Bỏ qua
+      </button>
     </div>
   </div>
 
@@ -70,12 +74,16 @@ window.FlowRunnerView = {
   <div class="ts-sheet-footer">
     <div class="ts-mb-2">
       <button id="flow-start-btn" class="ts-btn ts-btn--primary ts-w-full">
-        ▶ Bắt đầu Flow
+        ${window.CHIcons ? window.CHIcons.play({ size: 13 }) : '▶'} Bắt đầu Flow
       </button>
     </div>
     <div class="ts-grid ts-grid-2 ts-gap-2">
-      <button id="flow-pause-btn" class="ts-btn ts-btn--secondary" disabled>❚❚ Tạm dừng</button>
-      <button id="flow-resume-btn" class="ts-btn ts-btn--accent" disabled>▶ Tiếp tục</button>
+      <button id="flow-pause-btn" class="ts-btn ts-btn--secondary" disabled>
+        ${window.CHIcons ? window.CHIcons.pause({ size: 13 }) : '❚❚'} Tạm dừng
+      </button>
+      <button id="flow-resume-btn" class="ts-btn ts-btn--accent" disabled>
+        ${window.CHIcons ? window.CHIcons.play({ size: 13 }) : '▶'} Tiếp tục
+      </button>
     </div>
   </div>
     `;

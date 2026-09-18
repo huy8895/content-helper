@@ -32,10 +32,14 @@ class FlowModule extends BaseModule {
     });
     this.allScenarios = scenarioData.scenarioTemplates || {};
 
+    const workflowIcon = window.CHIcons ? CHIcons.workflow({ size: 18 }) : '';
+    const searchIcon = window.CHIcons ? CHIcons.search({ size: 14 }) : '🔍';
+    const plusIcon = window.CHIcons ? CHIcons.plus({ size: 13 }) : '';
+
     const html = `
       <div class="module-section">
         <div class="page-header">
-          <h2>🔗 Quản lý Flow (Luồng kịch bản)</h2>
+          <h2>${workflowIcon} Quản lý Flow (Luồng kịch bản)</h2>
           <p>Tạo và cấu hình các chuỗi kịch bản liên hoàn. Mỗi bước là một scenario độc lập.</p>
         </div>
 
@@ -43,12 +47,12 @@ class FlowModule extends BaseModule {
           <div class="scenario-list-header">
             <div style="display:flex;gap:12px;flex:1;max-width:480px">
               <div class="search-box" style="max-width:none;flex:1">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon">${searchIcon}</span>
                 <input type="text" id="flow-search" placeholder="Tìm flow...">
               </div>
             </div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-primary btn-sm" id="flow-create-btn">➕ Tạo Flow mới</button>
+              <button class="btn btn-primary btn-sm" id="flow-create-btn">${plusIcon} Tạo Flow mới</button>
             </div>
           </div>
 
@@ -83,9 +87,10 @@ class FlowModule extends BaseModule {
     const wrapper = this.containerEl.querySelector('#flow-table-wrapper');
 
     if (this.filteredNames.length === 0) {
+      const emptyIcon = window.CHIcons ? CHIcons.workflow({ size: 32 }) : '';
       wrapper.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">🔗</div>
+          <div class="empty-icon">${emptyIcon}</div>
           <h4>Chưa có Flow nào</h4>
           <p>Bấm "Tạo Flow mới" để bắt đầu kết nối các kịch bản.</p>
         </div>
@@ -106,6 +111,9 @@ class FlowModule extends BaseModule {
         <tbody>
     `;
 
+    const editIcon = window.CHIcons ? CHIcons.fileText({ size: 12 }) : '';
+    const trashIcon = window.CHIcons ? CHIcons.trash({ size: 12 }) : '';
+
     pageItems.forEach(name => {
       const flowData = this.flows[name];
       const steps = flowData.steps || [];
@@ -116,8 +124,8 @@ class FlowModule extends BaseModule {
           <td style="font-weight:600">${steps.length} steps</td>
           <td>
             <div class="sc-actions">
-              <button class="btn btn-secondary btn-xs flow-edit-btn" data-name="${this._escapeHTML(name)}">✏️ Sửa</button>
-              <button class="btn btn-danger btn-xs flow-delete-btn" data-name="${this._escapeHTML(name)}">🗑️</button>
+              <button class="btn btn-secondary btn-xs flow-edit-btn" data-name="${this._escapeHTML(name)}">${editIcon} Sửa</button>
+              <button class="btn btn-danger btn-xs flow-delete-btn" data-name="${this._escapeHTML(name)}">${trashIcon}</button>
             </div>
           </td>
         </tr>
@@ -170,7 +178,7 @@ class FlowModule extends BaseModule {
     const titleEl = document.getElementById('editor-title');
     const body = document.getElementById('editor-body');
 
-    titleEl.textContent = name ? `✏️ Sửa Flow: ${name}` : '➕ Tạo Flow mới';
+    titleEl.textContent = name ? `Sửa Flow: ${name}` : 'Tạo Flow mới';
 
     let flowName = name || '';
     let steps = [];
@@ -188,6 +196,8 @@ class FlowModule extends BaseModule {
         this.singleQScenarios.push({ name: scName, group });
       }
     });
+
+    const plusIcon = window.CHIcons ? CHIcons.plus({ size: 12 }) : '+';
 
     // Cấu trúc editor
     body.innerHTML = `
@@ -209,7 +219,7 @@ class FlowModule extends BaseModule {
         <div class="editor-main-header">
           <div class="form-label">Danh sách Bước (Kéo thả để sắp xếp)</div>
           <button class="btn btn-ghost btn-xs" id="flow-ed-add-step" style="height:26px;font-size:11px;gap:4px">
-            <span style="font-size:13px">+</span> Thêm bước
+            ${plusIcon} Thêm bước
           </button>
         </div>
         <!-- Vùng chứa các steps (drag drop) -->
@@ -262,6 +272,10 @@ class FlowModule extends BaseModule {
       position: relative;
     `;
 
+    const chevronIcon = window.CHIcons ? CHIcons.chevronDown({ size: 12 }) : '▼';
+    const searchIcon = window.CHIcons ? CHIcons.search({ size: 12 }) : '🔍';
+    const closeIcon = window.CHIcons ? CHIcons.x({ size: 12 }) : '✕';
+
     div.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="cursor:grab; padding:4px; opacity:0.5;">☰</div>
@@ -269,12 +283,12 @@ class FlowModule extends BaseModule {
         <div class="flow-sc-dropdown-container" style="flex:1; position:relative;">
           <div class="flow-sc-display" style="height:32px; border:1px solid var(--color-border); border-radius:4px; padding:0 8px; display:flex; align-items:center; font-size:12px; font-weight:bold; cursor:pointer; background:var(--color-bg); justify-content:space-between;">
             <span class="flow-sc-selected-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; display:flex; align-items:center;">-- Chọn Scenario (1 câu hỏi) --</span>
-            <span style="font-size:10px; color:var(--color-text-muted);">▼</span>
+            <span style="font-size:10px; color:var(--color-text-muted); display:flex; align-items:center;">${chevronIcon}</span>
           </div>
           <div class="flow-sc-menu" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--color-bg); border:1px solid var(--color-border); border-radius:4px; margin-top:4px; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:250px; flex-direction:column;">
             <div style="padding:8px; border-bottom:1px solid var(--color-border);">
                <div class="search-box" style="margin:0; padding:0; height:28px; border-radius:4px; background:var(--color-bg-secondary); position:relative; display:flex; align-items:center;">
-                 <span class="search-icon" style="font-size:12px; padding-left:8px; position:absolute;">🔍</span>
+                 <span class="search-icon" style="font-size:12px; padding-left:8px; position:absolute; display:flex; align-items:center;">${searchIcon}</span>
                  <input type="text" class="flow-sc-search" placeholder="Tìm kịch bản..." style="font-size:12px; padding-left:28px; height:100%; width:100%; border:none; background:transparent; outline:none; color:var(--color-text);">
                </div>
             </div>
@@ -284,7 +298,7 @@ class FlowModule extends BaseModule {
           <input type="hidden" class="flow-sc-value flow-sc-select" value="">
         </div>
 
-        <button class="btn btn-ghost btn-xs flow-remove-step" style="color:var(--color-text-muted); font-size:16px;">✕</button>
+        <button class="btn btn-ghost btn-xs flow-remove-step" style="color:var(--color-text-muted); font-size:16px; display:flex; align-items:center; justify-content:center;">${closeIcon}</button>
       </div>
       <div class="flow-step-vars" style="display:flex; flex-direction:column; gap:6px; margin-top:4px; padding-left:24px;">
       </div>

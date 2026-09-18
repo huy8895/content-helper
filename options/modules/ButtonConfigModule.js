@@ -18,33 +18,36 @@ class ButtonConfigModule extends BaseModule {
     ];
 
     this.availableButtons = [
-      { id: 'MANAGE_SCENARIO', label: '🛠 Quản lý kịch bản' },
-      { id: 'RUN_SCENARIO', label: '📤 Chạy kịch bản' },
-      { id: 'RUN_FLOW', label: '🔗 Chạy Flow' },
-      { id: 'COPY_CONTENT', label: '📋 Copy Content' },
-      { id: 'SPLITTER', label: '✂️ Text Split' },
-      { id: 'AUDIO', label: '🎵 Audio' },
-      { id: 'AI_STUDIO_SETTINGS', label: '⚙️ AI Studio Settings' },
-      { id: 'SRT_AUTOMATION', label: '🤖 SRT Automation' },
+      { id: 'MANAGE_SCENARIO', label: 'Quản lý kịch bản' },
+      { id: 'RUN_SCENARIO', label: 'Chạy kịch bản' },
+      { id: 'RUN_FLOW', label: 'Chạy Flow' },
+      { id: 'COPY_CONTENT', label: 'Copy Content' },
+      { id: 'SPLITTER', label: 'Text Split' },
+      { id: 'AUDIO', label: 'Audio' },
+      { id: 'AI_STUDIO_SETTINGS', label: 'AI Studio Settings' },
+      { id: 'SRT_AUTOMATION', label: 'SRT Automation' },
       { id: 'COLLAPSE_CODE', label: 'Collapse Code' },
-      { id: 'YT_STUDIO_SETTINGS', label: '🎬 YT Studio' },
+      { id: 'YT_STUDIO_SETTINGS', label: 'YT Studio' },
     ];
   }
 
   async render() {
     this.configs = await this.loadFromStorage() || {};
 
+    const slidersIcon = window.CHIcons ? CHIcons.sliders({ size: 18 }) : '';
+    const saveIcon = window.CHIcons ? CHIcons.save({ size: 13 }) : '';
+
     let html = `
       <div class="module-section">
         <div class="page-header">
-          <h2>🎛️ Cấu hình Nút (Buttons)</h2>
+          <h2>${slidersIcon} Cấu hình Nút (Buttons)</h2>
           <p>Tùy chỉnh danh sách các nút công cụ hiển thị trên từng trang web riêng biệt.</p>
         </div>
 
         <div class="card" style="padding: 0;">
           <div style="padding: 16px 20px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 600; font-size: 15px;">Danh sách nền tảng</span>
-            <button class="btn btn-primary btn-sm" id="btn-save-configs">💾 Lưu cấu hình</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-configs">${saveIcon} Lưu cấu hình</button>
           </div>
           <div class="platforms-list" style="padding: 20px; display: flex; flex-direction: column; gap: 24px;">
     `;
@@ -68,14 +71,14 @@ class ButtonConfigModule extends BaseModule {
       const disabledStyle = !isEnabled ? 'opacity: 0.4; pointer-events: none;' : '';
 
       html += `
-        <div class="platform-item" style="border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: white;">
+        <div class="platform-item platform-card" style="border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: white;">
           <div style="background: var(--color-bg-alt, #f8fafc); padding: 14px 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <input type="checkbox" class="toggle-switch cb-enable-platform" data-platform="${platform.id}" ${isEnabled ? 'checked' : ''} title="Bật/Tắt Extension trên trang này">
               <span style="font-weight: 700; font-size: 15px;">${platform.name}</span>
             </div>
             <label class="platform-compact-label" data-platform="${platform.id}" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); transition: opacity 0.2s; ${disabledStyle}">
-              <span>⚙️ Nút gộp (Content Helper)</span>
+              <span>${window.CHIcons ? CHIcons.settings({ size: 13 }) : ''} Nút gộp (Content Helper)</span>
               <input type="checkbox" class="toggle-switch cb-compact-mode" data-platform="${platform.id}" ${isCompactMode ? 'checked' : ''}>
             </label>
           </div>
@@ -135,6 +138,8 @@ class ButtonConfigModule extends BaseModule {
 
     // --- Event: Nút Lưu ---
     const saveBtn = this.containerEl.querySelector('#btn-save-configs');
+    const saveIcon = window.CHIcons ? CHIcons.save({ size: 13 }) : '';
+
     saveBtn.onclick = async () => {
       saveBtn.disabled = true;
       saveBtn.textContent = 'Đang lưu...';
@@ -183,7 +188,7 @@ class ButtonConfigModule extends BaseModule {
         BaseModule.showToast('Lỗi khi lưu cấu hình', 'error');
       } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Lưu cấu hình';
+        saveBtn.innerHTML = `${saveIcon} Lưu cấu hình`;
       }
     };
   }

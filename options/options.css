@@ -912,3 +912,22 @@ body {
   .editor-sidebar .meta-section-title { display: none; }
   .editor-sidebar .meta-stat { display: none; }
 }
+
+/* --- Technical Vector Icons (Lucide) --- */
+.ts-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  transition: stroke 0.15s ease, transform 0.15s ease;
+}
+.ts-icon--accent  { stroke: var(--color-primary); }
+.ts-icon--danger  { stroke: var(--color-danger); }
+.ts-icon--success { stroke: var(--color-success); }
+.ts-icon--warning { stroke: var(--color-warning); }
+.ts-icon--muted   { stroke: var(--color-text-muted); }
+.nav-item .ts-icon {
+  margin-right: 2px;
+}
+
