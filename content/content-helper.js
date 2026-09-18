@@ -842,6 +842,15 @@ class ContentHelper {
    * @param {number} duration 
    */
   static showToast(message, type = 'info', duration = 3500) {
+    if (!message) return;
+
+    // 1. Loại bỏ triệt để emoji hệ điều hành trong chuỗi message theo chuẩn Calm Tech (DESIGN.md)
+    const cleanMessage = String(message)
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+      .trim();
+
+    if (!cleanMessage) return;
+
     const shadow = ContentHelper.getShadowRoot();
     let container = shadow.getElementById('ts-toast-container');
     if (!container) {
@@ -850,34 +859,63 @@ class ContentHelper {
       shadow.appendChild(container);
     }
 
+    // 2. Deduplication Guard: Nếu cùng một thông điệp đang hiển thị, không tạo thêm toast trùng lặp
+    const activeMessages = Array.from(container.querySelectorAll('.ts-toast-message'));
+    if (activeMessages.some(el => el.textContent === cleanMessage)) {
+      return;
+    }
+
+    // 3. Phản hồi xúc giác vi mô khi hiển thị toast (Mục 7.3 & Calm Tech)
+    ContentHelper.playHapticFeedback(8);
+
     const toast = document.createElement('div');
     toast.className = `ts-toast ${type}`;
 
     const icons = {
-      success: '✓',
-      error: '✕',
-      warning: '!',
-      info: 'i'
+      success: window.CHIcons ? CHIcons.checkCircle({ size: 18, strokeWidth: 2.2, className: 'ts-icon--success' }) : '✓',
+      error: window.CHIcons ? CHIcons.alertTriangle({ size: 18, strokeWidth: 2.2, className: 'ts-icon--danger' }) : '✕',
+      warning: window.CHIcons ? CHIcons.alertTriangle({ size: 18, strokeWidth: 2.2, className: 'ts-icon--warning' }) : '!',
+      info: window.CHIcons ? CHIcons.info({ size: 18, strokeWidth: 2.2, className: 'ts-icon--accent' }) : 'i'
     };
 
     toast.innerHTML = `
-      <span class="ts-toast-icon">${icons[type]}</span>
-      <span class="ts-toast-message">${message}</span>
+      <div class="ts-toast-icon-wrapper">${icons[type] || icons.info}</div>
+      <div class="ts-toast-content">
+        <span class="ts-toast-message">${cleanMessage}</span>
+      </div>
+      <button class="ts-toast-close" title="Đóng" aria-label="Đóng">
+        ${window.CHIcons ? CHIcons.x({ size: 14, strokeWidth: 2.2 }) : '✕'}
+      </button>
     `;
 
     container.appendChild(toast);
 
-    // Tự động đóng sau duration
-    const hideTimeout = setTimeout(() => {
-      toast.classList.add('fade-out');
-      setTimeout(() => toast.remove(), 300);
-    }, duration);
-
-    // Click để đóng ngay lập tức
-    toast.onclick = () => {
+    let isClosing = false;
+    const closeToast = () => {
+      if (isClosing) return;
+      isClosing = true;
       clearTimeout(hideTimeout);
       toast.classList.add('fade-out');
-      setTimeout(() => toast.remove(), 300);
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 250);
+    };
+
+    // Tự động đóng sau duration
+    const hideTimeout = setTimeout(closeToast, duration);
+
+    // Bấm nút x đóng ngay lập tức
+    const closeBtn = toast.querySelector('.ts-toast-close');
+    if (closeBtn) {
+      closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        closeToast();
+      };
+    }
+
+    // Click vào bất kỳ vị trí nào trên thẻ toast để đóng nhanh
+    toast.onclick = () => {
+      closeToast();
     };
   }
 }

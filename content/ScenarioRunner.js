@@ -682,7 +682,7 @@ window.ScenarioRunner = class extends window.BasePanel {
     this.sequencer.start(() => {
       this._resetControls();
       ContentHelper.playDoneThump();
-      ContentHelper.showToast("🎉 Đã hoàn thành toàn bộ kịch bản!", "success");
+      ContentHelper.showToast("Đã hoàn thành toàn bộ kịch bản!", "success");
     });
     
     if (this._minimizeCtrl) {

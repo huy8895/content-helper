@@ -277,6 +277,28 @@ Toàn bộ icon trong hệ thống được quản lý tập trung qua helper `w
 .ts-icon--muted   { stroke: var(--ch-text-muted); }
 ```
 
+### 7.6. Toast Notifications (`.ts-toast`)
+Toast là thành phần thông báo phản hồi trạng thái không gây gián đoạn (Non-intrusive Feedback), hiện thực hóa trọn vẹn tinh thần **Calm Technology**:
+- **Vị trí cố định (Anchor Point):** Góc trên bên phải viewport (`top: 24px; right: 24px;`) với `z-index: 2147483647` (thuộc Shadow DOM). Nằm đúng tầm mắt quan sát tự nhiên của người dùng khi theo dõi câu trả lời của AI, tuyệt đối không che khuất khung nhập chat (chat input bar) hay dock buttons ở cạnh đáy.
+- **Quy cách hình học & Vật liệu (Tactile Hardware Card):**
+  - **Kích thước bề thế & Công thái học:** Chiều rộng mở rộng `min-width: 340px; max-width: 480px;`, padding đầm chắc `14px 18px;`, bo góc card `var(--ch-radius-card): 12px;`, khoảng cách gap `14px;`.
+  - **Nền & Tách lớp chống tiệp màu (Contrast & Elevation):** Để không bị tiệp vào màu nền trắng tinh khiết của các trang web AI (ChatGPT, Google AI Studio, YouTube Studio), Toast sử dụng nền Tone-on-Tone bề mặt riêng biệt (`--ch-toast-*-bg`) có sắc thái ngà/pastel dịu mắt đục mịn thay vì màu trắng trần.
+  - **Đổ bóng sâu 3 tầng:** `0 10px 30px -4px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)` giúp tấm thẻ toast nổi bật hoàn toàn lên trên không gian 3D của trang web.
+- **Huy hiệu Icon cơ học (Tactile Hardware Badge):**
+  - Khối bọc icon `.ts-toast-icon-wrapper`: Kích thước `36x36px`, bo góc `10px`, có viền và màu nền riêng biệt theo từng trạng thái.
+  - Vector Lucide: Sử dụng `size: 18px`, nét vẽ cơ học `strokeWidth: 2.2`.
+- **Tone-on-Tone Trạng Thái:**
+  - **Success:** Nền `--ch-toast-success-bg`, viền `--ch-toast-success-border`, badge `--ch-toast-success-badge`, icon `CHIcons.checkCircle()`.
+  - **Error:** Nền `--ch-toast-error-bg`, viền `--ch-toast-error-border`, badge `--ch-toast-error-badge`, icon `CHIcons.alertTriangle()`.
+  - **Warning:** Nền `--ch-toast-warning-bg`, viền `--ch-toast-warning-border`, badge `--ch-toast-warning-badge`, icon `CHIcons.alertTriangle()`.
+  - **Info:** Nền `--ch-toast-info-bg`, viền `--ch-toast-info-border`, badge `--ch-toast-info-badge`, icon `CHIcons.info()`.
+- **Hành vi & Tương tác Cơ học:**
+  - **Nút đóng nhanh (`.ts-toast-close`):** Tích hợp nút `x` gọn gàng (`CHIcons.x({ size: 14 })`), cho phép người dùng đóng ngay lập tức hoặc click trực tiếp lên thẻ toast.
+  - **Khử trùng lặp (Deduplication Guard):** Nếu cùng một nội dung đang hiển thị, hệ thống tự động bỏ qua để tránh spam màn hình.
+  - **Thanh lọc Emoji (Auto Sanitization):** Tự động cắt bỏ mọi ký tự emoji hệ điều hành trong chuỗi message, đảm bảo 100% sử dụng vector Lucide chuẩn mực.
+  - **Xúc giác vi mô (Tactile Haptic):** Rung nhẹ `ContentHelper.playHapticFeedback(8)` khi xuất hiện.
+  - **Animation:** Trượt nhẹ từ trên xuống `translateY(-16px) -> 0` trong `250ms` và fade-out êm ái khi tắt.
+
 ---
 
 ## 8. Checklist Kiểm Duyệt Thiết Kế (Design Review Checklist)
