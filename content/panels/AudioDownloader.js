@@ -3,7 +3,7 @@ window.AudioDownloader = class extends window.BasePanel {
     super({
       id: "audio-downloader",
       title: "Audio Downloader",
-      icon: "🎙️",
+      icon: window.CHIcons ? window.CHIcons.mic({ size: 20 }) : "🎙️",
       onClose: onClose,
       view: window.AudioDownloaderView
     });
@@ -113,14 +113,14 @@ window.AudioDownloader = class extends window.BasePanel {
       if (alreadyDownloaded) {
         btn.className = `${btnBaseClass}`;
         btn.style.opacity = '0.6';
-        btn.textContent = "✓ Saved";
+        btn.innerHTML = `${window.CHIcons ? window.CHIcons.check({ size: 12 }) : '✓'} Đã lưu`;
       } else if (isDownloading) {
         btn.className = `${btnBaseClass} ts-animate-pulse`;
         btn.style.color = "var(--ch-accent)";
-        btn.textContent = "Saving…";
+        btn.innerHTML = `${window.CHIcons ? window.CHIcons.clock({ size: 12 }) : ''} Đang lưu...`;
       } else {
         btn.className = `${btnBaseClass}`;
-        btn.textContent = `Get #${idx + 1}`;
+        btn.innerHTML = `${window.CHIcons ? window.CHIcons.download({ size: 12 }) : '↓'} Tải #${idx + 1}`;
       }
 
       btn.disabled = alreadyDownloaded || isDownloading;

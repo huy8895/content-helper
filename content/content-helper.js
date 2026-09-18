@@ -60,9 +60,9 @@ class ContentHelper {
     // Khởi tạo Master Shadow Root duy nhất chứa toàn bộ hệ thống giao diện
     ContentHelper.getShadowRoot();
 
-    // ⌨️  ESC → đóng panel trên cùng
+    // ⌨️ ESC → Thu nhỏ panel trên cùng thành bong bóng Messenger (thay vì đóng panel)
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') ContentHelper.closeTopPanel();
+      if (e.key === 'Escape') ContentHelper.minimizeTopPanel();
     });
   }
 
@@ -381,8 +381,8 @@ class ContentHelper {
   static addCloseButton(panelEl, onClose) {
     const btn = document.createElement("button");
     btn.className = "panel-close";
-    btn.textContent = "×";
-    btn.title = "Close";
+    btn.innerHTML = window.CHIcons ? window.CHIcons.x({ size: 14 }) : "✕";
+    btn.title = "Đóng panel";
 
     // Ngăn *tuyệt đối* sự kiện lan toả
     const stopAll = (ev) => {
@@ -458,7 +458,7 @@ class ContentHelper {
     // === Tạo nút minimize ===
     const btn = document.createElement("button");
     btn.className = "panel-minimize";
-    btn.textContent = "−"; // Ký tự minus
+    btn.innerHTML = window.CHIcons ? window.CHIcons.minus({ size: 14 }) : "−";
     btn.title = "Thu nhỏ";
 
     // Ngăn sự kiện lan toả (giống addCloseButton)
@@ -481,7 +481,11 @@ class ContentHelper {
       bubbleEl = document.createElement("div");
       bubbleEl.className = "panel-bubble";
       bubbleEl.dataset.tooltip = tooltip;
-      bubbleEl.textContent = icon;
+      if (typeof icon === 'string' && icon.includes('<svg')) {
+        bubbleEl.innerHTML = icon;
+      } else {
+        bubbleEl.textContent = icon;
+      }
       bubbleEl.style.setProperty('pointer-events', 'auto', 'important');
       bubbleEl.style.cursor = 'pointer';
       bubbleEl.style.animation = 'bubble-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards';
@@ -734,6 +738,31 @@ class ContentHelper {
     }
   }
 
+  /**
+   * Thu nhỏ panel đang mở trên cùng thành bong bóng tròn Messenger
+   * (Kích hoạt khi người dùng bấm phím Escape hoặc gọi theo chương trình)
+   */
+  static minimizeTopPanel() {
+    const shadow = ContentHelper.getShadowRoot();
+    const activePanelEl = shadow.querySelector(
+      '#content-helper-panel-bar .ts-panel:not(.panel-minimized), #content-helper-panel-bar .helper-panel:not(.panel-minimized)');
+    if (activePanelEl) {
+      // 1. Ưu tiên click nút thu nhỏ (.panel-minimize) để giữ nguyên state & tạo Messenger bubble
+      const minimizeBtn = activePanelEl.querySelector('.panel-minimize');
+      if (minimizeBtn) {
+        minimizeBtn.click();
+        return true;
+      }
+      // 2. Fallback: Nếu panel không hỗ trợ thu nhỏ, mới thực hiện đóng (.panel-close)
+      const closeBtn = activePanelEl.querySelector('.panel-close');
+      if (closeBtn) {
+        closeBtn.click();
+        return true;
+      }
+    }
+    return false;
+  }
+
   static closeTopPanel() {
     const shadow = ContentHelper.getShadowRoot();
     const activePanelEl = shadow.querySelector(
@@ -838,6 +867,15 @@ class ContentHelper {
    * @param {number} duration 
    */
   static showToast(message, type = 'info', duration = 3500) {
+    if (!message) return;
+
+    // 1. Loại bỏ triệt để emoji hệ điều hành trong chuỗi message theo chuẩn Calm Tech (DESIGN.md)
+    const cleanMessage = String(message)
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+      .trim();
+
+    if (!cleanMessage) return;
+
     const shadow = ContentHelper.getShadowRoot();
     let container = shadow.getElementById('ts-toast-container');
     if (!container) {
@@ -846,34 +884,63 @@ class ContentHelper {
       shadow.appendChild(container);
     }
 
+    // 2. Deduplication Guard: Nếu cùng một thông điệp đang hiển thị, không tạo thêm toast trùng lặp
+    const activeMessages = Array.from(container.querySelectorAll('.ts-toast-message'));
+    if (activeMessages.some(el => el.textContent === cleanMessage)) {
+      return;
+    }
+
+    // 3. Phản hồi xúc giác vi mô khi hiển thị toast (Mục 7.3 & Calm Tech)
+    ContentHelper.playHapticFeedback(8);
+
     const toast = document.createElement('div');
     toast.className = `ts-toast ${type}`;
 
     const icons = {
-      success: '✓',
-      error: '✕',
-      warning: '!',
-      info: 'i'
+      success: window.CHIcons ? CHIcons.checkCircle({ size: 18, strokeWidth: 2.2, className: 'ts-icon--success' }) : '✓',
+      error: window.CHIcons ? CHIcons.alertTriangle({ size: 18, strokeWidth: 2.2, className: 'ts-icon--danger' }) : '✕',
+      warning: window.CHIcons ? CHIcons.alertTriangle({ size: 18, strokeWidth: 2.2, className: 'ts-icon--warning' }) : '!',
+      info: window.CHIcons ? CHIcons.info({ size: 18, strokeWidth: 2.2, className: 'ts-icon--accent' }) : 'i'
     };
 
     toast.innerHTML = `
-      <span class="ts-toast-icon">${icons[type]}</span>
-      <span class="ts-toast-message">${message}</span>
+      <div class="ts-toast-icon-wrapper">${icons[type] || icons.info}</div>
+      <div class="ts-toast-content">
+        <span class="ts-toast-message">${cleanMessage}</span>
+      </div>
+      <button class="ts-toast-close" title="Đóng" aria-label="Đóng">
+        ${window.CHIcons ? CHIcons.x({ size: 14, strokeWidth: 2.2 }) : '✕'}
+      </button>
     `;
 
     container.appendChild(toast);
 
-    // Tự động đóng sau duration
-    const hideTimeout = setTimeout(() => {
-      toast.classList.add('fade-out');
-      setTimeout(() => toast.remove(), 300);
-    }, duration);
-
-    // Click để đóng ngay lập tức
-    toast.onclick = () => {
+    let isClosing = false;
+    const closeToast = () => {
+      if (isClosing) return;
+      isClosing = true;
       clearTimeout(hideTimeout);
       toast.classList.add('fade-out');
-      setTimeout(() => toast.remove(), 300);
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 250);
+    };
+
+    // Tự động đóng sau duration
+    const hideTimeout = setTimeout(closeToast, duration);
+
+    // Bấm nút x đóng ngay lập tức
+    const closeBtn = toast.querySelector('.ts-toast-close');
+    if (closeBtn) {
+      closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        closeToast();
+      };
+    }
+
+    // Click vào bất kỳ vị trí nào trên thẻ toast để đóng nhanh
+    toast.onclick = () => {
+      closeToast();
     };
   }
 }

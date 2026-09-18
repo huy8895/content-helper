@@ -109,7 +109,12 @@ class BaseModule {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
-    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    const icons = {
+      success: window.CHIcons ? CHIcons.check({ size: 14 }) : '✓',
+      error: window.CHIcons ? CHIcons.x({ size: 14 }) : '✕',
+      warning: window.CHIcons ? CHIcons.alertTriangle({ size: 14 }) : '!',
+      info: window.CHIcons ? CHIcons.info({ size: 14 }) : 'i'
+    };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
@@ -139,11 +144,14 @@ class BaseModule {
       .map(name => `<option value="${name}" ${name === activeProfileName ? 'selected' : ''}>${name}</option>`)
       .join('');
 
+    const plusIcon = window.CHIcons ? CHIcons.plus({ size: 13 }) : '+';
+    const trashIcon = window.CHIcons ? CHIcons.trash({ size: 13 }) : '-';
+
     return `
       <div class="profile-bar">
         <select class="profile-select" id="${idPrefix}-profile-select">${options}</select>
-        <button class="btn btn-secondary btn-sm" id="${idPrefix}-new-profile">➕ Mới</button>
-        <button class="btn btn-danger btn-sm" id="${idPrefix}-delete-profile">🗑️ Xóa</button>
+        <button class="btn btn-secondary btn-sm" id="${idPrefix}-new-profile">${plusIcon} Mới</button>
+        <button class="btn btn-danger btn-sm" id="${idPrefix}-delete-profile">${trashIcon} Xóa</button>
       </div>
     `;
   }

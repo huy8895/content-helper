@@ -290,6 +290,23 @@
   line-height: 1.3;
 }
 
+/* ── 4.5. VECTOR ICON SYSTEM (.ts-icon) ────────────────────────────────────── */
+.ts-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  stroke: currentColor;
+  transition: stroke 0.15s ease, transform 0.15s ease;
+}
+
+.ts-icon--accent { stroke: var(--ch-accent); }
+.ts-icon--danger { stroke: var(--ch-danger); }
+.ts-icon--success { stroke: var(--ch-success); }
+.ts-icon--warning { stroke: var(--ch-warning); }
+.ts-icon--muted { stroke: var(--ch-text-muted); }
+
 /* ── 5. BUTTON SYSTEM (.ts-btn) ────────────────────────────────────────────── */
 .ts-btn {
   display: inline-flex;
@@ -324,12 +341,13 @@
 
 /* Các biến thể màu nút */
 .ts-btn--primary {
-  background-color: #1A1918;
-  border-color: #2E3238;
+  background-color: var(--ch-accent);
+  border-color: var(--ch-accent);
   color: #FFFFFF;
 }
 .ts-btn--primary:hover:not(:disabled) {
-  background-color: #2E3238;
+  background-color: var(--ch-accent-hover);
+  border-color: var(--ch-accent-hover);
 }
 
 .ts-btn--accent {
@@ -452,7 +470,7 @@
 
 .ts-progress__bar {
   height: 100%;
-  background-color: #1A1918;
+  background-color: var(--ch-accent);
   border-radius: 9999px;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -574,54 +592,142 @@
   font-weight: 700;
 }
 
-/* ── 9. TOAST SYSTEM (#ts-toast-container) ─────────────────────────────────── */
+/* ── 9. TOAST NOTIFICATION SYSTEM (#ts-toast-container, .ts-toast) ────────── */
 #ts-toast-container {
   position: fixed;
-  bottom: 24px;
+  top: 24px;
   right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   z-index: 2147483647;
   pointer-events: none;
 }
 
 .ts-toast {
   pointer-events: auto;
-  min-width: 260px;
-  max-width: 360px;
+  min-width: 340px;
+  max-width: 480px;
   background-color: var(--ch-surface);
   color: var(--ch-text-primary);
   border: 1px solid var(--ch-border);
-  border-left-width: 4px;
-  border-radius: var(--ch-radius-control);
-  box-shadow: var(--ch-shadow-panel);
-  padding: 10px 14px;
+  border-radius: var(--ch-radius-card); /* 12px */
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   font-family: var(--ch-font-sans);
   animation: ts-toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
 }
 
-.ts-toast.success { border-left-color: var(--ch-success); }
-.ts-toast.error { border-left-color: var(--ch-danger); }
-.ts-toast.warning { border-left-color: var(--ch-warning); }
-.ts-toast.info { border-left-color: var(--ch-accent); }
+.ts-toast:hover {
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.16), 0 6px 16px -2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
 
-.ts-toast-icon { font-size: 16px; flex-shrink: 0; }
-.ts-toast-message { font-size: 12px; font-weight: 500; line-height: 1.4; }
+/* Tone-on-Tone Tinting chuẩn Calm Tech (Mục 7.2 & 7.6)
+   Sử dụng màu nền có sắc thái riêng biệt thông qua tokens --ch-toast-*,
+   tránh hiện tượng tiệp vào nền trang web trắng của ChatGPT/AI Studio. */
+.ts-toast.success {
+  border-color: var(--ch-toast-success-border);
+  background: var(--ch-toast-success-bg);
+}
+.ts-toast.success .ts-toast-icon-wrapper {
+  background: var(--ch-toast-success-badge);
+  border: 1px solid var(--ch-toast-success-border);
+  color: var(--ch-success);
+}
+
+.ts-toast.error {
+  border-color: var(--ch-toast-error-border);
+  background: var(--ch-toast-error-bg);
+}
+.ts-toast.error .ts-toast-icon-wrapper {
+  background: var(--ch-toast-error-badge);
+  border: 1px solid var(--ch-toast-error-border);
+  color: var(--ch-danger);
+}
+
+.ts-toast.warning {
+  border-color: var(--ch-toast-warning-border);
+  background: var(--ch-toast-warning-bg);
+}
+.ts-toast.warning .ts-toast-icon-wrapper {
+  background: var(--ch-toast-warning-badge);
+  border: 1px solid var(--ch-toast-warning-border);
+  color: var(--ch-warning);
+}
+
+.ts-toast.info {
+  border-color: var(--ch-toast-info-border);
+  background: var(--ch-toast-info-bg);
+}
+.ts-toast.info .ts-toast-icon-wrapper {
+  background: var(--ch-toast-info-badge);
+  border: 1px solid var(--ch-toast-info-border);
+  color: var(--ch-accent);
+}
+
+/* Khối bọc icon cơ học đầm chắc (Tactile Hardware Badge) */
+.ts-toast-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ts-toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ts-toast-message {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ch-text-primary);
+  display: block;
+  word-break: break-word;
+}
+
+.ts-toast-close {
+  background: transparent;
+  border: none;
+  color: var(--ch-text-muted);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.ts-toast-close:hover {
+  opacity: 1;
+  color: var(--ch-text-primary);
+  background-color: rgba(0, 0, 0, 0.06);
+}
 
 @keyframes ts-toast-slide-in {
-  from { transform: translateY(20px); opacity: 0; }
+  from { transform: translateY(-16px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 .ts-toast.fade-out {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(-8px);
 }
 
 /* ── 10. CHATBAR BUTTONS & FLOATING MENU ───────────────────────────────────── */
@@ -827,8 +933,8 @@
 }
 
 #helper-toggle-button {
-  background-color: #141517;
-  color: #FBFBFA;
+  background-color: var(--ch-surface);
+  color: var(--ch-text-primary);
   border: 1px solid var(--ch-border-strong);
   border-radius: 9999px;
   height: 40px;
@@ -842,12 +948,19 @@
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+#helper-toggle-button span:first-child {
+  color: var(--ch-accent);
+  font-weight: 800;
 }
 
 #helper-toggle-button:hover {
   transform: scale(1.04);
+  background-color: var(--ch-surface-alt);
   border-color: var(--ch-accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 #helper-toggle-button:active {

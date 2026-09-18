@@ -64,6 +64,20 @@
   --ch-radius-panel: 14px;
   --ch-radius-control: 8px;
   --ch-radius-card: 12px;
+
+  /* Bề mặt & Huy hiệu Toast Calm Tech (Chống tiệp vào nền trang web trắng) */
+  --ch-toast-success-bg: linear-gradient(135deg, #F4FBF7 0%, #EAF4EE 100%);
+  --ch-toast-success-border: rgba(45, 106, 79, 0.35);
+  --ch-toast-success-badge: #E0F2E6;
+  --ch-toast-error-bg: linear-gradient(135deg, #FFF6F6 0%, #FDF2F2 100%);
+  --ch-toast-error-border: rgba(168, 50, 50, 0.35);
+  --ch-toast-error-badge: #FEE4E4;
+  --ch-toast-warning-bg: linear-gradient(135deg, #FFFDF2 0%, #FEF3C7 100%);
+  --ch-toast-warning-border: rgba(180, 83, 9, 0.35);
+  --ch-toast-warning-badge: #FEF0C7;
+  --ch-toast-info-bg: linear-gradient(135deg, #FDF7F4 0%, #FAF0EB 100%);
+  --ch-toast-info-border: rgba(194, 94, 46, 0.35);
+  --ch-toast-info-badge: #FCE8DE;
 }
 
 /* ── 2. DARK MODE TOKENS (BRUSHED GRAPHITE & AMBER) ───────────────────────── */
@@ -113,6 +127,20 @@ html[class*="dark"] {
   --ch-shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.2), 0 24px 48px -12px rgba(0, 0, 0, 0.6);
   --ch-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
   --ch-shadow-dropdown: 0 12px 30px -5px rgba(0, 0, 0, 0.5);
+
+  /* Bề mặt & Huy hiệu Toast Calm Tech (Dark Mode) */
+  --ch-toast-success-bg: linear-gradient(135deg, #18261E 0%, #14281E 100%);
+  --ch-toast-success-border: rgba(64, 145, 108, 0.45);
+  --ch-toast-success-badge: #1E382A;
+  --ch-toast-error-bg: linear-gradient(135deg, #2A1717 0%, #2D1616 100%);
+  --ch-toast-error-border: rgba(201, 74, 74, 0.45);
+  --ch-toast-error-badge: #3D1E1E;
+  --ch-toast-warning-bg: linear-gradient(135deg, #2A2012 0%, #2D2010 100%);
+  --ch-toast-warning-border: rgba(217, 119, 6, 0.45);
+  --ch-toast-warning-badge: #3D2D16;
+  --ch-toast-info-bg: linear-gradient(135deg, #281C16 0%, #2D1E16 100%);
+  --ch-toast-info-border: rgba(217, 119, 54, 0.45);
+  --ch-toast-info-badge: #3D261B;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -154,5 +182,19 @@ html[class*="dark"] {
     --ch-purple: #C084FC;
     --ch-purple-subtle: #261633;
     --ch-purple-border: #4A2666;
+
+    /* Bề mặt & Huy hiệu Toast Calm Tech (Dark Mode) */
+    --ch-toast-success-bg: linear-gradient(135deg, #18261E 0%, #14281E 100%);
+    --ch-toast-success-border: rgba(64, 145, 108, 0.45);
+    --ch-toast-success-badge: #1E382A;
+    --ch-toast-error-bg: linear-gradient(135deg, #2A1717 0%, #2D1616 100%);
+    --ch-toast-error-border: rgba(201, 74, 74, 0.45);
+    --ch-toast-error-badge: #3D1E1E;
+    --ch-toast-warning-bg: linear-gradient(135deg, #2A2012 0%, #2D2010 100%);
+    --ch-toast-warning-border: rgba(217, 119, 6, 0.45);
+    --ch-toast-warning-badge: #3D2D16;
+    --ch-toast-info-bg: linear-gradient(135deg, #281C16 0%, #2D1E16 100%);
+    --ch-toast-info-border: rgba(217, 119, 54, 0.45);
+    --ch-toast-info-badge: #3D261B;
   }
 }

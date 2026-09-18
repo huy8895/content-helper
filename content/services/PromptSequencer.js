@@ -47,14 +47,13 @@ window.PromptSequencer = class {
 
     if (!wasStoppedManually) {
       if (!this.silent) {
-        console.log("🔔start Gửi thông báo")
-        // Gửi thông báo kèm tên kịch bản/action
+        console.log("🔔 [PromptSequencer] Gửi thông báo hoàn thành");
+        // Gửi desktop notification khi tab ở chế độ nền
         chrome.runtime.sendMessage({
           type: "SHOW_NOTIFICATION",
           title: "Scenario Completed",
           message: `Scenario "${this.scenarioName}" has been completed!`
         });
-        ContentHelper.showToast(`Scenario "${this.scenarioName}" has been completed!`, "success");
       }
       // QUAN TRỌNG: Đánh dấu là đã dừng để _isBusy() trả về false
       this.stopped = true;

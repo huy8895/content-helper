@@ -9,7 +9,7 @@ window.SRTAutomationPanel = class extends window.BasePanel {
         super({
             id: "srt-automation-panel",
             title: "SRT Automation",
-            icon: "⏱️",
+            icon: window.CHIcons ? window.CHIcons.subtitles({ size: 20 }) : "⏱️",
             onClose: onClose,
             view: window.SRTAutomationView
         });

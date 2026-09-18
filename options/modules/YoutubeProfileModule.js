@@ -67,10 +67,16 @@ class YoutubeProfileModule extends BaseModule {
     this.profiles = data.profiles || { 'default': { languages: [], isAloudChannel: false, isAutofillEnabled: false } };
     this.activeProfileName = data.activeProfileName || 'default';
 
+    const globeIcon = window.CHIcons ? CHIcons.globe({ size: 18 }) : '';
+    const settingsIcon = window.CHIcons ? CHIcons.settings({ size: 15 }) : '';
+    const fileIcon = window.CHIcons ? CHIcons.fileText({ size: 24 }) : '';
+    const searchIcon = window.CHIcons ? CHIcons.search({ size: 14 }) : '🔍';
+    const saveIcon = window.CHIcons ? CHIcons.save({ size: 14 }) : '';
+
     const html = `
       <div class="module-section">
         <div class="page-header">
-          <h2>🌍 YouTube Language Profiles</h2>
+          <h2>${globeIcon} YouTube Language Profiles</h2>
           <p>Quản lý danh sách ngôn ngữ phụ đề và metadata cho YouTube Studio.</p>
         </div>
 
@@ -89,7 +95,7 @@ class YoutubeProfileModule extends BaseModule {
         <!-- Toggles -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">⚙️ Tùy chọn: <strong id="yt-current-name">${this.activeProfileName}</strong></span>
+            <span class="card-title">${settingsIcon} Tùy chọn: <strong id="yt-current-name">${this.activeProfileName}</strong></span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
@@ -111,7 +117,7 @@ class YoutubeProfileModule extends BaseModule {
 
           <!-- JSON Upload -->
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;">
-            <div style="font-size:24px;">📄</div>
+            <div>${fileIcon}</div>
             <div style="flex:1;min-width:0;">
               <div style="font-size:11px;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;margin-bottom:4px;">Dữ liệu Dịch thuật</div>
               <div id="yt-json-filename" style="font-size:13px;font-weight:600;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chưa có file nào</div>
@@ -125,7 +131,7 @@ class YoutubeProfileModule extends BaseModule {
           <!-- Language search + filter -->
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <div class="search-box" style="max-width:none;flex:1">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon">${searchIcon}</span>
               <input type="text" id="yt-lang-search" placeholder="Tìm ngôn ngữ...">
             </div>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap">
@@ -139,7 +145,7 @@ class YoutubeProfileModule extends BaseModule {
           <div class="lang-grid custom-scroll" id="yt-lang-grid"></div>
 
           <button class="btn btn-primary" id="yt-save-btn" style="width:100%;margin-top:20px">
-            💾 Cập nhật Profile
+            ${saveIcon} Cập nhật Profile
           </button>
         </div>
       </div>
@@ -324,10 +330,10 @@ class YoutubeProfileModule extends BaseModule {
         }
 
         await chrome.storage.local.set({ [this.storageKeyTranslations]: translationsObject });
-        this.containerEl.querySelector('#yt-json-filename').textContent = `✅ Đã tải lên: ${file.name}`;
+        this.containerEl.querySelector('#yt-json-filename').textContent = `Đã tải lên: ${file.name}`;
         BaseModule.showToast('Đã lưu dữ liệu dịch thuật thành công!', "success");
       } catch (err) {
-        this.containerEl.querySelector('#yt-json-filename').textContent = `❌ Lỗi đọc file`;
+        this.containerEl.querySelector('#yt-json-filename').textContent = `Lỗi đọc file`;
         BaseModule.showToast('Lỗi: File JSON không hợp lệ hoặc không đúng định dạng mảng.', "error");
         console.error("JSON Process Error:", err);
       }

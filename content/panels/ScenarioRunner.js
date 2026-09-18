@@ -10,7 +10,7 @@ window.ScenarioRunner = class extends window.BasePanel {
     super({
       id: "scenario-runner",
       title: "Trình chạy Kịch bản",
-      icon: "▶",
+      icon: window.CHIcons ? window.CHIcons.play({ size: 20 }) : "▶",
       onClose: onClose,
       view: window.ScenarioRunnerView
     });
@@ -313,7 +313,10 @@ window.ScenarioRunner = class extends window.BasePanel {
 
       searchBox.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
-          dropdown.classList.add("hidden-dropdown");
+          if (!dropdown.classList.contains("hidden-dropdown")) {
+            dropdown.classList.add("hidden-dropdown");
+            e.stopPropagation();
+          }
         }
       });
 
@@ -682,7 +685,7 @@ window.ScenarioRunner = class extends window.BasePanel {
     this.sequencer.start(() => {
       this._resetControls();
       ContentHelper.playDoneThump();
-      ContentHelper.showToast("🎉 Đã hoàn thành toàn bộ kịch bản!", "success");
+      ContentHelper.showToast("Đã hoàn thành toàn bộ kịch bản!", "success");
     });
     
     if (this._minimizeCtrl) {

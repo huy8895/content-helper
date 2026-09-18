@@ -12,7 +12,7 @@ window.TextSplitter = class extends window.BasePanel {
     super({
       id: "text-splitter",
       title: "Text Splitter",
-      icon: "✂",
+      icon: window.CHIcons ? window.CHIcons.scissors({ size: 20 }) : "✂",
       onClose: onClose,
       view: window.TextSplitterView
     });
@@ -243,14 +243,14 @@ window.TextSplitter = class extends window.BasePanel {
       if (isDone) {
         btn.className += " ts-btn--success";
         btn.disabled = true;
-        btn.textContent = `✓ Done #${idx + 1}`;
+        btn.innerHTML = `${window.CHIcons ? window.CHIcons.check({ size: 12 }) : '✓'} Đã gửi #${idx + 1}`;
       } else if (isError) {
         btn.className += " ts-btn--danger";
         btn.disabled = false;
-        btn.textContent = `! Error #${idx + 1}`;
+        btn.innerHTML = `${window.CHIcons ? window.CHIcons.alertTriangle({ size: 12 }) : '!'} Lỗi #${idx + 1}`;
       } else {
         btn.className += " ts-btn--secondary";
-        btn.textContent = `▶ Send #${idx + 1}`;
+        btn.innerHTML = `${window.CHIcons ? window.CHIcons.play({ size: 12 }) : '▶'} Gửi #${idx + 1}`;
       }
 
       btn.onclick = () => {

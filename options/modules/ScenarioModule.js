@@ -22,10 +22,16 @@ class ScenarioModule extends BaseModule {
     this.filteredNames = Object.keys(this.scenarios);
     this.currentPage = 1;
 
+    const fileTextIcon = window.CHIcons ? CHIcons.fileText({ size: 18 }) : '';
+    const searchIcon = window.CHIcons ? CHIcons.search({ size: 14 }) : '🔍';
+    const plusIcon = window.CHIcons ? CHIcons.plus({ size: 13 }) : '';
+    const exportIcon = window.CHIcons ? CHIcons.upload({ size: 13 }) : '';
+    const importIcon = window.CHIcons ? CHIcons.download({ size: 13 }) : '';
+
     const html = `
       <div class="module-section">
         <div class="page-header">
-          <h2>📝 Quản lý Kịch bản</h2>
+          <h2>${fileTextIcon} Quản lý Kịch bản</h2>
           <p>Tạo, chỉnh sửa và quản lý các scenario template cho AI chat.</p>
         </div>
 
@@ -33,7 +39,7 @@ class ScenarioModule extends BaseModule {
           <div class="scenario-list-header">
             <div style="display:flex;gap:12px;flex:1;max-width:480px">
               <div class="search-box" style="max-width:none;flex:1">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon">${searchIcon}</span>
                 <input type="text" id="sc-search" placeholder="Tìm kịch bản...">
               </div>
               <select id="sc-group-filter" class="form-select" style="width:160px;height:36px;font-size:12px;padding:0 10px;color:var(--color-text-secondary)">
@@ -42,10 +48,10 @@ class ScenarioModule extends BaseModule {
               </select>
             </div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-primary btn-sm" id="sc-create-btn">➕ Tạo mới</button>
-              <button class="btn btn-secondary btn-sm" id="sc-export-btn">📤 Export JSON</button>
+              <button class="btn btn-primary btn-sm" id="sc-create-btn">${plusIcon} Tạo mới</button>
+              <button class="btn btn-secondary btn-sm" id="sc-export-btn">${exportIcon} Export JSON</button>
               <label class="btn btn-ghost btn-sm" style="cursor:pointer">
-                📥 Import
+                ${importIcon} Import
                 <input type="file" id="sc-import-file" accept=".json" style="display:none">
               </label>
             </div>
@@ -93,9 +99,10 @@ class ScenarioModule extends BaseModule {
     const wrapper = this.containerEl.querySelector('#sc-table-wrapper');
 
     if (this.filteredNames.length === 0) {
+      const emptyIcon = window.CHIcons ? CHIcons.fileText({ size: 32 }) : '';
       wrapper.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">📄</div>
+          <div class="empty-icon">${emptyIcon}</div>
           <h4>Chưa có kịch bản nào</h4>
           <p>Bấm "Tạo mới" để bắt đầu hoặc Import từ file JSON.</p>
         </div>
@@ -117,6 +124,9 @@ class ScenarioModule extends BaseModule {
         <tbody>
     `;
 
+    const editIcon = window.CHIcons ? CHIcons.fileText({ size: 12 }) : '';
+    const trashIcon = window.CHIcons ? CHIcons.trash({ size: 12 }) : '';
+
     pageItems.forEach(name => {
       const raw = this.scenarios[name];
       const group = (typeof raw === 'object' && !Array.isArray(raw)) ? (raw.group || '') : '';
@@ -129,8 +139,8 @@ class ScenarioModule extends BaseModule {
           <td style="font-weight:600">${questions.length}</td>
           <td>
             <div class="sc-actions">
-              <button class="btn btn-secondary btn-xs sc-edit-btn" data-name="${this._escapeHTML(name)}">✏️ Sửa</button>
-              <button class="btn btn-danger btn-xs sc-delete-btn" data-name="${this._escapeHTML(name)}">🗑️</button>
+              <button class="btn btn-secondary btn-xs sc-edit-btn" data-name="${this._escapeHTML(name)}">${editIcon} Sửa</button>
+              <button class="btn btn-danger btn-xs sc-delete-btn" data-name="${this._escapeHTML(name)}">${trashIcon}</button>
             </div>
           </td>
         </tr>
@@ -188,7 +198,7 @@ class ScenarioModule extends BaseModule {
     const titleEl = document.getElementById('editor-title');
     const body = document.getElementById('editor-body');
 
-    titleEl.textContent = name ? `✏️ Sửa: ${name}` : '➕ Tạo kịch bản mới';
+    titleEl.textContent = name ? `Sửa: ${name}` : 'Tạo kịch bản mới';
 
     // Lấy dữ liệu
     let scenarioName = name || '';
@@ -199,6 +209,8 @@ class ScenarioModule extends BaseModule {
       group = (typeof raw === 'object' && !Array.isArray(raw)) ? (raw.group || '') : '';
       questions = Array.isArray(raw) ? raw : (raw.questions || []);
     }
+
+    const plusIcon = window.CHIcons ? CHIcons.plus({ size: 12 }) : '+';
 
     body.innerHTML = `
       <!-- Cột trái: Metadata -->
@@ -226,7 +238,7 @@ class ScenarioModule extends BaseModule {
         <div class="editor-main-header">
           <div class="form-label">Danh sách câu hỏi</div>
           <button class="btn btn-ghost btn-xs" id="ed-add-question" style="height:26px;font-size:11px;gap:4px">
-            <span style="font-size:13px">+</span> Thêm
+            ${plusIcon} Thêm
           </button>
         </div>
         <div class="editor-questions custom-scroll" id="ed-questions"></div>
@@ -258,6 +270,7 @@ class ScenarioModule extends BaseModule {
     div.className = 'question-item-opt';
 
     const loopHidden = (q.type === 'loop' || q.type === 'list') ? '' : 'hidden';
+    const closeIcon = window.CHIcons ? CHIcons.x({ size: 12 }) : '✕';
 
     div.innerHTML = `
       <textarea placeholder="Câu hỏi... (VD: \${topic|AI,Tech} hoặc \${name})">${this._escapeHTML(q.text || '')}</textarea>
@@ -271,7 +284,7 @@ class ScenarioModule extends BaseModule {
         <input type="text" class="ed-loopkey ${loopHidden}"
           placeholder="Loop key" value="${this._escapeHTML(q.loopKey || '')}"
           style="height:24px;font-size:10px;padding:0 6px;flex:1;border:1px solid var(--color-border);border-radius:4px;outline:none;background:var(--color-bg);font-family:inherit">
-        <button class="btn btn-ghost btn-xs ed-remove-q" style="height:22px;width:22px;padding:0;color:var(--color-text-muted);font-size:11px;border:none" title="Xóa">✕</button>
+        <button class="btn btn-ghost btn-xs ed-remove-q" style="height:22px;width:22px;padding:0;color:var(--color-text-muted);font-size:11px;border:none;display:flex;align-items:center;justify-content:center" title="Xóa">${closeIcon}</button>
       </div>
     `;
 

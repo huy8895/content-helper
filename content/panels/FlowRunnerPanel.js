@@ -14,7 +14,7 @@ window.FlowRunnerPanel = class extends window.BasePanel {
     super({
       id: "flow-runner-panel",
       title: "Trình chạy Luồng",
-      icon: "🔀",
+      icon: window.CHIcons ? window.CHIcons.workflow({ size: 20 }) : "🔀",
       onClose: onClose,
       view: window.FlowRunnerView
     });
@@ -189,7 +189,10 @@ window.FlowRunnerPanel = class extends window.BasePanel {
 
     searchBox.onkeydown = (e) => {
       if (e.key === "Escape") {
-        dropdown.classList.add("hidden-dropdown");
+        if (!dropdown.classList.contains("hidden-dropdown")) {
+          dropdown.classList.add("hidden-dropdown");
+          e.stopPropagation();
+        }
       }
     };
 

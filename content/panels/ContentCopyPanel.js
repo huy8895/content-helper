@@ -4,7 +4,7 @@ window.ContentCopyPanel = class extends window.BasePanel {
     super({
       id: "content-copy-panel",
       title: "Copy Content",
-      icon: "⎘",
+      icon: window.CHIcons ? window.CHIcons.copy({ size: 20 }) : "⎘",
       onClose: onClose,
       view: {
         render: () => window.ContentCopyView?.render?.(elements.length) || ""
@@ -54,8 +54,8 @@ window.ContentCopyPanel = class extends window.BasePanel {
       // Button Download
       const btnDownload = document.createElement("button");
       btnDownload.className = "ts-item-row__btn";
-      btnDownload.title = `Download item #${idx + 1}`;
-      btnDownload.innerHTML = "↓";
+      btnDownload.title = `Tải xuống mục #${idx + 1}`;
+      btnDownload.innerHTML = window.CHIcons ? window.CHIcons.download({ size: 12 }) : "↓";
       btnDownload.onclick = (e) => {
         e.stopPropagation();
         ContentHelper.playHapticFeedback?.(8);
@@ -73,8 +73,8 @@ window.ContentCopyPanel = class extends window.BasePanel {
       // Button Copy
       const btnCopy = document.createElement("button");
       btnCopy.className = "ts-item-row__btn";
-      btnCopy.title = `Copy item #${idx + 1}`;
-      btnCopy.innerHTML = "⎘";
+      btnCopy.title = `Sao chép mục #${idx + 1}`;
+      btnCopy.innerHTML = window.CHIcons ? window.CHIcons.copy({ size: 12 }) : "⎘";
       btnCopy.onclick = (e) => {
         e.stopPropagation();
         ContentHelper.playHapticFeedback?.(8);

@@ -11,7 +11,7 @@ window.GoogleAIStudioPanel = class extends window.BasePanel {
     super({
       id: "google-ai-studio-panel",
       title: "AI Studio Settings",
-      icon: "⚙",
+      icon: window.CHIcons ? window.CHIcons.settings({ size: 20 }) : "⚙",
       onClose: onClose,
       view: window.GoogleAIStudioView
     });
