@@ -930,14 +930,14 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     const btn = document.createElement('button');
     btn.id = 'content-helper-aistudio-speech-settings';
     btn.textContent = '🎙️ Settings';
-    btn.className = 'bg-[#141517] text-[#fbfbfa] border border-[#2e3035] font-bold text-xs shadow-lg hover:shadow-xl transition-all active:scale-95';
+    btn.className = 'ts-btn font-bold text-xs shadow-md transition-all active:scale-95';
     btn.addEventListener('click', (e) => {
       if (container.dataset.isDragging !== 'true') {
         window.__helperInjected?._toggleAIStudioSpeechSettings();
       }
     });
     Object.assign(container.style, { position: 'fixed', bottom: '20px', left: '20px', zIndex: '2147483647' });
-    Object.assign(btn.style, { borderRadius: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', whiteSpace: 'nowrap', overflow: 'hidden', transition: 'width 0.3s ease, padding 0.3s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move' });
+    Object.assign(btn.style, { borderRadius: '24px', backgroundColor: 'var(--ch-surface)', color: 'var(--ch-text-primary)', border: '1px solid var(--ch-border-strong)', boxShadow: 'var(--ch-shadow-panel)', whiteSpace: 'nowrap', overflow: 'hidden', transition: 'width 0.3s ease, padding 0.3s ease, background-color 0.15s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move' });
     const expandedText = "🎙️ Settings", collapsedText = "🎙️";
     const updateButtonState = (isHovering) => {
       if (container.dataset.isDragging === 'true') return;

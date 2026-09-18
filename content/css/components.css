@@ -324,12 +324,13 @@
 
 /* Các biến thể màu nút */
 .ts-btn--primary {
-  background-color: #1A1918;
-  border-color: #2E3238;
+  background-color: var(--ch-accent);
+  border-color: var(--ch-accent);
   color: #FFFFFF;
 }
 .ts-btn--primary:hover:not(:disabled) {
-  background-color: #2E3238;
+  background-color: var(--ch-accent-hover);
+  border-color: var(--ch-accent-hover);
 }
 
 .ts-btn--accent {
@@ -452,7 +453,7 @@
 
 .ts-progress__bar {
   height: 100%;
-  background-color: #1A1918;
+  background-color: var(--ch-accent);
   border-radius: 9999px;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -827,8 +828,8 @@
 }
 
 #helper-toggle-button {
-  background-color: #141517;
-  color: #FBFBFA;
+  background-color: var(--ch-surface);
+  color: var(--ch-text-primary);
   border: 1px solid var(--ch-border-strong);
   border-radius: 9999px;
   height: 40px;
@@ -842,12 +843,19 @@
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+#helper-toggle-button span:first-child {
+  color: var(--ch-accent);
+  font-weight: 800;
 }
 
 #helper-toggle-button:hover {
   transform: scale(1.04);
+  background-color: var(--ch-surface-alt);
   border-color: var(--ch-accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 #helper-toggle-button:active {

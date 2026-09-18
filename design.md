@@ -132,7 +132,7 @@ Toàn bộ hệ thống UI của Extension trên **100% các website** tuân th�
 ```
 
 ### Bước 1: 1 Master Floating Button Duy Nhất
-- Hình viên thuốc (Pill shape), nền tối `#141517`, chữ trắng tương phản cao, bo tròn `9999px`.
+- Hình viên thuốc (Pill shape), nền Surface tự nhiên `var(--ch-surface)`, viền `var(--ch-border-strong)`, chữ `var(--ch-text-primary)` với icon điểm nhấn Accent Terracotta, bo tròn `9999px` hài hòa với mọi website.
 - Kéo thả tự do (Draggable) trên toàn màn hình với Viewport Clamping (chống kéo văng mất khỏi màn hình).
 - Tự động nhận diện độ cao: Nếu kéo nút lên nửa trên màn hình (`top < 260px`), popup menu sẽ tự động bung xuống dưới (`menu-down`).
 
@@ -192,7 +192,7 @@ Toàn bộ hệ thống giao diện của Content Helper được đóng gói b�
 - Chiều cao chuẩn: `28px` (Compact) hoặc `32px` (Standard).
 - Bo góc: `7px`. Font-weight: `600`.
 - Hiệu ứng cơ học khi bấm: `active:scale-[0.98]` êm ái.
-- Màu nhấn Primary là Đất nung Terracotta (`#C25E2E`) hoặc Than chì đen (`#141517`), tuyệt đối không dùng màu xanh dương công nghiệp generic.
+- Màu nhấn Primary là Đất nung Terracotta (`var(--ch-accent)`: `#C25E2E` ở Light Mode, `#D97736` ở Dark Mode), ấm áp và thân thiện. Tuyệt đối không dùng nút màu than chì đen (dễ gây nhầm lẫn là disabled và tạo cảm giác nặng nề) và không dùng màu xanh dương công nghiệp generic.
 
 ### 7.4. Empty States
 - Sử dụng câu chữ con người, ấm áp, ngắn gọn và có tính hướng dẫn hành động (ví dụ: *"Chưa có kịch bản nào được lưu. Bấm 'Tạo kịch bản mới' để bắt đầu tự động hóa."*).
