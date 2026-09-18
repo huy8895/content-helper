@@ -156,12 +156,6 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     const sampleContextEl = this.el.querySelector('#sample-context-instructions') || this.el.querySelector('#style-instructions');
     if (sampleContextEl) sampleContextEl.value = sampleContextVal;
 
-    this.el.querySelector('#auto-set-value').checked = profileData.autoSetValue || false;
-    this.el.querySelector('#auto-paste-clipboard').checked = profileData.autoPasteClipboard || false;
-    const autoDetectEl = this.el.querySelector('#auto-detect-speaker-order');
-    if (autoDetectEl) {
-      autoDetectEl.checked = profileData.autoDetectSpeakerOrder !== false;
-    }
   }
 
   switchProfile(profileName) {
@@ -176,21 +170,20 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     const sampleContextEl = this.el.querySelector('#sample-context-instructions') || this.el.querySelector('#style-instructions');
     const sceneVal = sceneEl ? sceneEl.value : '';
     const sampleContextVal = sampleContextEl ? sampleContextEl.value : '';
-    const autoDetectEl = this.el.querySelector('#auto-detect-speaker-order');
 
     return {
-      InputValue1: this.el.querySelector('#input-value1').value,
-      InputValue2: this.el.querySelector('#input-value2').value,
-      Voice1: this.el.querySelector('#voice1').value,
-      Voice2: this.el.querySelector('#voice2').value,
+      InputValue1: this.el.querySelector('#input-value1')?.value || '',
+      InputValue2: this.el.querySelector('#input-value2')?.value || '',
+      Voice1: this.el.querySelector('#voice1')?.value || '',
+      Voice2: this.el.querySelector('#voice2')?.value || '',
       scene: sceneVal,
       sampleContext: sampleContextVal,
       // Lưu song song key cũ để tương thích với dữ liệu và Firestore đã có
       sceneInstructions: sceneVal,
       styleInstructions: sampleContextVal,
-      autoDetectSpeakerOrder: autoDetectEl ? autoDetectEl.checked : true,
-      autoSetValue: this.el.querySelector('#auto-set-value').checked,
-      autoPasteClipboard: this.el.querySelector('#auto-paste-clipboard').checked,
+      autoDetectSpeakerOrder: true,
+      autoSetValue: true,
+      autoPasteClipboard: false,
     };
   }
 
@@ -271,7 +264,8 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       const activeProfileName = data.activeProfileName || 'default';
       const activeProfile = (data.profiles || {})[activeProfileName];
 
-      if (activeProfile && activeProfile.autoSetValue) {
+      // Auto Set luôn bật theo cấu hình mặc định của hệ thống
+      if (activeProfile && activeProfile.autoSetValue !== false) {
         console.log(`✅ [SpeechPanel] Auto Set enabled for profile "${activeProfileName}". Running script...`);
 
         // Bước 1: Tìm và click thẻ "The Energetic Co-Host"
@@ -281,9 +275,9 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
           await new Promise(r => setTimeout(r, 2000));
         }
 
-        // Đọc trước clipboard nếu có bật autoPasteClipboard để phát hiện thứ tự speaker
+        // Đọc trước clipboard nếu có để phát hiện thứ tự speaker
         let clipboardText = '';
-        if (activeProfile.autoPasteClipboard && navigator.clipboard?.readText) {
+        if (navigator.clipboard?.readText) {
           try {
             clipboardText = await navigator.clipboard.readText();
           } catch (e) {
@@ -293,14 +287,6 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
 
         // Bước 2: Điền cấu hình vào trang (truyền clipboardText để tự động đảo speaker nếu speaker 2 nói trước)
         await GoogleAIStudioSpeechPanel.setValueScript(activeProfile, clipboardText);
-
-        // Bước cuối: Tự động dán clipboard nếu option được bật
-        if (activeProfile.autoPasteClipboard) {
-          console.log(`📋 [SpeechPanel] Auto Paste Clipboard enabled. Running paste script...`);
-          await GoogleAIStudioSpeechPanel.autoPasteClipboardToPrompt(clipboardText);
-        } else {
-          console.log(`ℹ️ Auto Paste Clipboard is disabled for profile "${activeProfileName}".`);
-        }
       } else {
         console.log(`ℹ️ Auto Set is disabled for profile "${activeProfileName}".`);
       }
@@ -402,7 +388,8 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     let slot1Speaker = settings.InputValue2 || '';
     let slot1Voice = settings.Voice2 || '';
 
-    const shouldAutoDetect = settings.autoDetectSpeakerOrder !== false;
+    // Tự động phát hiện thứ tự Speaker xuất hiện trong kịch bản thoại (luôn bật)
+    const shouldAutoDetect = true;
 
     if (shouldAutoDetect && slot0Speaker && slot1Speaker) {
       let promptText = explicitText || '';
@@ -415,8 +402,8 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
         }
       }
 
-      // Thử đọc từ clipboard nếu được cấp quyền và chưa có text
-      if (!promptText && settings.autoPasteClipboard && navigator.clipboard?.readText) {
+      // Thử đọc từ clipboard nếu được cấp quyền và chưa có text để xác định thứ tự speaker
+      if (!promptText && navigator.clipboard?.readText) {
         try {
           promptText = await navigator.clipboard.readText();
         } catch (_) {}

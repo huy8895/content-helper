@@ -82,30 +82,6 @@ class SpeechProfileModule extends BaseModule {
             <textarea class="form-textarea" id="sp-sample-context" rows="3" placeholder="vd: Previous speaker just finished a long story..."></textarea>
           </div>
 
-          <label class="toggle-wrapper" style="margin-bottom:12px">
-            <div>
-              <div class="toggle-label">Tự động phát hiện thứ tự Speaker</div>
-              <div class="toggle-desc">Tự đảo vị trí nếu Speaker 2 nói trước trong kịch bản thoại</div>
-            </div>
-            <input type="checkbox" class="toggle-switch" id="sp-auto-detect" checked>
-          </label>
-
-          <label class="toggle-wrapper" style="margin-bottom:12px">
-            <div>
-              <div class="toggle-label">Tự động cấu hình (Auto Set)</div>
-              <div class="toggle-desc">Tự động thiết lập voice và speaker khi mở AI Studio</div>
-            </div>
-            <input type="checkbox" class="toggle-switch" id="sp-auto-set">
-          </label>
-
-          <label class="toggle-wrapper" style="margin-bottom:20px">
-            <div>
-              <div class="toggle-label">Tự động dán Clipboard (Auto Paste)</div>
-              <div class="toggle-desc">Tự động click nút Text và dán nội dung clipboard vào prompt</div>
-            </div>
-            <input type="checkbox" class="toggle-switch" id="sp-auto-paste">
-          </label>
-
           <button class="btn btn-primary" id="sp-save-btn" style="width:100%">
             ${saveIcon} Cập nhật Profile
           </button>
@@ -160,13 +136,6 @@ class SpeechProfileModule extends BaseModule {
     const sampleContextEl = this.containerEl.querySelector('#sp-sample-context');
     if (sampleContextEl) sampleContextEl.value = sampleContextVal;
 
-    const autoDetectEl = this.containerEl.querySelector('#sp-auto-detect');
-    if (autoDetectEl) {
-      autoDetectEl.checked = p.autoDetectSpeakerOrder !== false;
-    }
-
-    this.containerEl.querySelector('#sp-auto-set').checked = p.autoSetValue || false;
-    this.containerEl.querySelector('#sp-auto-paste').checked = p.autoPasteClipboard || false;
     this.containerEl.querySelector('#sp-current-name').textContent = profileName;
   }
 
@@ -177,20 +146,18 @@ class SpeechProfileModule extends BaseModule {
   _collectForm() {
     const sceneVal = this.containerEl.querySelector('#sp-scene')?.value || '';
     const sampleContextVal = this.containerEl.querySelector('#sp-sample-context')?.value || '';
-    const autoDetectEl = this.containerEl.querySelector('#sp-auto-detect');
-
     return {
-      InputValue1: this.containerEl.querySelector('#sp-speaker1').value,
-      InputValue2: this.containerEl.querySelector('#sp-speaker2').value,
-      Voice1: this.containerEl.querySelector('#sp-voice1').value,
-      Voice2: this.containerEl.querySelector('#sp-voice2').value,
+      InputValue1: this.containerEl.querySelector('#sp-speaker1')?.value || '',
+      InputValue2: this.containerEl.querySelector('#sp-speaker2')?.value || '',
+      Voice1: this.containerEl.querySelector('#sp-voice1')?.value || '',
+      Voice2: this.containerEl.querySelector('#sp-voice2')?.value || '',
       scene: sceneVal,
       sampleContext: sampleContextVal,
       sceneInstructions: sceneVal,
       styleInstructions: sampleContextVal,
-      autoDetectSpeakerOrder: autoDetectEl ? autoDetectEl.checked : true,
-      autoSetValue: this.containerEl.querySelector('#sp-auto-set').checked,
-      autoPasteClipboard: this.containerEl.querySelector('#sp-auto-paste').checked,
+      autoDetectSpeakerOrder: true,
+      autoSetValue: true,
+      autoPasteClipboard: false,
     };
   }
 

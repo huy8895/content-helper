@@ -49,7 +49,7 @@ window.GoogleAIStudioSpeechView = {
   </div>
 
   <!-- Form Cài Đặt -->
-  <div id="profile-settings-form" class="ts-flex ts-flex-col ts-gap-2 ts-mb-2 ts-flex-1 ts-min-h-0">
+  <div id="profile-settings-form" class="ts-flex ts-flex-col ts-gap-2 ts-mb-2">
     <div class="ts-flex ts-items-center ts-justify-between ts-px-1">
       <span class="ts-card__title">Speaker & Voice Mapping</span>
       <button id="btn-swap-speakers" class="ts-btn ts-btn--ghost ts-btn--xs" type="button" title="Hoán đổi nhanh vị trí Speaker 1 ⇄ Speaker 2">
@@ -81,31 +81,13 @@ window.GoogleAIStudioSpeechView = {
 
     <div class="ts-flex-shrink-0">
       <label for="scene-instructions" class="ts-label">Scene</label>
-      <textarea id="scene-instructions" class="ts-textarea custom-scrollbar" rows="2" style="min-height: 54px; resize: vertical;" placeholder="vd: A bustling street at night, two friends talking casually..."></textarea>
+      <textarea id="scene-instructions" class="ts-textarea custom-scrollbar" rows="2" style="min-height: 52px; resize: vertical;" placeholder="vd: A bustling street at night, two friends talking casually..."></textarea>
     </div>
 
-    <div class="ts-flex-1 ts-flex ts-flex-col ts-min-h-0">
+    <div class="ts-flex-shrink-0">
       <label for="sample-context-instructions" class="ts-label">Sample Context</label>
-      <textarea id="sample-context-instructions" class="ts-textarea ts-flex-1 custom-scrollbar ts-min-h-0" style="min-height: 72px; resize: vertical;" placeholder="vd: Previous speaker just finished a long story..."></textarea>
+      <textarea id="sample-context-instructions" class="ts-textarea custom-scrollbar" rows="3" style="min-height: 68px; resize: vertical;" placeholder="vd: Previous speaker just finished a long story..."></textarea>
     </div>
-
-    <label class="ts-switch-row ts-flex-shrink-0">
-      <div>
-        <div class="ts-switch-row__title">Tự động phát hiện thứ tự Speaker</div>
-        <div class="ts-switch-row__desc">Tự đảo vị trí nếu Speaker 2 nói trước trong kịch bản</div>
-      </div>
-      <input type="checkbox" id="auto-detect-speaker-order" class="ts-switch" checked>
-    </label>
-
-    <label class="ts-switch-row ts-flex-shrink-0">
-      <span class="ts-switch-row__title">Tự động cấu hình (Auto Set)</span>
-      <input type="checkbox" id="auto-set-value" class="ts-switch">
-    </label>
-
-    <label class="ts-switch-row ts-flex-shrink-0">
-      <span class="ts-switch-row__title">Tự động dán Clipboard (Auto Paste)</span>
-      <input type="checkbox" id="auto-paste-clipboard" class="ts-switch">
-    </label>
   </div>
 
   <div class="ts-sheet-footer ts-flex ts-gap-2">
