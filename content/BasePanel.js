@@ -87,6 +87,24 @@ window.BasePanel = class {
   }
 
   /**
+   * Thu nhỏ panel thành bong bóng tròn Messenger
+   */
+  minimize() {
+    if (this._minimizeCtrl && typeof this._minimizeCtrl.minimize === 'function') {
+      this._minimizeCtrl.minimize();
+    }
+  }
+
+  /**
+   * Khôi phục panel từ bong bóng thu nhỏ
+   */
+  restore() {
+    if (this._minimizeCtrl && typeof this._minimizeCtrl.restore === 'function') {
+      this._minimizeCtrl.restore();
+    }
+  }
+
+  /**
    * Dọn dẹp tài nguyên và gỡ bỏ hoàn toàn khỏi DOM
    */
   destroy() {

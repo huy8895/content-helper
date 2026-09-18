@@ -189,7 +189,10 @@ window.FlowRunnerPanel = class extends window.BasePanel {
 
     searchBox.onkeydown = (e) => {
       if (e.key === "Escape") {
-        dropdown.classList.add("hidden-dropdown");
+        if (!dropdown.classList.contains("hidden-dropdown")) {
+          dropdown.classList.add("hidden-dropdown");
+          e.stopPropagation();
+        }
       }
     };
 

@@ -60,9 +60,9 @@ class ContentHelper {
     // Khởi tạo Master Shadow Root duy nhất chứa toàn bộ hệ thống giao diện
     ContentHelper.getShadowRoot();
 
-    // ⌨️  ESC → đóng panel trên cùng
+    // ⌨️ ESC → Thu nhỏ panel trên cùng thành bong bóng Messenger (thay vì đóng panel)
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') ContentHelper.closeTopPanel();
+      if (e.key === 'Escape') ContentHelper.minimizeTopPanel();
     });
   }
 
@@ -736,6 +736,31 @@ class ContentHelper {
         bar.appendChild(el);                     // đưa về cuối thanh
       }
     }
+  }
+
+  /**
+   * Thu nhỏ panel đang mở trên cùng thành bong bóng tròn Messenger
+   * (Kích hoạt khi người dùng bấm phím Escape hoặc gọi theo chương trình)
+   */
+  static minimizeTopPanel() {
+    const shadow = ContentHelper.getShadowRoot();
+    const activePanelEl = shadow.querySelector(
+      '#content-helper-panel-bar .ts-panel:not(.panel-minimized), #content-helper-panel-bar .helper-panel:not(.panel-minimized)');
+    if (activePanelEl) {
+      // 1. Ưu tiên click nút thu nhỏ (.panel-minimize) để giữ nguyên state & tạo Messenger bubble
+      const minimizeBtn = activePanelEl.querySelector('.panel-minimize');
+      if (minimizeBtn) {
+        minimizeBtn.click();
+        return true;
+      }
+      // 2. Fallback: Nếu panel không hỗ trợ thu nhỏ, mới thực hiện đóng (.panel-close)
+      const closeBtn = activePanelEl.querySelector('.panel-close');
+      if (closeBtn) {
+        closeBtn.click();
+        return true;
+      }
+    }
+    return false;
   }
 
   static closeTopPanel() {
