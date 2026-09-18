@@ -82,6 +82,14 @@ class SpeechProfileModule extends BaseModule {
             <textarea class="form-textarea" id="sp-sample-context" rows="3" placeholder="vd: Previous speaker just finished a long story..."></textarea>
           </div>
 
+          <label class="toggle-wrapper" style="margin-bottom:20px">
+            <div>
+              <div class="toggle-label">Tự động dán Clipboard (Auto Paste)</div>
+              <div class="toggle-desc">Tự động click nút Text và dán nội dung clipboard vào prompt</div>
+            </div>
+            <input type="checkbox" class="toggle-switch" id="sp-auto-paste">
+          </label>
+
           <button class="btn btn-primary" id="sp-save-btn" style="width:100%">
             ${saveIcon} Cập nhật Profile
           </button>
@@ -136,6 +144,8 @@ class SpeechProfileModule extends BaseModule {
     const sampleContextEl = this.containerEl.querySelector('#sp-sample-context');
     if (sampleContextEl) sampleContextEl.value = sampleContextVal;
 
+    const autoPasteEl = this.containerEl.querySelector('#sp-auto-paste');
+    if (autoPasteEl) autoPasteEl.checked = p.autoPasteClipboard || false;
     this.containerEl.querySelector('#sp-current-name').textContent = profileName;
   }
 
@@ -157,7 +167,7 @@ class SpeechProfileModule extends BaseModule {
       styleInstructions: sampleContextVal,
       autoDetectSpeakerOrder: true,
       autoSetValue: true,
-      autoPasteClipboard: false,
+      autoPasteClipboard: this.containerEl.querySelector('#sp-auto-paste')?.checked || false,
     };
   }
 

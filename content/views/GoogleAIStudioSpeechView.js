@@ -88,6 +88,14 @@ window.GoogleAIStudioSpeechView = {
       <label for="sample-context-instructions" class="ts-label">Sample Context</label>
       <textarea id="sample-context-instructions" class="ts-textarea custom-scrollbar" rows="3" style="min-height: 68px; resize: vertical;" placeholder="vd: Previous speaker just finished a long story..."></textarea>
     </div>
+
+    <label class="ts-switch-row ts-flex-shrink-0">
+      <div>
+        <div class="ts-switch-row__title">Tự động dán Clipboard (Auto Paste)</div>
+        <div class="ts-switch-row__desc">Tự click Text và dán kịch bản thoại từ clipboard vào prompt</div>
+      </div>
+      <input type="checkbox" id="auto-paste-clipboard" class="ts-switch">
+    </label>
   </div>
 
   <div class="ts-sheet-footer ts-flex ts-gap-2">

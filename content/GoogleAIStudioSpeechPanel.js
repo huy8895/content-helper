@@ -14,6 +14,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
 
     this.attachEvents();
     this.loadProfiles();
+    GoogleAIStudioSpeechPanel.startRealtimePromptWatcher();
   }
 
   attachEvents() {
@@ -156,6 +157,8 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     const sampleContextEl = this.el.querySelector('#sample-context-instructions') || this.el.querySelector('#style-instructions');
     if (sampleContextEl) sampleContextEl.value = sampleContextVal;
 
+    const autoPasteEl = this.el.querySelector('#auto-paste-clipboard');
+    if (autoPasteEl) autoPasteEl.checked = profileData.autoPasteClipboard || false;
   }
 
   switchProfile(profileName) {
@@ -183,7 +186,7 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
       styleInstructions: sampleContextVal,
       autoDetectSpeakerOrder: true,
       autoSetValue: true,
-      autoPasteClipboard: false,
+      autoPasteClipboard: this.el.querySelector('#auto-paste-clipboard')?.checked || false,
     };
   }
 
@@ -275,9 +278,9 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
           await new Promise(r => setTimeout(r, 2000));
         }
 
-        // Đọc trước clipboard nếu có để phát hiện thứ tự speaker
+        // Đọc trước clipboard nếu có bật autoPasteClipboard để phát hiện thứ tự speaker
         let clipboardText = '';
-        if (navigator.clipboard?.readText) {
+        if (activeProfile.autoPasteClipboard && navigator.clipboard?.readText) {
           try {
             clipboardText = await navigator.clipboard.readText();
           } catch (e) {
@@ -287,6 +290,16 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
 
         // Bước 2: Điền cấu hình vào trang (truyền clipboardText để tự động đảo speaker nếu speaker 2 nói trước)
         await GoogleAIStudioSpeechPanel.setValueScript(activeProfile, clipboardText);
+
+        // Bước cuối: Tự động dán clipboard nếu option được bật
+        if (activeProfile.autoPasteClipboard) {
+          console.log(`📋 [SpeechPanel] Auto Paste Clipboard enabled. Running paste script...`);
+          await GoogleAIStudioSpeechPanel.autoPasteClipboardToPrompt(clipboardText);
+        } else {
+          console.log(`ℹ️ Auto Paste Clipboard is disabled for profile "${activeProfileName}".`);
+        }
+        // Bước tiếp theo: Kích hoạt realtime watcher lắng nghe ô Text prompt
+        GoogleAIStudioSpeechPanel.startRealtimePromptWatcher();
       } else {
         console.log(`ℹ️ Auto Set is disabled for profile "${activeProfileName}".`);
       }
@@ -358,6 +371,131 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
     return 1;
   }
 
+  /**
+   * Lấy tên Speaker hiện tại đang có trong Slot chỉ định (0 hoặc 1).
+   * @param {number} slotIndex - 0 hoặc 1
+   * @returns {string}
+   */
+  static getCurrentSpeakerInSlot(slotIndex) {
+    const allVoiceSettings = document.querySelectorAll('ms-voice-settings');
+    if (slotIndex < allVoiceSettings.length) {
+      const input = allVoiceSettings[slotIndex].querySelector('input[aria-label="Speaker name"], input.speaker-alias-input');
+      return input ? input.value.trim() : '';
+    }
+    return '';
+  }
+
+  /**
+   * Bắt đầu lắng nghe tự động thay đổi trong ô Text prompt theo thời gian thực (Realtime Watcher).
+   * Khi người dùng nhập hoặc dán kịch bản, tự động phân tích speaker nào nói trước và đảo thứ tự Speaker & Voice.
+   */
+  static startRealtimePromptWatcher() {
+    if (GoogleAIStudioSpeechPanel._isWatcherInitialized) return;
+    GoogleAIStudioSpeechPanel._isWatcherInitialized = true;
+
+    console.log("👀 [SpeechPanel] Khởi tạo Realtime Prompt Watcher...");
+
+    const attachToTextarea = (ta) => {
+      if (!ta || ta._chSpeechWatched) return;
+      ta._chSpeechWatched = true;
+      console.log("🎯 [SpeechPanel] Đã gắn Realtime Listener vào ô Text prompt:", ta);
+
+      const handleInput = () => {
+        clearTimeout(GoogleAIStudioSpeechPanel._debounceTimer);
+        GoogleAIStudioSpeechPanel._debounceTimer = setTimeout(async () => {
+          await GoogleAIStudioSpeechPanel.handlePromptChange(ta.value);
+        }, 500);
+      };
+
+      ta.addEventListener('input', handleInput);
+      ta.addEventListener('paste', handleInput);
+    };
+
+    // 1. Thử gắn ngay nếu textarea đã có trên DOM
+    const currentTa = GoogleAIStudioSpeechPanel.getPromptTextarea();
+    if (currentTa) {
+      attachToTextarea(currentTa);
+    }
+
+    // 2. Sử dụng MutationObserver để tự động bắt kịp khi ô textarea xuất hiện (khi chuyển tab hoặc sau khi load)
+    try {
+      const observer = new MutationObserver(() => {
+        const ta = GoogleAIStudioSpeechPanel.getPromptTextarea();
+        if (ta && !ta._chSpeechWatched) {
+          attachToTextarea(ta);
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      GoogleAIStudioSpeechPanel._promptObserver = observer;
+    } catch (e) {
+      console.warn("⚠️ [SpeechPanel] Không thể khởi tạo MutationObserver cho Prompt Watcher:", e);
+    }
+  }
+
+  /**
+   * Xử lý khi nội dung prompt thay đổi theo thời gian thực (Debounced)
+   * @param {string} text - Nội dung kịch bản hiện tại trong prompt
+   */
+  static async handlePromptChange(text) {
+    if (!text || typeof text !== 'string' || !text.trim()) return;
+
+    // Tránh re-entrance khi đang trong quá trình cập nhật
+    if (GoogleAIStudioSpeechPanel._isHandlingPromptChange) return;
+
+    const storageKey = 'google_ai_studio_profiles';
+    chrome.storage.local.get([storageKey], async (result) => {
+      const data = result[storageKey] || {};
+      const activeProfileName = data.activeProfileName || 'default';
+      const activeProfile = (data.profiles || {})[activeProfileName];
+      if (!activeProfile) return;
+
+      const spk1 = (activeProfile.InputValue1 || '').trim();
+      const spk2 = (activeProfile.InputValue2 || '').trim();
+      const voice1 = (activeProfile.Voice1 || '').trim();
+      const voice2 = (activeProfile.Voice2 || '').trim();
+
+      if (!spk1 || !spk2) return;
+
+      const detectedFirst = GoogleAIStudioSpeechPanel.detectSpeakerOrder(text, spk1, spk2);
+      const targetSlot0Spk = detectedFirst === 2 ? spk2 : spk1;
+      const targetSlot0Voice = detectedFirst === 2 ? voice2 : voice1;
+      const targetSlot1Spk = detectedFirst === 2 ? spk1 : spk2;
+      const targetSlot1Voice = detectedFirst === 2 ? voice1 : voice2;
+
+      // Lấy tên Speaker hiện tại đang có ở Slot 0
+      const currentSlot0Spk = GoogleAIStudioSpeechPanel.getCurrentSpeakerInSlot(0);
+
+      // Nếu slot 0 đã khớp với Speaker mục tiêu thì không cần đảo lại
+      if (currentSlot0Spk && currentSlot0Spk.toLowerCase() === targetSlot0Spk.toLowerCase()) {
+        return;
+      }
+
+      try {
+        GoogleAIStudioSpeechPanel._isHandlingPromptChange = true;
+        console.log(`🔄 [SpeechPanel Realtime] Phát hiện "${targetSlot0Spk}" nói trước. Tự động cập nhật Speaker 0 ⇄ 1...`);
+        if (typeof ContentHelper !== 'undefined') {
+          ContentHelper.showToast?.(`Phát hiện "${targetSlot0Spk}" nói trước, tự động đổi vị trí Thẻ giọng!`, 'info');
+        }
+
+        // Cập nhật tên Speaker
+        await GoogleAIStudioSpeechPanel.setSpeakerName(0, targetSlot0Spk);
+        await GoogleAIStudioSpeechPanel.setSpeakerName(1, targetSlot1Spk);
+
+        // Cập nhật Voice tương ứng
+        if (targetSlot0Voice) {
+          await GoogleAIStudioSpeechPanel.selectVoice(0, targetSlot0Voice);
+        }
+        if (targetSlot1Voice) {
+          await GoogleAIStudioSpeechPanel.selectVoice(1, targetSlot1Voice);
+        }
+      } catch (err) {
+        console.warn("⚠️ [SpeechPanel Realtime] Lỗi khi đổi vị trí Speaker:", err);
+      } finally {
+        GoogleAIStudioSpeechPanel._isHandlingPromptChange = false;
+      }
+    });
+  }
+
   static async setValueScript(settings, explicitText = null) {
     console.log("🚀 [SpeechPanel] start setValueScript: ", settings);
 
@@ -402,8 +540,8 @@ window.GoogleAIStudioSpeechPanel = class extends window.BasePanel {
         }
       }
 
-      // Thử đọc từ clipboard nếu được cấp quyền và chưa có text để xác định thứ tự speaker
-      if (!promptText && navigator.clipboard?.readText) {
+      // Thử đọc từ clipboard nếu được cấp quyền và chưa có text
+      if (!promptText && settings.autoPasteClipboard && navigator.clipboard?.readText) {
         try {
           promptText = await navigator.clipboard.readText();
         } catch (_) {}

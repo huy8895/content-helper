@@ -793,7 +793,8 @@ class GoogleAIStudioAdapter extends BaseChatAdapter {
 
     if (this.isSpeechPage) {
       setTimeout(() => {
-        window.GoogleAIStudioSpeechPanel.triggerAutoSet();
+        window.GoogleAIStudioSpeechPanel?.triggerAutoSet?.();
+        window.GoogleAIStudioSpeechPanel?.startRealtimePromptWatcher?.();
       }, 1500);
     }
   }
