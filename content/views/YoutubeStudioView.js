@@ -108,7 +108,7 @@ window.YoutubeStudioView = {
   
   <div class="ts-sheet-footer">
     <button id="yt-save-languages-btn" class="ts-btn ts-btn--primary ts-w-full ts-py-2">
-      ${window.CHIcons ? window.CHIcons.save({ size: 13 }) : ''} Cập nhật Profile
+      ${window.CHIcons ? window.CHIcons.save({ size: 13 }) : ''} Lưu Profile
     </button>
   </div>
     `;
